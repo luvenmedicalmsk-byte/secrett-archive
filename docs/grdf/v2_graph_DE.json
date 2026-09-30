@@ -2,25 +2,25 @@
   "country": "DE",
   "date": "2026-09-30",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-30T07:07:29.609346+00:00",
+  "generated_at": "2026-09-30T07:16:22.578927+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-DE",
       "type": "Country",
       "label": "DE",
-      "score": 72,
+      "score": 74,
       "props": {
-        "risk_score": 72
+        "risk_score": 74
       }
     },
     {
       "id": "DOMAIN-DE-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
-      "trend": "stable"
+      "score": 53,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-economic",
@@ -34,13 +34,13 @@
       "type": "Domain",
       "label": "climate",
       "score": 72,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 58,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
+      "id": "SIGNAL-DE-Министр_об",
+      "type": "Signal",
+      "label": "Министр обороны Украины отменил визит в ",
+      "severity": 53,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-DE-Шторм_—_Ге",
       "type": "Signal",
       "label": "Шторм — Германия",
       "severity": 72,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-DE-Киберугроз",
-      "type": "Signal",
-      "label": "Киберугроза — Германия",
-      "severity": 58,
-      "domain": "technology"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.53
     },
     {
       "from": "COUNTRY-DE",
@@ -124,7 +124,7 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-technology",
       "type": "CORRELATES",
-      "weight": 0.58
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-DE",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-DE-climate",
-      "to": "DOMAIN-DE-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-DE-infrastructure",
-      "to": "DOMAIN-DE-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-DE-economic",
-      "to": "DOMAIN-DE-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-DE-climate",
       "to": "DOMAIN-DE-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,22 +184,64 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-DE-climate",
+      "to": "DOMAIN-DE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-DE-infrastructure",
+      "to": "DOMAIN-DE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-DE-economic",
+      "to": "DOMAIN-DE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-DE-geopolitical",
+      "to": "DOMAIN-DE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-DE-infrastructure",
+      "to": "DOMAIN-DE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-DE-economic",
+      "to": "DOMAIN-DE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-DE-Гроза:_Гер",
       "to": "DOMAIN-DE-climate",
       "type": "AMPLIFIES",
       "weight": 0.72
     },
     {
+      "from": "SIGNAL-DE-Министр_об",
+      "to": "DOMAIN-DE-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.53
+    },
+    {
       "from": "SIGNAL-DE-Шторм_—_Ге",
       "to": "DOMAIN-DE-climate",
       "type": "AMPLIFIES",
       "weight": 0.72
-    },
-    {
-      "from": "SIGNAL-DE-Киберугроз",
-      "to": "DOMAIN-DE-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.58
     }
   ]
 }

@@ -2,7 +2,7 @@
   "country": "GE",
   "date": "2026-09-30",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-30T07:07:29.631981+00:00",
+  "generated_at": "2026-09-30T07:16:22.599006+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-GE-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 46,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "economic"
     },
     {
+      "id": "SIGNAL-GE-Ежемесячны",
+      "type": "Signal",
+      "label": "Ежемесячный ВВП Грузии в годовом исчисле",
+      "severity": 32,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-GE-Санкционно",
       "type": "Signal",
       "label": "Санкционное давление — Грузия",
@@ -90,13 +97,6 @@
       "id": "SIGNAL-GE-Авиационны",
       "type": "Signal",
       "label": "Авиационный инцидент — Грузия",
-      "severity": 62,
-      "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-GE-Энергоблэк",
-      "type": "Signal",
-      "label": "Энергоблэкаут — Грузия",
       "severity": 62,
       "domain": "technology"
     }
@@ -112,7 +112,7 @@
       "from": "COUNTRY-GE",
       "to": "DOMAIN-GE-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-GE",
@@ -184,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-GE-Ежемесячны",
+      "to": "DOMAIN-GE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.32
+    },
+    {
       "from": "SIGNAL-GE-Санкционно",
       "to": "DOMAIN-GE-geopolitical",
       "type": "AMPLIFIES",
@@ -191,12 +197,6 @@
     },
     {
       "from": "SIGNAL-GE-Авиационны",
-      "to": "DOMAIN-GE-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.62
-    },
-    {
-      "from": "SIGNAL-GE-Энергоблэк",
       "to": "DOMAIN-GE-technology",
       "type": "AMPLIFIES",
       "weight": 0.62
