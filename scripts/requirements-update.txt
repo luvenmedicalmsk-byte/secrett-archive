@@ -1,0 +1,40 @@
+# СГЕНЕРИРОВАНО 30.09.2026. Не править руками.
+#
+# Повод. Оба workflow ставили пакеты без закрепления версий:
+#   update-v2.yml       pip install --quiet telethon reportlab   (каждые 30 минут)
+#   collect-signals.yml pip install openai
+# Прогон идёт в раннере, где в этот момент лежат TG_SESSION, PRIVATE_REPO_TOKEN,
+# DATA_REPO_TOKEN и ADMIN_KEY. Подмена любого из пакетов или его транзитивной
+# зависимости в PyPI даёт исполнение чужого кода рядом с этими секретами.
+# Закрепление версии с хэшем закрывает этот путь: pip откажется ставить файл,
+# чей sha256 не совпал.
+#
+# Ставить строго так:
+#   pip install --require-hashes -r scripts/requirements-update.txt
+#
+# Обновление: пересобрать файл целиком, версии не править по одной,
+# иначе рассыплется дерево зависимостей.
+
+# прямые зависимости: telethon, reportlab
+
+charset-normalizer==3.5.2 \
+    --hash=sha256:211d5a3eb6af8f513b8d4ca19a8c1b7accab1b5f0d3175f9826b03c1a920dc1f \
+    --hash=sha256:39de2a259fc954455c57274dc94c79d5842774e1247a016aff30bc0efed0f4ef \
+    --hash=sha256:b6b751274acb69d77b3323d6b7dbaa3c7fdfc1eb829b7eb61d262f32e1af9685
+pillow==12.3.0 \
+    --hash=sha256:23d27a3e0307ec2244cc51e7287b919aa68d097504ebe19df4e76a98a3eea5bd \
+    --hash=sha256:3b8182a766685eaa002637e28b4ec8d6b18819a0c71f579bf0dbaa5830297cce
+pyaes==1.6.1 \
+    --hash=sha256:02c1b1405c38d3c370b085fb952dd8bea3fadcee6411ad99f312cc129c536d8f
+pyasn1==0.6.4 \
+    --hash=sha256:9c447d8431c947fe4c8febc4ed9e760bc29011a5b01e5c74b67025bd9fb8ce81 \
+    --hash=sha256:deda9277cfd454080ec40b207fb6df82206a3a2688735233cdcd8d3d565f088b
+reportlab==5.0.1 \
+    --hash=sha256:1c36e6bb0e71780c72331eba60da7f602e8d4389a8723825af71342e49d791e8 \
+    --hash=sha256:ebd13154be1c8515e665de70bd2d303ae9ddc3ef47e44afd5116441ca0283a26
+rsa==4.9.1 \
+    --hash=sha256:68635866661c6836b8d39430f97a996acbd61bfa49406748ea243539fe239762 \
+    --hash=sha256:e7bdbfdb5497da4c07dfd35530e1a902659db6ff241e39d9953cad06ebd0ae75
+Telethon==1.45.0 \
+    --hash=sha256:339e24c83aedc9f12cbe389264627edc49779e4289c535aa90aafc4ce62f7972 \
+    --hash=sha256:4cb7ae269b8ab9dad9fc490b859f0bc2f885121e990f5b20407b1faa0db2a1d9
