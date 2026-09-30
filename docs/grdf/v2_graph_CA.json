@@ -2,7 +2,7 @@
   "country": "CA",
   "date": "2026-09-30",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-30T00:26:54.703614+00:00",
+  "generated_at": "2026-09-30T00:50:26.710935+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -47,7 +47,7 @@
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
-      "score": 50,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-CA-«Мы_теряем",
+      "type": "Signal",
+      "label": "«Мы теряем нашу историю и идентичность» ",
+      "severity": 44,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-CA-Шторм_—_Се",
       "type": "Signal",
       "label": "Шторм — Северная Америка",
@@ -92,13 +99,6 @@
       "label": "Санкционное давление — Северная Америка",
       "severity": 65,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-CA-Эпидемиоло",
-      "type": "Signal",
-      "label": "Эпидемиологический риск — Канада",
-      "severity": 50,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -130,7 +130,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-social",
       "type": "CORRELATES",
-      "weight": 0.5
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CA",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-CA-geopolitical",
-      "to": "DOMAIN-CA-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-CA-infrastructure",
-      "to": "DOMAIN-CA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-CA-economic",
-      "to": "DOMAIN-CA-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "DOMAIN-CA-climate",
       "to": "DOMAIN-CA-infrastructure",
       "type": "ESCALATES",
@@ -226,6 +205,33 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-CA-geopolitical",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-CA-«Мы_теряем",
+      "to": "DOMAIN-CA-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.44
+    },
+    {
       "from": "SIGNAL-CA-Шторм_—_Се",
       "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-CA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.65
-    },
-    {
-      "from": "SIGNAL-CA-Эпидемиоло",
-      "to": "DOMAIN-CA-social",
-      "type": "AMPLIFIES",
-      "weight": 0.5
     }
   ]
 }
