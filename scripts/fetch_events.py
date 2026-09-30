@@ -9409,6 +9409,12 @@ def audit_feed(events):
                 })
         except Exception:
             continue
+    # AUDIT_CO 30.09.2026. `_co` импортировался локально внутри _signal_gate,
+    # то есть в ДРУГОЙ функции, и здесь имени не существовало. Каждый прогон
+    # падал на этой строке с NameError, исключение ловилось выше и печаталось
+    # как «[AUDIT] не записан: name '_co' is not defined». Слой аудита ленты
+    # не отрабатывал ни разу, отчёт не писался.
+    import collections as _co
     by_reason = _co.Counter()
     for f in flags:
         for r in f['reasons']:
