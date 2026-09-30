@@ -2,67 +2,67 @@
   "country": "US",
   "date": "2026-09-30",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-30T19:53:37.614379+00:00",
+  "generated_at": "2026-09-30T20:10:41.746934+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-US",
       "type": "Country",
       "label": "US",
-      "score": 80,
+      "score": 92,
       "props": {
-        "risk_score": 80
+        "risk_score": 92
       }
     },
     {
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 34,
-      "trend": "down"
+      "score": 77,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
       "score": 63,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 70,
-      "trend": "down"
+      "score": 79,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DRIVER-US-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-US-Отслеживай",
+      "type": "Signal",
+      "label": "Отслеживайте новые законы о лесных пожар",
+      "severity": 79,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-US-Кэмп_Мисти",
       "type": "Signal",
       "label": "Кэмп Мистик стремится продать имущество ",
@@ -92,13 +99,6 @@
       "label": "Стратегический запас нефти США упал до м",
       "severity": 63,
       "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-US-Растущие_ц",
-      "type": "Signal",
-      "label": "Растущие цены на жилье в США определенно",
-      "severity": 63,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.77
     },
     {
       "from": "COUNTRY-US",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-climate",
       "type": "CORRELATES",
-      "weight": 0.7
+      "weight": 0.79
     },
     {
       "from": "COUNTRY-US",
@@ -205,6 +205,33 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-US-geopolitical",
+      "to": "DOMAIN-US-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-US-infrastructure",
+      "to": "DOMAIN-US-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-US-Отслеживай",
+      "to": "DOMAIN-US-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.79
+    },
+    {
       "from": "SIGNAL-US-Кэмп_Мисти",
       "to": "DOMAIN-US-climate",
       "type": "AMPLIFIES",
@@ -212,12 +239,6 @@
     },
     {
       "from": "SIGNAL-US-Стратегиче",
-      "to": "DOMAIN-US-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.63
-    },
-    {
-      "from": "SIGNAL-US-Растущие_ц",
       "to": "DOMAIN-US-economic",
       "type": "AMPLIFIES",
       "weight": 0.63
