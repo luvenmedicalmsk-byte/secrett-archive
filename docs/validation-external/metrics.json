@@ -1,23 +1,23 @@
 {
-  "generated_at": "2026-09-30T22:10:55.400532+00:00",
+  "generated_at": "2026-09-30T22:26:36.498496+00:00",
   "events_database_size": 93,
   "years_covered": "2010-2026",
   "signal_threshold": 60,
   "severity_threshold": 70,
   "1_forecast_accuracy": {
     "n": 72,
-    "mae": 13.89,
-    "rmse": 17.3,
-    "bias": -0.97,
-    "accuracy_pct": 81.5
+    "mae": 13.65,
+    "rmse": 17.19,
+    "bias": -1.18,
+    "accuracy_pct": 81.8
   },
   "2_scenario_accuracy": {
     "n": 76,
-    "hit_rate": 34.2
+    "hit_rate": 40.8
   },
   "3_signal_correlation": {
     "n": 72,
-    "pearson_r": 0.058,
+    "pearson_r": 0.053,
     "r_squared": 0.003,
     "interpretation": "weak"
   },
@@ -37,12 +37,12 @@
   },
   "7_brier_score": {
     "n": 93,
-    "brier_score": 0.1729,
-    "brier_skill_score": -0.352,
+    "brier_score": 0.1736,
+    "brier_skill_score": -0.358,
     "interpretation": "fair"
   },
   "8_calibration_error": {
-    "ece": 0.1508,
+    "ece": 0.1801,
     "n_bins_populated": 7,
     "calibration_curve": [
       {
@@ -68,31 +68,31 @@
       },
       {
         "bin_center": 0.65,
-        "mean_pred": 0.669,
-        "mean_actual": 0.789,
-        "n": 19,
-        "error": 0.12
+        "mean_pred": 0.664,
+        "mean_actual": 0.875,
+        "n": 16,
+        "error": 0.211
       },
       {
         "bin_center": 0.75,
-        "mean_pred": 0.72,
-        "mean_actual": 0.5,
-        "n": 2,
-        "error": 0.22
+        "mean_pred": 0.714,
+        "mean_actual": 0.4,
+        "n": 5,
+        "error": 0.314
       },
       {
         "bin_center": 0.85,
-        "mean_pred": 0.846,
-        "mean_actual": 0.857,
-        "n": 14,
-        "error": 0.011
+        "mean_pred": 0.844,
+        "mean_actual": 0.875,
+        "n": 16,
+        "error": 0.031
       },
       {
         "bin_center": 0.95,
-        "mean_pred": 0.916,
-        "mean_actual": 1.0,
-        "n": 14,
-        "error": 0.084
+        "mean_pred": 0.918,
+        "mean_actual": 0.889,
+        "n": 27,
+        "error": 0.029
       }
     ],
     "interpretation": "poor"
@@ -106,7 +106,7 @@
     "by_country": {
       "US": {
         "n_events": 15,
-        "mae": 7.1,
+        "mae": 16.7,
         "classification_accuracy_pct": 80.0,
         "n_hits": 12,
         "event_ids": [
@@ -165,7 +165,7 @@
       },
       "ES": {
         "n_events": 2,
-        "mae": 12.5,
+        "mae": 3.5,
         "classification_accuracy_pct": 100.0,
         "n_hits": 2,
         "event_ids": [
@@ -208,7 +208,7 @@
       },
       "DE": {
         "n_events": 3,
-        "mae": 4.3,
+        "mae": 4.7,
         "classification_accuracy_pct": 33.3,
         "n_hits": 1,
         "event_ids": [
@@ -368,7 +368,7 @@
     "n_countries_covered": 18
   },
   "learning_signals": {
-    "n_signals": 6,
+    "n_signals": 5,
     "signals": [
       {
         "type": "threshold_adjust",
@@ -380,15 +380,9 @@
         "recommended": 55
       },
       {
-        "type": "bias_correction",
-        "action": "increase_base_pressure",
-        "detail": "Systematic underestimation bias -3.68pt. Increase sensitivity.",
-        "priority": "MEDIUM"
-      },
-      {
         "type": "calibration",
         "action": "recalibrate_confidence",
-        "detail": "ECE=0.151 — confidence scores need Platt scaling or isotonic regression.",
+        "detail": "ECE=0.180 — confidence scores need Platt scaling or isotonic regression.",
         "priority": "HIGH"
       },
       {
@@ -400,18 +394,18 @@
       {
         "type": "correlation",
         "action": "review_signal_sources",
-        "detail": "Signal-outcome correlation r=0.058 is weak. Review domain weighting formula.",
+        "detail": "Signal-outcome correlation r=0.053 is weak. Review domain weighting formula.",
         "priority": "HIGH"
       },
       {
         "type": "brier",
         "action": "recalibrate_probability_model",
-        "detail": "BSS=-0.352 — model barely outperforms climatology. Reweight GRIE_W.",
+        "detail": "BSS=-0.358 — model barely outperforms climatology. Reweight GRIE_W.",
         "priority": "HIGH"
       }
     ],
     "priority_high": 4,
-    "priority_medium": 2,
+    "priority_medium": 1,
     "overall_model_health": "critical"
   }
 }

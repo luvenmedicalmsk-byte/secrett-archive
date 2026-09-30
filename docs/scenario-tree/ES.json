@@ -10,6 +10,24 @@
       "depth": 0
     },
     {
+      "id": "worst",
+      "label": "Worst Case",
+      "type": "worst",
+      "status": "active",
+      "parent": "ROOT",
+      "depth": 1,
+      "prob": 36.6
+    },
+    {
+      "id": "ASE-ACC-9",
+      "label": "Сценарий ускорения (deceleration)",
+      "type": "acceleration",
+      "status": "emerging",
+      "parent": "ROOT",
+      "depth": 1,
+      "prob": 32
+    },
+    {
       "id": "ASE-ESC-DETE",
       "label": "Ветвь эскалации: deteriorating",
       "type": "escalation_branch",
@@ -54,14 +72,34 @@
   ],
   "convergences": [
     {
+      "scenario_a": "worst",
+      "scenario_b": "acceleration",
+      "score_gap": 2,
+      "prob_gap": 4.6,
+      "label": "Сближение: Worst Case ↔ Сценарий ускорения (deceleration)"
+    },
+    {
       "scenario_a": "escalation_branch",
       "scenario_b": "critical_branch",
-      "score_gap": 2,
+      "score_gap": 4,
       "prob_gap": 6,
       "label": "Сближение: Ветвь эскалации: deteriorating ↔ Критический каскад (ветвь КРИТИЧЕСКИХ рисков)"
     }
   ],
-  "divergences": [],
-  "active_count": 2,
-  "retired_count": 4
+  "divergences": [
+    {
+      "scenario_a": "worst",
+      "scenario_b": "escalation_branch",
+      "score_gap": 39,
+      "label": "Расхождение: Worst Case ↔ Ветвь эскалации: deteriorating"
+    },
+    {
+      "scenario_a": "acceleration",
+      "scenario_b": "escalation_branch",
+      "score_gap": 37,
+      "label": "Расхождение: Сценарий ускорения (deceleration) ↔ Ветвь эскалации: deteriorating"
+    }
+  ],
+  "active_count": 4,
+  "retired_count": 3
 }
