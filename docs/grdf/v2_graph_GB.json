@@ -2,39 +2,39 @@
   "country": "GB",
   "date": "2026-09-30",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-30T07:27:14.600606+00:00",
+  "generated_at": "2026-09-30T07:46:54.904152+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-GB",
       "type": "Country",
       "label": "GB",
-      "score": 81,
+      "score": 76,
       "props": {
-        "risk_score": 81
+        "risk_score": 76
       }
     },
     {
       "id": "DOMAIN-GB-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 60,
+      "score": 5,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-GB-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
-      "trend": "stable"
+      "score": 50,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GB-climate",
       "type": "Domain",
       "label": "climate",
       "score": 76,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GB-technology",
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-GB-В_Великобр",
-      "type": "Signal",
-      "label": "В Великобритании полиция задержала неско",
-      "severity": 60,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-GB-Городские_",
       "type": "Signal",
       "label": "Городские деревья — юго-восточная Англия",
       "severity": 50,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-GB-Цена_на_ди",
+      "type": "Signal",
+      "label": "Цена на дизель достигает рекорда в Велик",
+      "severity": 50,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.6
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-GB",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-GB-climate",
-      "to": "DOMAIN-GB-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-GB-economic",
-      "to": "DOMAIN-GB-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-GB-social",
-      "to": "DOMAIN-GB-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-GB-climate",
       "to": "DOMAIN-GB-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -205,25 +184,25 @@
       "lag_days": 30
     },
     {
-      "from": "DOMAIN-GB-geopolitical",
-      "to": "DOMAIN-GB-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-GB-infrastructure",
+      "from": "DOMAIN-GB-climate",
       "to": "DOMAIN-GB-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-GB-economic",
       "to": "DOMAIN-GB-social",
       "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-GB-social",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "SIGNAL-GB-Наша_продо",
@@ -232,14 +211,14 @@
       "weight": 0.76
     },
     {
-      "from": "SIGNAL-GB-В_Великобр",
-      "to": "DOMAIN-GB-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.6
-    },
-    {
       "from": "SIGNAL-GB-Городские_",
       "to": "DOMAIN-GB-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
+      "from": "SIGNAL-GB-Цена_на_ди",
+      "to": "DOMAIN-GB-economic",
       "type": "AMPLIFIES",
       "weight": 0.5
     }
