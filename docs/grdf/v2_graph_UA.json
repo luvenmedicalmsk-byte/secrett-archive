@@ -2,7 +2,7 @@
   "country": "UA",
   "date": "2026-09-30",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-30T04:26:38.297979+00:00",
+  "generated_at": "2026-09-30T04:47:06.145962+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -10,17 +10,17 @@
       "id": "COUNTRY-UA",
       "type": "Country",
       "label": "UA",
-      "score": 85,
+      "score": 92,
       "props": {
-        "risk_score": 85
+        "risk_score": 92
       }
     },
     {
       "id": "DOMAIN-UA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 93,
-      "trend": "stable"
+      "score": 100,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-economic",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-UA-В_результа",
+      "type": "Signal",
+      "label": "В результате ночного российского ракетно",
+      "severity": 95,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-UA-Сегодня_но",
       "type": "Signal",
       "label": "Сегодня ночью ВС РФ нанесли удар по логи",
@@ -92,13 +99,6 @@
       "label": "Зеленский предупреждает, что Россия хоче",
       "severity": 80,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-UA-В_Киевской",
-      "type": "Signal",
-      "label": "В Киевской области в результате атаки РФ",
-      "severity": 73,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.93
+      "weight": 1.0
     },
     {
       "from": "COUNTRY-UA",
@@ -184,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-UA-В_результа",
+      "to": "DOMAIN-UA-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.95
+    },
+    {
       "from": "SIGNAL-UA-Сегодня_но",
       "to": "DOMAIN-UA-geopolitical",
       "type": "AMPLIFIES",
@@ -194,12 +200,6 @@
       "to": "DOMAIN-UA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.8
-    },
-    {
-      "from": "SIGNAL-UA-В_Киевской",
-      "to": "DOMAIN-UA-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.73
     }
   ]
 }

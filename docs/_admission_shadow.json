@@ -1,14 +1,14 @@
 {
-  "generated": "2026-09-30T04:24:49Z",
+  "generated": "2026-09-30T04:44:27Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
     "PASS_FACT": 878,
-    "DENY_COMMENTARY": 285,
+    "DENY_COMMENTARY": 284,
+    "DENY_BACKGROUND": 4,
     "DENY_FEATURE": 3,
     "DENY_STATE_ONLY": 3,
-    "UNMATCHED": 3,
-    "DENY_BACKGROUND": 3
+    "UNMATCHED": 3
   },
   "kpi": {
     "processes_total": 1175,
@@ -25,44 +25,44 @@
   "shadow_reliability": {
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
-      "processes": 369,
-      "sample": 1093,
+      "processes": 370,
+      "sample": 1122,
       "agreement_pct": 87.6,
-      "decision_agreement_pct": 87.7,
-      "critical_errors": 134,
-      "truth_ratio_pct": 97.4,
+      "decision_agreement_pct": 87.8,
+      "critical_errors": 137,
+      "truth_ratio_pct": 97.5,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 115,
+        "FACT_EVENT→COMMENTARY": 118,
         "COMMENTARY→FACT_EVENT": 16,
-        "STATE_CONFIRMATION→COMMENTARY": 1,
         "FACT_EVENT→FEATURE": 2,
+        "STATE_CONFIRMATION→COMMENTARY": 1,
         "FACT_EVENT→REPORT": 1,
         "FEATURE→COMMENTARY": 1
       }
     },
     "historical": {
       "processes": 1175,
-      "sample": 2497,
+      "sample": 2526,
       "agreement_pct": 90.0,
       "decision_agreement_pct": 90.1,
-      "critical_errors": 246,
+      "critical_errors": 249,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 203,
+        "FACT_EVENT→COMMENTARY": 206,
         "COMMENTARY→FACT_EVENT": 38,
-        "STATE_CONFIRMATION→COMMENTARY": 1,
         "FACT_EVENT→FEATURE": 3,
+        "STATE_CONFIRMATION→COMMENTARY": 1,
         "FACT_EVENT→REPORT": 1,
         "FEATURE→COMMENTARY": 2,
         "STATE_CONFIRMATION→FACT_EVENT": 1
       }
     },
     "events_stream": {
-      "sample": 360,
-      "agreement_pct": 88.1,
-      "decision_agreement_pct": 88.3,
-      "critical_errors": 42,
+      "sample": 359,
+      "agreement_pct": 88.6,
+      "decision_agreement_pct": 88.9,
+      "critical_errors": 40,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 38,
+        "FACT_EVENT→COMMENTARY": 36,
         "FACT_EVENT→FEATURE": 1,
         "STATE_CONFIRMATION→COMMENTARY": 1,
         "COMMENTARY→FACT_EVENT": 2,
@@ -77,14 +77,14 @@
     }
   },
   "class_source": {
-    "shadow_title_only": 183,
-    "evidence_sic": 2497
+    "shadow_title_only": 175,
+    "evidence_sic": 2526
   },
-  "truth_ratio_pct": 93.2,
+  "truth_ratio_pct": 93.5,
   "domain_statistics": {
     "geopolitics": {
-      "pass": 247,
-      "deny": 76
+      "pass": 246,
+      "deny": 77
     },
     "climate": {
       "pass": 307,
@@ -92,8 +92,8 @@
       "unmatched": 2
     },
     "economy": {
-      "pass": 157,
-      "deny": 95,
+      "pass": 158,
+      "deny": 94,
       "unmatched": 1
     },
     "technology": {
@@ -194,21 +194,6 @@
         "COMMENTARY": 1
       },
       "status": "archived",
-      "causal_links": 0,
-      "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "econ-экономичес-великобр-7ffe",
-      "title": "Топливный рынок — Великобритания",
-      "domain": "economy",
-      "severity": 67,
-      "pressure": 58,
-      "first_seen": "2026-07-01",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "COMMENTARY": 1
-      },
-      "status": "active",
       "causal_links": 0,
       "reason": "no FACT_EVENT in evidence"
     },
@@ -589,6 +574,21 @@
       "reason": "no FACT_EVENT in evidence"
     },
     {
+      "signal_id": "geop-геополитич-украина-a414",
+      "title": "Геополитический процесс — Украина",
+      "domain": "geopolitics",
+      "severity": 61,
+      "pressure": 55,
+      "first_seen": "2026-06-30",
+      "evidence_count": 1,
+      "evidence_classes": {
+        "BACKGROUND": 1
+      },
+      "status": "active",
+      "causal_links": 4,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
       "signal_id": "geop-геополитич-грузия-4edf",
       "title": "Геополитический процесс — Грузия",
       "domain": "geopolitics",
@@ -623,11 +623,11 @@
       "title": "Уязвимость ПО",
       "domain": "technology",
       "severity": 60,
-      "pressure": 57,
+      "pressure": 55,
       "first_seen": "2026-06-25",
-      "evidence_count": 2,
+      "evidence_count": 1,
       "evidence_classes": {
-        "COMMENTARY": 2
+        "COMMENTARY": 1
       },
       "status": "active",
       "causal_links": 0,
@@ -1026,9 +1026,9 @@
       "delta": null
     },
     {
-      "signal_id": "econ-экономичес-великобр-7ffe",
-      "domain": "economy",
-      "legacy": 67,
+      "signal_id": "geop-геополитич-украина-a414",
+      "domain": "geopolitics",
+      "legacy": 61,
       "shadow": null,
       "delta": null
     },
@@ -1243,16 +1243,16 @@
       "delta": null
     },
     {
-      "signal_id": "clim-климатичес-бенгальс-e6f2",
-      "domain": "climate",
-      "legacy": 48,
+      "signal_id": "geop-геополитич-канада-19e3",
+      "domain": "geopolitics",
+      "legacy": 32,
       "shadow": null,
       "delta": null
     },
     {
-      "signal_id": "geop-геополитич-канада-19e3",
-      "domain": "geopolitics",
-      "legacy": 32,
+      "signal_id": "clim-климатичес-бенгальс-e6f2",
+      "domain": "climate",
+      "legacy": 48,
       "shadow": null,
       "delta": null
     },
