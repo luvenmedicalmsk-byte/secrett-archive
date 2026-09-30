@@ -2,67 +2,67 @@
   "country": "DE",
   "date": "2026-09-30",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-30T14:08:59.791278+00:00",
+  "generated_at": "2026-09-30T14:18:15.037774+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-DE",
       "type": "Country",
       "label": "DE",
-      "score": 83,
+      "score": 67,
       "props": {
-        "risk_score": 83
+        "risk_score": 67
       }
     },
     {
       "id": "DOMAIN-DE-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 53,
-      "trend": "stable"
+      "score": 5,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-DE-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
-      "trend": "stable"
+      "score": 34,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-DE-climate",
       "type": "Domain",
       "label": "climate",
       "score": 72,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-DE-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-DE-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-DE-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-DE-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DRIVER-DE-Geopolitical",
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-DE-Гроза:_Гер",
-      "type": "Signal",
-      "label": "Гроза: Германия (оранжевый уровень, 2 пр",
-      "severity": 72,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-DE-Массовая_а",
       "type": "Signal",
       "label": "Массовая аномальная жара: смерти в Европ",
@@ -94,11 +87,18 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-DE-Министр_об",
+      "id": "SIGNAL-DE-В_Германии",
       "type": "Signal",
-      "label": "Министр обороны Украины отменил визит в ",
-      "severity": 53,
-      "domain": "geopolitical"
+      "label": "В Германии стали чаще воровать бензин из",
+      "severity": 34,
+      "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-DE-Шторм_—_Ге",
+      "type": "Signal",
+      "label": "Шторм — Германия",
+      "severity": 72,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.53
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-DE",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-DE-climate",
-      "to": "DOMAIN-DE-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-DE-economic",
-      "to": "DOMAIN-DE-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-DE-social",
-      "to": "DOMAIN-DE-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-DE-climate",
       "to": "DOMAIN-DE-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -205,31 +184,25 @@
       "lag_days": 30
     },
     {
-      "from": "DOMAIN-DE-geopolitical",
-      "to": "DOMAIN-DE-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-DE-infrastructure",
+      "from": "DOMAIN-DE-climate",
       "to": "DOMAIN-DE-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-DE-economic",
       "to": "DOMAIN-DE-social",
       "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
+      "weight": 0.7,
+      "lag_days": 60
     },
     {
-      "from": "SIGNAL-DE-Гроза:_Гер",
-      "to": "DOMAIN-DE-climate",
+      "from": "DOMAIN-DE-social",
+      "to": "DOMAIN-DE-social",
       "type": "AMPLIFIES",
-      "weight": 0.72
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "SIGNAL-DE-Массовая_а",
@@ -238,10 +211,16 @@
       "weight": 0.67
     },
     {
-      "from": "SIGNAL-DE-Министр_об",
-      "to": "DOMAIN-DE-geopolitical",
+      "from": "SIGNAL-DE-В_Германии",
+      "to": "DOMAIN-DE-economic",
       "type": "AMPLIFIES",
-      "weight": 0.53
+      "weight": 0.34
+    },
+    {
+      "from": "SIGNAL-DE-Шторм_—_Ге",
+      "to": "DOMAIN-DE-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.72
     }
   ]
 }
