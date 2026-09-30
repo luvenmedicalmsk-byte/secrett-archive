@@ -1,14 +1,14 @@
 {
-  "generated": "2026-09-30T02:45:46Z",
+  "generated": "2026-09-30T03:05:44Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
-    "PASS_FACT": 876,
-    "DENY_COMMENTARY": 286,
-    "DENY_BACKGROUND": 4,
+    "PASS_FACT": 878,
+    "DENY_COMMENTARY": 285,
     "DENY_FEATURE": 3,
     "DENY_STATE_ONLY": 3,
-    "UNMATCHED": 3
+    "UNMATCHED": 3,
+    "DENY_BACKGROUND": 3
   },
   "kpi": {
     "processes_total": 1175,
@@ -16,53 +16,53 @@
     "unmatched": 3,
     "coverage_pct": 99.7,
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
-    "admission_pass_rate": 74.7,
-    "admission_deny_rate": 25.3,
-    "processes_without_fact": 296,
+    "admission_pass_rate": 74.9,
+    "admission_deny_rate": 25.1,
+    "processes_without_fact": 294,
     "report_evidence_count": 0,
     "reports_boosting": 0
   },
   "shadow_reliability": {
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
-      "processes": 371,
-      "sample": 1081,
-      "agreement_pct": 87.7,
-      "decision_agreement_pct": 87.9,
+      "processes": 370,
+      "sample": 1088,
+      "agreement_pct": 87.8,
+      "decision_agreement_pct": 88.0,
       "critical_errors": 131,
       "truth_ratio_pct": 97.4,
       "error_matrix": {
         "FACT_EVENT→COMMENTARY": 112,
         "COMMENTARY→FACT_EVENT": 16,
-        "FACT_EVENT→FEATURE": 2,
         "STATE_CONFIRMATION→COMMENTARY": 1,
+        "FACT_EVENT→FEATURE": 2,
         "FACT_EVENT→REPORT": 1,
         "FEATURE→COMMENTARY": 1
       }
     },
     "historical": {
       "processes": 1175,
-      "sample": 2483,
+      "sample": 2491,
       "agreement_pct": 90.1,
       "decision_agreement_pct": 90.2,
       "critical_errors": 243,
       "error_matrix": {
         "FACT_EVENT→COMMENTARY": 200,
         "COMMENTARY→FACT_EVENT": 38,
-        "FACT_EVENT→FEATURE": 3,
         "STATE_CONFIRMATION→COMMENTARY": 1,
+        "FACT_EVENT→FEATURE": 3,
         "FACT_EVENT→REPORT": 1,
         "FEATURE→COMMENTARY": 2,
         "STATE_CONFIRMATION→FACT_EVENT": 1
       }
     },
     "events_stream": {
-      "sample": 344,
-      "agreement_pct": 87.2,
-      "decision_agreement_pct": 87.5,
-      "critical_errors": 43,
+      "sample": 346,
+      "agreement_pct": 87.6,
+      "decision_agreement_pct": 87.9,
+      "critical_errors": 42,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 39,
+        "FACT_EVENT→COMMENTARY": 38,
         "FACT_EVENT→FEATURE": 1,
         "STATE_CONFIRMATION→COMMENTARY": 1,
         "COMMENTARY→FACT_EVENT": 2,
@@ -78,27 +78,27 @@
   },
   "class_source": {
     "shadow_title_only": 183,
-    "evidence_sic": 2483
+    "evidence_sic": 2491
   },
-  "truth_ratio_pct": 93.1,
+  "truth_ratio_pct": 93.2,
   "domain_statistics": {
     "geopolitics": {
-      "pass": 246,
-      "deny": 77
+      "pass": 247,
+      "deny": 76
     },
     "climate": {
-      "pass": 306,
-      "deny": 33,
+      "pass": 307,
+      "deny": 32,
       "unmatched": 2
+    },
+    "technology": {
+      "pass": 97,
+      "deny": 45
     },
     "economy": {
       "pass": 157,
       "deny": 95,
       "unmatched": 1
-    },
-    "technology": {
-      "pass": 97,
-      "deny": 45
     },
     "social": {
       "pass": 70,
@@ -574,21 +574,6 @@
       "reason": "no FACT_EVENT in evidence"
     },
     {
-      "signal_id": "geop-геополитич-украина-a414",
-      "title": "Геополитический процесс — Украина",
-      "domain": "geopolitics",
-      "severity": 61,
-      "pressure": 55,
-      "first_seen": "2026-06-30",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "BACKGROUND": 1
-      },
-      "status": "active",
-      "causal_links": 4,
-      "reason": "no FACT_EVENT in evidence"
-    },
-    {
       "signal_id": "geop-геополитич-грузия-4edf",
       "title": "Геополитический процесс — Грузия",
       "domain": "geopolitics",
@@ -1007,6 +992,21 @@
       "status": "fading",
       "causal_links": 0,
       "reason": "no FACT_EVENT in evidence"
+    },
+    {
+      "signal_id": "geop-покушение-европа-24fd",
+      "title": "Покушение — Европа",
+      "domain": "geopolitics",
+      "severity": 55,
+      "pressure": 32,
+      "first_seen": "2026-08-31",
+      "evidence_count": 3,
+      "evidence_classes": {
+        "COMMENTARY": 3
+      },
+      "status": "dormant",
+      "causal_links": 0,
+      "reason": "no FACT_EVENT in evidence"
     }
   ],
   "report_log": [],
@@ -1021,13 +1021,6 @@
     {
       "signal_id": "econ-топливныйр-сша-8442",
       "domain": "economy",
-      "legacy": 61,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "geop-геополитич-украина-a414",
-      "domain": "geopolitics",
       "legacy": 61,
       "shadow": null,
       "delta": null
@@ -1104,13 +1097,6 @@
     },
     {
       "signal_id": "clim-климатичес-африка-0f9e",
-      "domain": "climate",
-      "legacy": 32,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "clim-климатичес-европа-27d7",
       "domain": "climate",
       "legacy": 32,
       "shadow": null,
@@ -1430,12 +1416,26 @@
       "legacy": 32,
       "shadow": null,
       "delta": null
+    },
+    {
+      "signal_id": "soci-социальный-индия-dff1",
+      "domain": "social",
+      "legacy": 32,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "soci-социальный-ближнийв-3612",
+      "domain": "social",
+      "legacy": 54,
+      "shadow": null,
+      "delta": null
     }
   ],
   "deny_by_severity": {
     "0-30": 2,
-    "31-50": 208,
-    "51-70": 80,
+    "31-50": 207,
+    "51-70": 79,
     "71-90": 6,
     "91-100": 0
   }
