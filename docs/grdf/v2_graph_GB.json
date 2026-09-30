@@ -2,7 +2,7 @@
   "country": "GB",
   "date": "2026-09-30",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-30T15:08:14.559728+00:00",
+  "generated_at": "2026-09-30T15:27:35.859603+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -27,21 +27,21 @@
       "type": "Domain",
       "label": "economic",
       "score": 50,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-GB-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 79,
-      "trend": "down"
+      "score": 50,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-GB-technology",
       "type": "Domain",
       "label": "technology",
       "score": 46,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-GB-social",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-GB-Городские_",
+      "type": "Signal",
+      "label": "Городские деревья — юго-восточная Англия",
+      "severity": 50,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-GB-Цена_на_ди",
       "type": "Signal",
       "label": "Цена на дизель достигает рекорда в Велик",
@@ -92,13 +99,6 @@
       "label": "Более половины британских компаний не ув",
       "severity": 46,
       "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-GB-Климатичес",
-      "type": "Signal",
-      "label": "Климатическая аномалия — Великобритания",
-      "severity": 79,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-climate",
       "type": "CORRELATES",
-      "weight": 0.79
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-GB",
@@ -205,6 +205,12 @@
       "lag_days": 90
     },
     {
+      "from": "SIGNAL-GB-Городские_",
+      "to": "DOMAIN-GB-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
       "from": "SIGNAL-GB-Цена_на_ди",
       "to": "DOMAIN-GB-economic",
       "type": "AMPLIFIES",
@@ -215,12 +221,6 @@
       "to": "DOMAIN-GB-technology",
       "type": "AMPLIFIES",
       "weight": 0.46
-    },
-    {
-      "from": "SIGNAL-GB-Климатичес",
-      "to": "DOMAIN-GB-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.79
     }
   ]
 }
