@@ -2,7 +2,7 @@
   "country": "CA",
   "date": "2026-09-30",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-30T00:07:24.325946+00:00",
+  "generated_at": "2026-09-30T00:26:54.703614+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -20,49 +20,49 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 48,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CA-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CA-climate",
       "type": "Domain",
       "label": "climate",
       "score": 74,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CA-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
-      "trend": "down"
+      "score": 50,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CA-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-CA-Geopolitical",
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CA-«Мы_теряем",
-      "type": "Signal",
-      "label": "«Мы теряем нашу историю и идентичность» ",
-      "severity": 44,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-CA-Шторм_—_Се",
       "type": "Signal",
       "label": "Шторм — Северная Америка",
@@ -99,6 +92,13 @@
       "label": "Санкционное давление — Северная Америка",
       "severity": 65,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-CA-Эпидемиоло",
+      "type": "Signal",
+      "label": "Эпидемиологический риск — Канада",
+      "severity": 50,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -130,7 +130,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-CA",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-CA-climate",
-      "to": "DOMAIN-CA-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-CA-infrastructure",
-      "to": "DOMAIN-CA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-CA-economic",
-      "to": "DOMAIN-CA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-CA-geopolitical",
       "to": "DOMAIN-CA-infrastructure",
       "type": "ESCALATES",
@@ -226,10 +205,25 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-CA-«Мы_теряем",
-      "to": "DOMAIN-CA-climate",
+      "from": "DOMAIN-CA-climate",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
       "type": "AMPLIFIES",
-      "weight": 0.44
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "SIGNAL-CA-Шторм_—_Се",
@@ -242,6 +236,12 @@
       "to": "DOMAIN-CA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.65
+    },
+    {
+      "from": "SIGNAL-CA-Эпидемиоло",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.5
     }
   ]
 }
