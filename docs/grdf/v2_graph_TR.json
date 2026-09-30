@@ -2,7 +2,7 @@
   "country": "TR",
   "date": "2026-09-30",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-30T09:26:14.028669+00:00",
+  "generated_at": "2026-09-30T09:46:57.385900+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -19,14 +19,14 @@
       "id": "DOMAIN-TR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 73,
+      "score": 58,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-TR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 45,
       "trend": "stable"
     },
     {
@@ -94,11 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-TR-Военный_ко",
+      "id": "SIGNAL-TR-Кабинет_ми",
       "type": "Signal",
-      "label": "Военный конфликт — Ближний Восток (систе",
-      "severity": 98,
-      "domain": "geopolitical"
+      "label": "Кабинет министров Турции соберется сегод",
+      "severity": 45,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.73
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.45
     },
     {
       "from": "COUNTRY-TR",
@@ -164,6 +164,27 @@
     },
     {
       "from": "DOMAIN-TR-climate",
+      "to": "DOMAIN-TR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-TR-infrastructure",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-TR-climate",
       "to": "DOMAIN-TR-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,27 +226,6 @@
       "lag_days": 45
     },
     {
-      "from": "DOMAIN-TR-climate",
-      "to": "DOMAIN-TR-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-TR-infrastructure",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-TR-economic",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "SIGNAL-TR-Гроза,_сил",
       "to": "DOMAIN-TR-climate",
       "type": "AMPLIFIES",
@@ -238,10 +238,10 @@
       "weight": 0.47
     },
     {
-      "from": "SIGNAL-TR-Военный_ко",
-      "to": "DOMAIN-TR-geopolitical",
+      "from": "SIGNAL-TR-Кабинет_ми",
+      "to": "DOMAIN-TR-economic",
       "type": "AMPLIFIES",
-      "weight": 0.98
+      "weight": 0.45
     }
   ]
 }
