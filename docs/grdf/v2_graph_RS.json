@@ -2,7 +2,7 @@
   "country": "RS",
   "date": "2026-09-30",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-30T12:28:03.910328+00:00",
+  "generated_at": "2026-09-30T12:46:34.960338+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -26,14 +26,14 @@
       "id": "DOMAIN-RS-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
+      "score": 44,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-RS-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 38,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -75,9 +75,16 @@
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-RS-climate",
+      "id": "DRIVER-RS-economic",
       "type": "Driver",
-      "label": "climate"
+      "label": "economic"
+    },
+    {
+      "id": "SIGNAL-RS-Истекавший",
+      "type": "Signal",
+      "label": "Истекавший 30 сентября договор на постав",
+      "severity": 34,
+      "domain": "economic"
     },
     {
       "id": "SIGNAL-RS-Социальный",
@@ -90,15 +97,8 @@
       "id": "SIGNAL-RS-Экономичес",
       "type": "Signal",
       "label": "Экономический сигнал — Сербия",
-      "severity": 32,
+      "severity": 34,
       "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-RS-Пожарная_а",
-      "type": "Signal",
-      "label": "Пожарная активность — Сербия",
-      "severity": 38,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -112,13 +112,13 @@
       "from": "COUNTRY-RS",
       "to": "DOMAIN-RS-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-RS",
       "to": "DOMAIN-RS-climate",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-RS",
@@ -157,7 +157,7 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-RS-climate",
+      "from": "DRIVER-RS-economic",
       "to": "COUNTRY-RS",
       "type": "CAUSES",
       "weight": 0.8
@@ -184,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-RS-Истекавший",
+      "to": "DOMAIN-RS-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.34
+    },
+    {
       "from": "SIGNAL-RS-Социальный",
       "to": "DOMAIN-RS-social",
       "type": "AMPLIFIES",
@@ -193,13 +199,7 @@
       "from": "SIGNAL-RS-Экономичес",
       "to": "DOMAIN-RS-economic",
       "type": "AMPLIFIES",
-      "weight": 0.32
-    },
-    {
-      "from": "SIGNAL-RS-Пожарная_а",
-      "to": "DOMAIN-RS-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.38
+      "weight": 0.34
     }
   ]
 }
