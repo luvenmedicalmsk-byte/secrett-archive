@@ -2,7 +2,7 @@
   "country": "SK",
   "date": "2026-09-30",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-30T06:47:24.174160+00:00",
+  "generated_at": "2026-09-30T07:07:29.619042+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-SK",
       "type": "Country",
       "label": "SK",
-      "score": 53,
+      "score": 52,
       "props": {
-        "risk_score": 53
+        "risk_score": 52
       }
     },
     {
@@ -20,21 +20,21 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 53,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-SK-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
-      "trend": "stable"
+      "score": 32,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-SK-climate",
       "type": "Domain",
       "label": "climate",
       "score": 53,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-SK-technology",
@@ -80,13 +80,6 @@
       "label": "economic"
     },
     {
-      "id": "SIGNAL-SK-Учительниц",
-      "type": "Signal",
-      "label": "Учительница погибла при нападении школьн",
-      "severity": 53,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-SK-Военные_уд",
       "type": "Signal",
       "label": "Военные удары — Словакия",
@@ -99,6 +92,13 @@
       "label": "Тепловая волна — Словакия",
       "severity": 53,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-SK-Экономичес",
+      "type": "Signal",
+      "label": "Экономический сигнал — Словакия",
+      "severity": 32,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-SK",
       "to": "DOMAIN-SK-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-SK",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-SK-climate",
-      "to": "DOMAIN-SK-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-SK-economic",
-      "to": "DOMAIN-SK-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-SK-social",
-      "to": "DOMAIN-SK-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-SK-climate",
       "to": "DOMAIN-SK-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -203,6 +182,27 @@
       "type": "AMPLIFIES",
       "weight": 0.55,
       "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-SK-climate",
+      "to": "DOMAIN-SK-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-SK-economic",
+      "to": "DOMAIN-SK-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-SK-social",
+      "to": "DOMAIN-SK-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "DOMAIN-SK-geopolitical",
@@ -226,12 +226,6 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-SK-Учительниц",
-      "to": "DOMAIN-SK-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.53
-    },
-    {
       "from": "SIGNAL-SK-Военные_уд",
       "to": "DOMAIN-SK-geopolitical",
       "type": "AMPLIFIES",
@@ -242,6 +236,12 @@
       "to": "DOMAIN-SK-climate",
       "type": "AMPLIFIES",
       "weight": 0.53
+    },
+    {
+      "from": "SIGNAL-SK-Экономичес",
+      "to": "DOMAIN-SK-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.32
     }
   ]
 }
