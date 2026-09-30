@@ -1,11 +1,12 @@
 {
-  "generated": "2026-09-30T14:47:36Z",
+  "generated": "2026-09-30T15:06:42Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
     "PASS_FACT": 883,
-    "DENY_COMMENTARY": 261,
+    "DENY_COMMENTARY": 260,
     "DENY_FEATURE": 3,
+    "DENY_REPORT": 1,
     "DENY_STATE_ONLY": 2,
     "UNMATCHED": 3,
     "DENY_BACKGROUND": 3
@@ -25,44 +26,44 @@
   "shadow_reliability": {
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
-      "processes": 390,
-      "sample": 1100,
-      "agreement_pct": 88.1,
-      "decision_agreement_pct": 88.3,
-      "critical_errors": 129,
+      "processes": 392,
+      "sample": 1105,
+      "agreement_pct": 88.2,
+      "decision_agreement_pct": 88.4,
+      "critical_errors": 128,
       "truth_ratio_pct": 97.9,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 109,
+        "FACT_EVENT→COMMENTARY": 108,
         "COMMENTARY→FACT_EVENT": 17,
-        "STATE_CONFIRMATION→COMMENTARY": 1,
         "FACT_EVENT→FEATURE": 2,
+        "STATE_CONFIRMATION→COMMENTARY": 1,
         "FACT_EVENT→REPORT": 1,
         "FEATURE→COMMENTARY": 1
       }
     },
     "historical": {
       "processes": 1155,
-      "sample": 2586,
-      "agreement_pct": 90.1,
+      "sample": 2590,
+      "agreement_pct": 90.2,
       "decision_agreement_pct": 90.3,
       "critical_errors": 252,
       "error_matrix": {
         "FACT_EVENT→COMMENTARY": 206,
         "COMMENTARY→FACT_EVENT": 41,
-        "STATE_CONFIRMATION→COMMENTARY": 1,
         "FACT_EVENT→FEATURE": 3,
+        "STATE_CONFIRMATION→COMMENTARY": 1,
         "FACT_EVENT→REPORT": 1,
         "FEATURE→COMMENTARY": 2,
         "STATE_CONFIRMATION→FACT_EVENT": 1
       }
     },
     "events_stream": {
-      "sample": 394,
-      "agreement_pct": 88.1,
-      "decision_agreement_pct": 88.3,
-      "critical_errors": 46,
+      "sample": 397,
+      "agreement_pct": 88.9,
+      "decision_agreement_pct": 89.2,
+      "critical_errors": 43,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 41,
+        "FACT_EVENT→COMMENTARY": 38,
         "FACT_EVENT→FEATURE": 1,
         "STATE_CONFIRMATION→COMMENTARY": 1,
         "COMMENTARY→FACT_EVENT": 3,
@@ -78,7 +79,7 @@
   },
   "class_source": {
     "shadow_title_only": 138,
-    "evidence_sic": 2586
+    "evidence_sic": 2590
   },
   "truth_ratio_pct": 94.9,
   "domain_statistics": {
@@ -87,22 +88,22 @@
       "deny": 70
     },
     "climate": {
-      "pass": 300,
-      "deny": 31,
+      "pass": 301,
+      "deny": 30,
       "unmatched": 2
     },
     "economy": {
-      "pass": 167,
-      "deny": 87,
+      "pass": 166,
+      "deny": 88,
       "unmatched": 1
     },
     "social": {
-      "pass": 71,
-      "deny": 44
+      "pass": 70,
+      "deny": 45
     },
     "technology": {
-      "pass": 98,
-      "deny": 37
+      "pass": 99,
+      "deny": 36
     }
   },
   "deny_impact": [
@@ -228,6 +229,21 @@
       "reason": "no FACT_EVENT in evidence"
     },
     {
+      "signal_id": "econ-экономичес-персидск-31b3",
+      "title": "Финансовый рынок — Персидский залив",
+      "domain": "economy",
+      "severity": 63,
+      "pressure": 37,
+      "first_seen": "2026-07-02",
+      "evidence_count": 1,
+      "evidence_classes": {
+        "REPORT": 1
+      },
+      "status": "active",
+      "causal_links": 1,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
       "signal_id": "clim-климатичес-аравийск-b797",
       "title": "Тепловая волна — Аравийское море",
       "domain": "climate",
@@ -239,21 +255,6 @@
         "COMMENTARY": 1
       },
       "status": "dormant",
-      "causal_links": 0,
-      "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "clim-таяниекрио-глобальн-edd1",
-      "title": "Таяние криосферы",
-      "domain": "climate",
-      "severity": 62,
-      "pressure": 64,
-      "first_seen": "2026-09-24",
-      "evidence_count": 2,
-      "evidence_classes": {
-        "COMMENTARY": 2
-      },
-      "status": "active",
       "causal_links": 0,
       "reason": "no FACT_EVENT in evidence"
     },
@@ -713,7 +714,7 @@
       "title": "Эпидемиологический риск — США",
       "domain": "social",
       "severity": 58,
-      "pressure": 51,
+      "pressure": 48,
       "first_seen": "2026-08-05",
       "evidence_count": 1,
       "evidence_classes": {
@@ -1019,13 +1020,6 @@
       "delta": null
     },
     {
-      "signal_id": "clim-таяниекрио-глобальн-edd1",
-      "domain": "climate",
-      "legacy": 62,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "tech-уязвимость-глобальн-d798",
       "domain": "technology",
       "legacy": 60,
@@ -1071,6 +1065,13 @@
       "signal_id": "econ-валютныйры-израиль-36ee",
       "domain": "economy",
       "legacy": 44,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "soci-миграционн-глобальн-aafb",
+      "domain": "social",
+      "legacy": 45,
       "shadow": null,
       "delta": null
     },
@@ -1201,6 +1202,13 @@
       "delta": null
     },
     {
+      "signal_id": "econ-экономичес-персидск-31b3",
+      "domain": "economy",
+      "legacy": 63,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "econ-топливныйр-саудовск-2ddd",
       "domain": "economy",
       "legacy": 46,
@@ -1313,13 +1321,6 @@
       "delta": null
     },
     {
-      "signal_id": "econ-финансовый-турция-4a53",
-      "domain": "economy",
-      "legacy": 45,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "clim-климатичес-китай-6396",
       "domain": "climate",
       "legacy": 32,
@@ -1330,6 +1331,13 @@
       "signal_id": "econ-экономичес-швейцари-8259",
       "domain": "economy",
       "legacy": 32,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "econ-финансовый-турция-4a53",
+      "domain": "economy",
+      "legacy": 45,
       "shadow": null,
       "delta": null
     },
@@ -1421,13 +1429,6 @@
       "signal_id": "geop-санкционно-средизем-4f96",
       "domain": "geopolitics",
       "legacy": 32,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "clim-климатичес-эстония-be63",
-      "domain": "climate",
-      "legacy": 46,
       "shadow": null,
       "delta": null
     }
