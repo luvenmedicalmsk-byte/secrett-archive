@@ -2,7 +2,7 @@
   "country": "FR",
   "date": "2026-09-30",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-30T04:07:54.133071+00:00",
+  "generated_at": "2026-09-30T04:26:38.295266+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-FR",
       "type": "Country",
       "label": "FR",
-      "score": 78,
+      "score": 92,
       "props": {
-        "risk_score": 78
+        "risk_score": 92
       }
     },
     {
@@ -20,49 +20,49 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-FR-economic",
       "type": "Domain",
       "label": "economic",
       "score": 60,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-FR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 72,
-      "trend": "stable"
+      "score": 88,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-FR-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-FR-social",
       "type": "Domain",
       "label": "social",
-      "score": 54,
-      "trend": "stable"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-FR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-FR-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-FR-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-FR-Ливень:_Фр",
+      "type": "Signal",
+      "label": "Ливень: Франция (красный уровень, 8 пред",
+      "severity": 88,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-FR-Наводнение",
       "type": "Signal",
       "label": "Наводнение: Франция (оранжевый уровень, ",
@@ -92,13 +99,6 @@
       "label": "Госдолг Франции вновь обновил антирекорд",
       "severity": 60,
       "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-FR-Демонстрац",
-      "type": "Signal",
-      "label": "Демонстрации старшеклассников проходят б",
-      "severity": 54,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-FR",
       "to": "DOMAIN-FR-climate",
       "type": "CORRELATES",
-      "weight": 0.72
+      "weight": 0.88
     },
     {
       "from": "COUNTRY-FR",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-FR",
       "to": "DOMAIN-FR-social",
       "type": "CORRELATES",
-      "weight": 0.54
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-FR",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-FR-climate",
-      "to": "DOMAIN-FR-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-FR-economic",
-      "to": "DOMAIN-FR-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-FR-social",
-      "to": "DOMAIN-FR-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-FR-climate",
       "to": "DOMAIN-FR-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -205,6 +184,33 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-FR-climate",
+      "to": "DOMAIN-FR-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-FR-economic",
+      "to": "DOMAIN-FR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-FR-social",
+      "to": "DOMAIN-FR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "SIGNAL-FR-Ливень:_Фр",
+      "to": "DOMAIN-FR-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.88
+    },
+    {
       "from": "SIGNAL-FR-Наводнение",
       "to": "DOMAIN-FR-climate",
       "type": "AMPLIFIES",
@@ -215,12 +221,6 @@
       "to": "DOMAIN-FR-economic",
       "type": "AMPLIFIES",
       "weight": 0.6
-    },
-    {
-      "from": "SIGNAL-FR-Демонстрац",
-      "to": "DOMAIN-FR-social",
-      "type": "AMPLIFIES",
-      "weight": 0.54
     }
   ]
 }
