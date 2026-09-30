@@ -8,9 +8,20 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    # 30.09.2026. Права не были заданы, и прогон наследовал дефолт репозитория.
+    # Ему нужно ровно одно: прочитать публичный репозиторий. В приватный он
+    # пишет отдельным токеном DATA_REPO_TOKEN, а не GITHUB_TOKEN, поэтому
+    # права на запись здесь не нужны вовсе.
+    permissions:
+      contents: read
     steps:
       - name: Checkout public repo
         uses: actions/checkout@v4
+        with:
+          # GITHUB_TOKEN не остаётся в .git/config: в публичный репозиторий
+          # этот прогон ничего не пишет, а дальше в нём выполняется python
+          # и клонирование чужого репозитория.
+          persist-credentials: false
       - name: Push premium data to private repo
         env:
           TOKEN: ${{ secrets.DATA_REPO_TOKEN }}
