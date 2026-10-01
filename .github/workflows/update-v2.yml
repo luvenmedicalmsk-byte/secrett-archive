@@ -281,7 +281,13 @@ jobs:
           _add docs/system_state.json   # ADR-021 System State
           _add docs/migration/
 
-          _add docs/_signal_gate.json docs/_geo_authority.json
+          # 01.10.2026. _feed_audit.json писался на раннере и выбрасывался
+          # вместе с ним: в списках публикации его не было. Сам файл до
+          # 30.09 вообще не создавался из-за NameError в audit_feed, поэтому
+          # пропажа не бросалась в глаза. Публикуется рядом с отчётом гейта:
+          # гейт показывает, что отсеяно, аудит — что пропущено и требует
+          # взгляда человека.
+          _add docs/_signal_gate.json docs/_geo_authority.json docs/_feed_audit.json
 
           _add docs/_pipeline_loss.json docs/_admission_sample.json docs/_admission_history.json docs/_no_domain.json
 
