@@ -2,9 +2,9 @@
   "country": "RO",
   "date": "2026-10-01",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-01T16:01:46.225470+00:00",
-  "node_count": 13,
-  "edge_count": 15,
+  "generated_at": "2026-10-01T16:12:07.755797+00:00",
+  "node_count": 14,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-RO",
@@ -33,7 +33,7 @@
       "id": "DOMAIN-RO-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 56,
       "trend": "stable"
     },
     {
@@ -65,6 +65,11 @@
       "trend": "stable"
     },
     {
+      "id": "DRIVER-RO-climate",
+      "type": "Driver",
+      "label": "climate"
+    },
+    {
       "id": "DRIVER-RO-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
@@ -75,9 +80,11 @@
       "label": "economic"
     },
     {
-      "id": "DRIVER-RO-climate",
-      "type": "Driver",
-      "label": "climate"
+      "id": "SIGNAL-RO-Пожарный_с",
+      "type": "Signal",
+      "label": "Пожарный сигнал — Европа · Бухарест",
+      "severity": 56,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-RO-Рынок_труд",
@@ -111,7 +118,7 @@
       "from": "COUNTRY-RO",
       "to": "DOMAIN-RO-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-RO",
@@ -138,6 +145,12 @@
       "weight": 0.05
     },
     {
+      "from": "DRIVER-RO-climate",
+      "to": "COUNTRY-RO",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-RO-geopolitical",
       "to": "COUNTRY-RO",
       "type": "CAUSES",
@@ -150,10 +163,46 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-RO-climate",
-      "to": "COUNTRY-RO",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-RO-climate",
+      "to": "DOMAIN-RO-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-RO-infrastructure",
+      "to": "DOMAIN-RO-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-RO-economic",
+      "to": "DOMAIN-RO-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-RO-climate",
+      "to": "DOMAIN-RO-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-RO-economic",
+      "to": "DOMAIN-RO-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-RO-social",
+      "to": "DOMAIN-RO-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "DOMAIN-RO-geopolitical",
@@ -175,6 +224,12 @@
       "type": "AMPLIFIES",
       "weight": 0.6,
       "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-RO-Пожарный_с",
+      "to": "DOMAIN-RO-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.56
     },
     {
       "from": "SIGNAL-RO-Рынок_труд",
