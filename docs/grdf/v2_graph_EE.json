@@ -2,9 +2,9 @@
   "country": "EE",
   "date": "2026-10-01",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-01T06:47:01.333627+00:00",
+  "generated_at": "2026-10-01T07:06:43.497246+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-EE",
@@ -26,14 +26,14 @@
       "id": "DOMAIN-EE-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 62,
+      "score": 58,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-EE-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 46,
       "trend": "stable"
     },
     {
@@ -80,13 +80,6 @@
       "label": "climate"
     },
     {
-      "id": "SIGNAL-EE-Суд_в_Эсто",
-      "type": "Signal",
-      "label": "Суд в Эстонии признал пророссийского акт",
-      "severity": 62,
-      "domain": "economic"
-    },
-    {
       "id": "SIGNAL-EE-Санкционно",
       "type": "Signal",
       "label": "Санкционное давление — Эстония",
@@ -99,6 +92,13 @@
       "label": "Экономический сигнал — Эстония",
       "severity": 58,
       "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-EE-Пожарная_а",
+      "type": "Signal",
+      "label": "Пожарная активность — Эстония",
+      "severity": 46,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -112,13 +112,13 @@
       "from": "COUNTRY-EE",
       "to": "DOMAIN-EE-economic",
       "type": "CORRELATES",
-      "weight": 0.62
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-EE",
       "to": "DOMAIN-EE-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-EE",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-EE-climate",
+      "to": "DOMAIN-EE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-EE-infrastructure",
+      "to": "DOMAIN-EE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-EE-economic",
+      "to": "DOMAIN-EE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-EE-climate",
+      "to": "DOMAIN-EE-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-EE-economic",
+      "to": "DOMAIN-EE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-EE-social",
+      "to": "DOMAIN-EE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-EE-geopolitical",
       "to": "DOMAIN-EE-infrastructure",
       "type": "ESCALATES",
@@ -184,12 +226,6 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-EE-Суд_в_Эсто",
-      "to": "DOMAIN-EE-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.62
-    },
-    {
       "from": "SIGNAL-EE-Санкционно",
       "to": "DOMAIN-EE-geopolitical",
       "type": "AMPLIFIES",
@@ -200,6 +236,12 @@
       "to": "DOMAIN-EE-economic",
       "type": "AMPLIFIES",
       "weight": 0.58
+    },
+    {
+      "from": "SIGNAL-EE-Пожарная_а",
+      "to": "DOMAIN-EE-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.46
     }
   ]
 }
