@@ -2,7 +2,7 @@
   "country": "SG",
   "date": "2026-10-01",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-01T17:47:11.963375+00:00",
+  "generated_at": "2026-10-01T18:07:02.718300+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -40,7 +40,7 @@
       "id": "DOMAIN-SG-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 24,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -75,9 +75,16 @@
       "label": "economic"
     },
     {
-      "id": "DRIVER-SG-technology",
+      "id": "DRIVER-SG-climate",
       "type": "Driver",
-      "label": "technology"
+      "label": "climate"
+    },
+    {
+      "id": "SIGNAL-SG-Средняя_но",
+      "type": "Signal",
+      "label": "Средняя ночная ставка в Сингапуре (SORA)",
+      "severity": 32,
+      "domain": "economic"
     },
     {
       "id": "SIGNAL-SG-Геополитич",
@@ -92,13 +99,6 @@
       "label": "Транспортный коридор — Юго-Восточная Ази",
       "severity": 53,
       "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-SG-Технологич",
-      "type": "Signal",
-      "label": "Технологический сигнал — Юго-Восточная А",
-      "severity": 32,
-      "domain": "technology"
     }
   ],
   "edges": [
@@ -124,7 +124,7 @@
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-technology",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-SG",
@@ -157,7 +157,7 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-SG-technology",
+      "from": "DRIVER-SG-climate",
       "to": "COUNTRY-SG",
       "type": "CAUSES",
       "weight": 0.8
@@ -184,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-SG-Средняя_но",
+      "to": "DOMAIN-SG-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.32
+    },
+    {
       "from": "SIGNAL-SG-Геополитич",
       "to": "DOMAIN-SG-geopolitical",
       "type": "AMPLIFIES",
@@ -194,12 +200,6 @@
       "to": "DOMAIN-SG-economic",
       "type": "AMPLIFIES",
       "weight": 0.53
-    },
-    {
-      "from": "SIGNAL-SG-Технологич",
-      "to": "DOMAIN-SG-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.32
     }
   ]
 }
