@@ -2,38 +2,38 @@
   "country": "TR",
   "date": "2026-10-01",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-01T08:10:05.298393+00:00",
+  "generated_at": "2026-10-01T08:30:48.944847+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-TR",
       "type": "Country",
       "label": "TR",
-      "score": 68,
+      "score": 71,
       "props": {
-        "risk_score": 68
+        "risk_score": 71
       }
     },
     {
       "id": "DOMAIN-TR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 58,
-      "trend": "stable"
+      "score": 71,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-economic",
       "type": "Domain",
       "label": "economic",
       "score": 63,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 50,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-TR-Турецкая_р",
+      "type": "Signal",
+      "label": "Турецкая разведка задержала подозреваемо",
+      "severity": 71,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-TR-Импорт_из_",
       "type": "Signal",
       "label": "Импорт из России в Турцию в августе резк",
@@ -92,13 +99,6 @@
       "label": "В Турции прокуратура потребовала замороз",
       "severity": 60,
       "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-TR-Гроза:_Тур",
-      "type": "Signal",
-      "label": "Гроза: Турция, 2 предупреждения (жёлтый ",
-      "severity": 50,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.58
+      "weight": 0.71
     },
     {
       "from": "COUNTRY-TR",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-climate",
       "type": "CORRELATES",
-      "weight": 0.5
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-TR",
@@ -163,48 +163,6 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-TR-climate",
-      "to": "DOMAIN-TR-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-TR-infrastructure",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-TR-economic",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-TR-climate",
-      "to": "DOMAIN-TR-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-TR-economic",
-      "to": "DOMAIN-TR-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-TR-social",
-      "to": "DOMAIN-TR-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
       "from": "DOMAIN-TR-geopolitical",
       "to": "DOMAIN-TR-infrastructure",
       "type": "ESCALATES",
@@ -226,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-TR-Турецкая_р",
+      "to": "DOMAIN-TR-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.71
+    },
+    {
       "from": "SIGNAL-TR-Импорт_из_",
       "to": "DOMAIN-TR-economic",
       "type": "AMPLIFIES",
@@ -236,12 +200,6 @@
       "to": "DOMAIN-TR-economic",
       "type": "AMPLIFIES",
       "weight": 0.6
-    },
-    {
-      "from": "SIGNAL-TR-Гроза:_Тур",
-      "to": "DOMAIN-TR-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.5
     }
   ]
 }
