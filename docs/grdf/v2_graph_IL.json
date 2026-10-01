@@ -2,7 +2,7 @@
   "country": "IL",
   "date": "2026-10-01",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-01T19:47:25.736569+00:00",
+  "generated_at": "2026-10-01T20:07:37.542947+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,59 +10,59 @@
       "id": "COUNTRY-IL",
       "type": "Country",
       "label": "IL",
-      "score": 78,
+      "score": 87,
       "props": {
-        "risk_score": 78
+        "risk_score": 87
       }
     },
     {
       "id": "DOMAIN-IL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 62,
-      "trend": "stable"
+      "score": 87,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-climate",
       "type": "Domain",
       "label": "climate",
       "score": 72,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-IL-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IL-Палестинец",
+      "type": "Signal",
+      "label": "Палестинец убит, 3 ранены — израильский ",
+      "severity": 87,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-IL-Явления_на",
       "type": "Signal",
       "label": "Явления на побережье: Израиль (оранжевый",
@@ -92,13 +99,6 @@
       "label": "Пилот-россиянин и второй пилот-украинец ",
       "severity": 60,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-IL-Раненный_н",
-      "type": "Signal",
-      "label": "Раненный на рейсе FlyDubai пилот — гражд",
-      "severity": 48,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.62
+      "weight": 0.87
     },
     {
       "from": "COUNTRY-IL",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-IL-climate",
-      "to": "DOMAIN-IL-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-IL-infrastructure",
-      "to": "DOMAIN-IL-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-IL-economic",
-      "to": "DOMAIN-IL-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-IL-geopolitical",
       "to": "DOMAIN-IL-infrastructure",
       "type": "ESCALATES",
@@ -226,6 +205,33 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-IL-climate",
+      "to": "DOMAIN-IL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-IL-infrastructure",
+      "to": "DOMAIN-IL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IL-economic",
+      "to": "DOMAIN-IL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-IL-Палестинец",
+      "to": "DOMAIN-IL-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.87
+    },
+    {
       "from": "SIGNAL-IL-Явления_на",
       "to": "DOMAIN-IL-climate",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-IL-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.6
-    },
-    {
-      "from": "SIGNAL-IL-Раненный_н",
-      "to": "DOMAIN-IL-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.48
     }
   ]
 }
