@@ -1835,6 +1835,15 @@ def _resolve_geo_legacy(title, summary='', raw_coords=None, domain=None):
                 # покрывает запад США) → резолвим в США с сохранением координаты.
                 if 24.0 <= rla <= 49.5 and -125.0 <= rln <= -66.0:
                     return _mk(GAZ['сша'], 'natural', blob, actor, (rla, rln))
+                # LAND GUARD RU (TASK-265): bbox pacific_ocean, black_sea и
+                # caspian_sea перекрывают сушу России ровно так же, как
+                # pacific_ocean перекрывал запад США (CONUS guard выше).
+                # «Ветер: Камчатский край, юг (Россия)» получал place
+                # pacific_ocean, «Прочие опасности: Краснодарский край» —
+                # black_sea. Если текст называет субъект РФ, место наземное,
+                # и зонировать его как бассейн нельзя.
+                if _ru_subject(blob):
+                    return _mk(GAZ['росс'], 'natural', blob, actor, (rla, rln))
                 for zid in _BASIN_IDS:
                     zbox = ZONES[zid][4]
                     if _zone_contains(zbox, rla, rln):
