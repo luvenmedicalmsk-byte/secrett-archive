@@ -1,24 +1,24 @@
 {
-  "generated_at": "2026-10-01T20:07:35.197351+00:00",
+  "generated_at": "2026-10-01T20:27:01.295006+00:00",
   "events_database_size": 93,
   "years_covered": "2010-2026",
   "signal_threshold": 60,
   "severity_threshold": 70,
   "1_forecast_accuracy": {
     "n": 72,
-    "mae": 12.75,
-    "rmse": 15.93,
-    "bias": -1.36,
-    "accuracy_pct": 83.0
+    "mae": 11.69,
+    "rmse": 15.28,
+    "bias": -5.11,
+    "accuracy_pct": 84.4
   },
   "2_scenario_accuracy": {
     "n": 76,
-    "hit_rate": 28.9
+    "hit_rate": 34.2
   },
   "3_signal_correlation": {
     "n": 72,
-    "pearson_r": 0.036,
-    "r_squared": 0.001,
+    "pearson_r": 0.139,
+    "r_squared": 0.019,
     "interpretation": "weak"
   },
   "4_5_6_classification": {
@@ -37,12 +37,12 @@
   },
   "7_brier_score": {
     "n": 93,
-    "brier_score": 0.1717,
-    "brier_skill_score": -0.343,
+    "brier_score": 0.1728,
+    "brier_skill_score": -0.351,
     "interpretation": "fair"
   },
   "8_calibration_error": {
-    "ece": 0.1854,
+    "ece": 0.1918,
     "n_bins_populated": 7,
     "calibration_curve": [
       {
@@ -68,10 +68,10 @@
       },
       {
         "bin_center": 0.65,
-        "mean_pred": 0.661,
-        "mean_actual": 0.889,
-        "n": 18,
-        "error": 0.228
+        "mean_pred": 0.674,
+        "mean_actual": 0.848,
+        "n": 33,
+        "error": 0.174
       },
       {
         "bin_center": 0.75,
@@ -82,10 +82,10 @@
       },
       {
         "bin_center": 0.85,
-        "mean_pred": 0.856,
-        "mean_actual": 0.794,
-        "n": 34,
-        "error": 0.061
+        "mean_pred": 0.844,
+        "mean_actual": 0.789,
+        "n": 19,
+        "error": 0.055
       },
       {
         "bin_center": 0.95,
@@ -106,7 +106,7 @@
     "by_country": {
       "US": {
         "n_events": 15,
-        "mae": 12.4,
+        "mae": 7.3,
         "classification_accuracy_pct": 80.0,
         "n_hits": 12,
         "event_ids": [
@@ -368,12 +368,18 @@
     "n_countries_covered": 18
   },
   "learning_signals": {
-    "n_signals": 4,
+    "n_signals": 5,
     "signals": [
+      {
+        "type": "bias_correction",
+        "action": "increase_base_pressure",
+        "detail": "Systematic underestimation bias -5.11pt. Increase sensitivity.",
+        "priority": "MEDIUM"
+      },
       {
         "type": "calibration",
         "action": "recalibrate_confidence",
-        "detail": "ECE=0.185 — confidence scores need Platt scaling or isotonic regression.",
+        "detail": "ECE=0.192 — confidence scores need Platt scaling or isotonic regression.",
         "priority": "HIGH"
       },
       {
@@ -385,18 +391,18 @@
       {
         "type": "correlation",
         "action": "review_signal_sources",
-        "detail": "Signal-outcome correlation r=0.036 is weak. Review domain weighting formula.",
+        "detail": "Signal-outcome correlation r=0.139 is weak. Review domain weighting formula.",
         "priority": "HIGH"
       },
       {
         "type": "brier",
         "action": "recalibrate_probability_model",
-        "detail": "BSS=-0.343 — model barely outperforms climatology. Reweight GRIE_W.",
+        "detail": "BSS=-0.351 — model barely outperforms climatology. Reweight GRIE_W.",
         "priority": "HIGH"
       }
     ],
     "priority_high": 3,
-    "priority_medium": 1,
+    "priority_medium": 2,
     "overall_model_health": "critical"
   }
 }
