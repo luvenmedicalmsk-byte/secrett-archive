@@ -2,9 +2,9 @@
   "country": "IR",
   "date": "2026-10-01",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-01T13:10:10.614457+00:00",
+  "generated_at": "2026-10-01T13:27:13.726965+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-IR",
@@ -26,14 +26,14 @@
       "id": "DOMAIN-IR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 44,
+      "score": 5,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-IR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 65,
       "trend": "stable"
     },
     {
@@ -87,18 +87,18 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-IR-Исчезающая",
-      "type": "Signal",
-      "label": "Исчезающая нефть Ирана становится пробле",
-      "severity": 44,
-      "domain": "economic"
-    },
-    {
       "id": "SIGNAL-IR-Военный_ко",
       "type": "Signal",
       "label": "Военный конфликт — Ближний Восток (систе",
       "severity": 84,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-IR-Тепловая_в",
+      "type": "Signal",
+      "label": "Тепловая волна — Ближний Восток (системн",
+      "severity": 87,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -112,13 +112,13 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-economic",
       "type": "CORRELATES",
-      "weight": 0.44
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.65
     },
     {
       "from": "COUNTRY-IR",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IR-climate",
+      "to": "DOMAIN-IR-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IR-economic",
+      "to": "DOMAIN-IR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-IR-social",
+      "to": "DOMAIN-IR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-IR-climate",
+      "to": "DOMAIN-IR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-IR-infrastructure",
+      "to": "DOMAIN-IR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IR-economic",
+      "to": "DOMAIN-IR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "DOMAIN-IR-geopolitical",
       "to": "DOMAIN-IR-infrastructure",
       "type": "ESCALATES",
@@ -190,16 +232,16 @@
       "weight": 0.62
     },
     {
-      "from": "SIGNAL-IR-Исчезающая",
-      "to": "DOMAIN-IR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.44
-    },
-    {
       "from": "SIGNAL-IR-Военный_ко",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.84
+    },
+    {
+      "from": "SIGNAL-IR-Тепловая_в",
+      "to": "DOMAIN-IR-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.87
     }
   ]
 }
