@@ -1,8 +1,8 @@
 {
   "grdf_version": "4.0",
   "date": "2026-10-01",
-  "generated_at": "2026-10-01T19:27:21.548257+00:00",
-  "node_count": 64,
+  "generated_at": "2026-10-01T19:47:26.578384+00:00",
+  "node_count": 63,
   "edge_count": 72,
   "node_types": [
     "Country",
@@ -58,17 +58,17 @@
       "id": "CC:RU",
       "type": "Country",
       "label": "Россия",
-      "gri": 85,
-      "vulnerability": 25,
-      "resilience": 54
+      "gri": 89,
+      "vulnerability": 21,
+      "resilience": 52
     },
     {
       "id": "CC:US",
       "type": "Country",
       "label": "США",
-      "gri": 63,
-      "vulnerability": 43,
-      "resilience": 22
+      "gri": 77,
+      "vulnerability": 58,
+      "resilience": 13
     },
     {
       "id": "CC:CN",
@@ -339,7 +339,7 @@
       "type": "Country",
       "label": "Грузия",
       "gri": 62,
-      "vulnerability": 9,
+      "vulnerability": 5,
       "resilience": 69
     },
     {
@@ -455,10 +455,16 @@
       "score": 8
     },
     {
-      "id": "RISK:RU:CHAIN-CL",
+      "id": "RISK:US:CHAIN-CL",
       "type": "Risk",
-      "label": "RU: Wildfire → Energy → Supply Cha",
+      "label": "US: Wildfire → Energy → Supply Cha",
       "score": 21
+    },
+    {
+      "id": "RISK:US:CHAIN-DR",
+      "type": "Risk",
+      "label": "US: Drought → Agriculture → Food P",
+      "score": 19
     },
     {
       "id": "RISK:RU:CHAIN-GE",
@@ -477,18 +483,6 @@
       "type": "Risk",
       "label": "FR: Wildfire → Energy → Supply Cha",
       "score": 3
-    },
-    {
-      "id": "RISK:ID:CHAIN-DR",
-      "type": "Risk",
-      "label": "ID: Drought → Agriculture → Food P",
-      "score": 18
-    },
-    {
-      "id": "RISK:ID:CHAIN-GE",
-      "type": "Risk",
-      "label": "ID: Geopolitical Conflict → Energy",
-      "score": 12
     }
   ],
   "edges": [
@@ -614,15 +608,15 @@
     },
     {
       "from": "CC:RU",
-      "to": "DOM:climate",
-      "type": "CORRELATES",
-      "weight": 0.58
+      "to": "DOM:geopolitical",
+      "type": "ESCALATES",
+      "weight": 0.9
     },
     {
       "from": "CC:US",
-      "to": "DOM:economic",
-      "type": "CORRELATES",
-      "weight": 0.63
+      "to": "DOM:climate",
+      "type": "ESCALATES",
+      "weight": 0.79
     },
     {
       "from": "CC:CN",
@@ -805,6 +799,12 @@
       "weight": 0.32
     },
     {
+      "from": "CC:GE",
+      "to": "DOM:geopolitical",
+      "type": "CORRELATES",
+      "weight": 0.62
+    },
+    {
       "from": "CC:AM",
       "to": "DOM:geopolitical",
       "type": "CORRELATES",
@@ -889,8 +889,14 @@
       "weight": 0.85
     },
     {
-      "from": "CC:RU",
-      "to": "RISK:RU:CHAIN-CL",
+      "from": "CC:US",
+      "to": "RISK:US:CHAIN-CL",
+      "type": "CAUSES",
+      "weight": 0.85
+    },
+    {
+      "from": "CC:US",
+      "to": "RISK:US:CHAIN-DR",
       "type": "CAUSES",
       "weight": 0.85
     },
@@ -909,18 +915,6 @@
     {
       "from": "CC:FR",
       "to": "RISK:FR:CHAIN-CL",
-      "type": "CAUSES",
-      "weight": 0.85
-    },
-    {
-      "from": "CC:ID",
-      "to": "RISK:ID:CHAIN-DR",
-      "type": "CAUSES",
-      "weight": 0.85
-    },
-    {
-      "from": "CC:ID",
-      "to": "RISK:ID:CHAIN-GE",
       "type": "CAUSES",
       "weight": 0.85
     }
