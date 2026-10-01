@@ -2,9 +2,9 @@
   "country": "TR",
   "date": "2026-10-01",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-01T03:25:44.634319+00:00",
+  "generated_at": "2026-10-01T03:47:40.338990+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-TR",
@@ -26,14 +26,14 @@
       "id": "DOMAIN-TR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 62,
+      "score": 60,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-TR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 50,
       "trend": "stable"
     },
     {
@@ -80,18 +80,18 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-TR-Инвестицио",
-      "type": "Signal",
-      "label": "Инвестиционная компания не выполнила обя",
-      "severity": 62,
-      "domain": "economic"
-    },
-    {
       "id": "SIGNAL-TR-В_Турции_п",
       "type": "Signal",
       "label": "В Турции прокуратура потребовала замороз",
       "severity": 60,
       "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-TR-Гроза:_Тур",
+      "type": "Signal",
+      "label": "Гроза: Турция, 2 предупреждения (жёлтый ",
+      "severity": 50,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-TR-Турция_при",
@@ -112,13 +112,13 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-economic",
       "type": "CORRELATES",
-      "weight": 0.62
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-TR",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-TR-climate",
+      "to": "DOMAIN-TR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-TR-infrastructure",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-TR-climate",
+      "to": "DOMAIN-TR-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-TR-social",
+      "to": "DOMAIN-TR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-TR-geopolitical",
       "to": "DOMAIN-TR-infrastructure",
       "type": "ESCALATES",
@@ -184,16 +226,16 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-TR-Инвестицио",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.62
-    },
-    {
       "from": "SIGNAL-TR-В_Турции_п",
       "to": "DOMAIN-TR-economic",
       "type": "AMPLIFIES",
       "weight": 0.6
+    },
+    {
+      "from": "SIGNAL-TR-Гроза:_Тур",
+      "to": "DOMAIN-TR-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
     },
     {
       "from": "SIGNAL-TR-Турция_при",
