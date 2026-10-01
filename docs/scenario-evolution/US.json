@@ -2,17 +2,84 @@
   "country": "US",
   "country_name": "США",
   "date": "2026-10-01",
-  "generated_at": "2026-10-01T07:52:44.252649+00:00",
-  "evolution_score": 62,
-  "grade": "B",
-  "grade_ru": "Стабильная эволюция",
+  "generated_at": "2026-10-01T08:10:02.712993+00:00",
+  "evolution_score": 59,
+  "grade": "C",
+  "grade_ru": "Умеренная",
   "active_scenarios": [
     {
-      "id": "ASE-ACC-16",
+      "type": "worst",
+      "name": "Worst Case",
+      "name_ru": "Худший сценарий",
+      "probability": 42,
+      "score": 95,
+      "delta_from_current": 6,
+      "state": "cascade",
+      "state_ru": "Каскадный кризис",
+      "impact": "catastrophic",
+      "impact_ru": "Катастрофический",
+      "velocity": "explosive",
+      "velocity_ru": "Взрывной",
+      "recovery_days": 535,
+      "future_pressure": 83,
+      "future_resilience": 29,
+      "future_probability": 42,
+      "drivers": [
+        {
+          "driver": "Отслеживайте новые законы о лесных пожарах в ",
+          "impact": 22
+        },
+        {
+          "driver": "Каскадный эффект",
+          "impact": 15
+        }
+      ],
+      "description": "Каскадная эскалация, системный кризис",
+      "horizons": [
+        {
+          "horizon": "30d",
+          "label": "30 дней",
+          "score": 95,
+          "state": "cascade",
+          "state_ru": "Каскадный кризис",
+          "delta_from_current": 6
+        },
+        {
+          "horizon": "90d",
+          "label": "90 дней",
+          "score": 95,
+          "state": "cascade",
+          "state_ru": "Каскадный кризис",
+          "delta_from_current": 6
+        },
+        {
+          "horizon": "180d",
+          "label": "180 дней",
+          "score": 95,
+          "state": "cascade",
+          "state_ru": "Каскадный кризис",
+          "delta_from_current": 6
+        },
+        {
+          "horizon": "365d",
+          "label": "365 дней",
+          "score": 95,
+          "state": "cascade",
+          "state_ru": "Каскадный кризис",
+          "delta_from_current": 6
+        }
+      ],
+      "evolved_probability": 42.5,
+      "evolved_confidence": 31.0,
+      "evolution_delta": 0.5,
+      "status": "active"
+    },
+    {
+      "id": "ASE-ACC-17",
       "type": "acceleration",
-      "name": "Сценарий ускорения (deceleration)",
-      "trigger": "signal_acceleration Δ=-16",
-      "score": 24,
+      "name": "Сценарий ускорения (acceleration)",
+      "trigger": "signal_acceleration Δ=+17",
+      "score": 95,
       "probability": 35,
       "confidence": 55,
       "trend_strength": 100,
@@ -25,23 +92,36 @@
       "type": "escalation_branch",
       "name": "Ветвь эскалации: deteriorating",
       "trigger": "Тренд: нарастание давления",
-      "score": 82,
+      "score": 95,
       "probability": 18,
       "confidence": 50,
       "trend_strength": 65,
       "status": "emerging",
       "source": "recommendation_shift",
       "domain": "geopolitics"
+    },
+    {
+      "id": "ASE-CRIT-WORST",
+      "type": "critical_branch",
+      "name": "Критический каскад (ветвь КРИТИЧЕСКИХ рисков)",
+      "trigger": "Критический уровень риска: 89",
+      "score": 97,
+      "probability": 12,
+      "confidence": 60,
+      "trend_strength": 80,
+      "status": "emerging",
+      "source": "critical_risk",
+      "domain": "geopolitics"
     }
   ],
-  "active_count": 2,
+  "active_count": 4,
   "emerging_scenarios": [
     {
-      "id": "ASE-ACC-16",
+      "id": "ASE-ACC-17",
       "type": "acceleration",
-      "name": "Сценарий ускорения (deceleration)",
-      "trigger": "signal_acceleration Δ=-16",
-      "score": 24,
+      "name": "Сценарий ускорения (acceleration)",
+      "trigger": "signal_acceleration Δ=+17",
+      "score": 95,
       "probability": 35,
       "confidence": 55,
       "trend_strength": 100,
@@ -54,58 +134,101 @@
       "type": "escalation_branch",
       "name": "Ветвь эскалации: deteriorating",
       "trigger": "Тренд: нарастание давления",
-      "score": 82,
+      "score": 95,
       "probability": 18,
       "confidence": 50,
       "trend_strength": 65,
       "status": "emerging",
       "source": "recommendation_shift",
       "domain": "geopolitics"
-    }
-  ],
-  "convergences": [],
-  "divergences": [
+    },
     {
-      "scenario_a": "acceleration",
-      "scenario_b": "escalation_branch",
-      "score_gap": 58,
-      "label": "Расхождение: Сценарий ускорения (deceleration) ↔ Ветвь эскалации: deteriorating"
+      "id": "ASE-CRIT-WORST",
+      "type": "critical_branch",
+      "name": "Критический каскад (ветвь КРИТИЧЕСКИХ рисков)",
+      "trigger": "Критический уровень риска: 89",
+      "score": 97,
+      "probability": 12,
+      "confidence": 60,
+      "trend_strength": 80,
+      "status": "emerging",
+      "source": "critical_risk",
+      "domain": "geopolitics"
     }
   ],
+  "convergences": [
+    {
+      "scenario_a": "worst",
+      "scenario_b": "acceleration",
+      "score_gap": 0,
+      "prob_gap": 7.5,
+      "label": "Сближение: Worst Case ↔ Сценарий ускорения (acceleration)"
+    },
+    {
+      "scenario_a": "escalation_branch",
+      "scenario_b": "critical_branch",
+      "score_gap": 2,
+      "prob_gap": 6,
+      "label": "Сближение: Ветвь эскалации: deteriorating ↔ Критический каскад (ветвь КРИТИЧЕСКИХ рисков)"
+    }
+  ],
+  "divergences": [],
   "ranked_pathways": [
     {
-      "id": "ASE-ACC-16",
-      "name": "Сценарий ускорения (deceleration)",
+      "id": "ASE-ACC-17",
+      "name": "Сценарий ускорения (acceleration)",
       "type": "acceleration",
       "status": "emerging",
-      "probability": 66.0,
-      "score": 24,
+      "probability": 32.6,
+      "score": 95,
       "confidence": 55,
       "trend_strength": 100,
       "scenario_score": 64
     },
     {
+      "id": "ASE-CRIT-WORST",
+      "name": "Критический каскад (ветвь КРИТИЧЕСКИХ рисков)",
+      "type": "critical_branch",
+      "status": "emerging",
+      "probability": 11.2,
+      "score": 97,
+      "confidence": 60,
+      "trend_strength": 80,
+      "scenario_score": 56
+    },
+    {
+      "id": "worst",
+      "name": "Worst Case",
+      "type": "worst",
+      "status": "active",
+      "probability": 39.5,
+      "score": 95,
+      "confidence": 31.0,
+      "trend_strength": 50,
+      "scenario_score": 53
+    },
+    {
       "id": "ASE-ESC-DETE",
       "name": "Ветвь эскалации: deteriorating",
       "type": "escalation_branch",
       "status": "emerging",
-      "probability": 34.0,
-      "score": 82,
+      "probability": 16.7,
+      "score": 95,
       "confidence": 50,
       "trend_strength": 65,
-      "scenario_score": 51
+      "scenario_score": 53
     }
   ],
-  "pathway_count": 2,
+  "pathway_count": 4,
   "future_landscape": {
-    "dominant_pathway": "Сценарий ускорения (deceleration)",
-    "dominant_prob": 66.0,
-    "dominant_score": 24,
-    "outlook": "improving",
-    "narrative": "Доминирующий сценарий 'Сценарий ускорения (deceleration)' (66%) указывает на улучшение — скор 24. Деэскалационный потенциал высок.",
-    "n_convergences": 0,
-    "n_divergences": 1,
-    "landscape_complexity": 35
+    "dominant_pathway": "Сценарий ускорения (acceleration)",
+    "dominant_prob": 32.6,
+    "dominant_score": 95,
+    "outlook": "deteriorating",
+    "narrative": "Доминирующий сценарий 'Сценарий ускорения (acceleration)' (33%) указывает на ухудшение — скор 95. Риск системной эскалации.",
+    "n_convergences": 2,
+    "n_divergences": 0,
+    "landscape_complexity": 40
   },
   "diagnostics": [
     {
@@ -115,26 +238,26 @@
     }
   ],
   "diagnostic_count": 1,
-  "scenario_diversity_index": 100,
-  "future_stability_index": 100,
+  "scenario_diversity_index": 4,
+  "future_stability_index": 59,
   "retired_scenarios": [
     {
       "type": "best",
       "name": "Best Case",
       "name_ru": "Лучший сценарий",
-      "probability": 25,
-      "score": 10,
-      "delta_from_current": -62,
-      "state": "stabilization",
-      "state_ru": "Стабилизация",
-      "impact": "minor",
-      "impact_ru": "Незначительный",
+      "probability": 22,
+      "score": 70,
+      "delta_from_current": -19,
+      "state": "escalating",
+      "state_ru": "Эскалация",
+      "impact": "severe",
+      "impact_ru": "Тяжёлый",
       "velocity": "explosive",
       "velocity_ru": "Взрывной",
-      "recovery_days": 54,
-      "future_pressure": 0,
-      "future_resilience": 48,
-      "future_probability": 25,
+      "recovery_days": 394,
+      "future_pressure": 54,
+      "future_resilience": 41,
+      "future_probability": 22,
       "drivers": [
         {
           "driver": "Деэскалация",
@@ -146,117 +269,126 @@
         {
           "horizon": "30d",
           "label": "30 дней",
-          "score": 10,
-          "state": "escalating",
-          "state_ru": "Эскалация",
-          "delta_from_current": -62
+          "score": 70,
+          "state": "critical",
+          "state_ru": "Критическая эскалация",
+          "delta_from_current": -19
         },
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 10,
-          "state": "escalating",
-          "state_ru": "Эскалация",
-          "delta_from_current": -62
+          "score": 61,
+          "state": "critical",
+          "state_ru": "Критическая эскалация",
+          "delta_from_current": -28
         },
         {
           "horizon": "180d",
           "label": "180 дней",
-          "score": 10,
-          "state": "escalating",
-          "state_ru": "Эскалация",
-          "delta_from_current": -62
+          "score": 53,
+          "state": "critical",
+          "state_ru": "Критическая эскалация",
+          "delta_from_current": -36
         },
         {
           "horizon": "365d",
           "label": "365 дней",
-          "score": 10,
-          "state": "escalating",
-          "state_ru": "Эскалация",
-          "delta_from_current": -62
+          "score": 46,
+          "state": "critical",
+          "state_ru": "Критическая эскалация",
+          "delta_from_current": -43
         }
       ],
-      "evolved_probability": 25.3,
+      "evolved_probability": 21.9,
       "evolved_confidence": 25,
-      "evolution_delta": 0.3,
+      "evolution_delta": -0.1,
       "status": "retiring"
     },
     {
       "type": "base",
       "name": "Base Case",
       "name_ru": "Базовый сценарий",
-      "probability": 8,
-      "score": 10,
-      "delta_from_current": -62,
-      "state": "escalating",
-      "state_ru": "Эскалация",
-      "impact": "minor",
-      "impact_ru": "Незначительный",
+      "probability": 5,
+      "score": 95,
+      "delta_from_current": 6,
+      "state": "cascade",
+      "state_ru": "Каскадный кризис",
+      "impact": "catastrophic",
+      "impact_ru": "Катастрофический",
       "velocity": "explosive",
       "velocity_ru": "Взрывной",
-      "recovery_days": 54,
-      "future_pressure": 0,
-      "future_resilience": 45,
-      "future_probability": 8,
-      "drivers": [],
+      "recovery_days": 535,
+      "future_pressure": 80,
+      "future_resilience": 38,
+      "future_probability": 5,
+      "drivers": [
+        {
+          "driver": "Отслеживайте новые законы о лесных пожарах в ",
+          "impact": 12
+        }
+      ],
       "description": "Текущие тренды сохраняются, без значимых изменений",
       "horizons": [
         {
           "horizon": "30d",
           "label": "30 дней",
-          "score": 10,
-          "state": "escalating",
-          "state_ru": "Эскалация",
-          "delta_from_current": -62
+          "score": 95,
+          "state": "cascade",
+          "state_ru": "Каскадный кризис",
+          "delta_from_current": 6
         },
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 10,
-          "state": "escalating",
-          "state_ru": "Эскалация",
-          "delta_from_current": -62
+          "score": 95,
+          "state": "cascade",
+          "state_ru": "Каскадный кризис",
+          "delta_from_current": 6
         },
         {
           "horizon": "180d",
           "label": "180 дней",
-          "score": 10,
-          "state": "escalating",
-          "state_ru": "Эскалация",
-          "delta_from_current": -62
+          "score": 95,
+          "state": "cascade",
+          "state_ru": "Каскадный кризис",
+          "delta_from_current": 6
         },
         {
           "horizon": "365d",
           "label": "365 дней",
-          "score": 10,
-          "state": "escalating",
-          "state_ru": "Эскалация",
-          "delta_from_current": -62
+          "score": 95,
+          "state": "cascade",
+          "state_ru": "Каскадный кризис",
+          "delta_from_current": 6
         }
       ],
-      "evolved_probability": 8.0,
+      "evolved_probability": 5,
       "evolved_confidence": 25,
-      "evolution_delta": 0.0,
+      "evolution_delta": 0,
       "status": "retiring"
     },
     {
       "type": "stress",
       "name": "Stress Case",
       "name_ru": "Стресс-сценарий",
-      "probability": 29,
-      "score": 22,
-      "delta_from_current": -50,
-      "state": "critical",
-      "state_ru": "Критическая эскалация",
-      "impact": "minor",
-      "impact_ru": "Незначительный",
+      "probability": 31,
+      "score": 95,
+      "delta_from_current": 6,
+      "state": "cascade",
+      "state_ru": "Каскадный кризис",
+      "impact": "catastrophic",
+      "impact_ru": "Катастрофический",
       "velocity": "explosive",
       "velocity_ru": "Взрывной",
-      "recovery_days": 119,
-      "future_pressure": 5,
-      "future_resilience": 41,
-      "future_probability": 29,
+      "recovery_days": 535,
+      "future_pressure": 81,
+      "future_resilience": 35,
+      "future_probability": 31,
       "drivers": [
+        {
+          "driver": "Отслеживайте новые законы о лесных пожарах в ",
+          "impact": 16
+        },
         {
           "driver": "Негативный сдвиг",
           "impact": 8
@@ -267,115 +399,52 @@
         {
           "horizon": "30d",
           "label": "30 дней",
-          "score": 22,
-          "state": "escalating",
-          "state_ru": "Эскалация",
-          "delta_from_current": -50
+          "score": 95,
+          "state": "cascade",
+          "state_ru": "Каскадный кризис",
+          "delta_from_current": 6
         },
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 26,
-          "state": "escalating",
-          "state_ru": "Эскалация",
-          "delta_from_current": -46
+          "score": 95,
+          "state": "cascade",
+          "state_ru": "Каскадный кризис",
+          "delta_from_current": 6
         },
         {
           "horizon": "180d",
           "label": "180 дней",
-          "score": 30,
-          "state": "escalating",
-          "state_ru": "Эскалация",
-          "delta_from_current": -42
+          "score": 95,
+          "state": "cascade",
+          "state_ru": "Каскадный кризис",
+          "delta_from_current": 6
         },
         {
           "horizon": "365d",
           "label": "365 дней",
-          "score": 34,
-          "state": "escalating",
-          "state_ru": "Эскалация",
-          "delta_from_current": -38
+          "score": 95,
+          "state": "cascade",
+          "state_ru": "Каскадный кризис",
+          "delta_from_current": 6
         }
       ],
-      "evolved_probability": 28.9,
+      "evolved_probability": 30.9,
       "evolved_confidence": 25,
       "evolution_delta": -0.1,
       "status": "retiring"
-    },
-    {
-      "type": "worst",
-      "name": "Worst Case",
-      "name_ru": "Худший сценарий",
-      "probability": 38,
-      "score": 35,
-      "delta_from_current": -37,
-      "state": "critical",
-      "state_ru": "Критическая эскалация",
-      "impact": "moderate",
-      "impact_ru": "Умеренный",
-      "velocity": "explosive",
-      "velocity_ru": "Взрывной",
-      "recovery_days": 189,
-      "future_pressure": 21,
-      "future_resilience": 34,
-      "future_probability": 38,
-      "drivers": [
-        {
-          "driver": "Каскадный эффект",
-          "impact": 15
-        }
-      ],
-      "description": "Каскадная эскалация, системный кризис",
-      "horizons": [
-        {
-          "horizon": "30d",
-          "label": "30 дней",
-          "score": 35,
-          "state": "escalating",
-          "state_ru": "Эскалация",
-          "delta_from_current": -37
-        },
-        {
-          "horizon": "90d",
-          "label": "90 дней",
-          "score": 41,
-          "state": "escalating",
-          "state_ru": "Эскалация",
-          "delta_from_current": -31
-        },
-        {
-          "horizon": "180d",
-          "label": "180 дней",
-          "score": 48,
-          "state": "escalating",
-          "state_ru": "Эскалация",
-          "delta_from_current": -24
-        },
-        {
-          "horizon": "365d",
-          "label": "365 дней",
-          "score": 55,
-          "state": "escalating",
-          "state_ru": "Эскалация",
-          "delta_from_current": -17
-        }
-      ],
-      "evolved_probability": 37.8,
-      "evolved_confidence": 27.0,
-      "evolution_delta": -0.2,
-      "status": "retiring"
     }
   ],
-  "retired_count": 4,
+  "retired_count": 3,
   "sub_scores": {
     "fc_acc": 67,
-    "sc_val": 100,
+    "sc_val": 75,
     "prob_cal": 0,
-    "adapt": 80,
-    "stability": 52
+    "adapt": 95,
+    "stability": 64
   },
   "history_depth": 4,
-  "risk_score": 72,
-  "delta": -16,
+  "risk_score": 89,
+  "delta": 17,
   "domain": "geopolitics"
 }
