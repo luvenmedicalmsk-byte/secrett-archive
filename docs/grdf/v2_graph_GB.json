@@ -2,9 +2,9 @@
   "country": "GB",
   "date": "2026-10-01",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-01T14:07:50.461570+00:00",
+  "generated_at": "2026-10-01T14:26:32.907893+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-GB",
@@ -26,14 +26,14 @@
       "id": "DOMAIN-GB-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 36,
+      "score": 5,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-GB-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 50,
       "trend": "stable"
     },
     {
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-GB-Средняя_ст",
-      "type": "Signal",
-      "label": "Средняя ставка SONIA по стерлингу Велико",
-      "severity": 32,
-      "domain": "economic"
-    },
-    {
       "id": "SIGNAL-GB-Геополитич",
       "type": "Signal",
       "label": "Геополитический процесс — Великобритания",
@@ -99,6 +92,13 @@
       "label": "Криминальный инцидент — Великобритания",
       "severity": 53,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-GB-Тепловая_в",
+      "type": "Signal",
+      "label": "Тепловая волна — Великобритания",
+      "severity": 50,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -112,13 +112,13 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-economic",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-GB",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-GB-climate",
+      "to": "DOMAIN-GB-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-GB-economic",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-GB-social",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-GB-climate",
+      "to": "DOMAIN-GB-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-GB-infrastructure",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GB-economic",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "DOMAIN-GB-geopolitical",
       "to": "DOMAIN-GB-infrastructure",
       "type": "ESCALATES",
@@ -184,12 +226,6 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-GB-Средняя_ст",
-      "to": "DOMAIN-GB-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.32
-    },
-    {
       "from": "SIGNAL-GB-Геополитич",
       "to": "DOMAIN-GB-geopolitical",
       "type": "AMPLIFIES",
@@ -200,6 +236,12 @@
       "to": "DOMAIN-GB-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.53
+    },
+    {
+      "from": "SIGNAL-GB-Тепловая_в",
+      "to": "DOMAIN-GB-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
     }
   ]
 }
