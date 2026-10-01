@@ -1,9 +1,9 @@
 {
   "grdf_version": "4.0",
   "date": "2026-10-01",
-  "generated_at": "2026-10-01T10:29:12.303386+00:00",
-  "node_count": 63,
-  "edge_count": 72,
+  "generated_at": "2026-10-01T10:46:29.678452+00:00",
+  "node_count": 64,
+  "edge_count": 73,
   "node_types": [
     "Country",
     "Domain",
@@ -58,17 +58,17 @@
       "id": "CC:RU",
       "type": "Country",
       "label": "Россия",
-      "gri": 90,
-      "vulnerability": 20,
-      "resilience": 52
+      "gri": 86,
+      "vulnerability": 24,
+      "resilience": 54
     },
     {
       "id": "CC:US",
       "type": "Country",
       "label": "США",
-      "gri": 63,
-      "vulnerability": 16,
-      "resilience": 67
+      "gri": 77,
+      "vulnerability": 57,
+      "resilience": 16
     },
     {
       "id": "CC:CN",
@@ -90,17 +90,17 @@
       "id": "CC:DE",
       "type": "Country",
       "label": "Германия",
-      "gri": 63,
-      "vulnerability": 21,
-      "resilience": 65
+      "gri": 64,
+      "vulnerability": 28,
+      "resilience": 59
     },
     {
       "id": "CC:GB",
       "type": "Country",
       "label": "Великобритания",
-      "gri": 55,
+      "gri": 54,
       "vulnerability": 16,
-      "resilience": 71
+      "resilience": 72
     },
     {
       "id": "CC:FR",
@@ -146,8 +146,8 @@
       "id": "CC:BY",
       "type": "Country",
       "label": "Беларусь",
-      "gri": 60,
-      "vulnerability": 23,
+      "gri": 62,
+      "vulnerability": 17,
       "resilience": 68
     },
     {
@@ -274,9 +274,9 @@
       "id": "CC:IR",
       "type": "Country",
       "label": "Иран",
-      "gri": 59,
-      "vulnerability": 21,
-      "resilience": 69
+      "gri": 65,
+      "vulnerability": 22,
+      "resilience": 66
     },
     {
       "id": "CC:IT",
@@ -299,8 +299,8 @@
       "type": "Country",
       "label": "Канада",
       "gri": 57,
-      "vulnerability": 38,
-      "resilience": 67
+      "vulnerability": 27,
+      "resilience": 70
     },
     {
       "id": "CC:ES",
@@ -386,9 +386,9 @@
       "id": "CC:VN",
       "type": "Country",
       "label": "Вьетнам",
-      "gri": 74,
-      "vulnerability": 19,
-      "resilience": 62
+      "gri": 69,
+      "vulnerability": 48,
+      "resilience": 38
     },
     {
       "id": "CC:MY",
@@ -443,10 +443,28 @@
       "score": 14
     },
     {
+      "id": "RISK:RU:CHAIN-CL",
+      "type": "Risk",
+      "label": "RU: Wildfire → Energy → Supply Cha",
+      "score": 21
+    },
+    {
       "id": "RISK:RU:CHAIN-GE",
       "type": "Risk",
       "label": "RU: Geopolitical Conflict → Energy",
       "score": 21
+    },
+    {
+      "id": "RISK:US:CHAIN-CL",
+      "type": "Risk",
+      "label": "US: Wildfire → Energy → Supply Cha",
+      "score": 21
+    },
+    {
+      "id": "RISK:US:CHAIN-DR",
+      "type": "Risk",
+      "label": "US: Drought → Agriculture → Food P",
+      "score": 19
     },
     {
       "id": "RISK:ID:CHAIN-DR",
@@ -471,18 +489,6 @@
       "type": "Risk",
       "label": "FR: Wildfire → Energy → Supply Cha",
       "score": 3
-    },
-    {
-      "id": "RISK:IT:CHAIN-DR",
-      "type": "Risk",
-      "label": "IT: Drought → Agriculture → Food P",
-      "score": 18
-    },
-    {
-      "id": "RISK:IT:CHAIN-GE",
-      "type": "Risk",
-      "label": "IT: Geopolitical Conflict → Energy",
-      "score": 12
     }
   ],
   "edges": [
@@ -608,15 +614,15 @@
     },
     {
       "from": "CC:RU",
-      "to": "DOM:economic",
-      "type": "ESCALATES",
-      "weight": 0.84
+      "to": "DOM:climate",
+      "type": "CORRELATES",
+      "weight": 0.59
     },
     {
       "from": "CC:US",
       "to": "DOM:geopolitical",
-      "type": "CORRELATES",
-      "weight": 0.62
+      "type": "ESCALATES",
+      "weight": 0.77
     },
     {
       "from": "CC:CN",
@@ -633,14 +639,14 @@
     {
       "from": "CC:DE",
       "to": "DOM:climate",
-      "type": "CORRELATES",
-      "weight": 0.67
+      "type": "ESCALATES",
+      "weight": 0.72
     },
     {
       "from": "CC:GB",
       "to": "DOM:economic",
       "type": "CORRELATES",
-      "weight": 0.48
+      "weight": 0.44
     },
     {
       "from": "CC:FR",
@@ -838,7 +844,7 @@
       "from": "CC:VN",
       "to": "DOM:geopolitical",
       "type": "CORRELATES",
-      "weight": 0.55
+      "weight": 0.46
     },
     {
       "from": "CC:SG",
@@ -878,7 +884,25 @@
     },
     {
       "from": "CC:RU",
+      "to": "RISK:RU:CHAIN-CL",
+      "type": "CAUSES",
+      "weight": 0.85
+    },
+    {
+      "from": "CC:RU",
       "to": "RISK:RU:CHAIN-GE",
+      "type": "CAUSES",
+      "weight": 0.85
+    },
+    {
+      "from": "CC:US",
+      "to": "RISK:US:CHAIN-CL",
+      "type": "CAUSES",
+      "weight": 0.85
+    },
+    {
+      "from": "CC:US",
+      "to": "RISK:US:CHAIN-DR",
       "type": "CAUSES",
       "weight": 0.85
     },
@@ -903,18 +927,6 @@
     {
       "from": "CC:FR",
       "to": "RISK:FR:CHAIN-CL",
-      "type": "CAUSES",
-      "weight": 0.85
-    },
-    {
-      "from": "CC:IT",
-      "to": "RISK:IT:CHAIN-DR",
-      "type": "CAUSES",
-      "weight": 0.85
-    },
-    {
-      "from": "CC:IT",
-      "to": "RISK:IT:CHAIN-GE",
       "type": "CAUSES",
       "weight": 0.85
     }
