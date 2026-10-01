@@ -2,9 +2,9 @@
   "country": "GB",
   "date": "2026-10-01",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-01T10:00:45.525327+00:00",
+  "generated_at": "2026-10-01T10:14:28.705192+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-GB",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-GB-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 60,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -87,18 +87,18 @@
       "domain": "economic"
     },
     {
+      "id": "SIGNAL-GB-Средняя_ст",
+      "type": "Signal",
+      "label": "Средняя ставка SONIA по стерлингу Велико",
+      "severity": 32,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-GB-AWS_получи",
       "type": "Signal",
       "label": "AWS получила разрешение на планирование ",
       "severity": 32,
       "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-GB-Геополитич",
-      "type": "Signal",
-      "label": "Геополитический процесс — Великобритания",
-      "severity": 60,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.6
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-GB",
@@ -163,25 +163,16 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-GB-geopolitical",
-      "to": "DOMAIN-GB-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-GB-infrastructure",
+      "from": "SIGNAL-GB-Великобрит",
       "to": "DOMAIN-GB-economic",
       "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
+      "weight": 0.48
     },
     {
-      "from": "DOMAIN-GB-economic",
-      "to": "DOMAIN-GB-social",
+      "from": "SIGNAL-GB-Средняя_ст",
+      "to": "DOMAIN-GB-economic",
       "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
+      "weight": 0.32
     },
     {
       "from": "SIGNAL-GB-Великобрит",
@@ -194,12 +185,6 @@
       "to": "DOMAIN-GB-technology",
       "type": "AMPLIFIES",
       "weight": 0.32
-    },
-    {
-      "from": "SIGNAL-GB-Геополитич",
-      "to": "DOMAIN-GB-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.6
     }
   ]
 }
