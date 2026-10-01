@@ -11560,7 +11560,17 @@ def _scope_classify(e):
     title = (e.get('title') or '').lower()
     zw = _SCOPE_ZONE_WORDS.get((e.get('geo') or {}).get('zone_id') or '')
     if zt == 'global':
-        named = bool(zw and re.search(zw, title)) or bool(e.get('is_global'))
+        # TASK-271: is_global снят как доказательство глобальности. Он равен
+        # process_place_type == 'global', а тот ставится ОДНИМ регулярным
+        # выражением из четырёх шаблонов («по всему миру», «глобальное
+        # потепление/климат/температура», «планетарный масштаб», «мировой
+        # океан»), и ветка GLOBAL в geo_contract стоит РАНЬШЕ LOCATIVE.
+        # Поэтому запись с реальным местом может получить глобальность:
+        # из 59 таких записей 27 содержат страну в тексте, 21 ровно одну
+        # (TASK-270). Как признак семантической глобальности та же лексика
+        # замерена в TASK-268 и дала точность 14,3%.
+        # Остаётся единственное условие: зона названа в заголовке.
+        named = bool(zw and re.search(zw, title))
     else:
         named = bool(zw and re.search(zw, title))
     if not named:
