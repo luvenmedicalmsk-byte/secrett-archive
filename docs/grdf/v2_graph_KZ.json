@@ -2,7 +2,7 @@
   "country": "KZ",
   "date": "2026-10-02",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-02T12:18:52.193025+00:00",
+  "generated_at": "2026-10-02T12:30:29.668610+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-KZ-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 46,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-KZ-Международ",
+      "type": "Signal",
+      "label": "Международная торговая компания Metro AG",
+      "severity": 34,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-KZ-Военные_уд",
       "type": "Signal",
       "label": "Военные удары — Казахстан",
@@ -91,13 +98,6 @@
       "type": "Signal",
       "label": "Климатическая политика — Казахстан",
       "severity": 53,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-KZ-Климатичес",
-      "type": "Signal",
-      "label": "Климатический сигнал — Казахстан",
-      "severity": 52,
       "domain": "climate"
     }
   ],
@@ -112,7 +112,7 @@
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-KZ",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-KZ-climate",
-      "to": "DOMAIN-KZ-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-KZ-economic",
-      "to": "DOMAIN-KZ-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-KZ-social",
-      "to": "DOMAIN-KZ-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-KZ-climate",
       "to": "DOMAIN-KZ-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -203,6 +182,27 @@
       "type": "AMPLIFIES",
       "weight": 0.55,
       "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-KZ-climate",
+      "to": "DOMAIN-KZ-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-KZ-economic",
+      "to": "DOMAIN-KZ-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-KZ-social",
+      "to": "DOMAIN-KZ-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "DOMAIN-KZ-geopolitical",
@@ -226,6 +226,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-KZ-Международ",
+      "to": "DOMAIN-KZ-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.34
+    },
+    {
       "from": "SIGNAL-KZ-Военные_уд",
       "to": "DOMAIN-KZ-geopolitical",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-KZ-climate",
       "type": "AMPLIFIES",
       "weight": 0.53
-    },
-    {
-      "from": "SIGNAL-KZ-Климатичес",
-      "to": "DOMAIN-KZ-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.52
     }
   ]
 }
