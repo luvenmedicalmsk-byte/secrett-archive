@@ -1920,6 +1920,28 @@ def main():
         if _d.get("recommended") and _d.get("confidence", 0) >= 0.7:
             _e = _by_id.get(_d.get("id"))
             if _e is not None and _e.get("domain") != _d["recommended"]:
+                # TASK-278 · LINEAGE. Инструментация, не логика: само присвоение
+                # домена ниже не изменено. Этот писатель работает ПОСЛЕ
+                # fetch_events.py, в отдельном скрипте, и до сих пор не оставлял
+                # следа в domain_decision. Замер 02.10.2026: ровно он объяснял
+                # все 8 расхождений опубликованного домена с журналом в снимке
+                # 16:46 UTC, и 8 из 8 совпали с его рекомендациями.
+                _dd = _e.get("domain_decision")
+                if isinstance(_dd, dict):
+                    _dd.setdefault("trace", []).append({
+                        "stage": "AUDIT_DOMAIN_FIX",
+                        "from": _e.get("domain"),
+                        "to": _d["recommended"],
+                        "confidence": _d.get("confidence"),
+                    })
+                    _dd["published"] = _d["recommended"]
+                    _dd["published_at"] = "audit_events"
+                    _dd["last_writer"] = "AUDIT_DOMAIN_FIX"
+                    if _dd.get("final") != _d["recommended"]:
+                        _dd["stale"] = True
+                    else:
+                        _dd.pop("stale", None)
+                _e["_dom_at"] = _d["recommended"]
                 _e["domain"] = _d["recommended"]
                 _dom_fixed.append(_d)
     res["domain_fixed"] = _dom_fixed
