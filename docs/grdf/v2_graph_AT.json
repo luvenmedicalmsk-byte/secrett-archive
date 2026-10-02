@@ -2,9 +2,9 @@
   "country": "AT",
   "date": "2026-10-02",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-02T06:46:59.400322+00:00",
-  "node_count": 13,
-  "edge_count": 18,
+  "generated_at": "2026-10-02T07:06:58.660901+00:00",
+  "node_count": 14,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-AT",
@@ -26,14 +26,14 @@
       "id": "DOMAIN-AT-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 68,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-AT-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 72,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -65,9 +65,9 @@
       "trend": "stable"
     },
     {
-      "id": "DRIVER-AT-climate",
+      "id": "DRIVER-AT-economic",
       "type": "Driver",
-      "label": "climate"
+      "label": "economic"
     },
     {
       "id": "DRIVER-AT-geopolitical",
@@ -75,23 +75,30 @@
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-AT-economic",
+      "id": "DRIVER-AT-climate",
       "type": "Driver",
-      "label": "economic"
+      "label": "climate"
     },
     {
-      "id": "SIGNAL-AT-Шторм_—_Ав",
+      "id": "SIGNAL-AT-Инфляция_в",
       "type": "Signal",
-      "label": "Шторм — Австрия",
-      "severity": 72,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-AT-Геополитич",
-      "type": "Signal",
-      "label": "Геополитический процесс — Австрия",
+      "label": "Инфляция в Австрии, месяц к месяцу",
       "severity": 32,
-      "domain": "geopolitical"
+      "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-AT-Инфляция_в",
+      "type": "Signal",
+      "label": "Инфляция в Австрии",
+      "severity": 32,
+      "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-AT-Инфляция_—",
+      "type": "Signal",
+      "label": "Инфляция — Австрия",
+      "severity": 68,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -105,13 +112,13 @@
       "from": "COUNTRY-AT",
       "to": "DOMAIN-AT-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.68
     },
     {
       "from": "COUNTRY-AT",
       "to": "DOMAIN-AT-climate",
       "type": "CORRELATES",
-      "weight": 0.72
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-AT",
@@ -138,7 +145,7 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-AT-climate",
+      "from": "DRIVER-AT-economic",
       "to": "COUNTRY-AT",
       "type": "CAUSES",
       "weight": 0.8
@@ -150,64 +157,28 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-AT-economic",
+      "from": "DRIVER-AT-climate",
       "to": "COUNTRY-AT",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-AT-climate",
+      "from": "SIGNAL-AT-Инфляция_в",
       "to": "DOMAIN-AT-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-AT-economic",
-      "to": "DOMAIN-AT-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-AT-social",
-      "to": "DOMAIN-AT-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-AT-climate",
-      "to": "DOMAIN-AT-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-AT-infrastructure",
-      "to": "DOMAIN-AT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-AT-economic",
-      "to": "DOMAIN-AT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "SIGNAL-AT-Шторм_—_Ав",
-      "to": "DOMAIN-AT-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.72
-    },
-    {
-      "from": "SIGNAL-AT-Геополитич",
-      "to": "DOMAIN-AT-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.32
+    },
+    {
+      "from": "SIGNAL-AT-Инфляция_в",
+      "to": "DOMAIN-AT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.32
+    },
+    {
+      "from": "SIGNAL-AT-Инфляция_—",
+      "to": "DOMAIN-AT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68
     }
   ]
 }
