@@ -2,7 +2,7 @@
   "country": "CH",
   "date": "2026-10-02",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-02T03:00:43.059551+00:00",
+  "generated_at": "2026-10-02T03:09:35.950563+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -26,14 +26,14 @@
       "id": "DOMAIN-CH-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
+      "score": 5,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-CH-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 32,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-CH-'Катастроф",
+      "type": "Signal",
+      "label": "'Катастрофически': Швейцарские ледники т",
+      "severity": 32,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-CH-Геополитич",
       "type": "Signal",
       "label": "Геополитический процесс — Швейцария",
@@ -92,13 +99,6 @@
       "label": "Социальный процесс — Швейцария",
       "severity": 48,
       "domain": "social"
-    },
-    {
-      "id": "SIGNAL-CH-Валютный_р",
-      "type": "Signal",
-      "label": "Валютный рынок — Швейцария",
-      "severity": 32,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,13 +112,13 @@
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-CH",
@@ -184,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-CH-'Катастроф",
+      "to": "DOMAIN-CH-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.32
+    },
+    {
       "from": "SIGNAL-CH-Геополитич",
       "to": "DOMAIN-CH-geopolitical",
       "type": "AMPLIFIES",
@@ -194,12 +200,6 @@
       "to": "DOMAIN-CH-social",
       "type": "AMPLIFIES",
       "weight": 0.48
-    },
-    {
-      "from": "SIGNAL-CH-Валютный_р",
-      "to": "DOMAIN-CH-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.32
     }
   ]
 }
