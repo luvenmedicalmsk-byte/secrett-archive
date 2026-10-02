@@ -2,9 +2,9 @@
   "country": "FR",
   "date": "2026-10-02",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-02T05:46:07.639431+00:00",
+  "generated_at": "2026-10-02T06:06:56.984867+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-FR",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-FR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
+      "score": 62,
       "trend": "stable"
     },
     {
@@ -47,7 +47,7 @@
       "id": "DOMAIN-FR-social",
       "type": "Domain",
       "label": "social",
-      "score": 59,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -94,11 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-FR-Во_Франции",
+      "id": "SIGNAL-FR-Франция_до",
       "type": "Signal",
-      "label": "Во Франции задержали сотни подростков на",
-      "severity": 59,
-      "domain": "social"
+      "label": "Франция достигла рекорда в 800 часов отр",
+      "severity": 62,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-FR",
       "to": "DOMAIN-FR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.62
     },
     {
       "from": "COUNTRY-FR",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-FR",
       "to": "DOMAIN-FR-social",
       "type": "CORRELATES",
-      "weight": 0.59
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-FR",
@@ -205,6 +205,27 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-FR-geopolitical",
+      "to": "DOMAIN-FR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-FR-infrastructure",
+      "to": "DOMAIN-FR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-FR-economic",
+      "to": "DOMAIN-FR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-FR-Наводнение",
       "to": "DOMAIN-FR-climate",
       "type": "AMPLIFIES",
@@ -217,10 +238,10 @@
       "weight": 0.72
     },
     {
-      "from": "SIGNAL-FR-Во_Франции",
-      "to": "DOMAIN-FR-social",
+      "from": "SIGNAL-FR-Франция_до",
+      "to": "DOMAIN-FR-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.59
+      "weight": 0.62
     }
   ]
 }
