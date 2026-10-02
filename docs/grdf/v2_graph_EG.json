@@ -2,7 +2,7 @@
   "country": "EG",
   "date": "2026-10-02",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-02T04:09:31.150647+00:00",
+  "generated_at": "2026-10-02T04:26:11.135964+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-EG-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 47,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-EG-ВВП_Египта",
+      "type": "Signal",
+      "label": "ВВП Египта от производства",
+      "severity": 32,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-EG-Отключение",
       "type": "Signal",
       "label": "Отключение интернета — Египет",
@@ -92,13 +99,6 @@
       "label": "Социальный процесс — Египет",
       "severity": 57,
       "domain": "social"
-    },
-    {
-      "id": "SIGNAL-EG-Военные_уд",
-      "type": "Signal",
-      "label": "Военные удары — Египет",
-      "severity": 50,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-EG",
       "to": "DOMAIN-EG-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.47
     },
     {
       "from": "COUNTRY-EG",
@@ -184,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-EG-ВВП_Египта",
+      "to": "DOMAIN-EG-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.32
+    },
+    {
       "from": "SIGNAL-EG-Отключение",
       "to": "DOMAIN-EG-technology",
       "type": "AMPLIFIES",
@@ -194,12 +200,6 @@
       "to": "DOMAIN-EG-social",
       "type": "AMPLIFIES",
       "weight": 0.57
-    },
-    {
-      "from": "SIGNAL-EG-Военные_уд",
-      "to": "DOMAIN-EG-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.5
     }
   ]
 }
