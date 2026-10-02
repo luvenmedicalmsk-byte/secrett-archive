@@ -2,7 +2,7 @@
   "country": "ID",
   "date": "2026-10-02",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-02T07:27:41.465153+00:00",
+  "generated_at": "2026-10-02T07:47:12.094585+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-ID-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 50,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -47,7 +47,7 @@
       "id": "DOMAIN-ID-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
+      "score": 81,
       "trend": "stable"
     },
     {
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-ID-Министр_фи",
-      "type": "Signal",
-      "label": "Министр финансов Индонезии избегает конф",
-      "severity": 50,
-      "domain": "economic"
-    },
-    {
       "id": "SIGNAL-ID-Дым_от_Инд",
       "type": "Signal",
       "label": "Дым от Индонезии душит соседей, но юриди",
@@ -99,6 +92,13 @@
       "label": "Геополитический процесс — Юго-Восточная ",
       "severity": 62,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-ID-Эпидемиоло",
+      "type": "Signal",
+      "label": "Эпидемиологический риск — Индонезия",
+      "severity": 81,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-economic",
       "type": "CORRELATES",
-      "weight": 0.5
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-ID",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.81
     },
     {
       "from": "COUNTRY-ID",
@@ -161,27 +161,6 @@
       "to": "COUNTRY-ID",
       "type": "CAUSES",
       "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-ID-climate",
-      "to": "DOMAIN-ID-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-ID-infrastructure",
-      "to": "DOMAIN-ID-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-ID-economic",
-      "to": "DOMAIN-ID-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
     },
     {
       "from": "DOMAIN-ID-climate",
@@ -226,10 +205,25 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-ID-Министр_фи",
+      "from": "DOMAIN-ID-climate",
+      "to": "DOMAIN-ID-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-ID-infrastructure",
       "to": "DOMAIN-ID-economic",
       "type": "AMPLIFIES",
-      "weight": 0.5
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ID-economic",
+      "to": "DOMAIN-ID-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "SIGNAL-ID-Дым_от_Инд",
@@ -242,6 +236,12 @@
       "to": "DOMAIN-ID-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.62
+    },
+    {
+      "from": "SIGNAL-ID-Эпидемиоло",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.81
     }
   ]
 }
