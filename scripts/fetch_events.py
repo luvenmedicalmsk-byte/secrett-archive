@@ -8220,11 +8220,13 @@ def process_events(raw_items):
                   and len(re.findall(r'[іїєґІЇЄҐ]', (e.get('title') or '') + (e.get('summary') or ''))) < 3)]
     _post_lost('S43_новость_не_сигнал', _s43_in, top_events)
     # S44: домен по содержанию -- переназначаем неверно-доменные сигналы (политика из экономики и т.п.)
+    _dom_trace(top_events, 'CLASSIFIER')          # TASK-278 · точка 1
     _moved = 0
     for e in top_events:
         _nd = _reclass_domain(e.get('title',''), e.get('summary',''), e.get('domain',''))
         if _nd and _nd != e.get('domain'):
             e['domain'] = _nd; _moved += 1
+    _dom_trace(top_events, 'S44_reclass')         # TASK-278 · точка 2
     print(f"  [S43/44] сигнал-шум+фрагменты: {_before_s43} -> {len(top_events)}; доменов переназначено: {_moved}", file=sys.stderr)
     # S43b: дроп локального шума (криминал-курьёзы, рутинный пенсионный админ); смягчение опровержений слухов
     _keep_ns = []
@@ -8704,6 +8706,7 @@ def _domain_integrity_restore(events):
             _n += 1
     if _n:
         print(f'[DOMAIN-INTEGRITY] F1 возвращён домен: {_n}', file=sys.stderr)
+    _dom_trace(events, 'F1_integrity_restore')    # TASK-278 · точка 3
     return events
 
 
@@ -8758,6 +8761,79 @@ _DOMAIN_ALLOWED = {
     'Криминальный инцидент':    ('social', 'geopolitics'),
     'Авиационный инцидент':     ('technology', 'social'),
 }
+
+
+# ═══ TASK-278 · LINEAGE ДОМЕНА ═══════════════════════════════════════════════
+# Инструментация, не логика. Ни одно значение домена здесь не меняется.
+# Задача: ответить на вопрос «кто и на каком этапе записал domain». Сегодня
+# журнал domain_decision на него не отвечает: writer пуст у 98,9% записей,
+# а final фиксируется один раз в арбитре и после него не обновляется, хотя
+# домен после арбитра ещё меняется. Замер TASK-277: у 152 записей из 6010
+# domain не равен domain_decision.final, и у 137 из них арбитр не участвовал.
+DOMAIN_LINEAGE = os.getenv('DOMAIN_LINEAGE', '1') != '0'
+
+
+def _dom_trace(events, stage):
+    """Контрольная точка: снимает домен каждого события и записывает шаг.
+
+    Шаг пишется только при изменении домена с прошлой точки, поэтому у
+    события с неизменным доменом след состоит из одной начальной записи.
+    """
+    if not DOMAIN_LINEAGE:
+        return events
+    for e in (events or []):
+        if not isinstance(e, dict):
+            continue
+        _cur = e.get('domain')
+        if '_dom_at' not in e:
+            e['_dom_at'] = _cur
+            _step = {'stage': stage, 'to': _cur}
+        elif e['_dom_at'] != _cur:
+            _step = {'stage': stage, 'from': e['_dom_at'], 'to': _cur}
+            e['_dom_at'] = _cur
+        else:
+            continue
+        _dd = e.get('domain_decision')
+        if isinstance(_dd, dict):
+            _dd.setdefault('trace', []).append(_step)
+        else:
+            e.setdefault('_dom_pre', []).append(_step)
+    return events
+
+
+def _domain_lineage_finalize(events, point):
+    """Сводит след в domain_decision перед записью файла.
+
+    Поля original, final, reason и arbiter не трогаются: расхождение между
+    final и опубликованным доменом должно остаться видимым, иначе его нечем
+    будет объяснить. Добавляются только published, last_writer и stale.
+    """
+    if not DOMAIN_LINEAGE:
+        return events
+    _mis = 0
+    _by_stage = {}
+    for e in (events or []):
+        if not isinstance(e, dict):
+            continue
+        _dd = e.get('domain_decision')
+        if not isinstance(_dd, dict):
+            continue
+        _pre = e.pop('_dom_pre', None)
+        if _pre:
+            _dd['trace'] = list(_pre) + list(_dd.get('trace') or [])
+        _tr = _dd.get('trace') or []
+        _dd['published'] = e.get('domain')
+        _dd['published_at'] = point
+        _dd['last_writer'] = (_tr[-1].get('stage') if _tr else None)
+        if _dd.get('final') != e.get('domain'):
+            _mis += 1
+            _dd['stale'] = True
+            _by_stage[_dd['last_writer']] = _by_stage.get(_dd['last_writer'], 0) + 1
+        else:
+            _dd.pop('stale', None)
+    print(f'[DOMAIN-LINEAGE] {point}: журнал расходится с доменом у {_mis}/{len(events or [])}'
+          + (f' · по последней стадии: {_by_stage}' if _by_stage else ''), file=sys.stderr)
+    return events
 
 
 def _last_domain_writer(e):
@@ -8884,6 +8960,7 @@ def _domain_fix(events):
             e['domain'] = 'technology'
         elif e.get('domain') == 'geopolitics' and _PROT_RE.search(t) and not _PROT_KEEP_RE.search(t):
             e['domain'] = 'social'
+    _dom_trace(events, 'W3_domain_fix')           # TASK-278 · точка 4
     return events
 def _ndup_collapse(events):
     """Near-dup collapse (паритет с C2 Событий): перефраз. репосты, тот же домен, дата +-3д, оставляем макс. риск."""
@@ -12852,6 +12929,7 @@ def _editorial_gate(events):
     if dropped or soft or retro:
         print('  [EDITORIAL] удалено %d · PR/регуляторика в фон %d · ретро-штраф %d'
               % (dropped, soft, retro), file=sys.stderr)
+    _dom_trace(kept, 'EDITORIAL_GATE')            # TASK-278 · точка 4a
     return kept
 
 
@@ -23863,7 +23941,9 @@ def save_enriched(events, previous_snapshot=None):
                     if _hme.get('canon_domain')=='geopolitics': _hme['canon_domain']='social'
             # ═══ IDR-011 · DOMAIN ARBITER: последний, кто трогает domain до записи ═══
             try:
+                _dom_trace(enriched["events"], 'PRE_ARBITER')   # TASK-278 · точка 5
                 _domain_arbiter(enriched["events"])
+                _dom_trace(enriched["events"], 'ARBITER')       # TASK-278 · точка 6
             except Exception as _dae:
                 print(f'[DOMAIN-ARBITER] skip: {_dae}', file=sys.stderr)
             # НЕЙТРАЛИЗАЦИЯ пропаганд. терминов в display-полях (title/summary/_headline), 0 churn
@@ -23914,6 +23994,7 @@ def save_enriched(events, previous_snapshot=None):
             except Exception as _qe:
                 print(f'[QUALITY] skip: {_qe}', file=sys.stderr)
             OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+            _domain_lineage_finalize(enriched["events"], 'write_1')      # TASK-278
             with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
                 json.dump(enriched, f, ensure_ascii=False, indent=2)
                 _lineage_flush(str(OUTPUT_PATH.parent / '_lineage.jsonl'))
@@ -23986,6 +24067,7 @@ def save_enriched(events, previous_snapshot=None):
                             continue
                         if _cd in _CANARY_DOMAINS and _e.get('domain') != _cd:
                             _saved_dom[_i] = _e.get('domain'); _e['domain'] = _cd
+                    _dom_trace(enriched["events"], 'W17_canary')    # TASK-278 · точка 7
                     _SE.DOMAIN_CANARY = set(_CANARY_DOMAINS)
                     # ADR-009 Lifecycle Canary Stage 2: climate + economy.
                     # Stage 1 (climate) держал false_decay=0 и continuity=1.0 на всём
@@ -24024,6 +24106,7 @@ def save_enriched(events, previous_snapshot=None):
                     # объект в памяти, ссылки уже в нём.
                     try:
                         if any(_le.get('process_id') for _le in enriched["events"]):
+                            _domain_lineage_finalize(enriched["events"], 'write_2')   # TASK-278
                             with open(OUTPUT_PATH, "w", encoding="utf-8") as _lf:
                                 json.dump(enriched, _lf, ensure_ascii=False, indent=2)
                             _ln = sum(1 for _le in enriched["events"] if _le.get('process_id'))
@@ -24048,6 +24131,7 @@ def save_enriched(events, previous_snapshot=None):
                         # АВТО-ROLLBACK: восстановить domain, пересобрать legacy
                         for _i, _d in _saved_dom.items():
                             enriched["events"][_i]['domain'] = _d
+                        _dom_trace(enriched["events"], 'W17_rollback')  # TASK-278 · точка 8
                         _SE.DOMAIN_CANARY = set()
                         _sig_n = _write_signals(enriched["events"], _sig_path)
                         _canary_meta.update(active=False, rolled_back=True, reason=_reason, stats=_stats)
