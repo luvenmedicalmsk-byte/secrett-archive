@@ -2,39 +2,39 @@
   "country": "US",
   "date": "2026-10-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-03T07:26:49.732141+00:00",
+  "generated_at": "2026-10-03T07:37:20.810981+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-US",
       "type": "Country",
       "label": "US",
-      "score": 75,
+      "score": 73,
       "props": {
-        "risk_score": 75
+        "risk_score": 73
       }
     },
     {
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 62,
-      "trend": "stable"
+      "score": 51,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
       "score": 67,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "stable"
+      "score": 42,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-technology",
@@ -94,11 +94,11 @@
       "domain": "economic"
     },
     {
-      "id": "SIGNAL-US-США_ужесто",
+      "id": "SIGNAL-US-Цены_на_бе",
       "type": "Signal",
-      "label": "США ужесточили санкции против Кубы, введ",
-      "severity": 62,
-      "domain": "geopolitical"
+      "label": "Цены на бензин, дизельное и авиационное ",
+      "severity": 57,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.62
+      "weight": 0.51
     },
     {
       "from": "COUNTRY-US",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-US",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-US-climate",
+      "to": "DOMAIN-US-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-US-infrastructure",
+      "to": "DOMAIN-US-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-US-climate",
+      "to": "DOMAIN-US-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-US-social",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-US-geopolitical",
       "to": "DOMAIN-US-infrastructure",
       "type": "ESCALATES",
@@ -196,10 +238,10 @@
       "weight": 0.63
     },
     {
-      "from": "SIGNAL-US-США_ужесто",
-      "to": "DOMAIN-US-geopolitical",
+      "from": "SIGNAL-US-Цены_на_бе",
+      "to": "DOMAIN-US-economic",
       "type": "AMPLIFIES",
-      "weight": 0.62
+      "weight": 0.57
     }
   ]
 }
