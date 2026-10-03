@@ -2,9 +2,9 @@
   "country": "TR",
   "date": "2026-10-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-03T03:28:43.732008+00:00",
+  "generated_at": "2026-10-03T03:48:26.708415+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-TR",
@@ -33,7 +33,7 @@
       "id": "DOMAIN-TR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 50,
       "trend": "stable"
     },
     {
@@ -94,11 +94,11 @@
       "domain": "economic"
     },
     {
-      "id": "SIGNAL-TR-Турецкая_л",
+      "id": "SIGNAL-TR-Сильный_ве",
       "type": "Signal",
-      "label": "Турецкая лира упала до нового историческ",
-      "severity": 46,
-      "domain": "economic"
+      "label": "Сильный ветер: Турция, 1 предупреждение ",
+      "severity": 50,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-TR",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-TR-climate",
+      "to": "DOMAIN-TR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-TR-infrastructure",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-TR-climate",
+      "to": "DOMAIN-TR-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-TR-social",
+      "to": "DOMAIN-TR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-TR-geopolitical",
       "to": "DOMAIN-TR-infrastructure",
       "type": "ESCALATES",
@@ -196,10 +238,10 @@
       "weight": 0.61
     },
     {
-      "from": "SIGNAL-TR-Турецкая_л",
-      "to": "DOMAIN-TR-economic",
+      "from": "SIGNAL-TR-Сильный_ве",
+      "to": "DOMAIN-TR-climate",
       "type": "AMPLIFIES",
-      "weight": 0.46
+      "weight": 0.5
     }
   ]
 }
