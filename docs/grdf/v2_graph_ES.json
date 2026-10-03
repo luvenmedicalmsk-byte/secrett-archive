@@ -2,67 +2,67 @@
   "country": "ES",
   "date": "2026-10-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-03T14:48:04.960568+00:00",
+  "generated_at": "2026-10-03T15:08:14.313392+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-ES",
       "type": "Country",
       "label": "ES",
-      "score": 50,
+      "score": 81,
       "props": {
-        "risk_score": 50
+        "risk_score": 81
       }
     },
     {
       "id": "DOMAIN-ES-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": -3,
+      "score": 74,
       "trend": "up"
     },
     {
       "id": "DOMAIN-ES-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
-      "trend": "down"
+      "score": 61,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 96,
-      "trend": "down"
+      "score": 76,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 62,
-      "trend": "down"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DRIVER-ES-Geopolitical",
@@ -80,25 +80,25 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-ES-Каталония_",
+      "type": "Signal",
+      "label": "Каталония в Испании на предупреждении из",
+      "severity": 76,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-ES-70_000_про",
+      "type": "Signal",
+      "label": "70 000 протестующих — Испания против жил",
+      "severity": 61,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-ES-Шторм_—_Ис",
       "type": "Signal",
       "label": "Шторм — Испания",
-      "severity": 72,
+      "severity": 76,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-ES-Пожарная_а",
-      "type": "Signal",
-      "label": "Пожарная активность — Испания",
-      "severity": 96,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-ES-Киберугроз",
-      "type": "Signal",
-      "label": "Киберугроза — Испания",
-      "severity": 62,
-      "domain": "technology"
     }
   ],
   "edges": [
@@ -106,25 +106,25 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-geopolitical",
       "type": "CORRELATES",
-      "weight": -0.03
+      "weight": 0.74
     },
     {
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.61
     },
     {
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-climate",
       "type": "CORRELATES",
-      "weight": 0.96
+      "weight": 0.76
     },
     {
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-technology",
       "type": "CORRELATES",
-      "weight": 0.62
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-ES",
@@ -205,22 +205,43 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-ES-geopolitical",
+      "to": "DOMAIN-ES-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-ES-infrastructure",
+      "to": "DOMAIN-ES-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ES-economic",
+      "to": "DOMAIN-ES-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-ES-Каталония_",
+      "to": "DOMAIN-ES-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.76
+    },
+    {
+      "from": "SIGNAL-ES-70_000_про",
+      "to": "DOMAIN-ES-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.61
+    },
+    {
       "from": "SIGNAL-ES-Шторм_—_Ис",
       "to": "DOMAIN-ES-climate",
       "type": "AMPLIFIES",
-      "weight": 0.72
-    },
-    {
-      "from": "SIGNAL-ES-Пожарная_а",
-      "to": "DOMAIN-ES-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.96
-    },
-    {
-      "from": "SIGNAL-ES-Киберугроз",
-      "to": "DOMAIN-ES-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.62
+      "weight": 0.76
     }
   ]
 }
