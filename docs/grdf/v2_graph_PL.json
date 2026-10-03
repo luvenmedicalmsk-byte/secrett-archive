@@ -2,9 +2,9 @@
   "country": "PL",
   "date": "2026-10-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-03T13:28:05.385894+00:00",
+  "generated_at": "2026-10-03T13:54:11.841932+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-PL",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-PL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 42,
+      "score": 48,
       "trend": "stable"
     },
     {
@@ -33,7 +33,7 @@
       "id": "DOMAIN-PL-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 46,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-PL-Министр_на",
+      "type": "Signal",
+      "label": "Министр национальной обороны Польши Влад",
+      "severity": 48,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-PL-Поставленн",
       "type": "Signal",
       "label": "Поставленные Сеулом истребители FA-50 Go",
@@ -92,13 +99,6 @@
       "label": "Министерство национальной обороны Польши",
       "severity": 34,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-PL-Оползень_—",
-      "type": "Signal",
-      "label": "Оползень — Польша",
-      "severity": 46,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.42
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-PL",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-climate",
       "type": "CORRELATES",
-      "weight": 0.46
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-PL",
@@ -163,48 +163,6 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-PL-climate",
-      "to": "DOMAIN-PL-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-PL-economic",
-      "to": "DOMAIN-PL-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-PL-social",
-      "to": "DOMAIN-PL-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-PL-climate",
-      "to": "DOMAIN-PL-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-PL-infrastructure",
-      "to": "DOMAIN-PL-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-PL-economic",
-      "to": "DOMAIN-PL-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-PL-geopolitical",
       "to": "DOMAIN-PL-infrastructure",
       "type": "ESCALATES",
@@ -226,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-PL-Министр_на",
+      "to": "DOMAIN-PL-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.48
+    },
+    {
       "from": "SIGNAL-PL-Поставленн",
       "to": "DOMAIN-PL-geopolitical",
       "type": "AMPLIFIES",
@@ -236,12 +200,6 @@
       "to": "DOMAIN-PL-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.34
-    },
-    {
-      "from": "SIGNAL-PL-Оползень_—",
-      "to": "DOMAIN-PL-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.46
     }
   ]
 }
