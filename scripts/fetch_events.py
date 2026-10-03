@@ -15860,6 +15860,143 @@ def _notam_token():
     return ''
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# СВОДКА РЕЖИМА ВОЗДУШНОГО ПРОСТРАНСТВА
+#
+# Решение Мии 03.10.2026. Отдельные уведомления на карту НЕ идут. Причина не
+# юридическая, а архитектурная: 416 действующих ограничений это запас, а не
+# поток. Зона, объявленная в июле на полгода, лежит в выдаче каждый день, и
+# точками она превращает карту сигналов в обычную OSINT-карту. Ровно по этой
+# причине из проекта убирали самолёты, суда и отключения.
+#
+# Вместо ленты источник отдаёт измеренное состояние по странам: сколько
+# ограничений действует, сколько открылось за сутки, есть ли помехи навигации.
+# Это четвёртая плитка и вкладка в разделе «Риски», рядом с погодой, сейсмикой
+# и криосферой, то есть рядом с другими машинными детекторами.
+#
+# Для условия правообладателя (autorouter case 9853) агрегат безопаснее всего:
+# числа по странам это бесспорно производная информация.
+# ══════════════════════════════════════════════════════════════════════════════
+_NOTAM_HISTORY_DAYS = 60       # глубина истории для спарклайна
+
+
+def _notam_ts(v):
+    """Момент времени из поля ответа. Формат autorouter не документирован,
+    поэтому принимаем все встречающиеся виды и честно возвращаем None, когда
+    вид незнаком. Молчаливая подстановка «сейчас» запрещена: она превратила бы
+    любое старое ограничение в свежее."""
+    if v is None or v == '':
+        return None
+    if isinstance(v, bool):
+        return None
+    if isinstance(v, (int, float)):
+        f = float(v)
+        if f > 1e11:            # миллисекунды
+            f = f / 1000.0
+        if 9e8 < f < 4e9:       # разумный диапазон эпохи
+            return datetime.fromtimestamp(f, timezone.utc)
+        return None
+    t = str(v).strip()
+    if not t:
+        return None
+    if 'T' in t or '-' in t:
+        try:
+            return datetime.fromisoformat(t.replace('Z', '+00:00')).astimezone(timezone.utc)
+        except ValueError:
+            pass
+    m = re.fullmatch(r'(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})', t)   # ГГММДДЧЧММ
+    if m:
+        try:
+            return datetime(2000 + int(m.group(1)), int(m.group(2)), int(m.group(3)),
+                            int(m.group(4)), int(m.group(5)), tzinfo=timezone.utc)
+        except ValueError:
+            return None
+    if t.isdigit():
+        try:
+            f = float(t)
+            if f > 1e11:
+                f = f / 1000.0
+            if 9e8 < f < 4e9:
+                return datetime.fromtimestamp(f, timezone.utc)
+        except ValueError:
+            return None
+    return None
+
+
+def _notam_summary(agg, now, fir_total, prev):
+    """Сводка по странам из отобранных записей.
+
+    agg  — список словарей fir / cc / страна / тип / помехи / начало
+    prev — прошлая сводка, нужна только ради истории по дням
+    """
+    by = {}
+    for r in agg:
+        k = r['fir']
+        d = by.setdefault(k, {'fir': k, 'код страны': r['cc'], 'страна': r['страна'],
+                              'действует': 0, 'за сутки': 0, 'помехи навигации': 0,
+                              'по типу': {}})
+        d['действует'] += 1
+        if r['помехи']:
+            d['помехи навигации'] += 1
+        if r['начало'] is not None and (now - r['начало']).total_seconds() <= 86400:
+            d['за сутки'] += 1
+        _t = r['тип']
+        d['по типу'][_t] = d['по типу'].get(_t, 0) + 1
+    rows = sorted(by.values(), key=lambda d: (-d['действует'], d['страна']))
+
+    known = sum(1 for r in agg if r['начало'] is not None)
+    day_ok = known > 0          # без разобранного времени колонка «за сутки» лжёт
+    if not day_ok:
+        for d in rows:
+            d['за сутки'] = None
+
+    hist = [h for h in (prev or {}).get('история', []) if isinstance(h, dict)]
+    today = now.strftime('%Y-%m-%d')
+    hist = [h for h in hist if h.get('дата') != today]
+    hist.append({'дата': today, 'действует': len(agg),
+                 'за сутки': (sum(1 for r in agg if r['начало'] is not None
+                                  and (now - r['начало']).total_seconds() <= 86400)
+                              if day_ok else None)})
+    hist = sorted(hist, key=lambda h: str(h.get('дата')))[-_NOTAM_HISTORY_DAYS:]
+
+    return {
+        'дата': now.isoformat(),
+        'источник': 'EUROCONTROL EAD через autorouter',
+        'оговорка': _NOTAM_DISCLAIMER,
+        'всего действует': len(agg),
+        'всего за сутки': (hist[-1]['за сутки'] if hist else None),
+        'помехи навигации': sum(1 for r in agg if r['помехи']),
+        'время разобрано': known,
+        'время не разобрано': len(agg) - known,
+        'страны': rows,
+        'история': hist,
+        'получено по FIR': fir_total,
+        'FIR с обрезанным ответом': [f for f, c in (fir_total or {}).items() if c >= 100],
+    }
+
+
+def _notam_summary_write(rep):
+    """Сводка в docs/airspace.json. Пишется всегда, даже пустая: пустой файл
+    отличим от отсутствующего, а отсутствующий от сломанного прогона — нет."""
+    try:
+        _p = OUTPUT_PATH.parent / "airspace.json"
+        _p.write_text(json.dumps(rep, ensure_ascii=False, indent=1), encoding="utf-8")
+        print('  [NOTAM] сводка записана: %s, стран %d' % (_p.name, len(rep.get('страны') or [])),
+              file=sys.stderr)
+    except Exception as _ne:
+        print('  [WARN] NOTAM summary: %s' % _ne, file=sys.stderr)
+
+
+def _notam_summary_prev():
+    try:
+        _p = OUTPUT_PATH.parent / "airspace.json"
+        if _p.exists():
+            return json.loads(_p.read_text(encoding="utf-8"))
+    except Exception:
+        pass
+    return {}
+
+
 def _notam_shadow_write(rep):
     """Отчёт замера пишется ВСЕГДА, в том числе при неудаче.
 
@@ -15895,6 +16032,7 @@ def fetch_notam():
     # записей и НОЛЬ координат при наличии полей lat/lon в ответе.
     # Собираем форму полей, чтобы чинить разбор по факту, а не на глаз.
     coord_shape, lat_present = [], 0
+    agg = []
     # Получено по каждому FIR отдельно: запрос идёт с limit=100, и если
     # какой-то FIR вернул ровно 100, ответ обрезан и записей там больше.
     fir_total = {}
@@ -15958,6 +16096,11 @@ def fetch_notam():
             score = _NOTAM_SEV_GNSS if gnss else _NOTAM_SEV.get(c23, 60)
             what = ('Помехи спутниковой навигации' if gnss else
                     'Изменение режима воздушного пространства')
+            agg.append({'fir': fir, 'cc': cc, 'страна': reg_ru,
+                        'тип': ('помехи навигации' if gnss
+                                else _NOTAM_C23_RU.get(c23, 'прочее ограничение')),
+                        'помехи': gnss,
+                        'начало': _notam_ts(n.get('startvalidity'))})
             items.append({
                 "title": f"{what}: {reg_ru}"[:130],
                 # Исходный текст NOTAM не публикуется: условие правообладателя
@@ -15976,6 +16119,7 @@ def fetch_notam():
                           "radius": n.get('radius')},
             })
             kept += 1
+    _notam_summary_write(_notam_summary(agg, now, fir_total, _notam_summary_prev()))
     print(f"  NOTAM: {kept} из {total} записей прошли фильтр Q-кода "
           f"({len(_NOTAM_FIR)} FIR)", file=sys.stderr)
     if not NOTAM_GATE:
