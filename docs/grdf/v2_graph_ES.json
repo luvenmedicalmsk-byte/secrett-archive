@@ -2,67 +2,67 @@
   "country": "ES",
   "date": "2026-10-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-03T12:47:26.689405+00:00",
+  "generated_at": "2026-10-03T13:07:45.861514+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-ES",
       "type": "Country",
       "label": "ES",
-      "score": 92,
+      "score": 72,
       "props": {
-        "risk_score": 92
+        "risk_score": 72
       }
     },
     {
       "id": "DOMAIN-ES-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 54,
-      "trend": "stable"
+      "score": 13,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ES-economic",
       "type": "Domain",
       "label": "economic",
       "score": 32,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ES-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 88,
-      "trend": "stable"
+      "score": 72,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ES-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ES-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ES-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ES-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DRIVER-ES-Geopolitical",
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-ES-Ливень:_Ис",
-      "type": "Signal",
-      "label": "Ливень: Испания (красный уровень, 87 пре",
-      "severity": 88,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-ES-Гроза:_Исп",
       "type": "Signal",
       "label": "Гроза: Испания (оранжевый уровень, 12 пр",
@@ -99,6 +92,13 @@
       "label": "Средняя годовая зарплата в Испании",
       "severity": 32,
       "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-ES-Шторм_—_Ис",
+      "type": "Signal",
+      "label": "Шторм — Испания",
+      "severity": 72,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.54
+      "weight": 0.13
     },
     {
       "from": "COUNTRY-ES",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-climate",
       "type": "CORRELATES",
-      "weight": 0.88
+      "weight": 0.72
     },
     {
       "from": "COUNTRY-ES",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-ES-climate",
-      "to": "DOMAIN-ES-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-ES-economic",
-      "to": "DOMAIN-ES-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-ES-social",
-      "to": "DOMAIN-ES-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-ES-climate",
       "to": "DOMAIN-ES-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -205,31 +184,25 @@
       "lag_days": 30
     },
     {
-      "from": "DOMAIN-ES-geopolitical",
-      "to": "DOMAIN-ES-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-ES-infrastructure",
+      "from": "DOMAIN-ES-climate",
       "to": "DOMAIN-ES-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-ES-economic",
       "to": "DOMAIN-ES-social",
       "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
+      "weight": 0.7,
+      "lag_days": 60
     },
     {
-      "from": "SIGNAL-ES-Ливень:_Ис",
-      "to": "DOMAIN-ES-climate",
+      "from": "DOMAIN-ES-social",
+      "to": "DOMAIN-ES-social",
       "type": "AMPLIFIES",
-      "weight": 0.88
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "SIGNAL-ES-Гроза:_Исп",
@@ -242,6 +215,12 @@
       "to": "DOMAIN-ES-economic",
       "type": "AMPLIFIES",
       "weight": 0.32
+    },
+    {
+      "from": "SIGNAL-ES-Шторм_—_Ис",
+      "to": "DOMAIN-ES-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.72
     }
   ]
 }
