@@ -16091,6 +16091,10 @@ def fetch_notam():
     # записей и НОЛЬ координат при наличии полей lat/lon в ответе.
     # Собираем форму полей, чтобы чинить разбор по факту, а не на глаз.
     coord_shape, lat_present = [], 0
+    # Сколько знаков в целой части |lat|. Упакованный вид ГГММСС даёт
+    # шесть, ГГММ четыре, десятичные градусы один или два. Значения в
+    # отчёт не идут, только разрядность: данные NOTAM не распространяем.
+    lat_digits = {}
     agg = []
     # Получено по каждому FIR отдельно: запрос идёт с limit=100, и если
     # какой-то FIR вернул ровно 100, ответ обрезан и записей там больше.
@@ -16162,6 +16166,12 @@ def fetch_notam():
                 lat, lng = _notam_qline_xy(txt)
             if str(n.get('lat') or '').strip():
                 lat_present += 1
+            try:
+                _lv = abs(float(n.get('lat') or 0))
+                _k = '%d знак(ов)' % len(str(int(_lv))) if _lv else 'ноль'
+                lat_digits[_k] = lat_digits.get(_k, 0) + 1
+            except (TypeError, ValueError):
+                lat_digits['не число'] = lat_digits.get('не число', 0) + 1
             if not NOTAM_GATE and len(coord_shape) < 8:
                 coord_shape.append({_k: _notam_shape(n.get(_k)) for _k in (
                     'lat', 'lon', 'nelat', 'nelon', 'swlat', 'swlon',
@@ -16219,6 +16229,7 @@ def fetch_notam():
                 "получено по FIR": fir_total,
                 "FIR на потолке страниц": [f for f, c in fir_total.items() if c >= _NOTAM_PAGE_CAP],
                 "записей с непустым полем lat": lat_present,
+                "разрядность целой части lat": lat_digits,
                 "форма полей координат и времени": coord_shape,
                 "помехи навигации": sum(1 for x in items if (x.get("_meta") or {}).get("gnss")),
                 "по FIR": dict(_NC((x.get("_meta") or {}).get("fir") for x in items)),
