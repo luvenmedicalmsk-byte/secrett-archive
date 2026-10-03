@@ -2,9 +2,9 @@
   "country": "VN",
   "date": "2026-10-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-03T07:47:44.555474+00:00",
+  "generated_at": "2026-10-03T08:08:13.155117+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-VN",
@@ -19,21 +19,21 @@
       "id": "DOMAIN-VN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
+      "score": 46,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-VN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 34,
+      "score": 39,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-VN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 79,
       "trend": "stable"
     },
     {
@@ -65,6 +65,11 @@
       "trend": "stable"
     },
     {
+      "id": "DRIVER-VN-climate",
+      "type": "Driver",
+      "label": "climate"
+    },
+    {
       "id": "DRIVER-VN-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
@@ -75,29 +80,24 @@
       "label": "economic"
     },
     {
-      "id": "DRIVER-VN-climate",
-      "type": "Driver",
-      "label": "climate"
+      "id": "SIGNAL-VN-Геополитич",
+      "type": "Signal",
+      "label": "Геополитический процесс — Юго-Восточная ",
+      "severity": 62,
+      "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-VN-Импорт_Вье",
+      "id": "SIGNAL-VN-Наводнение",
       "type": "Signal",
-      "label": "Импорт Вьетнама",
-      "severity": 32,
-      "domain": "economic"
+      "label": "Наводнение — Вьетнам",
+      "severity": 79,
+      "domain": "climate"
     },
     {
-      "id": "SIGNAL-VN-Экспорт_Вь",
+      "id": "SIGNAL-VN-Транспортн",
       "type": "Signal",
-      "label": "Экспорт Вьетнама",
-      "severity": 32,
-      "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-VN-ВВП_Вьетна",
-      "type": "Signal",
-      "label": "ВВП Вьетнама от государственного управле",
-      "severity": 32,
+      "label": "Транспортный коридор — Юго-Восточная Ази",
+      "severity": 53,
       "domain": "economic"
     }
   ],
@@ -106,19 +106,19 @@
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-economic",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.39
     },
     {
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.79
     },
     {
       "from": "COUNTRY-VN",
@@ -145,6 +145,12 @@
       "weight": 0.05
     },
     {
+      "from": "DRIVER-VN-climate",
+      "to": "COUNTRY-VN",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-VN-geopolitical",
       "to": "COUNTRY-VN",
       "type": "CAUSES",
@@ -157,28 +163,85 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-VN-climate",
-      "to": "COUNTRY-VN",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-VN-climate",
+      "to": "DOMAIN-VN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
     },
     {
-      "from": "SIGNAL-VN-Импорт_Вье",
+      "from": "DOMAIN-VN-infrastructure",
       "to": "DOMAIN-VN-economic",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.68,
+      "lag_days": 14
     },
     {
-      "from": "SIGNAL-VN-Экспорт_Вь",
+      "from": "DOMAIN-VN-economic",
       "to": "DOMAIN-VN-economic",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
-      "from": "SIGNAL-VN-ВВП_Вьетна",
+      "from": "DOMAIN-VN-climate",
+      "to": "DOMAIN-VN-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-VN-economic",
+      "to": "DOMAIN-VN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-VN-social",
+      "to": "DOMAIN-VN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-VN-geopolitical",
+      "to": "DOMAIN-VN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-VN-infrastructure",
       "to": "DOMAIN-VN-economic",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-VN-economic",
+      "to": "DOMAIN-VN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-VN-Геополитич",
+      "to": "DOMAIN-VN-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.62
+    },
+    {
+      "from": "SIGNAL-VN-Наводнение",
+      "to": "DOMAIN-VN-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.79
+    },
+    {
+      "from": "SIGNAL-VN-Транспортн",
+      "to": "DOMAIN-VN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.53
     }
   ]
 }
