@@ -2,7 +2,7 @@
   "country": "TW",
   "date": "2026-10-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-03T16:26:30.512963+00:00",
+  "generated_at": "2026-10-03T16:47:40.569736+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-TW-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 57,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -70,14 +70,21 @@
       "label": "climate"
     },
     {
-      "id": "DRIVER-TW-economic",
-      "type": "Driver",
-      "label": "economic"
-    },
-    {
       "id": "DRIVER-TW-technology",
       "type": "Driver",
       "label": "technology"
+    },
+    {
+      "id": "DRIVER-TW-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-TW-Падение_ин",
+      "type": "Signal",
+      "label": "Падение интернет-связи: Тайвань",
+      "severity": 56,
+      "domain": "technology"
     },
     {
       "id": "SIGNAL-TW-Наводнение",
@@ -92,13 +99,6 @@
       "label": "Отключение интернета — Тайвань",
       "severity": 56,
       "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-TW-Валютный_р",
-      "type": "Signal",
-      "label": "Валютный рынок — Тайвань",
-      "severity": 57,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-TW",
       "to": "DOMAIN-TW-economic",
       "type": "CORRELATES",
-      "weight": 0.57
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-TW",
@@ -151,13 +151,13 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-TW-economic",
+      "from": "DRIVER-TW-technology",
       "to": "COUNTRY-TW",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-TW-technology",
+      "from": "DRIVER-TW-geopolitical",
       "to": "COUNTRY-TW",
       "type": "CAUSES",
       "weight": 0.8
@@ -205,6 +205,12 @@
       "lag_days": 90
     },
     {
+      "from": "SIGNAL-TW-Падение_ин",
+      "to": "DOMAIN-TW-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.56
+    },
+    {
       "from": "SIGNAL-TW-Наводнение",
       "to": "DOMAIN-TW-climate",
       "type": "AMPLIFIES",
@@ -215,12 +221,6 @@
       "to": "DOMAIN-TW-technology",
       "type": "AMPLIFIES",
       "weight": 0.56
-    },
-    {
-      "from": "SIGNAL-TW-Валютный_р",
-      "to": "DOMAIN-TW-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.57
     }
   ]
 }
