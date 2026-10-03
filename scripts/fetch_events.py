@@ -15761,6 +15761,25 @@ def _notam_qline_xy(qline):
     return round(la, 4), round(lo, 4)
 
 
+def _notam_shape(v):
+    """Форма значения без самого значения: цифры заменены решёткой.
+
+    Нужна для диагностики разбора. В отчёт замера уходит именно форма, а не
+    данные: условие правообладателя (autorouter case 9853) запрещает
+    распространять данные NOTAM, и диагностика не повод для исключения.
+    """
+    if v is None:
+        return 'null'
+    if isinstance(v, bool):
+        return 'bool'
+    if isinstance(v, (int, float)):
+        return 'number'
+    s = str(v)
+    if not s.strip():
+        return 'empty'
+    return re.sub(r'\d', '#', s)[:24]
+
+
 def _notam_xy(row):
     """Координаты из готовых полей ответа autorouter.
 
@@ -15872,6 +15891,10 @@ def fetch_notam():
         return items
     now = datetime.now(timezone.utc)
     seen, total, kept = set(), 0, 0
+    # Диагностика разбора координат: первый замер 03.10.2026 дал 417
+    # записей и НОЛЬ координат при наличии полей lat/lon в ответе.
+    # Собираем форму полей, чтобы чинить разбор по факту, а не на глаз.
+    coord_shape, lat_present = [], 0
     # Отказы по отдельным FIR раньше уходили только в stderr. В отчёте замера
     # это выглядело как «получено 0» — тот же вид, что и «в небе спокойно».
     # Различать обязательно: первое значит, что доступ не работает.
@@ -15921,6 +15944,12 @@ def fetch_notam():
             lat, lng = _notam_xy(n)
             if lat is None:
                 lat, lng = _notam_qline_xy(txt)
+            if str(n.get('lat') or '').strip():
+                lat_present += 1
+            if not NOTAM_GATE and len(coord_shape) < 8:
+                coord_shape.append({_k: _notam_shape(n.get(_k)) for _k in (
+                    'lat', 'lon', 'nelat', 'nelon', 'swlat', 'swlon',
+                    'startvalidity', 'endvalidity', 'modified', 'radius')})
             reg_ru, cc = _NOTAM_FIR_RU.get(fir, (fir, ''))
             score = _NOTAM_SEV_GNSS if gnss else _NOTAM_SEV.get(c23, 60)
             what = ('Помехи спутниковой навигации' if gnss else
@@ -15965,6 +15994,8 @@ def fetch_notam():
                 # Имена полей проверяем по живому ответу, а не по документации:
                 # прежний разбор читал несуществующие поля и молча давал пустоту.
                 "поля первой записи": first_keys,
+                "записей с непустым полем lat": lat_present,
+                "форма полей координат и времени": coord_shape,
                 "помехи навигации": sum(1 for x in items if (x.get("_meta") or {}).get("gnss")),
                 "по FIR": dict(_NC((x.get("_meta") or {}).get("fir") for x in items)),
                 "по субъекту Q-кода": dict(_NC((x.get("_meta") or {}).get("code23") for x in items)),
