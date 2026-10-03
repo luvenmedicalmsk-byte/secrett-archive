@@ -2,7 +2,7 @@
   "country": "VN",
   "date": "2026-10-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-03T01:49:31.092472+00:00",
+  "generated_at": "2026-10-03T02:07:12.368062+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-VN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 50,
+      "score": 34,
       "trend": "stable"
     },
     {
@@ -70,14 +70,21 @@
       "label": "climate"
     },
     {
+      "id": "DRIVER-VN-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
+    },
+    {
       "id": "DRIVER-VN-economic",
       "type": "Driver",
       "label": "economic"
     },
     {
-      "id": "DRIVER-VN-geopolitical",
-      "type": "Driver",
-      "label": "geopolitical"
+      "id": "SIGNAL-VN-Годовой_те",
+      "type": "Signal",
+      "label": "Годовой темп роста ВВП во Вьетнаме",
+      "severity": 32,
+      "domain": "economic"
     },
     {
       "id": "SIGNAL-VN-Геополитич",
@@ -92,13 +99,6 @@
       "label": "Наводнение — Вьетнам",
       "severity": 79,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-VN-Топливный_",
-      "type": "Signal",
-      "label": "Топливный рынок — Вьетнам",
-      "severity": 50,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-economic",
       "type": "CORRELATES",
-      "weight": 0.5
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-VN",
@@ -151,13 +151,13 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-VN-economic",
+      "from": "DRIVER-VN-geopolitical",
       "to": "COUNTRY-VN",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-VN-geopolitical",
+      "from": "DRIVER-VN-economic",
       "to": "COUNTRY-VN",
       "type": "CAUSES",
       "weight": 0.8
@@ -226,6 +226,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-VN-Годовой_те",
+      "to": "DOMAIN-VN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.32
+    },
+    {
       "from": "SIGNAL-VN-Геополитич",
       "to": "DOMAIN-VN-geopolitical",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-VN-climate",
       "type": "AMPLIFIES",
       "weight": 0.79
-    },
-    {
-      "from": "SIGNAL-VN-Топливный_",
-      "to": "DOMAIN-VN-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.5
     }
   ]
 }
