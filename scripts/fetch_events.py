@@ -15678,6 +15678,19 @@ _NOTAM_FIR = [
 # пространства, аэродромная рутина не проходит.
 _NOTAM_CODE23 = {'RA', 'RD', 'RP', 'RR', 'RT', 'RM', 'RO', 'WM', 'WP', 'WU'}
 
+# ЗАКРЫТИЕ АЭРОДРОМА. 03.10.2026, по вопросу Мии «как я пойму, что закрыли
+# воздушное пространство». Прежний фильтр пропускал только зоны и резал всю
+# аэродромную рутину, а закрытие самого аэропорта идёт аэродромным субъектом
+# FA и уходило в мусор вместе с неработающими огнями на полосе. То есть
+# закрытие Вильнюса из-за дронов панель бы не показала.
+#
+# Берём ТОЛЬКО условие LC, закрыт. Остальные аэродромные условия (ограничения
+# по полосе, смена частоты) остаются отрезанными: иначе вернётся та самая
+# рутина, ради отсечения которой фильтр и писался.
+_NOTAM_AD_SUBJ = {'FA'}        # субъект: аэродром
+_NOTAM_AD_COND = {'LC'}        # условие: закрыт
+_NOTAM_SEV_AD = 84             # закрытие аэропорта весомее любой зоны
+
 # Глушение навигации: субъект ненадёжен, опознаём по тексту.
 _NOTAM_GNSS = re.compile(r'\b(?:GPS|GNSS|RAIM|GBAS|SBAS)\b|JAMMING|INTERFERENCE|SPOOFING', re.I)
 
@@ -15718,11 +15731,12 @@ _NOTAM_DISCLAIMER = ('Не предназначено для планирова�
                      'и иного эксплуатационного применения.')
 
 
-def _notam_desc(reg_ru, c23, gnss, nid, fir, radius):
+def _notam_desc(reg_ru, c23, gnss, nid, fir, radius, ad_closed=False):
     """Описание записи ТОЛЬКО из производных данных. Исходный текст NOTAM сюда
     не попадает: условие правообладателя, см. комментарий выше."""
-    what = ('зафиксированы помехи спутниковой навигации' if gnss
-            else _NOTAM_C23_RU.get(c23, 'изменён режим воздушного пространства'))
+    what = ('аэродром закрыт' if ad_closed
+            else ('зафиксированы помехи спутниковой навигации' if gnss
+                  else _NOTAM_C23_RU.get(c23, 'изменён режим воздушного пространства')))
     part = ['%s: %s' % (reg_ru, what)]
     try:
         _r = float(radius)
@@ -15997,13 +16011,13 @@ def _notam_summary(agg, now, fir_total, prev):
         # Нижняя граница обязательна. Без неё запись с датой в будущем
         # давала отрицательную разницу и попадала в «за сутки»: первый
         # прогон насчитал 336 свежих ограничений из 422.
-        if r['начало'] is not None and 0 <= (now - r['начало']).total_seconds() <= 86400:
+        if r['момент'] is not None and 0 <= (now - r['момент']).total_seconds() <= 86400:
             d['за сутки'] += 1
         _t = r['тип']
         d['по типу'][_t] = d['по типу'].get(_t, 0) + 1
     rows = sorted(by.values(), key=lambda d: (-d['действует'], d['страна']))
 
-    known = sum(1 for r in agg if r['начало'] is not None)
+    known = sum(1 for r in agg if r['момент'] is not None)
     day_ok = known > 0          # без разобранного времени колонка «за сутки» лжёт
     if not day_ok:
         for d in rows:
@@ -16013,8 +16027,8 @@ def _notam_summary(agg, now, fir_total, prev):
     today = now.strftime('%Y-%m-%d')
     hist = [h for h in hist if h.get('дата') != today]
     hist.append({'дата': today, 'действует': len(agg),
-                 'за сутки': (sum(1 for r in agg if r['начало'] is not None
-                                  and 0 <= (now - r['начало']).total_seconds() <= 86400)
+                 'за сутки': (sum(1 for r in agg if r['момент'] is not None
+                                  and 0 <= (now - r['момент']).total_seconds() <= 86400)
                               if day_ok else None)})
     hist = sorted(hist, key=lambda h: str(h.get('дата')))[-_NOTAM_HISTORY_DAYS:]
 
@@ -16152,7 +16166,9 @@ def fetch_notam():
             # случай, если сервер отдаёт их в другом регистре.
             txt = str(n.get('iteme') or n.get('itemE') or n.get('all') or '')
             gnss = bool(_NOTAM_GNSS.search(txt))
-            if c23 not in _NOTAM_CODE23 and not gnss:
+            c45 = str(n.get('code45') or '').upper()
+            ad_closed = (c23 in _NOTAM_AD_SUBJ and c45 in _NOTAM_AD_COND)
+            if c23 not in _NOTAM_CODE23 and not gnss and not ad_closed:
                 continue
             nid = str(n.get('id') or n.get('number') or '')[:40]
             if nid and nid in seen:
@@ -16177,19 +16193,28 @@ def fetch_notam():
                     'lat', 'lon', 'nelat', 'nelon', 'swlat', 'swlon',
                     'startvalidity', 'endvalidity', 'modified', 'radius')})
             reg_ru, cc = _NOTAM_FIR_RU.get(fir, (fir, ''))
-            score = _NOTAM_SEV_GNSS if gnss else _NOTAM_SEV.get(c23, 60)
-            what = ('Помехи спутниковой навигации' if gnss else
-                    'Изменение режима воздушного пространства')
+            score = (_NOTAM_SEV_AD if ad_closed else
+                     (_NOTAM_SEV_GNSS if gnss else _NOTAM_SEV.get(c23, 60)))
+            what = ('Закрыт аэродром' if ad_closed else
+                    ('Помехи спутниковой навигации' if gnss else
+                     'Изменение режима воздушного пространства'))
+            # Момент СОБЫТИЯ это объявление, а не начало действия. Зону могут
+            # объявить сегодня, а действовать она начнёт через неделю: по началу
+            # действия такое объявление в сутки не попадало, хотя событие
+            # произошло именно сейчас. Берём время изменения записи, с откатом
+            # на начало действия, когда его нет.
             agg.append({'fir': fir, 'cc': cc, 'страна': reg_ru,
-                        'тип': ('помехи навигации' if gnss
-                                else _NOTAM_C23_RU.get(c23, 'прочее ограничение')),
+                        'тип': ('закрыт аэродром' if ad_closed
+                                else ('помехи навигации' if gnss
+                                      else _NOTAM_C23_RU.get(c23, 'прочее ограничение'))),
                         'помехи': gnss,
-                        'начало': _notam_ts(n.get('startvalidity'))})
+                        'момент': (_notam_ts(n.get('modified'))
+                                   or _notam_ts(n.get('startvalidity')))})
             items.append({
                 "title": f"{what}: {reg_ru}"[:130],
                 # Исходный текст NOTAM не публикуется: условие правообладателя
                 # (autorouter case 9853, 03.10.2026). Описание производное.
-                "desc": _notam_desc(reg_ru, c23, gnss, nid, fir, n.get('radius')),
+                "desc": _notam_desc(reg_ru, c23, gnss, nid, fir, n.get('radius'), ad_closed),
                 "date": now.strftime("%Y-%m-%d"),
                 "source": "EUROCONTROL NOTAM",
                 "_lat": lat, "_lng": lng,
