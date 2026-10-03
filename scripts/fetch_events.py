@@ -15780,6 +15780,27 @@ def _notam_shape(v):
     return re.sub(r'\d', '#', s)[:24]
 
 
+def _notam_packed_deg(f, lim):
+    """Градусы из упакованного числа ГГММСС или ГГГММСС.
+
+    Возвращает None, когда минуты или секунды выходят за 60: это значит, что
+    перед нами не упакованная координата, и угадывать нельзя.
+    """
+    neg = f < 0
+    d = int(abs(f))
+    # Ниже пяти знаков вид неоднозначен: 5245 это и 52 градуса 45 минут, и
+    # 0 градусов 52 минуты 45 секунд. Угадывать нельзя, отбрасываем.
+    if d > 1800000 or d < 10000:
+        return None
+    ss, mm, dd = d % 100, (d // 100) % 100, d // 10000
+    if ss >= 60 or mm >= 60:
+        return None
+    val = dd + mm / 60.0 + ss / 3600.0
+    if val > lim:
+        return None
+    return -val if neg else val
+
+
 def _notam_xy(row):
     """Координаты из готовых полей ответа autorouter.
 
@@ -15793,7 +15814,14 @@ def _notam_xy(row):
             return None
         if isinstance(v, (int, float)):
             f = float(v)
-            return f if -lim <= f <= lim else None
+            if -lim <= f <= lim:
+                return f
+            # 03.10.2026. Замер дал 422 записи и НОЛЬ координат при непустом
+            # числовом поле lat у всех. Причина: autorouter отдаёт координату
+            # не десятичными градусами, а упакованным числом вида 521500, то
+            # есть 52 градуса 15 минут 00 секунд. Прежняя проверка диапазона
+            # отбрасывала такое значение целиком.
+            return _notam_packed_deg(f, lim)
         s = str(v).strip().upper()
         m = re.fullmatch(r'(\d{2,3})(\d{2})(\d{2})?([NSEW])', s)
         if m:
@@ -15878,6 +15906,25 @@ def _notam_token():
 # числа по странам это бесспорно производная информация.
 # ══════════════════════════════════════════════════════════════════════════════
 _NOTAM_HISTORY_DAYS = 60       # глубина истории для спарклайна
+_NOTAM_PAGE_CAP = 500          # потолок страниц на один FIR, защита от зацикливания
+
+
+def _notam_packed_dt(f):
+    """Дата из упакованного числа ГГММДДЧЧММ. Принимается только при
+    осмысленных месяце, дне, часе и минуте: эпоха такую проверку не проходит
+    (у неё на месте месяца получается 90 и больше)."""
+    if f != int(f) or f <= 0:
+        return None
+    t = str(int(f))
+    if len(t) != 10:
+        return None
+    yy, mo, dd, hh, mi = (int(t[0:2]), int(t[2:4]), int(t[4:6]), int(t[6:8]), int(t[8:10]))
+    if not (1 <= mo <= 12 and 1 <= dd <= 31 and hh <= 23 and mi <= 59):
+        return None
+    try:
+        return datetime(2000 + yy, mo, dd, hh, mi, tzinfo=timezone.utc)
+    except ValueError:
+        return None
 
 
 def _notam_ts(v):
@@ -15893,7 +15940,16 @@ def _notam_ts(v):
         f = float(v)
         if f > 1e11:            # миллисекунды
             f = f / 1000.0
-        if 9e8 < f < 4e9:       # разумный диапазон эпохи
+        # 03.10.2026. Упакованная дата вида 2610031200 попадает в диапазон
+        # эпохи и читалась как 2052 год. Поэтому сначала пробуем упаковку и
+        # принимаем её ТОЛЬКО когда все поля осмысленны, иначе эпоха.
+        _p = _notam_packed_dt(f)
+        if _p is not None:
+            return _p
+        # Диапазон эпохи сужен до 2014-2039 годов. Прежние границы
+        # пропускали мусор: число 2613011200 с несуществующим месяцем
+        # падало в эпоху и давало 2052 год вместо честного None.
+        if 1.4e9 < f < 2.2e9:
             return datetime.fromtimestamp(f, timezone.utc)
         return None
     t = str(v).strip()
@@ -15916,7 +15972,7 @@ def _notam_ts(v):
             f = float(t)
             if f > 1e11:
                 f = f / 1000.0
-            if 9e8 < f < 4e9:
+            if 1.4e9 < f < 2.2e9:
                 return datetime.fromtimestamp(f, timezone.utc)
         except ValueError:
             return None
@@ -15938,7 +15994,10 @@ def _notam_summary(agg, now, fir_total, prev):
         d['действует'] += 1
         if r['помехи']:
             d['помехи навигации'] += 1
-        if r['начало'] is not None and (now - r['начало']).total_seconds() <= 86400:
+        # Нижняя граница обязательна. Без неё запись с датой в будущем
+        # давала отрицательную разницу и попадала в «за сутки»: первый
+        # прогон насчитал 336 свежих ограничений из 422.
+        if r['начало'] is not None and 0 <= (now - r['начало']).total_seconds() <= 86400:
             d['за сутки'] += 1
         _t = r['тип']
         d['по типу'][_t] = d['по типу'].get(_t, 0) + 1
@@ -15955,7 +16014,7 @@ def _notam_summary(agg, now, fir_total, prev):
     hist = [h for h in hist if h.get('дата') != today]
     hist.append({'дата': today, 'действует': len(agg),
                  'за сутки': (sum(1 for r in agg if r['начало'] is not None
-                                  and (now - r['начало']).total_seconds() <= 86400)
+                                  and 0 <= (now - r['начало']).total_seconds() <= 86400)
                               if day_ok else None)})
     hist = sorted(hist, key=lambda h: str(h.get('дата')))[-_NOTAM_HISTORY_DAYS:]
 
@@ -15971,7 +16030,7 @@ def _notam_summary(agg, now, fir_total, prev):
         'страны': rows,
         'история': hist,
         'получено по FIR': fir_total,
-        'FIR с обрезанным ответом': [f for f, c in (fir_total or {}).items() if c >= 100],
+        'FIR на потолке страниц': [f for f, c in (fir_total or {}).items() if c >= _NOTAM_PAGE_CAP],
     }
 
 
@@ -16042,25 +16101,40 @@ def fetch_notam():
     fir_err = {}
     first_keys = []
     for fir in _NOTAM_FIR:
-        try:
-            url = (_AR_NOTAM_URL + '?itemas=' + urllib.parse.quote('["%s"]' % fir)
-                   + '&offset=0&limit=100')
-            req = urllib.request.Request(url, headers={'Authorization': 'Bearer ' + tok})
-            with urllib.request.urlopen(req, timeout=25) as r:
-                data = json.loads(r.read().decode())
-        except urllib.error.HTTPError as e:
+        # Страницы. Запрос отдаёт не больше ста записей за раз, и первый
+        # замер 03.10.2026 показал ровно по сто у Польши, Финляндии и
+        # Румынии: ответ был обрезан, а по итоговой цифре это не видно.
+        # Берём страницами до исчерпания, с потолком _NOTAM_PAGE_CAP, чтобы
+        # ошибка на стороне сервера не закрутила бесконечный цикл.
+        rows, _off, _failed = [], 0, False
+        while _off < _NOTAM_PAGE_CAP:
             try:
-                _eb = e.read().decode('utf-8', 'ignore')[:200]
-            except Exception:
-                _eb = ''
-            fir_err[fir] = 'HTTP %s: %s' % (e.code, _eb)
-            print(f"  [WARN] NOTAM {fir}: HTTP {e.code}", file=sys.stderr)
+                url = (_AR_NOTAM_URL + '?itemas=' + urllib.parse.quote('["%s"]' % fir)
+                       + '&offset=%d&limit=100' % _off)
+                req = urllib.request.Request(url, headers={'Authorization': 'Bearer ' + tok})
+                with urllib.request.urlopen(req, timeout=25) as r:
+                    data = json.loads(r.read().decode())
+            except urllib.error.HTTPError as e:
+                try:
+                    _eb = e.read().decode('utf-8', 'ignore')[:200]
+                except Exception:
+                    _eb = ''
+                fir_err[fir] = 'HTTP %s: %s (смещение %d)' % (e.code, _eb, _off)
+                print(f"  [WARN] NOTAM {fir}: HTTP {e.code}", file=sys.stderr)
+                _failed = not rows
+                break
+            except Exception as e:
+                fir_err[fir] = '%s: %s (смещение %d)' % (type(e).__name__, e, _off)
+                print(f"  [WARN] NOTAM {fir}: {e}", file=sys.stderr)
+                _failed = not rows
+                break
+            _page = (data or {}).get('rows') or []
+            rows.extend(_page)
+            if len(_page) < 100:
+                break
+            _off += 100
+        if _failed:
             continue
-        except Exception as e:
-            fir_err[fir] = '%s: %s' % (type(e).__name__, e)
-            print(f"  [WARN] NOTAM {fir}: {e}", file=sys.stderr)
-            continue
-        rows = (data or {}).get('rows') or []
         if rows and not first_keys:
             first_keys = sorted(str(k) for k in (rows[0] or {}).keys())
         fir_total[fir] = len(rows)
@@ -16143,7 +16217,7 @@ def fetch_notam():
                 # прежний разбор читал несуществующие поля и молча давал пустоту.
                 "поля первой записи": first_keys,
                 "получено по FIR": fir_total,
-                "FIR с обрезанным ответом": [f for f, c in fir_total.items() if c >= 100],
+                "FIR на потолке страниц": [f for f, c in fir_total.items() if c >= _NOTAM_PAGE_CAP],
                 "записей с непустым полем lat": lat_present,
                 "форма полей координат и времени": coord_shape,
                 "помехи навигации": sum(1 for x in items if (x.get("_meta") or {}).get("gnss")),
