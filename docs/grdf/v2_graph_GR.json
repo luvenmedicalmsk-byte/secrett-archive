@@ -2,7 +2,7 @@
   "country": "GR",
   "date": "2026-10-04",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-04T13:08:02.101460+00:00",
+  "generated_at": "2026-10-04T13:27:48.780051+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,17 +10,17 @@
       "id": "COUNTRY-GR",
       "type": "Country",
       "label": "GR",
-      "score": 88,
+      "score": 92,
       "props": {
-        "risk_score": 88
+        "risk_score": 92
       }
     },
     {
       "id": "DOMAIN-GR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 54,
-      "trend": "stable"
+      "score": 68,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-economic",
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 88,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-technology",
@@ -80,6 +80,13 @@
       "label": "economic"
     },
     {
+      "id": "SIGNAL-GR-Наводнение",
+      "type": "Signal",
+      "label": "Наводнение на Крите, Греция",
+      "severity": 88,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-GR-Ливень:_Гр",
       "type": "Signal",
       "label": "Ливень: Греция (красный уровень, 7 преду",
@@ -92,13 +99,6 @@
       "label": "Владимир Путин назначил Юрия Горлача пос",
       "severity": 45,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-GR-Шторм_—_Гр",
-      "type": "Signal",
-      "label": "Шторм — Греция",
-      "severity": 88,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.54
+      "weight": 0.68
     },
     {
       "from": "COUNTRY-GR",
@@ -226,6 +226,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-GR-Наводнение",
+      "to": "DOMAIN-GR-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.88
+    },
+    {
       "from": "SIGNAL-GR-Ливень:_Гр",
       "to": "DOMAIN-GR-climate",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-GR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.45
-    },
-    {
-      "from": "SIGNAL-GR-Шторм_—_Гр",
-      "to": "DOMAIN-GR-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.88
     }
   ]
 }
