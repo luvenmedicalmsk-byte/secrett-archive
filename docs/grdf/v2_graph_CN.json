@@ -1,18 +1,18 @@
 {
   "country": "CN",
-  "date": "2026-10-03",
+  "date": "2026-10-04",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-03T23:27:47.721052+00:00",
+  "generated_at": "2026-10-04T00:02:05.921314+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 84,
+      "score": 65,
       "props": {
-        "risk_score": 84
+        "risk_score": 65
       }
     },
     {
@@ -20,49 +20,49 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CN-economic",
       "type": "Domain",
       "label": "economic",
       "score": 62,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 84,
-      "trend": "stable"
+      "score": 5,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CN-technology",
       "type": "Domain",
       "label": "technology",
       "score": 64,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CN-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CN-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DRIVER-CN-Geopolitical",
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CN-Оранжевое_",
-      "type": "Signal",
-      "label": "Оранжевое наводнения предупреждение — Ки",
-      "severity": 84,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-CN-Падение_ин",
       "type": "Signal",
       "label": "Падение интернет-связи: Китай",
@@ -99,6 +92,13 @@
       "label": "Мы все скоро будем ездить на китайских а",
       "severity": 62,
       "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-CN-Три_уязвим",
+      "type": "Signal",
+      "label": "Три уязвимости Chrome-Windows 0-day были",
+      "severity": 60,
+      "domain": "technology"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-climate",
       "type": "CORRELATES",
-      "weight": 0.84
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CN",
@@ -163,54 +163,6 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-CN-climate",
-      "to": "DOMAIN-CN-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-CN-infrastructure",
-      "to": "DOMAIN-CN-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-CN-economic",
-      "to": "DOMAIN-CN-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-CN-climate",
-      "to": "DOMAIN-CN-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-CN-economic",
-      "to": "DOMAIN-CN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-CN-social",
-      "to": "DOMAIN-CN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "SIGNAL-CN-Оранжевое_",
-      "to": "DOMAIN-CN-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.84
-    },
-    {
       "from": "SIGNAL-CN-Падение_ин",
       "to": "DOMAIN-CN-technology",
       "type": "AMPLIFIES",
@@ -221,6 +173,12 @@
       "to": "DOMAIN-CN-economic",
       "type": "AMPLIFIES",
       "weight": 0.62
+    },
+    {
+      "from": "SIGNAL-CN-Три_уязвим",
+      "to": "DOMAIN-CN-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.6
     }
   ]
 }
