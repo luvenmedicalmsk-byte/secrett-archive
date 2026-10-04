@@ -2,7 +2,7 @@
   "country": "TR",
   "date": "2026-10-04",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-04T17:28:07.595039+00:00",
+  "generated_at": "2026-10-04T17:47:57.317684+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -19,7 +19,7 @@
       "id": "DOMAIN-TR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 58,
+      "score": 63,
       "trend": "stable"
     },
     {
@@ -47,7 +47,7 @@
       "id": "DOMAIN-TR-social",
       "type": "Domain",
       "label": "social",
-      "score": 34,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -94,11 +94,11 @@
       "domain": "economic"
     },
     {
-      "id": "SIGNAL-TR-Образованн",
+      "id": "SIGNAL-TR-Военный_ко",
       "type": "Signal",
-      "label": "Образованные этнические турчанки рожают ",
-      "severity": 34,
-      "domain": "social"
+      "label": "Военный конфликт — Ближний Восток (систе",
+      "severity": 84,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.58
+      "weight": 0.63
     },
     {
       "from": "COUNTRY-TR",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-social",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-TR",
@@ -161,6 +161,27 @@
       "to": "COUNTRY-TR",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-TR-climate",
+      "to": "DOMAIN-TR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-TR-infrastructure",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-TR-climate",
@@ -205,27 +226,6 @@
       "lag_days": 45
     },
     {
-      "from": "DOMAIN-TR-climate",
-      "to": "DOMAIN-TR-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-TR-infrastructure",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-TR-economic",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "SIGNAL-TR-Гроза:_Тур",
       "to": "DOMAIN-TR-climate",
       "type": "AMPLIFIES",
@@ -238,10 +238,10 @@
       "weight": 0.46
     },
     {
-      "from": "SIGNAL-TR-Образованн",
-      "to": "DOMAIN-TR-social",
+      "from": "SIGNAL-TR-Военный_ко",
+      "to": "DOMAIN-TR-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.34
+      "weight": 0.84
     }
   ]
 }
