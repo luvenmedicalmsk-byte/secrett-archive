@@ -2,67 +2,67 @@
   "country": "GB",
   "date": "2026-10-04",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-04T21:55:35.144925+00:00",
+  "generated_at": "2026-10-04T22:06:25.391544+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-GB",
       "type": "Country",
       "label": "GB",
-      "score": 53,
+      "score": 50,
       "props": {
-        "risk_score": 53
+        "risk_score": 50
       }
     },
     {
       "id": "DOMAIN-GB-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
-      "trend": "stable"
+      "score": 62,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GB-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 53,
-      "trend": "up"
+      "score": 32,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GB-climate",
       "type": "Domain",
       "label": "climate",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GB-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GB-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GB-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GB-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DRIVER-GB-Geopolitical",
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-GB-Задержанны",
-      "type": "Signal",
-      "label": "Задержанных около британской авиабазы Фэ",
-      "severity": 53,
-      "domain": "economic"
-    },
-    {
       "id": "SIGNAL-GB-Средняя_ст",
       "type": "Signal",
       "label": "Средняя ставка SONIA по стерлингу Велико",
@@ -94,11 +87,18 @@
       "domain": "economic"
     },
     {
-      "id": "SIGNAL-GB-Экономичес",
+      "id": "SIGNAL-GB-Геополитич",
       "type": "Signal",
-      "label": "Экономический сигнал — Великобритания",
+      "label": "Геополитический процесс — Великобритания",
       "severity": 53,
-      "domain": "economic"
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-GB-Санкционно",
+      "type": "Signal",
+      "label": "Санкционное давление — Великобритания",
+      "severity": 62,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.62
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-economic",
       "type": "CORRELATES",
-      "weight": 0.53
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-GB",
@@ -163,10 +163,25 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-GB-Задержанны",
+      "from": "DOMAIN-GB-geopolitical",
+      "to": "DOMAIN-GB-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-GB-infrastructure",
       "to": "DOMAIN-GB-economic",
       "type": "AMPLIFIES",
-      "weight": 0.53
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GB-economic",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-GB-Средняя_ст",
@@ -175,10 +190,16 @@
       "weight": 0.32
     },
     {
-      "from": "SIGNAL-GB-Экономичес",
-      "to": "DOMAIN-GB-economic",
+      "from": "SIGNAL-GB-Геополитич",
+      "to": "DOMAIN-GB-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.53
+    },
+    {
+      "from": "SIGNAL-GB-Санкционно",
+      "to": "DOMAIN-GB-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.62
     }
   ]
 }
