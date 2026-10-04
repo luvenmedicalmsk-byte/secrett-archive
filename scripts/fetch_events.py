@@ -15921,6 +15921,18 @@ def _notam_token():
 # ══════════════════════════════════════════════════════════════════════════════
 _NOTAM_HISTORY_DAYS = 60       # глубина истории для спарклайна
 _NOTAM_PAGE_CAP = 500          # потолок страниц на один FIR, защита от зацикливания
+# ВЫДЕРЖКА МЕЖДУ ОБРАЩЕНИЯМИ. 04.10.2026. Прогон 05:41 UTC вернул отказ:
+# «toomanytokens, limit 20, reuse an existing token or wait for older ones to
+# expire». Причина: токен запрашивается в КАЖДОМ прогоне, а прогонов больше,
+# чем по расписанию: каждый пуш в main запускает ещё один. Двадцать активных
+# токенов копятся за несколько часов, и источник умолкает целиком.
+#
+# Хранить токен между прогонами негде: репозиторий публичный, кеш Actions тоже
+# не место для bearer-токена. Поэтому ограничиваем не хранение, а частоту:
+# если прошлая сводка младше выдержки, прогон вообще не ходит за токеном.
+# Решение Мии: раз в час. Выдержка 55 минут, а не 60, чтобы прогон, стартующий
+# на минуту раньше предыдущего, не пропускал свой час.
+_NOTAM_MIN_INTERVAL_MIN = 55
 
 
 def _notam_packed_dt(f):
@@ -16092,6 +16104,22 @@ def fetch_notam():
     items = []
     if not (NOTAM_GATE or NOTAM_SHADOW):
         return items
+    # Выдержка. Считается от даты последней УСПЕШНОЙ сводки: неудачный прогон
+    # её не обновляет, поэтому отказ не блокирует следующую попытку.
+    _prev = _notam_summary_prev()
+    _last = (_prev or {}).get('дата')
+    if _last:
+        try:
+            _lt = datetime.fromisoformat(str(_last).replace('Z', '+00:00'))
+            if _lt.tzinfo is None:
+                _lt = _lt.replace(tzinfo=timezone.utc)
+            _age = (datetime.now(timezone.utc) - _lt).total_seconds() / 60.0
+            if 0 <= _age < _NOTAM_MIN_INTERVAL_MIN:
+                print('  [SKIP] NOTAM: выдержка, прошлая сводка %d мин назад' % _age,
+                      file=sys.stderr)
+                return items
+        except (ValueError, TypeError):
+            pass          # нечитаемая дата не должна останавливать источник
     tok = _notam_token()
     if not tok:
         print("  [SKIP] NOTAM: токена нет", file=sys.stderr)
@@ -16222,9 +16250,14 @@ def fetch_notam():
                 "_country_code": cc,
                 "_domain": "geopolitics",
                 "_force_severity": score,
+                # itema это код места по ICAO (аэродром или FIR), служебный
+                # идентификатор, а не текст уведомления. Нужен, чтобы назвать
+                # место словами: EYVI → Вильнюс. Разбор названия делается по
+                # нашему справочнику, то есть остаётся производной информацией.
                 "_meta": {"kind": "notam", "verified": True, "fir": fir,
                           "code23": c23, "code45": str(n.get('code45') or ''),
                           "gnss": gnss, "notam_id": nid,
+                          "itema": str(n.get('itema') or '')[:32],
                           "radius": n.get('radius')},
             })
             kept += 1
