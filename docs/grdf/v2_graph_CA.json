@@ -2,7 +2,7 @@
   "country": "CA",
   "date": "2026-10-05",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-05T17:48:17.275522+00:00",
+  "generated_at": "2026-10-05T18:08:14.307504+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-CA",
       "type": "Country",
       "label": "CA",
-      "score": 44,
+      "score": 58,
       "props": {
-        "risk_score": 44
+        "risk_score": 58
       }
     },
     {
@@ -20,49 +20,49 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 66,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-climate",
       "type": "Domain",
       "label": "climate",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 68,
-      "trend": "stable"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
-      "trend": "stable"
+      "score": 58,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-CA-Geopolitical",
@@ -75,9 +75,16 @@
       "label": "Economic"
     },
     {
-      "id": "DRIVER-CA-Economic",
+      "id": "DRIVER-CA-Social",
       "type": "Driver",
-      "label": "Economic"
+      "label": "Social"
+    },
+    {
+      "id": "SIGNAL-CA-Общественн",
+      "type": "Signal",
+      "label": "Общественное здравоохранение Торонто соо",
+      "severity": 58,
+      "domain": "social"
     },
     {
       "id": "SIGNAL-CA-Военные_уд",
@@ -92,13 +99,6 @@
       "label": "Военные удары — Канада",
       "severity": 66,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-CA-Киберугроз",
-      "type": "Signal",
-      "label": "Киберугроза — Канада",
-      "severity": 68,
-      "domain": "technology"
     }
   ],
   "edges": [
@@ -124,13 +124,13 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-technology",
       "type": "CORRELATES",
-      "weight": 0.68
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-CA",
@@ -157,7 +157,7 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-CA-Economic",
+      "from": "DRIVER-CA-Social",
       "to": "COUNTRY-CA",
       "type": "CAUSES",
       "weight": 0.8
@@ -184,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-CA-Общественн",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.58
+    },
+    {
       "from": "SIGNAL-CA-Военные_уд",
       "to": "DOMAIN-CA-geopolitical",
       "type": "AMPLIFIES",
@@ -194,12 +200,6 @@
       "to": "DOMAIN-CA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.66
-    },
-    {
-      "from": "SIGNAL-CA-Киберугроз",
-      "to": "DOMAIN-CA-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.68
     }
   ]
 }
