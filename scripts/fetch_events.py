@@ -23352,6 +23352,15 @@ def _strike_weight(events):
 #
 # Откат: SCALE_REVERT = False.
 SCALE_REVERT = True
+# SCALE_FORECAST_KEEP 06.10.2026. Прогноз с численной величиной сохраняет
+# повышение по масштабу, но не выше верхней границы «среднего» (59): это
+# сигнал с измеримым масштабом, но не наблюдённое событие. Кейс: «Ситуация в
+# Ормузском проливе может привести к росту цен на зерно до 80%» (МТП) стояло
+# на 23 после снятия повышения 23 -> 62. Прогноз без величины снимается как
+# раньше. Замер на 40 последних снимках: из 29 снятых повышений правило
+# затрагивает 2. Откат: SCALE_FORECAST_KEEP = False.
+SCALE_FORECAST_KEEP = True
+_SCALE_FORECAST_CAP = 59
 
 # S50 (30.09.2026). ОГОВОРКА К ОТКАТУ: декларация о применении ОМП.
 # «Россия готова применить ядерное оружие в случае попытки стран НАТО
@@ -23414,6 +23423,24 @@ def _scale_revert(events):
             if not isinstance(back, (int, float)):
                 continue
             cur = e.get('severity')
+            if SCALE_FORECAST_KEEP:
+                try:
+                    _ft = ((e.get('title') or '') + ' ' + (e.get('summary') or '')).lower()
+                    _to = a.get('to')
+                    if (isinstance(_to, (int, float))
+                            and (_SIC_WARN.search(_ft) or _SIC_FORECAST.search(_ft))
+                            and _SIC_EXT_MEAS.search(_ft)):
+                        back = max(back, min(_to, _SCALE_FORECAST_CAP))
+                        if cur == back:
+                            break
+                        e['severity'] = _sev_log(
+                            e, 'scale_forecast_cap', cur, back,
+                            'прогноз с численной величиной: масштаб сохранён до границы среднего',
+                            'penalty' if back < cur else 'boost')
+                        n += 1
+                        break
+                except Exception:
+                    pass
             if cur == back:
                 continue
             e['severity'] = _sev_log(
