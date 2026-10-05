@@ -2,7 +2,7 @@
   "country": "TR",
   "date": "2026-10-05",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-05T15:28:43.831893+00:00",
+  "generated_at": "2026-10-05T15:47:32.183690+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -19,14 +19,14 @@
       "id": "DOMAIN-TR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 63,
+      "score": 58,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-TR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 46,
+      "score": 51,
       "trend": "stable"
     },
     {
@@ -47,7 +47,7 @@
       "id": "DOMAIN-TR-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
+      "score": 48,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-TR-Турецкий_H",
+      "type": "Signal",
+      "label": "Турецкий Halkbank продолжает размещение ",
+      "severity": 51,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-TR-Гроза:_Тур",
       "type": "Signal",
       "label": "Гроза: Турция, 3 предупреждения (жёлтый ",
@@ -87,18 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-TR-Турецкая_л",
+      "id": "SIGNAL-TR-30-летняя_",
       "type": "Signal",
-      "label": "Турецкая лира упала до нового историческ",
-      "severity": 46,
-      "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-TR-Военный_ко",
-      "type": "Signal",
-      "label": "Военный конфликт — Ближний Восток (систе",
-      "severity": 84,
-      "domain": "geopolitical"
+      "label": "30-летняя женщина родила мальчика в туал",
+      "severity": 48,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.63
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-economic",
       "type": "CORRELATES",
-      "weight": 0.46
+      "weight": 0.51
     },
     {
       "from": "COUNTRY-TR",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-TR",
@@ -161,27 +161,6 @@
       "to": "COUNTRY-TR",
       "type": "CAUSES",
       "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-TR-climate",
-      "to": "DOMAIN-TR-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-TR-infrastructure",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-TR-economic",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
     },
     {
       "from": "DOMAIN-TR-climate",
@@ -226,22 +205,43 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-TR-climate",
+      "to": "DOMAIN-TR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-TR-infrastructure",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-TR-Турецкий_H",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.51
+    },
+    {
       "from": "SIGNAL-TR-Гроза:_Тур",
       "to": "DOMAIN-TR-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-TR-Турецкая_л",
-      "to": "DOMAIN-TR-economic",
+      "from": "SIGNAL-TR-30-летняя_",
+      "to": "DOMAIN-TR-social",
       "type": "AMPLIFIES",
-      "weight": 0.46
-    },
-    {
-      "from": "SIGNAL-TR-Военный_ко",
-      "to": "DOMAIN-TR-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.84
+      "weight": 0.48
     }
   ]
 }
