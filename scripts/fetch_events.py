@@ -21457,6 +21457,7 @@ def _signal_quality_pass(events):
 _RETAIN_MIN_SEV = 70      # прежнее значение: 85
 _RETAIN_MAX_DAYS = 2      # прежнее значение: 7
 RETAIN_RECOMPUTE = True   # удержанное событие пересчитывается по текущим правилам; откат: False
+RETAIN_READMIT = True     # удержанное событие заново проходит S43 «новость, не сигнал»; откат: False
 
 
 def _retain_critical(evs, prev):
@@ -21518,6 +21519,24 @@ def _retain_critical(evs, prev):
                 if (e.get('severity') or 0) < _RETAIN_MIN_SEV:
                     _dropped += 1
                     continue
+            # ═══ RETAIN_READMIT 06.10.2026 ═══════════════════════════════════
+            # Удержание брало событие из прошлого снимка мимо фильтра S43.
+            # Правило, добавленное после первого попадания события, на нём не
+            # срабатывало никогда: S43 отсеивал его из свежего потока, а
+            # удержание тут же возвращало из снимка, и так двое суток.
+            # Случай: «Читатели Guardian финансируют жизненно важную операцию
+            # для сомалийского мальчика…», 92/100, держалось после выкатки
+            # правила о помощи конкретному человеку (05.10).
+            # Замер на снимке 05.10 21:30: удержано 32, S43 отклоняет 1, это
+            # событие. Других изменений нет.
+            if RETAIN_READMIT:
+                try:
+                    if _is_news_not_signal(e.get('title', ''), e.get('summary', ''),
+                                           e.get('domain', '')):
+                        _dropped += 1
+                        continue
+                except Exception:
+                    pass
             m=dict(e.get('meta') or {}); m['retained']=True; e['meta']=m
             kept.append(e)
         if kept or _dropped:
