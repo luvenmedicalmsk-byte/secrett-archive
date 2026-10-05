@@ -2,7 +2,7 @@
   "country": "TR",
   "date": "2026-10-05",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-05T15:09:35.825961+00:00",
+  "generated_at": "2026-10-05T15:28:43.831893+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -19,21 +19,21 @@
       "id": "DOMAIN-TR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 58,
+      "score": 63,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-TR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 46,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-TR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 52,
+      "score": 50,
       "trend": "stable"
     },
     {
@@ -47,7 +47,7 @@
       "id": "DOMAIN-TR-social",
       "type": "Domain",
       "label": "social",
-      "score": 48,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-TR-Пожарный_с",
-      "type": "Signal",
-      "label": "Пожарный сигнал — Европа · Балыкесир",
-      "severity": 52,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-TR-Гроза:_Тур",
       "type": "Signal",
       "label": "Гроза: Турция, 3 предупреждения (жёлтый ",
@@ -94,11 +87,18 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-TR-30-летняя_",
+      "id": "SIGNAL-TR-Турецкая_л",
       "type": "Signal",
-      "label": "30-летняя женщина родила мальчика в туал",
-      "severity": 48,
-      "domain": "social"
+      "label": "Турецкая лира упала до нового историческ",
+      "severity": 46,
+      "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-TR-Военный_ко",
+      "type": "Signal",
+      "label": "Военный конфликт — Ближний Восток (систе",
+      "severity": 84,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,19 +106,19 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.58
+      "weight": 0.63
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-climate",
       "type": "CORRELATES",
-      "weight": 0.52
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-TR",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-social",
       "type": "CORRELATES",
-      "weight": 0.48
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-TR",
@@ -161,6 +161,27 @@
       "to": "COUNTRY-TR",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-TR-climate",
+      "to": "DOMAIN-TR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-TR-infrastructure",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-TR-climate",
@@ -205,43 +226,22 @@
       "lag_days": 45
     },
     {
-      "from": "DOMAIN-TR-climate",
-      "to": "DOMAIN-TR-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-TR-infrastructure",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-TR-economic",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "SIGNAL-TR-Пожарный_с",
-      "to": "DOMAIN-TR-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.52
-    },
-    {
       "from": "SIGNAL-TR-Гроза:_Тур",
       "to": "DOMAIN-TR-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-TR-30-летняя_",
-      "to": "DOMAIN-TR-social",
+      "from": "SIGNAL-TR-Турецкая_л",
+      "to": "DOMAIN-TR-economic",
       "type": "AMPLIFIES",
-      "weight": 0.48
+      "weight": 0.46
+    },
+    {
+      "from": "SIGNAL-TR-Военный_ко",
+      "to": "DOMAIN-TR-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.84
     }
   ]
 }
