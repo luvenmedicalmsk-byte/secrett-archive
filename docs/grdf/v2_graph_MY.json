@@ -2,7 +2,7 @@
   "country": "MY",
   "date": "2026-10-05",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-05T23:06:37.369289+00:00",
+  "generated_at": "2026-10-05T23:26:37.610210+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-MY",
       "type": "Country",
       "label": "MY",
-      "score": 45,
+      "score": 46,
       "props": {
-        "risk_score": 45
+        "risk_score": 46
       }
     },
     {
@@ -20,14 +20,14 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 46,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MY-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 45,
-      "trend": "stable"
+      "score": 46,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MY-climate",
@@ -40,7 +40,7 @@
       "id": "DOMAIN-MY-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 56,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -65,11 +65,6 @@
       "trend": "stable"
     },
     {
-      "id": "DRIVER-MY-technology",
-      "type": "Driver",
-      "label": "technology"
-    },
-    {
       "id": "DRIVER-MY-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
@@ -80,25 +75,30 @@
       "label": "economic"
     },
     {
-      "id": "SIGNAL-MY-Геополитич",
+      "id": "DRIVER-MY-climate",
+      "type": "Driver",
+      "label": "climate"
+    },
+    {
+      "id": "SIGNAL-MY-Руководств",
       "type": "Signal",
-      "label": "Геополитический процесс — Юго-Восточная ",
-      "severity": 62,
-      "domain": "geopolitical"
+      "label": "Руководство трейдера по навигации в бюдж",
+      "severity": 46,
+      "domain": "economic"
     },
     {
       "id": "SIGNAL-MY-Экономичес",
       "type": "Signal",
       "label": "Экономический сигнал — Малайзия",
-      "severity": 45,
+      "severity": 46,
       "domain": "economic"
     },
     {
-      "id": "SIGNAL-MY-Отключение",
+      "id": "SIGNAL-MY-Геополитич",
       "type": "Signal",
-      "label": "Отключение интернета — Малайзия",
-      "severity": 56,
-      "domain": "technology"
+      "label": "Геополитический процесс — Юго-Восточная ",
+      "severity": 62,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-MY",
       "to": "DOMAIN-MY-economic",
       "type": "CORRELATES",
-      "weight": 0.45
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-MY",
@@ -124,7 +124,7 @@
       "from": "COUNTRY-MY",
       "to": "DOMAIN-MY-technology",
       "type": "CORRELATES",
-      "weight": 0.56
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-MY",
@@ -145,12 +145,6 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-MY-technology",
-      "to": "COUNTRY-MY",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
       "from": "DRIVER-MY-geopolitical",
       "to": "COUNTRY-MY",
       "type": "CAUSES",
@@ -158,6 +152,12 @@
     },
     {
       "from": "DRIVER-MY-economic",
+      "to": "COUNTRY-MY",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DRIVER-MY-climate",
       "to": "COUNTRY-MY",
       "type": "CAUSES",
       "weight": 0.8
@@ -184,22 +184,22 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-MY-Геополитич",
-      "to": "DOMAIN-MY-geopolitical",
+      "from": "SIGNAL-MY-Руководств",
+      "to": "DOMAIN-MY-economic",
       "type": "AMPLIFIES",
-      "weight": 0.62
+      "weight": 0.46
     },
     {
       "from": "SIGNAL-MY-Экономичес",
       "to": "DOMAIN-MY-economic",
       "type": "AMPLIFIES",
-      "weight": 0.45
+      "weight": 0.46
     },
     {
-      "from": "SIGNAL-MY-Отключение",
-      "to": "DOMAIN-MY-technology",
+      "from": "SIGNAL-MY-Геополитич",
+      "to": "DOMAIN-MY-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.56
+      "weight": 0.62
     }
   ]
 }
