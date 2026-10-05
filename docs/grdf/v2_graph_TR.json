@@ -2,7 +2,7 @@
   "country": "TR",
   "date": "2026-10-05",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-05T07:08:08.602580+00:00",
+  "generated_at": "2026-10-05T07:27:23.596603+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -33,7 +33,7 @@
       "id": "DOMAIN-TR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 32,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -47,7 +47,7 @@
       "id": "DOMAIN-TR-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
+      "score": 48,
       "trend": "stable"
     },
     {
@@ -65,11 +65,6 @@
       "trend": "stable"
     },
     {
-      "id": "DRIVER-TR-Economic",
-      "type": "Driver",
-      "label": "Economic"
-    },
-    {
       "id": "DRIVER-TR-Geopolitical",
       "type": "Driver",
       "label": "Geopolitical"
@@ -80,24 +75,29 @@
       "label": "Economic"
     },
     {
+      "id": "DRIVER-TR-Economic",
+      "type": "Driver",
+      "label": "Economic"
+    },
+    {
+      "id": "SIGNAL-TR-Неожиданны",
+      "type": "Signal",
+      "label": "Неожиданный замедление — инфляция в Турц",
+      "severity": 48,
+      "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-TR-30-летняя_",
+      "type": "Signal",
+      "label": "30-летняя женщина родила мальчика в туал",
+      "severity": 48,
+      "domain": "social"
+    },
+    {
       "id": "SIGNAL-TR-Турецкая_л",
       "type": "Signal",
       "label": "Турецкая лира упала до нового историческ",
       "severity": 46,
-      "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-TR-COP31_долж",
-      "type": "Signal",
-      "label": "COP31 должна ставить более амбициозные ц",
-      "severity": 32,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-TR-Инфляция_ц",
-      "type": "Signal",
-      "label": "Инфляция цен производителей в Турции в м",
-      "severity": 32,
       "domain": "economic"
     }
   ],
@@ -118,7 +118,7 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-climate",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-TR",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-TR",
@@ -145,13 +145,13 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-TR-Economic",
+      "from": "DRIVER-TR-Geopolitical",
       "to": "COUNTRY-TR",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-TR-Geopolitical",
+      "from": "DRIVER-TR-Economic",
       "to": "COUNTRY-TR",
       "type": "CAUSES",
       "weight": 0.8
@@ -184,22 +184,22 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-TR-Неожиданны",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.48
+    },
+    {
+      "from": "SIGNAL-TR-30-летняя_",
+      "to": "DOMAIN-TR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.48
+    },
+    {
       "from": "SIGNAL-TR-Турецкая_л",
       "to": "DOMAIN-TR-economic",
       "type": "AMPLIFIES",
       "weight": 0.46
-    },
-    {
-      "from": "SIGNAL-TR-COP31_долж",
-      "to": "DOMAIN-TR-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.32
-    },
-    {
-      "from": "SIGNAL-TR-Инфляция_ц",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.32
     }
   ]
 }
