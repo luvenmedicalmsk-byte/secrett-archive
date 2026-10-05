@@ -2,9 +2,9 @@
   "country": "VN",
   "date": "2026-10-05",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-05T18:08:14.314134+00:00",
+  "generated_at": "2026-10-05T18:42:40.031406+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-VN",
@@ -19,50 +19,50 @@
       "id": "DOMAIN-VN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 46,
-      "trend": "down"
+      "score": 38,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-VN-economic",
       "type": "Domain",
       "label": "economic",
       "score": 50,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-VN-climate",
       "type": "Domain",
       "label": "climate",
       "score": 79,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-VN-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-VN-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
-      "trend": "down"
+      "score": 34,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-VN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-VN-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-VN-climate",
@@ -80,6 +80,13 @@
       "label": "geopolitical"
     },
     {
+      "id": "SIGNAL-VN-Российские",
+      "type": "Signal",
+      "label": "Российские семьи начали массово заболева",
+      "severity": 34,
+      "domain": "social"
+    },
+    {
       "id": "SIGNAL-VN-Наводнение",
       "type": "Signal",
       "label": "Наводнение — Вьетнам",
@@ -92,13 +99,6 @@
       "label": "Топливный рынок — Вьетнам",
       "severity": 50,
       "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-VN-Геополитич",
-      "type": "Signal",
-      "label": "Геополитический процесс — Юго-Восточная ",
-      "severity": 62,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.46
+      "weight": 0.38
     },
     {
       "from": "COUNTRY-VN",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-VN",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-VN-climate",
-      "to": "DOMAIN-VN-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-VN-infrastructure",
-      "to": "DOMAIN-VN-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-VN-economic",
-      "to": "DOMAIN-VN-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-VN-climate",
       "to": "DOMAIN-VN-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,25 +184,31 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-VN-geopolitical",
+      "from": "DOMAIN-VN-climate",
       "to": "DOMAIN-VN-infrastructure",
       "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
+      "weight": 0.82,
+      "lag_days": 7
     },
     {
       "from": "DOMAIN-VN-infrastructure",
       "to": "DOMAIN-VN-economic",
       "type": "AMPLIFIES",
-      "weight": 0.72,
+      "weight": 0.68,
       "lag_days": 14
     },
     {
       "from": "DOMAIN-VN-economic",
+      "to": "DOMAIN-VN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-VN-Российские",
       "to": "DOMAIN-VN-social",
       "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
+      "weight": 0.34
     },
     {
       "from": "SIGNAL-VN-Наводнение",
@@ -236,12 +221,6 @@
       "to": "DOMAIN-VN-economic",
       "type": "AMPLIFIES",
       "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-VN-Геополитич",
-      "to": "DOMAIN-VN-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.62
     }
   ]
 }
