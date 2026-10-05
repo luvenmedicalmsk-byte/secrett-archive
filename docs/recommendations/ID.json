@@ -2,19 +2,19 @@
   "country": "ID",
   "country_name": "Индонезия",
   "date": "2026-10-05",
-  "generated_at": "2026-10-05T11:08:47.701738+00:00",
-  "srs_score": 66,
+  "generated_at": "2026-10-05T11:27:28.195640+00:00",
+  "srs_score": 60,
   "srs_grade": "C",
   "srs_grade_ru": "Умеренная",
   "priority_risks": [
     {
-      "id": "R-04",
-      "category": "STRATEGIC",
-      "title": "Множественные диагностические проблемы: 3",
-      "detail": "Обнаружено 3 диагностических предупреждений в стратегическом слое. Возможны системные ошибки.",
-      "metric_value": 3,
-      "urgency": 64,
-      "source": "diagnostics"
+      "id": "R-02",
+      "category": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+10/день",
+      "detail": "Скорость ухудшения 10 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "metric_value": 10,
+      "urgency": 90,
+      "source": "delta"
     },
     {
       "id": "R-05",
@@ -24,18 +24,9 @@
       "metric_value": 2,
       "urgency": 54,
       "source": "decision_bias"
-    },
-    {
-      "id": "R-06",
-      "category": "WATCHLIST",
-      "title": "Дрейф уверенности прогнозов: -9.0pt",
-      "detail": "Уверенность прогнозной системы дрейфует на -9.0pt от краткосрочного к долгосрочному горизонту.",
-      "metric_value": -9,
-      "urgency": 48,
-      "source": "confidence_drift"
     }
   ],
-  "risk_count": 3,
+  "risk_count": 2,
   "priority_opportunities": [
     {
       "id": "O-05",
@@ -45,18 +36,9 @@
       "metric_value": 7,
       "impact": 70,
       "source": "high_alpha"
-    },
-    {
-      "id": "O-06",
-      "category": "INFORMATIONAL",
-      "title": "Стратегия результативна: 65.0% успех",
-      "detail": "Исторический процент успешных решений 65.0% — выше среднего. Поддерживать текущий подход.",
-      "metric_value": 65.0,
-      "impact": 65,
-      "source": "decision_success"
     }
   ],
-  "opp_count": 2,
+  "opp_count": 1,
   "emerging_shifts": [
     {
       "type": "improving",
@@ -66,21 +48,21 @@
     },
     {
       "type": "horizon_shift",
-      "title": "Горизонт d30 точнее, d7 — слабее",
-      "detail": "Система прогнозирует надёжнее на горизонте d30 и менее точно на d7. Скорректируйте горизонты планирования.",
+      "title": "Горизонт d30 точнее, d90 — слабее",
+      "detail": "Система прогнозирует надёжнее на горизонте d30 и менее точно на d90. Скорректируйте горизонты планирования.",
       "direction": "neutral"
     }
   ],
   "forecast_degradation": [
     {
       "type": "horizon_degradation",
-      "horizon": "d7",
-      "detail": "Худший горизонт прогноза: d7. Увеличить частоту переобучения на этом горизонте."
+      "horizon": "d90",
+      "detail": "Худший горизонт прогноза: d90. Увеличить частоту переобучения на этом горизонте."
     },
     {
       "type": "confidence_drift",
       "horizon": "long",
-      "detail": "Дрейф уверенности -9.0pt указывает на деградацию долгосрочных прогнозов."
+      "detail": "Дрейф уверенности -7.0pt указывает на деградацию долгосрочных прогнозов."
     }
   ],
   "forecast_improvement": [
@@ -92,10 +74,19 @@
     {
       "type": "alpha_positive",
       "horizon": "all",
-      "detail": "Положительная альфа стратегии (+1.82pt) — решения превосходят пассивный базис."
+      "detail": "Положительная альфа стратегии (+1.72pt) — решения превосходят пассивный базис."
     }
   ],
   "ranked_recommendations": [
+    {
+      "id": "R-02",
+      "type": "risk",
+      "priority": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+10/день",
+      "rec_score": 61,
+      "metric_value": 10,
+      "source": "delta"
+    },
     {
       "id": "O-05",
       "type": "opportunity",
@@ -106,24 +97,6 @@
       "source": "high_alpha"
     },
     {
-      "id": "O-06",
-      "type": "opportunity",
-      "priority": "INFORMATIONAL",
-      "title": "Стратегия результативна: 65.0% успех",
-      "rec_score": 49,
-      "metric_value": 65.0,
-      "source": "decision_success"
-    },
-    {
-      "id": "R-04",
-      "type": "risk",
-      "priority": "STRATEGIC",
-      "title": "Множественные диагностические проблемы: 3",
-      "rec_score": 47,
-      "metric_value": 3,
-      "source": "diagnostics"
-    },
-    {
       "id": "R-05",
       "type": "risk",
       "priority": "STRATEGIC",
@@ -131,25 +104,16 @@
       "rec_score": 42,
       "metric_value": 2,
       "source": "decision_bias"
-    },
-    {
-      "id": "R-06",
-      "type": "risk",
-      "priority": "WATCHLIST",
-      "title": "Дрейф уверенности прогнозов: -9.0pt",
-      "rec_score": 39,
-      "metric_value": -9,
-      "source": "confidence_drift"
     }
   ],
   "action_plan": [
     {
-      "id": "ACT-R-04",
-      "priority": "STRATEGIC",
-      "action": "Реагировать: Множественные диагностические проблемы: 3",
-      "rationale": "Обнаружено 3 диагностических предупреждений в стратегическом слое. Возможны системные ошибки.",
-      "deadline": "72 часа",
-      "source": "diagnostics"
+      "id": "ACT-R-02",
+      "priority": "CRITICAL",
+      "action": "Реагировать: Быстрая эскалация: Δ=+10/день",
+      "rationale": "Скорость ухудшения 10 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "deadline": "немедленно",
+      "source": "delta"
     },
     {
       "id": "ACT-R-05",
@@ -166,29 +130,13 @@
       "rationale": "Идентифицировано 7 действий с альфой выше порога. Их приоритизация улучшит стратегический результат.",
       "deadline": "7 дней",
       "source": "high_alpha"
-    },
-    {
-      "id": "ACT-O-06",
-      "priority": "STRATEGIC",
-      "action": "Использовать: Стратегия результативна: 65.0% успех",
-      "rationale": "Исторический процент успешных решений 65.0% — выше среднего. Поддерживать текущий подход.",
-      "deadline": "30 дней",
-      "source": "decision_success"
-    },
-    {
-      "id": "ACT-R-06",
-      "priority": "WATCHLIST",
-      "action": "Реагировать: Дрейф уверенности прогнозов: -9.0pt",
-      "rationale": "Уверенность прогнозной системы дрейфует на -9.0pt от краткосрочного к долгосрочному горизонту.",
-      "deadline": "7 дней",
-      "source": "confidence_drift"
     }
   ],
-  "action_count": 5,
+  "action_count": 3,
   "rec_diagnostics": [],
   "diagnostic_count": 0,
-  "risk_score": 52,
-  "delta": 0,
+  "risk_score": 62,
+  "delta": 10,
   "domain": "climate",
   "history_depth": 130
 }
