@@ -15973,6 +15973,13 @@ _NOTAM_PAGE_CAP = 500          # потолок страниц на один FIR
 # Решение Мии: раз в час. Выдержка 55 минут, а не 60, чтобы прогон, стартующий
 # на минуту раньше предыдущего, не пропускал свой час.
 _NOTAM_MIN_INTERVAL_MIN = 55
+# ОТСТУП ПРИ ИСЧЕРПАНИИ ТОКЕНОВ. 05.10.2026. Отказ toomanytokens держится 36
+# часов: токены не истекают сами, и пул не разгружается. Пока он держится,
+# ежечасная попытка ничего не меняет, но раз в час бьётся в сервер авторизации
+# провайдера, который прямо сейчас оценивает проект. Поэтому на ЭТОТ отказ
+# отступаем до шести часов. Любая другая причина отказа отступа не получает:
+# сетевой сбой или разовая ошибка должны пробоваться через час, как раньше.
+_NOTAM_BACKOFF_MIN = 360
 
 
 def _notam_packed_dt(f):
@@ -16160,6 +16167,22 @@ def fetch_notam():
                 return items
         except (ValueError, TypeError):
             pass          # нечитаемая дата не должна останавливать источник
+    # Отступ при исчерпании токенов: ждём дольше, пока провайдер не освободит пул.
+    try:
+        _sp = OUTPUT_PATH.parent / "_notam_shadow.json"
+        if _sp.exists():
+            _sr = json.loads(_sp.read_text(encoding="utf-8"))
+            if 'toomanytokens' in str(_sr.get('причина') or ''):
+                _st = datetime.fromisoformat(str(_sr.get('дата')).replace('Z', '+00:00'))
+                if _st.tzinfo is None:
+                    _st = _st.replace(tzinfo=timezone.utc)
+                _sa = (datetime.now(timezone.utc) - _st).total_seconds() / 60.0
+                if 0 <= _sa < _NOTAM_BACKOFF_MIN:
+                    print('  [SKIP] NOTAM: пул токенов исчерпан, отступ, прошло %d мин' % _sa,
+                          file=sys.stderr)
+                    return items
+    except (ValueError, TypeError, OSError):
+        pass          # нечитаемый отчёт не должен останавливать источник
     tok = _notam_token()
     if not tok:
         print("  [SKIP] NOTAM: токена нет", file=sys.stderr)
