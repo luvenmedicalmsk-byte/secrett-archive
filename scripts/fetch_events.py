@@ -5749,6 +5749,49 @@ def _is_digest(blob):
     return sum(1 for _r in _DIGEST_RUBRICS if _r in _t) >= 4
 
 
+# ═══ RETRO_TITLE 06.10.2026 · ГОДОВЩИНА И НАКОПЛЕННЫЙ ИТОГ ═══════════════════
+# «Израиль сообщает о 1 318 погибших с 7 октября после атаки ХАМАСа» стояло
+# на 88: disaster_scale прочитал накопленный за три года итог как масштаб
+# нового бедствия. «Через 3 года после 7 октября Израиль награждает офицера…»
+# стояло на 76. Обе записи это ретроспектива к годовщине, а не сигнал.
+# Признак только по заголовку: «через N лет после», «N лет спустя»,
+# «годовщина»; либо счёт погибших «с <дата>», где дата приходится на прошлый
+# год или раньше («с 7 октября» 6 октября означает прошлый год).
+# Замер: 7149 уникальных записей всех снимков, срабатываний 2, обе эти.
+# Откат: RETRO_TITLE = False.
+RETRO_TITLE = True
+_RT_N = r'(?:\d+|два|две|три|четыре|пять|шесть|семь|восемь|девять|десять|полтора)'
+_RT_ANNIV = re.compile(
+    r'через\s+' + _RT_N + r'\s+(?:год|лет)\w*\s+после|'
+    + _RT_N + r'\s+(?:год|лет)\w*\s+спустя|годовщин\w*', re.I)
+_RT_MON = {'января': 1, 'февраля': 2, 'марта': 3, 'апреля': 4, 'мая': 5, 'июня': 6,
+           'июля': 7, 'августа': 8, 'сентября': 9, 'октября': 10, 'ноября': 11, 'декабря': 12}
+_RT_SINCE = re.compile(r'\bс\s+(\d{1,2})\s+(' + '|'.join(_RT_MON) + r')(?:\s+(20\d\d))?', re.I)
+_RT_SINCE_Y = re.compile(r'\b(?:с|со)\s+(20\d\d)\s+год|за\s+' + _RT_N
+                         + r'\s+(?:год|лет)\w*\s+(?:войн|конфликт)', re.I)
+_RT_TOLL = re.compile(r'погиб|убит|жертв|раненых|потер[ья]', re.I)
+
+
+def _is_retro_title(title):
+    t = (title or '').lower()
+    if _RT_ANNIV.search(t):
+        return True
+    if not _RT_TOLL.search(t):
+        return False
+    from datetime import datetime as _dt, timezone as _tz
+    _n = _dt.now(_tz.utc)
+    m = _RT_SINCE.search(t)
+    if m:
+        dd, mon, yy = int(m.group(1)), _RT_MON[m.group(2).lower()], m.group(3)
+        if yy:
+            return int(yy) < _n.year
+        return (mon, dd) > (_n.month, _n.day)
+    my = _RT_SINCE_Y.search(t)
+    if my:
+        return (not my.group(1)) or int(my.group(1)) < _n.year
+    return False
+
+
 def _is_news_not_signal(title, summary, domain):
     """S43: «сигнал или шум» на финальном (русском) тексте. True = новость, не сигнал.
     Дубль логики S41/S42, но на переведённом тексте -- ловит мусор из англоязычных
@@ -5760,6 +5803,8 @@ def _is_news_not_signal(title, summary, domain):
     # «нхлебные»: 31 событие отсеивалось как спортивная новость, включая
     # данные ЦБ по инфляции и сообщения о конфликте.
     if _is_digest(b) or _is_agency_pr(b) or _is_personal_story(title):
+        return True
+    if RETRO_TITLE and _is_retro_title(title):
         return True
     _fluff = _fluff_short(b) or any(w in b for w in ('плей-офф','лига чемпионов','чемпионат мира','олимпийск иг','кубок гагарина','knicks',
         'футбол','хоккей','баскетбол','теннис','волейбол','олимпиад','чемпионат','матч ','сборная по','по футболу','турнир',
