@@ -2,7 +2,7 @@
   "country": "US",
   "date": "2026-10-06",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-06T13:09:09.378706+00:00",
+  "generated_at": "2026-10-06T13:27:18.040404+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-US",
       "type": "Country",
       "label": "US",
-      "score": 70,
+      "score": 71,
       "props": {
-        "risk_score": 70
+        "risk_score": 71
       }
     },
     {
@@ -20,14 +20,14 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 62,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 63,
-      "trend": "stable"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-climate",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-US-Мексика_пр",
+      "type": "Signal",
+      "label": "Мексика прекратила поставки топлива на К",
+      "severity": 62,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-US-США_вводят",
       "type": "Signal",
       "label": "США вводят санкции против членов банды T",
@@ -91,13 +98,6 @@
       "type": "Signal",
       "label": "Потребительская уверенность в США: Обвал",
       "severity": 60,
-      "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-US-Растущие_ц",
-      "type": "Signal",
-      "label": "Растущие цены на жилье в США определенно",
-      "severity": 63,
       "domain": "economic"
     }
   ],
@@ -112,7 +112,7 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-economic",
       "type": "CORRELATES",
-      "weight": 0.63
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-US",
@@ -184,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-US-Мексика_пр",
+      "to": "DOMAIN-US-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.62
+    },
+    {
       "from": "SIGNAL-US-США_вводят",
       "to": "DOMAIN-US-geopolitical",
       "type": "AMPLIFIES",
@@ -194,12 +200,6 @@
       "to": "DOMAIN-US-economic",
       "type": "AMPLIFIES",
       "weight": 0.6
-    },
-    {
-      "from": "SIGNAL-US-Растущие_ц",
-      "to": "DOMAIN-US-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.63
     }
   ]
 }
