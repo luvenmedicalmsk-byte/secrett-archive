@@ -23647,10 +23647,74 @@ def _wmd_declaration(e):
     return bool(_WMD_DECL.search(t))
 
 
+# SCALE_STATEMENT 06.10.2026. Пересчёт по масштабу поднимал до 62 записи,
+# где масштабно только содержание чужих слов, а SIC при этом ставил EVENT
+# (событием считается сам факт заявления):
+#   «Трамп вновь заявил, что украинские удары по НПЗ - причина роста цен»
+#   «Блокировка группировки «Рассвет» приведёт к космической войне - Медведев»
+#   «По данным Fars, Иран намерен расширить радиус действия ракет»
+# Заявление, намерение и предложение сохраняют повышение только до 52
+# («Средний»). Совершённое действие в заголовке («провели испытания»,
+# «подписал», «ввёл») правило не трогает. Декларация о применении ОМП
+# (S50) по-прежнему не ограничивается.
+# Откат: SCALE_STATEMENT = False.
+SCALE_STATEMENT = True
+_SCALE_STATEMENT_CAP = 52
+_STMT_HEAD = re.compile(
+    r'заявил\w*|заявлени\w*|считает|назвал\w*|пригрозил\w*|предупредил\w*|призвал\w*|'
+    r'по\s+данным|намерен\w*|планиру\w*|\bможет\b|\bмогут\b|привед[её]т|предложил\w*', re.I)
+# Атрибуция в конце заголовка: «... - Медведев». БЕЗ re.I: с ним класс
+# заглавных букв ловил бы любое слово, и «KillSec - 16-летний подросток»
+# читалось бы как цитата.
+_STMT_ATTR = re.compile(r'\s[—–]\s*[А-ЯЁA-Z][\w.]+(?:\s+[А-ЯЁA-Z][\w.]+)?\s*$')
+_STMT_CARRIER = re.compile(_WMD_CARRIER, re.I)
+_STMT_DONE = re.compile(
+    r'провел\w*|провёл|нанес\w*|нанёс|вв[её]л\w*|подписал\w*|утвердил\w*|запустил\w*|'
+    r'испытал\w*|атаковал\w*|уничтожил\w*|сбил\w*|погиб\w*|ранен\w*|задержал\w*', re.I)
+
+
+def _scale_statement(events):
+    """Ограничивает повышение по масштабу у заявлений и намерений до 52."""
+    if not SCALE_STATEMENT:
+        return 0
+    n = 0
+    for e in events:
+        if e.get('sic_class') not in (None, '', 'EVENT'):
+            continue                       # не-события обрабатывает _scale_revert
+        if e.get('domain') != 'geopolitics':
+            continue                       # замер: в экономике и кибере ложные срабатывания
+        head = e.get('title') or ''
+        if not (_STMT_HEAD.search(head) or _STMT_ATTR.search(head)) or _STMT_DONE.search(head):
+            continue
+        if _STMT_CARRIER.search(head):
+            continue                       # ядерное оружие в заголовке: масштаб оставляем
+        if _wmd_declaration(e):
+            continue
+        d = e.get('severity_decision')
+        if not isinstance(d, dict):
+            continue
+        for a in (d.get('applied') or []):
+            if a.get('rule') != 'scale_recompute' or not isinstance(a.get('from'), (int, float)):
+                continue
+            if not isinstance(a.get('delta'), (int, float)) or a['delta'] <= 0:
+                continue
+            cur = e.get('severity') or 0
+            back = max(a['from'], min(cur, _SCALE_STATEMENT_CAP))
+            if back < cur:
+                e['severity'] = _sev_log(e, 'scale_statement', cur, back,
+                                         'заявление или намерение: масштаб сохранён до 52', 'penalty')
+                n += 1
+            break
+    if n:
+        print('  [SCALE-STATEMENT] ограничено: %d' % n, file=sys.stderr)
+    return n
+
+
 def _scale_revert(events):
     """Снимает повышение веса от scale_recompute у записей-не-событий."""
     if not SCALE_REVERT:
         return 0
+    _scale_statement(events)
     n = 0
     tot = 0
     for e in events:
