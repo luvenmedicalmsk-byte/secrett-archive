@@ -2,67 +2,67 @@
   "country": "GB",
   "date": "2026-10-06",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-06T13:48:07.573117+00:00",
+  "generated_at": "2026-10-06T14:07:54.211228+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-GB",
       "type": "Country",
       "label": "GB",
-      "score": 50,
+      "score": 53,
       "props": {
-        "risk_score": 50
+        "risk_score": 53
       }
     },
     {
       "id": "DOMAIN-GB-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 53,
-      "trend": "down"
+      "score": 5,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-GB-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 34,
-      "trend": "down"
+      "score": 53,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-climate",
       "type": "Domain",
       "label": "climate",
       "score": 5,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-GB-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 58,
-      "trend": "down"
+      "score": 5,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-GB-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-GB-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-GB-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-GB-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-GB-Задержанны",
+      "type": "Signal",
+      "label": "Задержанных около британской авиабазы Фэ",
+      "severity": 53,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-GB-Самолёт_из",
       "type": "Signal",
       "label": "Самолёт из Лондона в Чикаго подал сигнал",
@@ -87,18 +94,11 @@
       "domain": "economic"
     },
     {
-      "id": "SIGNAL-GB-Технологич",
+      "id": "SIGNAL-GB-Средняя_ст",
       "type": "Signal",
-      "label": "Технологический сигнал — Великобритания",
-      "severity": 58,
-      "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-GB-Геополитич",
-      "type": "Signal",
-      "label": "Геополитический процесс — Великобритания",
-      "severity": 53,
-      "domain": "geopolitical"
+      "label": "Средняя ставка ночного индекса стерлинго",
+      "severity": 32,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.53
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-economic",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.53
     },
     {
       "from": "COUNTRY-GB",
@@ -124,7 +124,7 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-technology",
       "type": "CORRELATES",
-      "weight": 0.58
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-GB",
@@ -163,25 +163,10 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-GB-geopolitical",
-      "to": "DOMAIN-GB-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-GB-infrastructure",
+      "from": "SIGNAL-GB-Задержанны",
       "to": "DOMAIN-GB-economic",
       "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-GB-economic",
-      "to": "DOMAIN-GB-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
+      "weight": 0.53
     },
     {
       "from": "SIGNAL-GB-Самолёт_из",
@@ -190,16 +175,10 @@
       "weight": 0.34
     },
     {
-      "from": "SIGNAL-GB-Технологич",
-      "to": "DOMAIN-GB-technology",
+      "from": "SIGNAL-GB-Средняя_ст",
+      "to": "DOMAIN-GB-economic",
       "type": "AMPLIFIES",
-      "weight": 0.58
-    },
-    {
-      "from": "SIGNAL-GB-Геополитич",
-      "to": "DOMAIN-GB-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.53
+      "weight": 0.32
     }
   ]
 }
