@@ -21377,6 +21377,15 @@ def _build_history_map(cache):
 
 
 _SQ_DEESCAL = re.compile(r'заверш|закончил|перемири|прекращени\w* огня|соглашени|вывод войск|деэскал|мирн\w* (?:договор|соглашени)', re.I)
+# OPINION_FACT 06.10.2026. Штраф за источник мнений (-15%) снимался и с
+# сообщений о жертвах: «Не менее 8 погибших - авиаудары Мьянмы» от The
+# Diplomat стояло на 51 вместо 61. Издание публикует мнения, но эта запись
+# сообщает факт. Если в ЗАГОЛОВКЕ названы жертвы или удар, штраф не
+# применяется; пометка analysis при этом остаётся.
+# Замер: на ленте штраф у 4 записей, освобождается 1 (Мьянма); в корпусе
+# 5406 записей штрафов нет.
+_SQ_OPINION_FACT = re.compile(
+    r'погиб\w*|убит\w*|ранен\w*|жертв\w*|авиаудар\w*|обстрел\w*|нанесл\w+\s+удар|уничтожен\w*', re.I)
 _SQ_OPINION = {'Foreign Policy','Foreign Affairs','The Economist','The Diplomat','Project Syndicate','War on the Rocks','Carnegie','Atlantic Council','Bloomberg Opinion'}
 _SQ_NONSYS = re.compile(r'дерево упал|перформанс|арт-акци|выпал из окна|школьн\w*\s+\w*автобус|упал\w*\s+на\s+\w*автобус', re.I)
 
@@ -21485,7 +21494,7 @@ def _signal_quality_pass(events):
                     e['escalation_level'] = 'none'
                 if e.get('source') in _SQ_OPINION:
                     e['analysis'] = True
-                    if isinstance(e.get('severity'), (int, float)):
+                    if isinstance(e.get('severity'), (int, float)) and not _SQ_OPINION_FACT.search(tl):
                         e['severity'] = _sev_log(e, 'opinion_penalty', e['severity'], int(e['severity'] * 0.85), 'источник публикует мнения', 'penalty')
                     if e.get('signal_type') == 'baseline':
                         e['signal_type'] = 'analysis'
