@@ -1,18 +1,18 @@
 {
-  "generated": "2026-10-06T18:44:30Z",
+  "generated": "2026-10-06T19:24:57Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
-    "PASS_FACT": 914,
-    "DENY_COMMENTARY": 266,
+    "PASS_FACT": 916,
+    "DENY_COMMENTARY": 265,
     "DENY_STATE_ONLY": 3,
-    "DENY_BACKGROUND": 7,
+    "DENY_BACKGROUND": 8,
     "DENY_FEATURE": 2,
     "UNMATCHED": 2
   },
   "kpi": {
-    "processes_total": 1194,
-    "matched": 1192,
+    "processes_total": 1196,
+    "matched": 1194,
     "unmatched": 2,
     "coverage_pct": 99.8,
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
@@ -25,49 +25,46 @@
   "shadow_reliability": {
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
-      "processes": 421,
-      "sample": 1254,
+      "processes": 425,
+      "sample": 1263,
       "agreement_pct": 88.7,
       "decision_agreement_pct": 88.8,
-      "critical_errors": 141,
+      "critical_errors": 142,
       "truth_ratio_pct": 98.8,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 124,
+        "FACT_EVENT→COMMENTARY": 126,
         "COMMENTARY→FACT_EVENT": 10,
         "FACT_EVENT→STATE_CONFIRMATION": 2,
         "STATE_CONFIRMATION→FACT_EVENT": 4,
-        "BACKGROUND→COMMENTARY": 1,
-        "FACT_EVENT→REPORT": 1
+        "BACKGROUND→COMMENTARY": 1
       }
     },
     "historical": {
-      "processes": 1194,
-      "sample": 2720,
-      "agreement_pct": 90.3,
+      "processes": 1196,
+      "sample": 2726,
+      "agreement_pct": 90.2,
       "decision_agreement_pct": 90.3,
-      "critical_errors": 263,
+      "critical_errors": 264,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 218,
+        "FACT_EVENT→COMMENTARY": 220,
         "COMMENTARY→FACT_EVENT": 37,
         "FACT_EVENT→STATE_CONFIRMATION": 2,
         "STATE_CONFIRMATION→FACT_EVENT": 5,
         "BACKGROUND→COMMENTARY": 1,
-        "FACT_EVENT→REPORT": 1,
         "FEATURE→COMMENTARY": 1
       }
     },
     "events_stream": {
-      "sample": 363,
-      "agreement_pct": 87.6,
-      "decision_agreement_pct": 87.9,
+      "sample": 366,
+      "agreement_pct": 87.7,
+      "decision_agreement_pct": 88.0,
       "critical_errors": 44,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 40,
+        "FACT_EVENT→COMMENTARY": 41,
         "STATE_CONFIRMATION→FACT_EVENT": 1,
         "COMMENTARY→FACT_EVENT": 1,
         "BACKGROUND→COMMENTARY": 1,
-        "FACT_EVENT→STATE_CONFIRMATION": 1,
-        "FACT_EVENT→REPORT": 1
+        "FACT_EVENT→STATE_CONFIRMATION": 1
       }
     },
     "gate": {
@@ -79,13 +76,17 @@
   },
   "class_source": {
     "shadow_title_only": 84,
-    "evidence_sic": 2720
+    "evidence_sic": 2726
   },
   "truth_ratio_pct": 97.0,
   "domain_statistics": {
     "geopolitics": {
-      "pass": 246,
+      "pass": 248,
       "deny": 80
+    },
+    "social": {
+      "pass": 88,
+      "deny": 32
     },
     "climate": {
       "pass": 297,
@@ -95,10 +96,6 @@
     "economy": {
       "pass": 178,
       "deny": 100
-    },
-    "social": {
-      "pass": 88,
-      "deny": 32
     },
     "technology": {
       "pass": 105,
@@ -195,21 +192,6 @@
       },
       "status": "active",
       "causal_links": 1,
-      "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "econ-топливныйр-саудовск-2ddd",
-      "title": "Топливный рынок — Саудовская Аравия",
-      "domain": "economy",
-      "severity": 68,
-      "pressure": 50,
-      "first_seen": "2026-07-28",
-      "evidence_count": 2,
-      "evidence_classes": {
-        "COMMENTARY": 2
-      },
-      "status": "active",
-      "causal_links": 2,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -784,21 +766,6 @@
       "reason": "no FACT_EVENT in evidence"
     },
     {
-      "signal_id": "clim-климатичес-глобальн-11a0",
-      "title": "Климатический сигнал",
-      "domain": "climate",
-      "severity": 55,
-      "pressure": 62,
-      "first_seen": "2026-07-01",
-      "evidence_count": 9,
-      "evidence_classes": {
-        "COMMENTARY": 9
-      },
-      "status": "active",
-      "causal_links": 2,
-      "reason": "no FACT_EVENT in evidence"
-    },
-    {
       "signal_id": "soci-социальный-мьянма-5f49",
       "title": "Миграционная политика — Мьянма",
       "domain": "social",
@@ -1007,17 +974,40 @@
       "status": "fading",
       "causal_links": 6,
       "reason": "no FACT_EVENT in evidence"
+    },
+    {
+      "signal_id": "econ-топливныйр-красноем-4b2c",
+      "title": "Топливный рынок — Красное море",
+      "domain": "economy",
+      "severity": 53,
+      "pressure": 43,
+      "first_seen": "2026-09-24",
+      "evidence_count": 1,
+      "evidence_classes": {
+        "COMMENTARY": 1
+      },
+      "status": "dormant",
+      "causal_links": 4,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
+      "signal_id": "econ-топливныйр-чёрноемо-1853",
+      "title": "Инфляция — Чёрное море",
+      "domain": "economy",
+      "severity": 53,
+      "pressure": 35,
+      "first_seen": "2026-07-17",
+      "evidence_count": 1,
+      "evidence_classes": {
+        "COMMENTARY": 1
+      },
+      "status": "dormant",
+      "causal_links": 1,
+      "reason": "no FACT_EVENT in evidence"
     }
   ],
   "report_log": [],
   "severity_delta": [
-    {
-      "signal_id": "clim-климатичес-глобальн-11a0",
-      "domain": "climate",
-      "legacy": 55,
-      "shadow": null,
-      "delta": null
-    },
     {
       "signal_id": "econ-инфляция-сша-8a37",
       "domain": "economy",
@@ -1040,6 +1030,13 @@
       "delta": null
     },
     {
+      "signal_id": "clim-климатичес-глобальн-11a0",
+      "domain": "climate",
+      "legacy": 37,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "geop-геополитич-сша-a91e",
       "domain": "geopolitics",
       "legacy": 47,
@@ -1050,13 +1047,6 @@
       "signal_id": "econ-экономичес-глобальн-ec76",
       "domain": "economy",
       "legacy": 65,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "econ-топливныйр-саудовск-2ddd",
-      "domain": "economy",
-      "legacy": 68,
       "shadow": null,
       "delta": null
     },
@@ -1194,16 +1184,16 @@
       "delta": null
     },
     {
-      "signal_id": "econ-экономичес-великобр-7ffe",
+      "signal_id": "econ-валютныйры-сша-a47b",
       "domain": "economy",
-      "legacy": 32,
+      "legacy": 50,
       "shadow": null,
       "delta": null
     },
     {
-      "signal_id": "econ-валютныйры-сша-a47b",
+      "signal_id": "econ-экономичес-великобр-7ffe",
       "domain": "economy",
-      "legacy": 50,
+      "legacy": 46,
       "shadow": null,
       "delta": null
     },
@@ -1236,13 +1226,6 @@
       "delta": null
     },
     {
-      "signal_id": "tech-технологич-индия-a870",
-      "domain": "technology",
-      "legacy": 32,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "econ-транспортн-глобальн-6436",
       "domain": "economy",
       "legacy": 59,
@@ -1267,6 +1250,13 @@
       "signal_id": "geop-санкционно-грузия-c0ee",
       "domain": "geopolitics",
       "legacy": 46,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "tech-технологич-индия-a870",
+      "domain": "technology",
+      "legacy": 32,
       "shadow": null,
       "delta": null
     },
@@ -1425,17 +1415,24 @@
       "delta": null
     },
     {
-      "signal_id": "soci-социальный-пакистан-b6db",
+      "signal_id": "soci-социальный-турция-a69f",
       "domain": "social",
-      "legacy": 59,
+      "legacy": 34,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "clim-климатичес-китай-6396",
+      "domain": "climate",
+      "legacy": 32,
       "shadow": null,
       "delta": null
     }
   ],
   "deny_by_severity": {
     "0-30": 1,
-    "31-50": 203,
-    "51-70": 68,
+    "31-50": 205,
+    "51-70": 66,
     "71-90": 6,
     "91-100": 0
   }
