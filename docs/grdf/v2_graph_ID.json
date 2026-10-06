@@ -2,7 +2,7 @@
   "country": "ID",
   "date": "2026-10-06",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-06T16:50:58.958796+00:00",
+  "generated_at": "2026-10-06T17:07:32.792357+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,59 +10,59 @@
       "id": "COUNTRY-ID",
       "type": "Country",
       "label": "ID",
-      "score": 52,
+      "score": 62,
       "props": {
-        "risk_score": 52
+        "risk_score": 62
       }
     },
     {
       "id": "DOMAIN-ID-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 32,
-      "trend": "down"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 44,
-      "trend": "down"
+      "score": 62,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DRIVER-ID-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-ID-‘Возможно,",
+      "type": "Signal",
+      "label": "‘Возможно, местное вымирание’: Борьба за",
+      "severity": 62,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-ID-Поскольку_",
       "type": "Signal",
       "label": "Поскольку вырубка лесов растет, Индонези",
@@ -92,13 +99,6 @@
       "label": "Индонезийцы, сталкивающиеся с пожарами Э",
       "severity": 32,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-ID-Индонезия_",
-      "type": "Signal",
-      "label": "Индонезия угрожает тюремным сроком за не",
-      "severity": 32,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-ID",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-climate",
       "type": "CORRELATES",
-      "weight": 0.44
+      "weight": 0.62
     },
     {
       "from": "COUNTRY-ID",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-ID-climate",
-      "to": "DOMAIN-ID-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-ID-economic",
-      "to": "DOMAIN-ID-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-ID-social",
-      "to": "DOMAIN-ID-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-ID-climate",
       "to": "DOMAIN-ID-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -205,6 +184,33 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-ID-climate",
+      "to": "DOMAIN-ID-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ID-economic",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-ID-social",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "SIGNAL-ID-‘Возможно,",
+      "to": "DOMAIN-ID-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.62
+    },
+    {
       "from": "SIGNAL-ID-Поскольку_",
       "to": "DOMAIN-ID-climate",
       "type": "AMPLIFIES",
@@ -213,12 +219,6 @@
     {
       "from": "SIGNAL-ID-Индонезийц",
       "to": "DOMAIN-ID-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.32
-    },
-    {
-      "from": "SIGNAL-ID-Индонезия_",
-      "to": "DOMAIN-ID-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.32
     }
