@@ -22398,6 +22398,80 @@ def _mil_escalation(events):
     return n
 
 
+# ХВОСТОВЫЕ ОГРАНИЧЕНИЯ (06.10.2026, аудит геополитики и социума).
+# Записи, которые словарь веса поднимает лексикой, хотя ущерба нет:
+#   78  «Германия выделяет Украине более €1 млрд военной и энергетической
+#        помощи» (тот же пакет у Мерца стоит 61)
+#   66  «Польша требует извинений от Такера Карлсона»
+#   53  «Академик РАН … умер на 92-м году жизни» (геополитика по слову
+#        «ракетных двигателей»)
+#   53  «Мощный взрыв падающего метеора над столицей Ливии» (геополитика)
+#   54  «Три человека пострадали после столкновения машины с медведем»
+#   60  «Санитарный контроль в надёжных руках» (рубрика)
+# Все правила читают ЗАГОЛОВОК и не срабатывают при ударе или жертвах.
+# Проход идемпотентен: ограничение сверху, повторный прогон не меняет вес.
+# Откат: TAIL_CAPS = False.
+TAIL_CAPS = True
+_TC_KINETIC = re.compile(
+    r'поразил\w*|удар\w*\s+по|обстрел\w*|бпла|беспилотн\w*|авиаудар\w*|погиб\w*|убит\w*|'
+    r'ранен\w*|взрыв\w*\s+(?:в|на|у)\s|теракт\w*', re.I)
+_TC_AID = re.compile(
+    r'(?:выделя\w*|выделил\w*|предостав\w*|передаст|переда[её]т|одобрил\w*|объявил\w*\s+о\s+(?:\w+\s+){0,2}(?:пакет|предоставлени))'
+    r'[^.]{0,80}(?:помощ\w*|пакет\w*)|пакет\w*\s+(?:\w+\s+)?помощ\w*', re.I)
+_TC_AID_CAP = 58
+_TC_RHETORIC = re.compile(
+    r'(?:требу\w*|потребовал\w*)\s+(?:\w+\s+)?извинен\w*|осудил\w*\s+(?:высказыван|заявлен|слова|замечани)|'
+    r'возмущ\w+\s+(?:высказыван|заявлен|замечани)|высмеял\w*', re.I)
+_TC_RHETORIC_CAP = 45
+_TC_OBIT = re.compile(r'(?:умер\w*|скончал\w*)\s+на\s+\d+[-\w]*\s+году\s+жизни', re.I)
+_TC_OBIT_STOP = re.compile(r'погиб|убит|удар|взрыв|теракт|авари|катастроф|убийств|отравлен', re.I)
+_TC_SKY = re.compile(r'метеор\w*|болид\w*|метеорит\w*', re.I)
+_TC_ANIMAL_ROAD = re.compile(
+    r'столкновени\w*\s+(?:\w+\s+){0,2}с\s+(?:медвед|лос[её]?м|лосем|олен|кабан|коров)\w*|'
+    r'сбил\w*\s+(?:медвед|лося|оленя|кабана|корову)', re.I)
+_TC_PR = re.compile(r'в\s+надё?е?жных\s+руках|лица\s+роспотребнадзор|вы\s+спрашивали', re.I)
+_TC_LOCAL_CAP = 30
+
+
+def _tail_caps(events):
+    """Ограничение веса записей без ущерба: помощь, риторика, некролог, метеор, курьёзы."""
+    if not TAIL_CAPS:
+        return 0
+    n = 0
+    def _cap(e, to, rule, why, hide=False):
+        nonlocal n
+        cur = e.get('severity') or 0
+        if cur > to:
+            e['severity'] = _sev_log(e, rule, cur, to, why, 'penalty')
+            n += 1
+        if hide and e.get('feed_visible') is not False:
+            e['feed_visible'] = False
+    for e in events:
+        head = e.get('title') or ''
+        kin = _TC_KINETIC.search(head)
+        dom = e.get('domain')
+        if dom == 'geopolitics' and not kin and _TC_AID.search(head):
+            _cap(e, _TC_AID_CAP, 'aid_cap', 'пакет помощи: решение без ущерба, не выше 58')
+        elif dom == 'geopolitics' and not kin and _TC_RHETORIC.search(head):
+            _cap(e, _TC_RHETORIC_CAP, 'rhetoric_cap', 'требование извинений и оценка высказываний, не выше 45')
+        if _TC_OBIT.search(head) and not _TC_OBIT_STOP.search(head):
+            _cap(e, _TC_LOCAL_CAP, 'obituary_cap', 'некролог: смерть в преклонном возрасте не сигнал', hide=True)
+        if _TC_ANIMAL_ROAD.search(head):
+            _cap(e, _TC_LOCAL_CAP, 'local_cap', 'ДТП с животным: локальный случай', hide=True)
+        if _TC_PR.search(head):
+            _cap(e, _TC_LOCAL_CAP + 10, 'pr_cap', 'рубрика ведомства, не сигнал', hide=True)
+        if dom in ('geopolitics', 'social', 'economy') and _TC_SKY.search(head) and not kin:
+            e['domain'] = 'climate'
+            _dd = e.get('domain_decision')
+            if isinstance(_dd, dict):
+                _dd.setdefault('trace', []).append({'stage': 'TAIL_SKY', 'to': 'climate'})
+                _dd['final'] = 'climate'; _dd['published'] = 'climate'; _dd['last_writer'] = 'TAIL_SKY'
+            n += 1
+    if n:
+        print('  [TAIL-CAPS] изменено записей: %d' % n, file=sys.stderr)
+    return n
+
+
 def _sic_ext_kind(t):
     if _SIC_EXT_AUTH.search(t):
         return 'AUTH'
@@ -24668,6 +24742,7 @@ def save_enriched(events, previous_snapshot=None):
                 # уже поставлен по числу пострадавших, второй надбавки не
                 # получает (проверка severity_hs_shadow внутри).
                 _econ_scale(enriched["events"])
+                _tail_caps(enriched["events"])
                 _zone_place(enriched["events"])
                 # Предупреждения метятся ПЕРВЫМИ: иначе запись, отнесённая
                 # интентом к комментарию, уходит в контекст и на вкладку
