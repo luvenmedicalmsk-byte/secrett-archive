@@ -22311,6 +22311,55 @@ _SIC_EXT_MODAL = re.compile(
     r'рискует|вероятно|по\s+мнению|не\s+исключ\w*|грозит)', re.I)
 
 
+# ВОЕННАЯ ЭСКАЛАЦИЯ БЕЗ УДАРА (06.10.2026). Словарь тяжести построен на
+# ударах и жертвах, и шаг к войне без выстрела весил как рядовая новость:
+#   48  «Турция, Пакистан и Саудовская Аравия развернут военные силы на
+#        саудовской территории»
+#   47  «Израильская армия получила приказ готовиться к полномасштабным
+#        боевым действиям»
+#   34  «Эстония перебрасывает элитные войска ближе к границе с Россией»
+# Развёртывание и переброска войск, приказ готовиться к боевым действиям,
+# активация оборонного пакта и объявленная мобилизация получают пол 62
+# («Повышенный») и класс события. Прогноз и обсуждение («может развернуть»,
+# «рассматривает переброску») пола не получают.
+MIL_ESCAL = True   # откат: False
+_MIL_ESCAL_FLOOR = 62
+_MIL_ESCAL = re.compile(
+    r'развер(?:нут|нул|тыва|тыв)\w*\s+(?:\w+\s+){0,3}(?:войск|военн\w+\s+сил|вооружённ\w+\s+сил|контингент|бригад|дивизи)'
+    r'|перебр[ао]с\w*\s+(?:\w+\s+){0,3}(?:войск|сил[аыу]?\b|подразделени|бригад|дивизи|«?элитн)'
+    r'|(?:получил\w*|отдал\w*|издал\w*)\s+приказ\w*\s+(?:\w+\s+){0,2}готовит\w*\s+к\s+(?:\w+\s+){0,2}(?:боев|войн|наступлен|операци)'
+    r'|(?:активир|задейств)\w*\s+(?:\w+\s+){0,2}(?:оборонн\w+\s+пакт|пакт\w*\s+о\s+(?:взаимн|коллективн)|стать\w+\s+5)'
+    r'|мобилизаци\w*\s+(?:объявл|начал)|объявил\w*\s+(?:\w+\s+)?мобилизаци', re.I)
+_MIL_ESCAL_MODAL = re.compile(
+    r'мож\w+|могут|мог\s|планиру\w*|намерен\w*|рассматрива\w*|не\s+исключ\w*|предлож\w*|'
+    r'призыва\w*|обсужда\w*|угрожа\w*|пригрози\w*', re.I)
+_AIRPORT_STOP = re.compile(
+    r'аэропорт\w*\s+(?:[«"]?\w+[»"]?\s+){0,2}(?:временно\s+)?(?:не\s+обслуживает|закрыт|приостановил\w*|прекратил\w*)'
+    r'|(?:закрыт\w*|приостановлен\w*)\s+(?:работ\w+\s+)?аэропорт', re.I)
+
+
+def _mil_escalation(events):
+    """Пол 62 для военной эскалации без удара. Только geopolitics, только по заголовку."""
+    if not MIL_ESCAL:
+        return 0
+    n = 0
+    for e in events:
+        if e.get('domain') != 'geopolitics':
+            continue
+        head = (e.get('title') or '').lower()
+        if not _MIL_ESCAL.search(head) or _MIL_ESCAL_MODAL.search(head):
+            continue
+        cur = e.get('severity') or 0
+        if cur >= _MIL_ESCAL_FLOOR:
+            continue
+        e['severity'] = _sev_log(e, 'mil_escalation', cur, _MIL_ESCAL_FLOOR,
+                                 'военная эскалация без удара: развёртывание, переброска, приказ, пакт', 'boost')
+        n += 1
+    if n:
+        print('  [MIL-ESCAL] поднято до %d: %d' % (_MIL_ESCAL_FLOOR, n), file=sys.stderr)
+    return n
+
+
 def _sic_ext_kind(t):
     if _SIC_EXT_AUTH.search(t):
         return 'AUTH'
@@ -22319,6 +22368,13 @@ def _sic_ext_kind(t):
     # и было скрыто из ленты.
     if EPI_GRADE and _EPI_GRAVE.search(t) and not _SIC_EXT_MODAL.search(t):
         return 'EPI'
+    # Военная эскалация и закрытие аэропорта (06.10.2026): «Эстония перебрасывает
+    # элитные войска к границе с Россией» и «Внуково временно не обслуживает
+    # рейсы» стояли контекстом и были скрыты из ленты.
+    if MIL_ESCAL and _MIL_ESCAL.search(t) and not _MIL_ESCAL_MODAL.search(t):
+        return 'MIL'
+    if MIL_ESCAL and _AIRPORT_STOP.search(t):
+        return 'AIRPORT'
     if _SIC_EXT_LOSS.search(t) and _SIC_EXT_MEAS.search(t) and not _SIC_EXT_MODAL.search(t):
         return 'MEASURE'
     if _SIC_EXT_EXTREMUM.search(t) and not _SIC_EXT_MODAL.search(t):
@@ -22730,7 +22786,12 @@ _SW_STRIKE = re.compile(
 _SW_LIFE = re.compile(
     r'без\s+(?:свет|вод|тепл|электр)|перебо\w+\s+со?\s+свет|обесточ|'
     r'электроснабж|водоснабж|теплоснабж|отоплен|подстанц|энергоблок|'
-    r'\bтэц\b|\bгрэс\b|\bнпз\b|электростанц|водоканал', re.I)
+    r'\bтэц\b|\bгрэс\b|\bнпз\b|электростанц|водоканал|'
+    # Нефтяная инфраструктура по названию оператора (06.10.2026): «объект
+    # компании Aramco» не содержит слова НПЗ.
+    r'aramco|нефтеперерабатыва\w*|нефтепромысл\w*|нефтяно\w*\s+терминал', re.I)
+_SW_CLAIM = re.compile(
+    r'заявил\w*,?\s+что\s+(?:\w+\s+){0,2}(?:нанесл|атаковал|поразил|уничтожил|сбил)', re.I)
 _SW_CAPITAL = re.compile(r'\bкиев|\bмоскв|столиц', re.I)
 _SW_MASS = re.compile(r'массирован|комбинирован|сери\w+\s+удар|крупнейш|самы\w+\s+масс', re.I)
 _SW_MANY = re.compile(r'в\s+ряде\s+(?:районов|городов|регионов)|нескольк\w+\s+(?:городов|регионов|областей)|'
@@ -23458,7 +23519,11 @@ def _strike_weight(events):
         if not _SW_STRIKE.search(blob):
             continue
         # Признаки масштаба читаются только у совершённого действия.
-        if _SW_TALK.search(head) or not _SW_ACTED.search(head):
+        # SW_CLAIM 06.10.2026. «Хуситы заявили, что нанесли удар баллистическими
+        # ракетами по объекту Aramco» отсекалось словом «заявили»: глагол речи
+        # здесь вводит заявление об уже совершённом ударе, а не намерение.
+        _claim = _SW_CLAIM.search(head)
+        if (_SW_TALK.search(head) and not _claim) or not _SW_ACTED.search(head):
             continue
         hits, add = [], 0
         for name, rx, w in _SW_RULES:
@@ -24495,6 +24560,7 @@ def save_enriched(events, previous_snapshot=None):
                 # полным независимо от того, попала запись в ленту или нет.
                 _scale_revert(enriched["events"])
                 _strike_weight(enriched["events"])
+                _mil_escalation(enriched["events"])
                 _human_scale(enriched["events"])
                 # Экономический масштаб после человеческого: запись, где вес
                 # уже поставлен по числу пострадавших, второй надбавки не
