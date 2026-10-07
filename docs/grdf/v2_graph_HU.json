@@ -2,7 +2,7 @@
   "country": "HU",
   "date": "2026-10-07",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-07T07:46:44.754240+00:00",
+  "generated_at": "2026-10-07T08:07:39.248652+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -47,7 +47,7 @@
       "id": "DOMAIN-HU-social",
       "type": "Domain",
       "label": "social",
-      "score": 49,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -75,16 +75,9 @@
       "label": "climate"
     },
     {
-      "id": "DRIVER-HU-social",
+      "id": "DRIVER-HU-geopolitical",
       "type": "Driver",
-      "label": "social"
-    },
-    {
-      "id": "SIGNAL-HU-Депутаты_Е",
-      "type": "Signal",
-      "label": "Депутаты Европарламента предупреждают о ",
-      "severity": 49,
-      "domain": "social"
+      "label": "geopolitical"
     },
     {
       "id": "SIGNAL-HU-Технологич",
@@ -97,6 +90,13 @@
       "id": "SIGNAL-HU-Водный_деф",
       "type": "Signal",
       "label": "Водный дефицит — Венгрия",
+      "severity": 62,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-HU-Тепловая_в",
+      "type": "Signal",
+      "label": "Тепловая волна — Венгрия",
       "severity": 62,
       "domain": "climate"
     }
@@ -130,7 +130,7 @@
       "from": "COUNTRY-HU",
       "to": "DOMAIN-HU-social",
       "type": "CORRELATES",
-      "weight": 0.49
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-HU",
@@ -157,7 +157,7 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-HU-social",
+      "from": "DRIVER-HU-geopolitical",
       "to": "COUNTRY-HU",
       "type": "CAUSES",
       "weight": 0.8
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-HU-geopolitical",
-      "to": "DOMAIN-HU-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-HU-infrastructure",
-      "to": "DOMAIN-HU-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-HU-economic",
-      "to": "DOMAIN-HU-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "DOMAIN-HU-climate",
       "to": "DOMAIN-HU-infrastructure",
       "type": "ESCALATES",
@@ -226,10 +205,25 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-HU-Депутаты_Е",
+      "from": "DOMAIN-HU-geopolitical",
+      "to": "DOMAIN-HU-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-HU-infrastructure",
+      "to": "DOMAIN-HU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-HU-economic",
       "to": "DOMAIN-HU-social",
       "type": "AMPLIFIES",
-      "weight": 0.49
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-HU-Технологич",
@@ -239,6 +233,12 @@
     },
     {
       "from": "SIGNAL-HU-Водный_деф",
+      "to": "DOMAIN-HU-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.62
+    },
+    {
+      "from": "SIGNAL-HU-Тепловая_в",
       "to": "DOMAIN-HU-climate",
       "type": "AMPLIFIES",
       "weight": 0.62

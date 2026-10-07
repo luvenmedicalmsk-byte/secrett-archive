@@ -2,7 +2,7 @@
   "country": "TW",
   "date": "2026-10-07",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-07T07:46:44.745396+00:00",
+  "generated_at": "2026-10-07T08:07:39.241876+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-TW-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 50,
       "trend": "stable"
     },
     {
@@ -70,14 +70,21 @@
       "label": "climate"
     },
     {
+      "id": "DRIVER-TW-economic",
+      "type": "Driver",
+      "label": "economic"
+    },
+    {
       "id": "DRIVER-TW-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-TW-economic",
-      "type": "Driver",
-      "label": "economic"
+      "id": "SIGNAL-TW-Уровень_ин",
+      "type": "Signal",
+      "label": "Уровень инфляции на Тайване в месяц",
+      "severity": 32,
+      "domain": "economic"
     },
     {
       "id": "SIGNAL-TW-Наводнение",
@@ -92,13 +99,6 @@
       "label": "Санкционное давление — Восточная Азия",
       "severity": 65,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-TW-Шторм_—_Во",
-      "type": "Signal",
-      "label": "Шторм — Восточная Азия",
-      "severity": 62,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-TW",
       "to": "DOMAIN-TW-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-TW",
@@ -151,37 +151,16 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-TW-geopolitical",
-      "to": "COUNTRY-TW",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
       "from": "DRIVER-TW-economic",
       "to": "COUNTRY-TW",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-TW-climate",
-      "to": "DOMAIN-TW-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-TW-economic",
-      "to": "DOMAIN-TW-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-TW-social",
-      "to": "DOMAIN-TW-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
+      "from": "DRIVER-TW-geopolitical",
+      "to": "COUNTRY-TW",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DOMAIN-TW-climate",
@@ -205,6 +184,27 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-TW-climate",
+      "to": "DOMAIN-TW-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-TW-economic",
+      "to": "DOMAIN-TW-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-TW-social",
+      "to": "DOMAIN-TW-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-TW-geopolitical",
       "to": "DOMAIN-TW-infrastructure",
       "type": "ESCALATES",
@@ -226,6 +226,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-TW-Уровень_ин",
+      "to": "DOMAIN-TW-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.32
+    },
+    {
       "from": "SIGNAL-TW-Наводнение",
       "to": "DOMAIN-TW-climate",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-TW-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.65
-    },
-    {
-      "from": "SIGNAL-TW-Шторм_—_Во",
-      "to": "DOMAIN-TW-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.62
     }
   ]
 }
