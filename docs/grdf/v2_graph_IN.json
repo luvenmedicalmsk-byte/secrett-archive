@@ -2,24 +2,24 @@
   "country": "IN",
   "date": "2026-10-07",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-07T15:26:57.454167+00:00",
+  "generated_at": "2026-10-07T15:37:14.317765+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-IN",
       "type": "Country",
       "label": "IN",
-      "score": 91,
+      "score": 92,
       "props": {
-        "risk_score": 91
+        "risk_score": 92
       }
     },
     {
       "id": "DOMAIN-IN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
+      "score": 65,
       "trend": "up"
     },
     {
@@ -27,7 +27,7 @@
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IN-climate",
@@ -41,7 +41,7 @@
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IN-social",
@@ -55,14 +55,14 @@
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IN-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-IN-Geopolitical",
@@ -94,11 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-IN-Наводнение",
+      "id": "SIGNAL-IN-Ребёнок_по",
       "type": "Signal",
-      "label": "Наводнение: India",
-      "severity": 57,
-      "domain": "climate"
+      "label": "Ребёнок погиб, как минимум 8 человек пос",
+      "severity": 65,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.65
     },
     {
       "from": "COUNTRY-IN",
@@ -184,6 +184,27 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-IN-geopolitical",
+      "to": "DOMAIN-IN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IN-infrastructure",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "DOMAIN-IN-climate",
       "to": "DOMAIN-IN-infrastructure",
       "type": "ESCALATES",
@@ -217,10 +238,10 @@
       "weight": 0.77
     },
     {
-      "from": "SIGNAL-IN-Наводнение",
-      "to": "DOMAIN-IN-climate",
+      "from": "SIGNAL-IN-Ребёнок_по",
+      "to": "DOMAIN-IN-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.57
+      "weight": 0.65
     }
   ]
 }
