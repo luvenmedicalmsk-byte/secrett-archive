@@ -2,9 +2,9 @@
   "country": "GE",
   "date": "2026-10-07",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-07T08:07:39.257470+00:00",
+  "generated_at": "2026-10-07T08:27:44.697288+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-GE",
@@ -33,7 +33,7 @@
       "id": "DOMAIN-GE-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 46,
       "trend": "stable"
     },
     {
@@ -75,9 +75,16 @@
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-GE-economic",
+      "id": "DRIVER-GE-climate",
       "type": "Driver",
-      "label": "economic"
+      "label": "climate"
+    },
+    {
+      "id": "SIGNAL-GE-Бесконечна",
+      "type": "Signal",
+      "label": "Бесконечная борьба за защиту самого попу",
+      "severity": 32,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-GE-Санкционно",
@@ -90,13 +97,6 @@
       "id": "SIGNAL-GE-Авиационны",
       "type": "Signal",
       "label": "Авиационный инцидент — Грузия",
-      "severity": 62,
-      "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-GE-Энергоблэк",
-      "type": "Signal",
-      "label": "Энергоблэкаут — Грузия",
       "severity": 62,
       "domain": "technology"
     }
@@ -118,7 +118,7 @@
       "from": "COUNTRY-GE",
       "to": "DOMAIN-GE-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-GE",
@@ -157,10 +157,52 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-GE-economic",
+      "from": "DRIVER-GE-climate",
       "to": "COUNTRY-GE",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-GE-climate",
+      "to": "DOMAIN-GE-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-GE-economic",
+      "to": "DOMAIN-GE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-GE-social",
+      "to": "DOMAIN-GE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-GE-climate",
+      "to": "DOMAIN-GE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-GE-infrastructure",
+      "to": "DOMAIN-GE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GE-economic",
+      "to": "DOMAIN-GE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-GE-geopolitical",
@@ -184,6 +226,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-GE-Бесконечна",
+      "to": "DOMAIN-GE-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.32
+    },
+    {
       "from": "SIGNAL-GE-Санкционно",
       "to": "DOMAIN-GE-geopolitical",
       "type": "AMPLIFIES",
@@ -191,12 +239,6 @@
     },
     {
       "from": "SIGNAL-GE-Авиационны",
-      "to": "DOMAIN-GE-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.62
-    },
-    {
-      "from": "SIGNAL-GE-Энергоблэк",
       "to": "DOMAIN-GE-technology",
       "type": "AMPLIFIES",
       "weight": 0.62
