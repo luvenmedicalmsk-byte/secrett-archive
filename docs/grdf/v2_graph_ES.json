@@ -2,7 +2,7 @@
   "country": "ES",
   "date": "2026-10-07",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-07T06:21:13.130891+00:00",
+  "generated_at": "2026-10-07T06:30:37.369044+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-ES-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 45,
+      "score": 50,
       "trend": "stable"
     },
     {
@@ -47,7 +47,7 @@
       "id": "DOMAIN-ES-social",
       "type": "Domain",
       "label": "social",
-      "score": 55,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-ES-В_Барселон",
+      "type": "Signal",
+      "label": "В Барселоне протест из-за жилищного криз",
+      "severity": 50,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-ES-Премьер_Ис",
       "type": "Signal",
       "label": "Премьер Испании Педро Санчес объявил о п",
@@ -92,13 +99,6 @@
       "label": "Пожарная активность — Испания",
       "severity": 96,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-ES-Социальный",
-      "type": "Signal",
-      "label": "Социальный процесс — Испания",
-      "severity": 55,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-economic",
       "type": "CORRELATES",
-      "weight": 0.45
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-ES",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-social",
       "type": "CORRELATES",
-      "weight": 0.55
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-ES",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-ES-climate",
-      "to": "DOMAIN-ES-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-ES-economic",
-      "to": "DOMAIN-ES-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-ES-social",
-      "to": "DOMAIN-ES-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-ES-climate",
       "to": "DOMAIN-ES-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -203,6 +182,27 @@
       "type": "AMPLIFIES",
       "weight": 0.55,
       "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ES-climate",
+      "to": "DOMAIN-ES-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ES-economic",
+      "to": "DOMAIN-ES-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-ES-social",
+      "to": "DOMAIN-ES-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "DOMAIN-ES-geopolitical",
@@ -226,6 +226,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-ES-В_Барселон",
+      "to": "DOMAIN-ES-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
       "from": "SIGNAL-ES-Премьер_Ис",
       "to": "DOMAIN-ES-economic",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-ES-climate",
       "type": "AMPLIFIES",
       "weight": 0.96
-    },
-    {
-      "from": "SIGNAL-ES-Социальный",
-      "to": "DOMAIN-ES-social",
-      "type": "AMPLIFIES",
-      "weight": 0.55
     }
   ]
 }
