@@ -113,7 +113,38 @@ def role_of(gc):
     return 'mention'
 
 
+# ═══ ADR-284B · EU = БЛОК (07.10.2026) ═══════════════════════════════════════
+# Контракт решает семантику EU сам; downstream её не пересчитывает (NO
+# RECALCULATION). Место-EU -> зона 'eu' (zone_type='bloc', region «ЕС»,
+# центроид Брюсселя, precision centroid). EU не является страной ни в каком
+# поле контракта: убирается из impact_countries и actor_country.
+# ОТКАТ: GEO_EU_BLOC = False.
+GEO_EU_BLOC = True
+_EU_CODES = ('EU',)
+
+
+def _eu_bloc(gc):
+    if not GEO_EU_BLOC or gc is None:
+        return gc
+    import geo_contract as _g
+    imp = tuple(c for c in (gc.impact_countries or ()) if c not in _EU_CODES)
+    act = None if gc.actor_country in _EU_CODES else gc.actor_country
+    if gc.country in _EU_CODES:
+        name, ztype, zlat, zlng, _zb = _g.ZONES['eu']
+        return _g.GeoContract(None, None, name, zlat, zlng, imp, act, 'centroid',
+                              gc.confidence, gc.source, process_place_type='zone',
+                              zone_id='eu', zone_type=ztype)
+    if imp != tuple(gc.impact_countries or ()) or act != gc.actor_country:
+        from dataclasses import replace as _rp
+        return _rp(gc, impact_countries=imp, actor_country=act)
+    return gc
+
+
 def resolve_geo_v2(title, summary='', raw_coords=None, domain=None):
+    return _eu_bloc(_resolve_geo_v2_core(title, summary, raw_coords, domain))
+
+
+def _resolve_geo_v2_core(title, summary='', raw_coords=None, domain=None):
     """G1 Resolver v2. Phase 2: Lever A (LRR). Legacy — единственный источник координат
     и контракта; v2 лишь демотирует accusative-назначение при конкурирующем локативе."""
     if LEVER_TR and str(domain or '') in LEVER_TR_DOMAINS:

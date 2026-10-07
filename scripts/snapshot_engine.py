@@ -412,14 +412,10 @@ def _tag_event_countries(events: list[dict]) -> None:
     # масштаба события, не код страны: как значение country он создавал
     # псевдострану в атрибуции.
     _NON_COUNTRY = {"EU", "UN", "GLOBAL"}  # GEO-fix: блоки/организации/масштаб — не страны
+    # ADR-284B (07.10.2026): страновые поля здесь больше не пересчитываются
+    # (NO RECALCULATION). EU как блок решается в Geo-контракте; UN и GLOBAL
+    # контракт страной не выдаёт. Прежний фильтр _NON_COUNTRY удалён.
     for ev in events:
-        for _k in ("mentioned_countries", "impact_countries", "country_codes"):
-            if ev.get(_k):
-                ev[_k] = [c for c in ev[_k] if c not in _NON_COUNTRY]
-        if ev.get("primary_country") in _NON_COUNTRY:
-            ev["primary_country"] = ""
-        if ev.get("event_country") in _NON_COUNTRY:
-            ev["event_country"] = ""
         gc = ev.get("geo") or {}
         if gc:
             actor = gc.get("actor_country") or ""

@@ -141,6 +141,11 @@ def _process_place(e):
         return {'place': place, 'iso': iso, 'macro': _macro_for(place, iso), 'via': 'geo_contract'}
     if ppt == 'zone':
         zn = g.get('region') or 'Акватория'
+        # ADR-284B: блок (EU) — зона без ISO, но макрозона считается как у
+        # прежнего странового места «ЕС», иначе процессы «ЕС» выпадают из
+        # макрогруппировки «Европа».
+        if g.get('zone_type') == 'bloc':
+            return {'place': zn, 'iso': None, 'macro': _macro_for(zn, None), 'via': 'geo_contract'}
         return {'place': zn, 'iso': None, 'macro': zn, 'via': 'geo_zone'}
     if ppt == 'global':
         return {'place': 'Глобально', 'iso': None, 'macro': 'Глобально', 'via': 'geo_global'}
@@ -3626,7 +3631,9 @@ def _build_one_signal(evs, meta=None):
     # Только ISO2: у части событий в поле места лежит название макрозоны
     # («Европа»), а не код страны. Макрозона — это geo_spread и process_place,
     # в списке стран ей не место.
-    _iso2=lambda c: bool(c) and len(str(c))==2 and str(c).isupper() and str(c).isalpha()
+    # ADR-284B: только ASCII. Кириллическое «ЕС» (region зоны-блока) проходило
+    # как ISO2: len 2, isupper, isalpha.
+    _iso2=lambda c: bool(c) and len(str(c))==2 and str(c).isascii() and str(c).isupper() and str(c).isalpha()
     _place_cc=sorted({c for c in ((x.get('country_code') or x.get('primary_country')
                                    or x.get('event_country') or '') for x in evs) if _iso2(c)})
     # Место процесса известно, а ни у одного свидетельства кода страны нет:
