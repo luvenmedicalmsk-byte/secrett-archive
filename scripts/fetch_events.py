@@ -22555,6 +22555,10 @@ def _sic_ext_kind(t):
 def _sic_class(title, summary='', canon_type=None):
     """SIC-интент. READ-ONLY чистая функция. → EVENT|PROCESS|COMMENTARY|FEATURE|BACKGROUND."""
     low = ((title or '') + ' ' + (summary or '')).strip().lower()
+    # S53: системный макросигнал института — событие до любых веток речи и
+    # предупреждения («заявила глава МВФ», «может превысить»).
+    if _macro_sys(title, summary):
+        return 'EVENT'
     if 'санкц' in low:
         if _SIC_SANCT_ACT.search(low) and not _SIC_SANCT_TALK.search(low):
             return 'EVENT'
@@ -22757,8 +22761,6 @@ def _sic_class(title, summary='', canon_type=None):
         b = _base()
         if b in ('EVENT', 'PROCESS'):
             return b
-    if _macro_sys(title, summary):
-        return 'EVENT'
     # 4) аналитическое предупреждение о возможном будущем (нет accomplished, нет операц.алерта) → COMMENTARY.
     if SIC_EVENT_EXT:
         _xk = _sic_ext_kind(_title_low) if not _SIC_WARN.search(_title_low) else None
