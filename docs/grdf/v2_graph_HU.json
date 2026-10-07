@@ -2,9 +2,9 @@
   "country": "HU",
   "date": "2026-10-07",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-07T09:12:09.712358+00:00",
+  "generated_at": "2026-10-07T09:47:27.856813+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-HU",
@@ -26,14 +26,14 @@
       "id": "DOMAIN-HU-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
+      "score": 5,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-HU-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 62,
       "trend": "stable"
     },
     {
@@ -47,7 +47,7 @@
       "id": "DOMAIN-HU-social",
       "type": "Domain",
       "label": "social",
-      "score": 49,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -70,9 +70,9 @@
       "label": "technology"
     },
     {
-      "id": "DRIVER-HU-social",
+      "id": "DRIVER-HU-climate",
       "type": "Driver",
-      "label": "social"
+      "label": "climate"
     },
     {
       "id": "DRIVER-HU-geopolitical",
@@ -80,25 +80,25 @@
       "label": "geopolitical"
     },
     {
-      "id": "SIGNAL-HU-Депутаты_Е",
-      "type": "Signal",
-      "label": "Депутаты Европарламента предупреждают о ",
-      "severity": 49,
-      "domain": "social"
-    },
-    {
-      "id": "SIGNAL-HU-Дефлятор_В",
-      "type": "Signal",
-      "label": "Дефлятор ВВП Венгрии",
-      "severity": 32,
-      "domain": "economic"
-    },
-    {
       "id": "SIGNAL-HU-Технологич",
       "type": "Signal",
       "label": "Технологический сигнал — Венгрия",
       "severity": 64,
       "domain": "technology"
+    },
+    {
+      "id": "SIGNAL-HU-Водный_деф",
+      "type": "Signal",
+      "label": "Водный дефицит — Венгрия",
+      "severity": 62,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-HU-Тепловая_в",
+      "type": "Signal",
+      "label": "Тепловая волна — Венгрия",
+      "severity": 62,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -112,13 +112,13 @@
       "from": "COUNTRY-HU",
       "to": "DOMAIN-HU-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-HU",
       "to": "DOMAIN-HU-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.62
     },
     {
       "from": "COUNTRY-HU",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-HU",
       "to": "DOMAIN-HU-social",
       "type": "CORRELATES",
-      "weight": 0.49
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-HU",
@@ -151,7 +151,7 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-HU-social",
+      "from": "DRIVER-HU-climate",
       "to": "COUNTRY-HU",
       "type": "CAUSES",
       "weight": 0.8
@@ -161,6 +161,48 @@
       "to": "COUNTRY-HU",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-HU-climate",
+      "to": "DOMAIN-HU-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-HU-economic",
+      "to": "DOMAIN-HU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-HU-social",
+      "to": "DOMAIN-HU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-HU-climate",
+      "to": "DOMAIN-HU-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-HU-infrastructure",
+      "to": "DOMAIN-HU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-HU-economic",
+      "to": "DOMAIN-HU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-HU-geopolitical",
@@ -184,22 +226,22 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-HU-Депутаты_Е",
-      "to": "DOMAIN-HU-social",
-      "type": "AMPLIFIES",
-      "weight": 0.49
-    },
-    {
-      "from": "SIGNAL-HU-Дефлятор_В",
-      "to": "DOMAIN-HU-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.32
-    },
-    {
       "from": "SIGNAL-HU-Технологич",
       "to": "DOMAIN-HU-technology",
       "type": "AMPLIFIES",
       "weight": 0.64
+    },
+    {
+      "from": "SIGNAL-HU-Водный_деф",
+      "to": "DOMAIN-HU-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.62
+    },
+    {
+      "from": "SIGNAL-HU-Тепловая_в",
+      "to": "DOMAIN-HU-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.62
     }
   ]
 }

@@ -2,13 +2,13 @@
   "country": "ES",
   "country_name": "Испания",
   "date": "2026-10-07",
-  "generated_at": "2026-10-07T09:12:06.013854+00:00",
-  "optimization_score": 58,
+  "generated_at": "2026-10-07T09:47:24.971098+00:00",
+  "optimization_score": 57,
   "grade": "D",
   "grade_ru": "Слабая",
-  "decision_score_base": 48,
-  "predicted_next_score": 42,
-  "optimization_gain": -6.2,
+  "decision_score_base": 47,
+  "predicted_next_score": 39,
+  "optimization_gain": -8.4,
   "high_alpha_actions": [
     {
       "action_id": "CA-01",
@@ -58,6 +58,30 @@
   ],
   "underperforming": [
     {
+      "action_id": "C-01",
+      "sample_count": 51,
+      "win_rate": 58.8,
+      "avg_alpha": -0.61,
+      "avg_efficiency": 54.7,
+      "action_score": 40,
+      "reasons": [
+        "отрицательная альфа (-0.61)"
+      ],
+      "recommendation": "reduce_weight"
+    },
+    {
+      "action_id": "C-02",
+      "sample_count": 51,
+      "win_rate": 58.8,
+      "avg_alpha": -0.61,
+      "avg_efficiency": 54.7,
+      "action_score": 40,
+      "reasons": [
+        "отрицательная альфа (-0.61)"
+      ],
+      "recommendation": "reduce_weight"
+    },
+    {
       "action_id": "CR-09",
       "sample_count": 4,
       "win_rate": 25.0,
@@ -73,6 +97,18 @@
   ],
   "rebalance_plan": {
     "action_adjustments": [
+      {
+        "action_id": "C-01",
+        "adjustment": "reduce",
+        "factor": 0.7,
+        "reason": "отрицательная альфа (-0.61)"
+      },
+      {
+        "action_id": "C-02",
+        "adjustment": "reduce",
+        "factor": 0.7,
+        "reason": "отрицательная альфа (-0.61)"
+      },
       {
         "action_id": "CR-09",
         "adjustment": "reduce",
@@ -115,7 +151,7 @@
     "urgency_adjustment": "increase",
     "urgency_factor": 1.1,
     "n_boosted": 5,
-    "n_reduced": 1
+    "n_reduced": 3
   },
   "adjusted_actions": [
     {
@@ -159,22 +195,6 @@
       "avg_alpha": 6.5
     },
     {
-      "action_id": "C-01",
-      "original_score": 42,
-      "adjusted_score": 39,
-      "factor": 1.0,
-      "win_rate": 60.8,
-      "avg_alpha": -0.18
-    },
-    {
-      "action_id": "C-02",
-      "original_score": 42,
-      "adjusted_score": 39,
-      "factor": 1.0,
-      "win_rate": 60.8,
-      "avg_alpha": -0.18
-    },
-    {
       "action_id": "E-01",
       "original_score": 38,
       "adjusted_score": 36,
@@ -191,6 +211,22 @@
       "avg_alpha": -0.04
     },
     {
+      "action_id": "C-01",
+      "original_score": 40,
+      "adjusted_score": 26,
+      "factor": 0.7,
+      "win_rate": 58.8,
+      "avg_alpha": -0.61
+    },
+    {
+      "action_id": "C-02",
+      "original_score": 40,
+      "adjusted_score": 26,
+      "factor": 0.7,
+      "win_rate": 58.8,
+      "avg_alpha": -0.61
+    },
+    {
       "action_id": "CR-09",
       "original_score": 21,
       "adjusted_score": 14,
@@ -201,9 +237,9 @@
   ],
   "confidence_target": 65,
   "urgency_adjustment": "increase",
-  "stability_index": 65,
-  "alpha_score": 47,
-  "win_rate": 53.9,
+  "stability_index": 67,
+  "alpha_score": 44,
+  "win_rate": 52.9,
   "rr_score": 46,
   "opp_score": 100,
   "diagnostics": [
@@ -212,25 +248,31 @@
       "label": "Риск переобучения",
       "severity": "medium",
       "detail": "3 boost с малой выборкой (n<5) — нестабильная оценка"
+    },
+    {
+      "type": "optimization_instability",
+      "label": "Нестабильность оптимизации",
+      "severity": "medium",
+      "detail": "Одновременно 5 boost и 3 reduce — высокая волатильность весов"
     }
   ],
-  "diagnostic_count": 1,
+  "diagnostic_count": 2,
   "conf_drift": 5,
   "fb_grade": "fair",
-  "hv_score": 61,
+  "hv_score": 60,
   "n_actions": 10,
   "history_depth": 132,
   "evolution_record": {
     "date": "2026-10-07",
-    "optimization_score": 58,
+    "optimization_score": 57,
     "grade": "D",
-    "decision_score": 48,
-    "opt_gain": -6.2,
-    "alpha_mean": -0.34,
-    "win_rate": 53.9,
-    "stability": 65,
+    "decision_score": 47,
+    "opt_gain": -8.4,
+    "alpha_mean": -0.56,
+    "win_rate": 52.9,
+    "stability": 67,
     "n_boosted": 5,
-    "n_reduced": 1,
+    "n_reduced": 3,
     "bias_count": 1
   }
 }
