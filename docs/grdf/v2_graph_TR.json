@@ -2,7 +2,7 @@
   "country": "TR",
   "date": "2026-10-07",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-07T19:16:06.156706+00:00",
+  "generated_at": "2026-10-07T19:27:27.563657+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -19,7 +19,7 @@
       "id": "DOMAIN-TR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 71,
+      "score": 58,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-TR-Полицейски",
+      "type": "Signal",
+      "label": "Полицейский убит — стрельба на контрольн",
+      "severity": 50,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-TR-Платежи_ин",
       "type": "Signal",
       "label": "Платежи инвесторам в 17 фондах начнутся",
@@ -92,13 +99,6 @@
       "label": "Турецкая лира упала до нового историческ",
       "severity": 46,
       "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-TR-Геополитич",
-      "type": "Signal",
-      "label": "Геополитический процесс — Ближний Восток",
-      "severity": 95,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.71
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-TR",
@@ -184,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-TR-Полицейски",
+      "to": "DOMAIN-TR-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
       "from": "SIGNAL-TR-Платежи_ин",
       "to": "DOMAIN-TR-economic",
       "type": "AMPLIFIES",
@@ -194,12 +200,6 @@
       "to": "DOMAIN-TR-economic",
       "type": "AMPLIFIES",
       "weight": 0.46
-    },
-    {
-      "from": "SIGNAL-TR-Геополитич",
-      "to": "DOMAIN-TR-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.95
     }
   ]
 }
