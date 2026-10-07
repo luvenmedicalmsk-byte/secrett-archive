@@ -6,6 +6,7 @@ Runs once per day via GitHub Actions.
 Reads events.json → computes scores → saves JSON files to docs/snapshots/
 """
 
+import zlib
 import json
 import os
 import sys
@@ -2546,7 +2547,7 @@ def generate_correlations(snap: dict, all_snapshots: list[dict]) -> dict:
     country_links.sort(key=lambda x: -x["strength"])
 
     # ── Driver Correlations ────────────────────────────────────────────────
-    driver_domains = list({d.get("domain", "") for d in drivers if d.get("domain")})
+    driver_domains = sorted({d.get("domain", "") for d in drivers if d.get("domain")})
     driver_corrs   = []
 
     for d_a, d_b, strength, explanation in _DOMAIN_CORRELATIONS:
@@ -8958,7 +8959,7 @@ def save_tr_metrics(snapshots: list[dict]) -> None:
     # Daily metrics
     all_scores   = [s.get("risk_score", 50) for s in snapshots if s.get("risk_score")]
     all_signals  = sum(s.get("event_count", 0) for s in snapshots)
-    all_domains  = list(set(s.get("dominant_domain","?") for s in snapshots if s.get("dominant_domain")))
+    all_domains  = sorted(set(s.get("dominant_domain","?") for s in snapshots if s.get("dominant_domain")))
 
     # Model version usage (count from ledger)
     version_usage = {_MODEL_VERSION: len(snapshots)}
@@ -13068,7 +13069,10 @@ def _run_montecarlo(iso2: str, snap: dict, state: dict) -> dict:
     Each simulation draws random delta from N(mean_delta, sigma) and projects
     score over the horizon. Returns percentile distribution.
     """
-    rng = _rng.Random(_RNG_SEED + abs(hash(iso2)) % 1_000_000)
+    # TASK-284C (07.10.2026): hash() строки рандомизирован в каждом процессе
+    # (PYTHONHASHSEED), поэтому seed страны менялся от прогона к прогону и
+    # Монте-Карло не был детерминированным. crc32 стабилен между процессами.
+    rng = _rng.Random(_RNG_SEED + zlib.crc32(iso2.encode('utf-8')) % 1_000_000)
 
     base    = int(snap.get("risk_score", 50) or 50)
     delta   = float(snap.get("delta", 0) or 0)
@@ -19984,7 +19988,7 @@ def _build_prod_connectors(snapshots: list) -> dict:
         "active_n":          active_n,
         "avg_availability":  avg_avail,
         "connectors":        connectors,
-        "coverage_domains":  list({c["domain"] for c in connectors}),
+        "coverage_domains":  sorted({c["domain"] for c in connectors}),
         "status":            "PASS" if active_n >= 9 else "WARN",
     }
 
@@ -22083,9 +22087,9 @@ def _analyse_impact(request: dict) -> dict:
         "request_id":        request["request_id"],
         "affected_versions": downstream_versions,
         "n_downstream":      n_downstream,
-        "affected_formulas": list(set(affected_formulas)),
+        "affected_formulas": sorted(set(affected_formulas)),
         "affected_apis":     api_versions_affected,
-        "affected_dashboards":list(set(affected_dashboards)),
+        "affected_dashboards":sorted(set(affected_dashboards)),
         "affected_storage":  affected_storage,
         "risk_score":        risk_proxy,
     }
@@ -23434,7 +23438,7 @@ def _build_lo_signal_registry(snapshots: list) -> dict:
         "total_signals_per_day": round(total_sig,1),
         "avg_signal_quality":    avg_quality,
         "sources":          source_stats,
-        "domains_covered":  list({s["domain"] for s in _LO_SOURCES}),
+        "domains_covered":  sorted({s["domain"] for s in _LO_SOURCES}),
         "as_of":            TODAY,
     }
 
@@ -24198,7 +24202,7 @@ def _build_acc_prediction_registry(snapshots: list) -> dict:
         "total_predictions":    len(preds),
         "by_source": {s: sum(1 for p in preds if p["source_layer"]==s) for s in _ACC_SOURCES},
         "countries_covered":    len({p["country"] for p in preds}),
-        "horizons_covered":     list({p["time_horizon"] for p in preds}),
+        "horizons_covered":     sorted({p["time_horizon"] for p in preds}),
         "schema":               ["prediction_id","timestamp","country","domain","prediction","confidence","time_horizon","source_layer"],
         "predictions":          preds,
         "as_of":               TODAY,
@@ -29193,7 +29197,7 @@ def _build_amv2_filters(snapshots: list) -> dict:
     countries_active = [s["country"] for s in snapshots]
 
     # Region list
-    regions_active = list({_AMV2_COUNTRY_REGION.get(iso2,"WE") for iso2 in countries_active})
+    regions_active = sorted({_AMV2_COUNTRY_REGION.get(iso2,"WE") for iso2 in countries_active})
 
     # Domain values (from V5 scenario data)
     domains_active  = list(_amv2_load("v5_domains.json").get("domains",

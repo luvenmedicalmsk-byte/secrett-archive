@@ -141,6 +141,8 @@ jobs:
         timeout-minutes: 10
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          # TASK-284C: страховка детерминизма. Настоящий fix — crc32 и sorted() в коде.
+          PYTHONHASHSEED: '0'
         run: |
           python scripts/snapshot_engine.py
 
