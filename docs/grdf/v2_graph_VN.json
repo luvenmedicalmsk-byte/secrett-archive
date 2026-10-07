@@ -2,9 +2,9 @@
   "country": "VN",
   "date": "2026-10-07",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-07T01:01:22.293294+00:00",
+  "generated_at": "2026-10-07T01:10:54.849109+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-VN",
@@ -26,14 +26,14 @@
       "id": "DOMAIN-VN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 32,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-VN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 79,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -65,11 +65,6 @@
       "trend": "stable"
     },
     {
-      "id": "DRIVER-VN-climate",
-      "type": "Driver",
-      "label": "climate"
-    },
-    {
       "id": "DRIVER-VN-social",
       "type": "Driver",
       "label": "social"
@@ -80,6 +75,11 @@
       "label": "geopolitical"
     },
     {
+      "id": "DRIVER-VN-economic",
+      "type": "Driver",
+      "label": "economic"
+    },
+    {
       "id": "SIGNAL-VN-Вспышка_ви",
       "type": "Signal",
       "label": "Вспышка вируса Коксаки во Вьетнаме — сра",
@@ -87,18 +87,18 @@
       "domain": "social"
     },
     {
+      "id": "SIGNAL-VN-Трехмесячн",
+      "type": "Signal",
+      "label": "Трехмесячная межбанковская ставка во Вье",
+      "severity": 32,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-VN-Эпидемиоло",
       "type": "Signal",
       "label": "Эпидемиологический риск — Вьетнам",
       "severity": 58,
       "domain": "social"
-    },
-    {
-      "id": "SIGNAL-VN-Наводнение",
-      "type": "Signal",
-      "label": "Наводнение — Вьетнам",
-      "severity": 79,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -112,13 +112,13 @@
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-climate",
       "type": "CORRELATES",
-      "weight": 0.79
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-VN",
@@ -145,12 +145,6 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-VN-climate",
-      "to": "COUNTRY-VN",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
       "from": "DRIVER-VN-social",
       "to": "COUNTRY-VN",
       "type": "CAUSES",
@@ -163,25 +157,10 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-VN-climate",
-      "to": "DOMAIN-VN-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-VN-economic",
-      "to": "DOMAIN-VN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-VN-social",
-      "to": "DOMAIN-VN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
+      "from": "DRIVER-VN-economic",
+      "to": "COUNTRY-VN",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DOMAIN-VN-geopolitical",
@@ -205,43 +184,22 @@
       "lag_days": 45
     },
     {
-      "from": "DOMAIN-VN-climate",
-      "to": "DOMAIN-VN-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-VN-infrastructure",
-      "to": "DOMAIN-VN-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-VN-economic",
-      "to": "DOMAIN-VN-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "SIGNAL-VN-Вспышка_ви",
       "to": "DOMAIN-VN-social",
       "type": "AMPLIFIES",
       "weight": 0.58
     },
     {
+      "from": "SIGNAL-VN-Трехмесячн",
+      "to": "DOMAIN-VN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.32
+    },
+    {
       "from": "SIGNAL-VN-Эпидемиоло",
       "to": "DOMAIN-VN-social",
       "type": "AMPLIFIES",
       "weight": 0.58
-    },
-    {
-      "from": "SIGNAL-VN-Наводнение",
-      "to": "DOMAIN-VN-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.79
     }
   ]
 }
