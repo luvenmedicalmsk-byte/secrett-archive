@@ -2,9 +2,9 @@
   "country": "GB",
   "date": "2026-10-07",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-07T06:06:52.422977+00:00",
+  "generated_at": "2026-10-07T06:21:13.115608+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-GB",
@@ -19,21 +19,21 @@
       "id": "DOMAIN-GB-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
+      "score": 48,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-GB-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 46,
+      "score": 5,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-GB-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 36,
+      "score": 32,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-GB-Полиция_Ве",
+      "type": "Signal",
+      "label": "Полиция Великобритании задержала еще одн",
+      "severity": 48,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-GB-Сделало_ли",
       "type": "Signal",
       "label": "Сделало ли жаркое лето больше людей обес",
@@ -92,13 +99,6 @@
       "label": "Технологический сигнал — Великобритания",
       "severity": 58,
       "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-GB-Экономичес",
-      "type": "Signal",
-      "label": "Экономический сигнал — Великобритания",
-      "severity": 46,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,19 +106,19 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-economic",
       "type": "CORRELATES",
-      "weight": 0.46
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-climate",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-GB",
@@ -163,6 +163,33 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-GB-geopolitical",
+      "to": "DOMAIN-GB-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-GB-infrastructure",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GB-economic",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-GB-Полиция_Ве",
+      "to": "DOMAIN-GB-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.48
+    },
+    {
       "from": "SIGNAL-GB-Сделало_ли",
       "to": "DOMAIN-GB-climate",
       "type": "AMPLIFIES",
@@ -173,12 +200,6 @@
       "to": "DOMAIN-GB-technology",
       "type": "AMPLIFIES",
       "weight": 0.58
-    },
-    {
-      "from": "SIGNAL-GB-Экономичес",
-      "to": "DOMAIN-GB-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.46
     }
   ]
 }
