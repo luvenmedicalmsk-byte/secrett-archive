@@ -22350,6 +22350,39 @@ _SIC_EXT_EXTREMUM = re.compile(
     r'рекордно\s+(?:низк|высок|мал)\w*|исторически\w*\s+(?:минимум|максимум)|'
     r'(?:минимум|максимум)\w*\s+(?:за\s+)?\d+\s*(?:-|–)?\s*(?:лет|летн|год|месяц)|'
     r'до\s+\d+\s*-?\s*летн\w*\s+(?:минимум|максимум)', re.I)
+# СИСТЕМНЫЙ МАКРОСИГНАЛ ИНСТИТУТА (07.10.2026).
+# «Мировой госдолг приближается к рекордному со времён Второй мировой войны
+# уровню и вскоре может превысить 100% глобального ВВП» (глава МВФ) стояло
+# контекстом с весом 34 и было скрыто из ленты: «может превысить» уводило
+# запись в предупреждение, а заявление — в комментарий. Но здесь институт
+# фиксирует текущее состояние глобального агрегата у исторического рекорда,
+# это сигнал, а не мнение. Нужны все три признака: глобальный или
+# государственный агрегат в заголовке, рекорд или порог, авторитетный
+# институт. Корпус 5406: 0 срабатываний помимо целевой записи.
+# Откат: MACRO_SYS_SIGNAL = False.
+MACRO_SYS_SIGNAL = True
+_MACRO_SYS_FLOOR = 66
+_MACRO_AGG = re.compile(
+    r'(?:мирово\w*|глобальн\w*|суверенн\w*)\s+(?:гос)?долг\w*|госдолг\w*|государственн\w+\s+долг\w*|'
+    r'долгов\w+\s+(?:нагрузк|кризис)\w*|глобальн\w+\s+ввп|мирово\w+\s+ввп|мирово\w+\s+экономик\w*|'
+    r'(?:глобальн|мирово)\w+\s+(?:рецесси\w*|финансов\w+\s+кризис\w*)', re.I)
+_MACRO_REC = re.compile(
+    r'рекордн\w*|историческ\w+\s+(?:максимум|минимум)\w*|впервые\s+(?:со\s+времен|с\s+\d{4}|за\s+\d+)|'
+    r'со\s+времен\s+(?:второй\s+мировой|великой\s+депрессии)|'
+    r'превы\w+\s+\d+\s*%\s*(?:глобальн\w+\s+|мирово\w+\s+)?ввп|максимальн\w*\s+с\s+\d{4}', re.I)
+_MACRO_AUTH = re.compile(
+    r'\bмвф\b|международн\w+\s+валютн\w+\s+фонд\w*|всемирн\w+\s+банк\w*|\bфрс\b|\bецб\b|'
+    r'банк\w*\s+международных\s+расч[её]тов|\bбмр\b|\bоэср\b|георгиев\w*|\bimf\b|world\s+bank|\boecd\b', re.I)
+
+
+def _macro_sys(title, summary=''):
+    if not MACRO_SYS_SIGNAL:
+        return False
+    tl = (title or '').lower()
+    low = tl + ' ' + (summary or '').lower()
+    return bool(_MACRO_AGG.search(tl) and _MACRO_REC.search(low) and _MACRO_AUTH.search(low))
+
+
 _SIC_EXT_MODAL = re.compile(
     r'(ожида\w*|прогноз\w*|може\w*|могут|мог\s|планиру\w*|намерен\w*|будет|станет|'
     r'рискует|вероятно|по\s+мнению|не\s+исключ\w*|грозит)', re.I)
@@ -22380,6 +22413,25 @@ _MIL_ESCAL_MODAL = re.compile(
 _AIRPORT_STOP = re.compile(
     r'аэропорт\w*\s+(?:[«"]?\w+[»"]?\s+){0,2}(?:временно\s+)?(?:не\s+обслуживает|закрыт|приостановил\w*|прекратил\w*)'
     r'|(?:закрыт\w*|приостановлен\w*)\s+(?:работ\w+\s+)?аэропорт', re.I)
+
+
+def _macro_signal(events):
+    """Пол 66 для системного макросигнала института. Только economy."""
+    if not MACRO_SYS_SIGNAL:
+        return 0
+    n = 0
+    for e in events:
+        if e.get('domain') != 'economy' or not _macro_sys(e.get('title'), e.get('summary')):
+            continue
+        cur = e.get('severity') or 0
+        if cur >= _MACRO_SYS_FLOOR:
+            continue
+        e['severity'] = _sev_log(e, 'macro_systemic', cur, _MACRO_SYS_FLOOR,
+                                 'системный макросигнал института: глобальный агрегат у рекорда', 'boost')
+        n += 1
+    if n:
+        print('  [MACRO-SYS] поднято до %d: %d' % (_MACRO_SYS_FLOOR, n), file=sys.stderr)
+    return n
 
 
 def _mil_escalation(events):
@@ -22705,6 +22757,8 @@ def _sic_class(title, summary='', canon_type=None):
         b = _base()
         if b in ('EVENT', 'PROCESS'):
             return b
+    if _macro_sys(title, summary):
+        return 'EVENT'
     # 4) аналитическое предупреждение о возможном будущем (нет accomplished, нет операц.алерта) → COMMENTARY.
     if SIC_EVENT_EXT:
         _xk = _sic_ext_kind(_title_low) if not _SIC_WARN.search(_title_low) else None
@@ -24748,6 +24802,7 @@ def save_enriched(events, previous_snapshot=None):
                 # уже поставлен по числу пострадавших, второй надбавки не
                 # получает (проверка severity_hs_shadow внутри).
                 _econ_scale(enriched["events"])
+                _macro_signal(enriched["events"])
                 _tail_caps(enriched["events"])
                 _zone_place(enriched["events"])
                 # Предупреждения метятся ПЕРВЫМИ: иначе запись, отнесённая
