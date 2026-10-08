@@ -21649,6 +21649,7 @@ RETAIN_READMIT = True     # удержанное событие заново п�
 # Замер 08.10 14:31 UTC: 12 из 13 непереведённых заголовков ленты — удержанные.
 # Подмена только если результат уже не английский (словарный fallback не пишем).
 RETAIN_RETRANSLATE = True  # откат: False
+RETAIN_ID_DEDUP = True     # удержание не дублирует событие с тем же id; откат: False
 
 
 def _retain_critical(evs, prev):
@@ -21660,12 +21661,20 @@ def _retain_critical(evs, prev):
         if not pevs: return evs
         have={(e.get('fingerprint') or e.get('id') or (e.get('title') or '')[:60]) for e in evs}
         have_t={(e.get('title') or '')[:60] for e in evs}
+        # RETAIN_ID_DEDUP 08.10.2026: свежая выдача того же события после
+        # перевода имеет другой заголовок и fingerprint, но тот же id. Без
+        # проверки id удержание добавляло вторую, английскую копию рядом с
+        # переведённой (eaf283e3c, e54122007, e6d8297f1 на 0e9d898e).
+        have_id={e.get('id') for e in evs if e.get('id')} if RETAIN_ID_DEDUP else set()
         from datetime import datetime as _dt, timezone as _tz
         _now=_dt.now(_tz.utc); kept=[]; _dropped=0
         for e in pevs:
             if (e.get('severity') or 0) < _RETAIN_MIN_SEV: continue
             key=e.get('fingerprint') or e.get('id') or (e.get('title') or '')[:60]
             if key in have or (e.get('title') or '')[:60] in have_t: continue
+            if RETAIN_ID_DEDUP and e.get('id'):
+                if e['id'] in have_id: continue
+                have_id.add(e['id'])
             try:
                 d=_dt.strptime((e.get('date') or '')[:10],'%Y-%m-%d').replace(tzinfo=_tz.utc)
                 if (_now-d).days>_RETAIN_MAX_DAYS: continue
