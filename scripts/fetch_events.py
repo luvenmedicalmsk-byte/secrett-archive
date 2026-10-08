@@ -13535,7 +13535,7 @@ def _attach_signal_state(events):
 
 
 # 284D · флаги (откат: False)
-CAP_MA_SCOPE = False   # D1: отдельным коммитом после PASS D2
+CAP_MA_SCOPE = True
 CAP_FALLBACK_NO_COORDS = True
 
 
