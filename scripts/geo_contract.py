@@ -987,6 +987,23 @@ def in_bbox(cc, lat, lng, margin=0.0):
     return (b[0] - margin) <= lat <= (b[1] + margin) and (b[2] - margin) <= lng <= (b[3] + margin)
 
 
+# 284D-D3 · флаг, откат: False
+CAP_LAND_ALIAS = True
+_CAP_LAND_ALIAS = (
+    (re.compile(r'(?:^|[^а-яё])сахалин(?![а-яё])', re.I), 'Сахалинская область'),
+    (re.compile(r'(?:^|[^а-яё])курильские\s+острова,\s*север', re.I), 'Сахалинская область'),
+    (re.compile(r'(?:^|[^а-яё])республика\s+саха(?![а-яё])', re.I), 'Якутия'),
+    (re.compile(r'(?:^|[^а-яё])карачаево-черкес', re.I), 'Карачаево-Черкесия'),
+    (re.compile(r'(?:^|[^а-яё])республика\s+адыге', re.I), 'Адыгея'),
+    (re.compile(r'(?:^|[^а-яё])еврейская\s+(?:а\.\s*о\.|автономн)', re.I), 'Еврейская АО'),
+)
+def _cap_land_alias(blob):
+    for rx, nm in _CAP_LAND_ALIAS:
+        if rx.search(blob or ''):
+            return nm
+    return None
+
+
 def _mk(g, rule, blob, actor, raw_coords):
     """Собрать контракт из точки GAZ: координаты выводятся из страны (инвариант)."""
     cc, name, glat, glng = g
@@ -1917,6 +1934,22 @@ def _resolve_geo_legacy(title, summary='', raw_coords=None, domain=None):
                 # и зонировать его как бассейн нельзя.
                 if _ru_subject(blob):
                     return _mk(GAZ['росс'], 'natural', blob, actor, (rla, rln))
+                # 284D-D3 · CAP_LAND_ALIAS. Формы областей Росгидромета, которых
+                # нет в словаре субъектов («Сахалин, север», «Курильские острова,
+                # север», «Республика Саха, арктическое побережье»,
+                # «Карачаево-Черкесская Республика», «Республика Адыгея»,
+                # «Еврейская а.о.»). Действует ТОЛЬКО здесь, когда точка попала в
+                # бассейн: общий словарь ru_subject не расширяется, поэтому
+                # остальные ветки резолвера и точность записей вне бассейна не
+                # меняются. Спорные территории (D4) сюда не входят.
+                if CAP_LAND_ALIAS:
+                    _al = _cap_land_alias(blob)
+                    if _al and any(_zone_contains(ZONES[z][4], rla, rln) for z in _BASIN_IDS):
+                        _g = _mk(GAZ['росс'], 'natural', blob, actor, (rla, rln))
+                        if _g.region in (None, '', 'Россия'):
+                            import dataclasses as _dc
+                            _g = _dc.replace(_g, region=_al)
+                        return _g
                 for zid in _BASIN_IDS:
                     zbox = ZONES[zid][4]
                     if _zone_contains(zbox, rla, rln):
