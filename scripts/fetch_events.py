@@ -21737,6 +21737,13 @@ def _retain_critical(evs, prev):
                         continue
                 except Exception:
                     pass
+            # RETAIN_DD_SYNC 08.10.2026: решение арбитра доменов из прошлого
+            # снимка не совпадает с текущим каноном (канон пересчитан после
+            # перевода) — пересобирается арбитром, а не переносится (I5).
+            if RETAIN_RETRANSLATE:
+                _dd = e.get('domain_decision')
+                if isinstance(_dd, dict) and _dd.get('canon_type') != e.get('canon_type'):
+                    e.pop('domain_decision', None)
             m=dict(e.get('meta') or {}); m['retained']=True; e['meta']=m
             kept.append(e)
         if RETAIN_RETRANSLATE and kept:
@@ -21751,6 +21758,9 @@ def _retain_critical(evs, prev):
                         if t and t != kept[k][_fld] and not is_english(t):
                             kept[k][_fld] = _title_polish(t) if _fld == 'title' else t
                             _rt += 1
+                            # текст сменился → канон пересчитается; решение арбитра
+                            # доменов из прошлого снимка устарело (иначе I5)
+                            kept[k].pop('domain_decision', None)
                 if _rt:
                     print(f"  ✓ retention: переведено удержанных полей {_rt}", file=sys.stderr)
             except Exception as _e:
