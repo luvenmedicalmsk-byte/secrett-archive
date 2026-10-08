@@ -2,17 +2,17 @@
   "country": "PL",
   "date": "2026-10-08",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-08T17:50:09.073694+00:00",
+  "generated_at": "2026-10-08T18:07:54.896004+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-PL",
       "type": "Country",
       "label": "PL",
-      "score": 65,
+      "score": 64,
       "props": {
-        "risk_score": 65
+        "risk_score": 64
       }
     },
     {
@@ -20,7 +20,7 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 64,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-PL-economic",
@@ -33,8 +33,8 @@
       "id": "DOMAIN-PL-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "stable"
+      "score": 46,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-PL-technology",
@@ -87,18 +87,18 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-PL-1_погибший",
-      "type": "Signal",
-      "label": "1 погибший — второй ножевой нападение в ",
-      "severity": 54,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-PL-Военные_уд",
       "type": "Signal",
       "label": "Военные удары — Польша",
       "severity": 64,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-PL-Оползень_—",
+      "type": "Signal",
+      "label": "Оползень — Польша",
+      "severity": 46,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-PL",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-PL-climate",
+      "to": "DOMAIN-PL-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-PL-economic",
+      "to": "DOMAIN-PL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-PL-social",
+      "to": "DOMAIN-PL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-PL-climate",
+      "to": "DOMAIN-PL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-PL-infrastructure",
+      "to": "DOMAIN-PL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-PL-economic",
+      "to": "DOMAIN-PL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "DOMAIN-PL-geopolitical",
       "to": "DOMAIN-PL-infrastructure",
       "type": "ESCALATES",
@@ -190,16 +232,16 @@
       "weight": 0.64
     },
     {
-      "from": "SIGNAL-PL-1_погибший",
-      "to": "DOMAIN-PL-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.54
-    },
-    {
       "from": "SIGNAL-PL-Военные_уд",
       "to": "DOMAIN-PL-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.64
+    },
+    {
+      "from": "SIGNAL-PL-Оползень_—",
+      "to": "DOMAIN-PL-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.46
     }
   ]
 }
