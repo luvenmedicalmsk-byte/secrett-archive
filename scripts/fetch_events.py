@@ -13534,6 +13534,11 @@ def _attach_signal_state(events):
     return events
 
 
+# 284D · флаги (откат: False)
+CAP_MA_SCOPE = False   # D1: отдельным коммитом после PASS D2
+CAP_FALLBACK_NO_COORDS = True
+
+
 def _apply_geo_contract(events):
     """GEO CONTRACT Phase 2 (docs/GEO_CONTRACT.md): авторитетная география платформы.
     resolve_geo() вычисляется ОДИН раз здесь; все гео-поля события — производные
@@ -13802,6 +13807,11 @@ def _apply_geo_contract(events):
     try:
         _ma_cc = {t[1]: (t[2], t[3], t[4]) for t in _MA_COUNTRIES}
         for e in events:
+            # 284D-G1 (D1): правило только для MeteoAlarm. Росгидромет и прочие CAP
+            # выпускают предупреждения для своей территории; список _MA_COUNTRIES
+            # к ним неприменим (в нём нет RU — выбиралась вторая страна упоминаний).
+            if CAP_MA_SCOPE and not str(e.get('source') or '').startswith('MeteoAlarm'):
+                continue
             if 'CAP' not in str(e.get('source') or ''):
                 continue
             if e.get('primary_country'):
@@ -13816,7 +13826,11 @@ def _apply_geo_contract(events):
             e['country_code'] = _cc
             e['event_country'] = _cc
             e['region'] = _nm
-            e['lat'], e['lng'] = _la, _ln
+            # 284D-G2 (D2): fallback не переписывает координаты события. Точка уже
+            # принята Geo Contract (geo.lat/lng); отдельная запись lat/lng давала
+            # две координатные истины (I10) и уводила точку области в столицу.
+            if not CAP_FALLBACK_NO_COORDS:
+                e['lat'], e['lng'] = _la, _ln
             e['map_visible'] = True
             if isinstance(e.get('geo_decision'), dict):
                 e['geo_decision']['primary'] = _cc
