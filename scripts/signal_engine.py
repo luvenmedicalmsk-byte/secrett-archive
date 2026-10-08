@@ -774,6 +774,15 @@ IDENTITY_V2_APPLY = False
 # Откат: IDENTITY_CONTINUITY_V2T = False.
 IDENTITY_CONTINUITY_V2T = False
 
+# TASK-285A · D3 · ДВУХФАЗНОЕ НАЗНАЧЕНИЕ signal_id (08.10.2026).
+# Дубль рождался, когда кластер A спасался по identity_key в id X раньше,
+# чем кластер B получал тот же X естественно (matched_existing): ветка
+# matched_existing занятость не проверяла, результат зависел от порядка.
+# Фаза 1: естественные владельцы резервируют свои id. Фаза 2: rescue только
+# в незарезервированные id, претенденты в детерминированном порядке.
+# Ключи идентичности не меняются. Откат: D3_TWO_PHASE = False.
+D3_TWO_PHASE = True
+
 # ═══ TASK-244 · TOMBSTONE CONSERVATION ═══
 # Процесс, поглощённый слиянием или снятый семантическим дедупом, не удаляется,
 # а превращается в надгробие: исходный объект целиком плюс четыре служебных
@@ -2795,7 +2804,17 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
         _IDENTITY_SHADOW['remap_production']=_v2_remap
     seen=set(); out=[]
     n_matched=0; n_created=0; match_scores=[]; n_identity_rescued=0
-    for cur in current:
+    _order=list(range(len(current))); _pos=[]
+    if D3_TWO_PHASE:
+        _nat=[i for i in _order if current[i].get('signal_id') in prev_by_id]
+        _rest=[i for i in _order if current[i].get('signal_id') not in prev_by_id]
+        _rest.sort(key=lambda i:(-(current[i].get('evidence_count') or len(current[i].get('evidence') or [])),
+                                  -(current[i].get('severity') or 0),
+                                  str(current[i].get('signal_id') or '')))
+        _order=_nat+_rest
+        seen.update(current[i]['signal_id'] for i in _nat)   # резерв естественных владельцев
+    for _ix in _order:
+        cur=current[_ix]
         sid=cur['signal_id']; seen.add(sid)
         # средний confidence-match свидетельств процесса
         for e in cur.get('evidence',[]): match_scores.append(e.get('match_score',1.0))
@@ -2895,7 +2914,9 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
                                                'evidence_n': len(s.get('evidence') or [])})
                 except Exception:
                     pass
-        out.append(s)
+        _pos.append(_ix); out.append(s)
+    if D3_TWO_PHASE:
+        out=[x for _,x in sorted(zip(_pos,out), key=lambda t:t[0])]
     _FUNNEL['previous_на_входе']=len(previous)
     _FUNNEL['current_из_событий']=len(current)
     _FUNNEL['после_основного_цикла']=len(out)
