@@ -1,10 +1,10 @@
 {
-  "generated": "2026-10-08T05:45:51Z",
+  "generated": "2026-10-08T05:53:11Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
-    "PASS_FACT": 920,
-    "DENY_COMMENTARY": 274,
+    "PASS_FACT": 923,
+    "DENY_COMMENTARY": 271,
     "DENY_BACKGROUND": 9,
     "DENY_STATE_ONLY": 3,
     "DENY_FEATURE": 2,
@@ -16,9 +16,9 @@
     "unmatched": 2,
     "coverage_pct": 99.8,
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
-    "admission_pass_rate": 76.2,
-    "admission_deny_rate": 23.8,
-    "processes_without_fact": 288,
+    "admission_pass_rate": 76.4,
+    "admission_deny_rate": 23.6,
+    "processes_without_fact": 285,
     "report_evidence_count": 0,
     "reports_boosting": 0
   },
@@ -28,14 +28,15 @@
       "processes": 410,
       "sample": 1317,
       "agreement_pct": 89.7,
-      "decision_agreement_pct": 89.7,
-      "critical_errors": 135,
+      "decision_agreement_pct": 89.8,
+      "critical_errors": 134,
       "truth_ratio_pct": 98.9,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 121,
+        "FACT_EVENT→COMMENTARY": 120,
         "COMMENTARY→FACT_EVENT": 9,
-        "STATE_CONFIRMATION→FACT_EVENT": 4,
+        "STATE_CONFIRMATION→FACT_EVENT": 3,
         "BACKGROUND→COMMENTARY": 1,
+        "FACT_EVENT→REPORT": 1,
         "FACT_EVENT→STATE_CONFIRMATION": 1
       }
     },
@@ -44,26 +45,28 @@
       "sample": 2902,
       "agreement_pct": 90.4,
       "decision_agreement_pct": 90.5,
-      "critical_errors": 277,
+      "critical_errors": 276,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 235,
+        "FACT_EVENT→COMMENTARY": 234,
         "COMMENTARY→FACT_EVENT": 35,
-        "STATE_CONFIRMATION→FACT_EVENT": 6,
+        "STATE_CONFIRMATION→FACT_EVENT": 5,
         "BACKGROUND→COMMENTARY": 1,
+        "FACT_EVENT→REPORT": 1,
         "FACT_EVENT→STATE_CONFIRMATION": 1,
         "FEATURE→COMMENTARY": 1
       }
     },
     "events_stream": {
-      "sample": 397,
-      "agreement_pct": 88.9,
-      "decision_agreement_pct": 89.2,
-      "critical_errors": 43,
+      "sample": 398,
+      "agreement_pct": 88.4,
+      "decision_agreement_pct": 88.7,
+      "critical_errors": 45,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 40,
+        "FACT_EVENT→COMMENTARY": 41,
         "COMMENTARY→FACT_EVENT": 2,
         "BACKGROUND→COMMENTARY": 1,
-        "STATE_CONFIRMATION→FACT_EVENT": 1
+        "FACT_EVENT→STATE_CONFIRMATION": 1,
+        "FACT_EVENT→REPORT": 1
       }
     },
     "gate": {
@@ -80,8 +83,8 @@
   "truth_ratio_pct": 97.5,
   "domain_statistics": {
     "geopolitics": {
-      "pass": 248,
-      "deny": 79
+      "pass": 249,
+      "deny": 78
     },
     "climate": {
       "pass": 297,
@@ -89,16 +92,16 @@
       "unmatched": 2
     },
     "economy": {
-      "pass": 179,
-      "deny": 107
+      "pass": 181,
+      "deny": 105
     },
     "social": {
-      "pass": 88,
-      "deny": 33
+      "pass": 89,
+      "deny": 32
     },
     "technology": {
-      "pass": 108,
-      "deny": 31
+      "deny": 32,
+      "pass": 107
     }
   },
   "deny_impact": [
@@ -179,15 +182,30 @@
       "reason": "no FACT_EVENT in evidence"
     },
     {
+      "signal_id": "tech-технологич-глобальн-1a5c",
+      "title": "Технологический сигнал",
+      "domain": "technology",
+      "severity": 68,
+      "pressure": 73,
+      "first_seen": "2026-06-24",
+      "evidence_count": 11,
+      "evidence_classes": {
+        "COMMENTARY": 11
+      },
+      "status": "active",
+      "causal_links": 0,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
       "signal_id": "econ-экономичес-глобальн-ec76",
       "title": "Экономический сигнал",
       "domain": "economy",
       "severity": 68,
       "pressure": 67,
       "first_seen": "2026-06-29",
-      "evidence_count": 13,
+      "evidence_count": 12,
       "evidence_classes": {
-        "COMMENTARY": 13
+        "COMMENTARY": 12
       },
       "status": "active",
       "causal_links": 0,
@@ -477,21 +495,6 @@
       },
       "status": "archived",
       "causal_links": 1,
-      "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "soci-эпидемиоло-глобальн-6b54",
-      "title": "Эпидемиологический риск",
-      "domain": "social",
-      "severity": 61,
-      "pressure": 45,
-      "first_seen": "2026-07-01",
-      "evidence_count": 3,
-      "evidence_classes": {
-        "COMMENTARY": 3
-      },
-      "status": "active",
-      "causal_links": 0,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -1008,6 +1011,13 @@
   "report_log": [],
   "severity_delta": [
     {
+      "signal_id": "tech-технологич-глобальн-1a5c",
+      "domain": "technology",
+      "legacy": 68,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "econ-экономичес-иран-7b79",
       "domain": "economy",
       "legacy": 82,
@@ -1032,13 +1042,6 @@
       "signal_id": "clim-климатичес-средизем-6462",
       "domain": "climate",
       "legacy": 75,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "geop-геополитич-сша-a91e",
-      "domain": "geopolitics",
-      "legacy": 51,
       "shadow": null,
       "delta": null
     },
@@ -1081,13 +1084,6 @@
       "signal_id": "geop-криминальн-израиль-41c3",
       "domain": "geopolitics",
       "legacy": 48,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "econ-финансовый-глобальн-ee05",
-      "domain": "economy",
-      "legacy": 46,
       "shadow": null,
       "delta": null
     },
@@ -1190,13 +1186,6 @@
       "delta": null
     },
     {
-      "signal_id": "soci-эпидемиоло-глобальн-6b54",
-      "domain": "social",
-      "legacy": 61,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "econ-инфляция-сша-8a37",
       "domain": "economy",
       "legacy": 63,
@@ -1211,14 +1200,14 @@
       "delta": null
     },
     {
-      "signal_id": "clim-климатичес-тихийоке-41c0",
+      "signal_id": "clim-климатичес-непал-d446",
       "domain": "climate",
       "legacy": 32,
       "shadow": null,
       "delta": null
     },
     {
-      "signal_id": "clim-климатичес-непал-d446",
+      "signal_id": "clim-климатичес-тихийоке-41c0",
       "domain": "climate",
       "legacy": 32,
       "shadow": null,
@@ -1284,13 +1273,6 @@
       "signal_id": "econ-финансовый-северная-5e37",
       "domain": "economy",
       "legacy": 37,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "econ-экономичес-китай-3eea",
-      "domain": "economy",
-      "legacy": 34,
       "shadow": null,
       "delta": null
     },
@@ -1426,12 +1408,33 @@
       "legacy": 32,
       "shadow": null,
       "delta": null
+    },
+    {
+      "signal_id": "geop-санкционно-япония-25bf",
+      "domain": "geopolitics",
+      "legacy": 32,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "clim-климатичес-венгрия-039f",
+      "domain": "climate",
+      "legacy": 32,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "soci-эпидемиоло-европа-0eb3",
+      "domain": "social",
+      "legacy": 32,
+      "shadow": null,
+      "delta": null
     }
   ],
   "deny_by_severity": {
     "0-30": 1,
-    "31-50": 212,
-    "51-70": 70,
+    "31-50": 210,
+    "51-70": 69,
     "71-90": 5,
     "91-100": 0
   }
