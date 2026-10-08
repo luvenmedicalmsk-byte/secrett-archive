@@ -21642,6 +21642,13 @@ _RETAIN_MIN_SEV = 70      # прежнее значение: 85
 _RETAIN_MAX_DAYS = 2      # прежнее значение: 7
 RETAIN_RECOMPUTE = True   # удержанное событие пересчитывается по текущим правилам; откат: False
 RETAIN_READMIT = True     # удержанное событие заново проходит S43 «новость, не сигнал»; откат: False
+# 08.10.2026 · удержанное событие заново проходит перевод. Удержание берёт
+# запись из прошлого снимка как есть: если она попала туда, пока перевод
+# OpenAI не работал (баланс), заголовок остаётся английским или словарной
+# смесью («Dozens погибших — Russian удар…») до истечения срока удержания.
+# Замер 08.10 14:31 UTC: 12 из 13 непереведённых заголовков ленты — удержанные.
+# Подмена только если результат уже не английский (словарный fallback не пишем).
+RETAIN_RETRANSLATE = True  # откат: False
 
 
 def _retain_critical(evs, prev):
@@ -21723,6 +21730,22 @@ def _retain_critical(evs, prev):
                     pass
             m=dict(e.get('meta') or {}); m['retained']=True; e['meta']=m
             kept.append(e)
+        if RETAIN_RETRANSLATE and kept:
+            try:
+                _rt = 0
+                for _fld in ('title', 'summary'):
+                    _ix = [k for k, x in enumerate(kept) if is_english(x.get(_fld) or '')]
+                    if not _ix:
+                        continue
+                    _tr = translate_batch([kept[k][_fld] for k in _ix])
+                    for k, t in zip(_ix, _tr):
+                        if t and t != kept[k][_fld] and not is_english(t):
+                            kept[k][_fld] = _title_polish(t) if _fld == 'title' else t
+                            _rt += 1
+                if _rt:
+                    print(f"  ✓ retention: переведено удержанных полей {_rt}", file=sys.stderr)
+            except Exception as _e:
+                print('  [WARN] retention retranslate: ' + str(_e), file=sys.stderr)
         if kept or _dropped:
             print(f"  ✓ retention: удержано тяжёлых событий {len(kept)}, "
                   f"снято после пересчёта {_dropped} "
