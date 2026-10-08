@@ -2,17 +2,17 @@
   "country": "JP",
   "date": "2026-10-08",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-08T20:06:57.972434+00:00",
+  "generated_at": "2026-10-08T20:28:04.290881+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-JP",
       "type": "Country",
       "label": "JP",
-      "score": 54,
+      "score": 63,
       "props": {
-        "risk_score": 54
+        "risk_score": 63
       }
     },
     {
@@ -20,49 +20,49 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 53,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 67,
-      "trend": "stable"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
-      "trend": "stable"
+      "score": 64,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-social",
       "type": "Domain",
       "label": "social",
       "score": 46,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-JP-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-JP-Атака_прог",
+      "type": "Signal",
+      "label": "Атака программ-вымогателей нарушила рабо",
+      "severity": 58,
+      "domain": "technology"
+    },
+    {
       "id": "SIGNAL-JP-Япония_наб",
       "type": "Signal",
       "label": "Япония наблюдает резкий рост — утечки ве",
@@ -92,13 +99,6 @@
       "label": "Жить в Японии станет дороже: пошлина за ",
       "severity": 46,
       "domain": "social"
-    },
-    {
-      "id": "SIGNAL-JP-Наводнение",
-      "type": "Signal",
-      "label": "Наводнение — Восточная Азия",
-      "severity": 90,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -118,13 +118,13 @@
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-climate",
       "type": "CORRELATES",
-      "weight": 0.67
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.64
     },
     {
       "from": "COUNTRY-JP",
@@ -163,27 +163,6 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-JP-climate",
-      "to": "DOMAIN-JP-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-JP-economic",
-      "to": "DOMAIN-JP-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-JP-social",
-      "to": "DOMAIN-JP-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
       "from": "DOMAIN-JP-geopolitical",
       "to": "DOMAIN-JP-infrastructure",
       "type": "ESCALATES",
@@ -205,25 +184,10 @@
       "lag_days": 45
     },
     {
-      "from": "DOMAIN-JP-climate",
-      "to": "DOMAIN-JP-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-JP-infrastructure",
-      "to": "DOMAIN-JP-economic",
+      "from": "SIGNAL-JP-Атака_прог",
+      "to": "DOMAIN-JP-technology",
       "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-JP-economic",
-      "to": "DOMAIN-JP-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
+      "weight": 0.58
     },
     {
       "from": "SIGNAL-JP-Япония_наб",
@@ -236,12 +200,6 @@
       "to": "DOMAIN-JP-social",
       "type": "AMPLIFIES",
       "weight": 0.46
-    },
-    {
-      "from": "SIGNAL-JP-Наводнение",
-      "to": "DOMAIN-JP-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.9
     }
   ]
 }
