@@ -2,38 +2,38 @@
   "country": "US",
   "date": "2026-10-09",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-09T15:28:46.894009+00:00",
+  "generated_at": "2026-10-09T15:49:13.959538+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-US",
       "type": "Country",
       "label": "US",
-      "score": 77,
+      "score": 86,
       "props": {
-        "risk_score": 77
+        "risk_score": 86
       }
     },
     {
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 68,
+      "score": 81,
       "trend": "up"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 65,
+      "score": 75,
       "trend": "up"
     },
     {
       "id": "DOMAIN-US-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 62,
+      "score": 5,
       "trend": "up"
     },
     {
@@ -41,28 +41,28 @@
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-US-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-US-Международ",
+      "type": "Signal",
+      "label": "Международный уголовный суд осуждает шир",
+      "severity": 73,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-US-США_вводят",
       "type": "Signal",
       "label": "США вводят санкции против Международного",
@@ -92,13 +99,6 @@
       "label": "Рынок жилья в США столкнулся с серьезным",
       "severity": 65,
       "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-US-Последние_",
-      "type": "Signal",
-      "label": "Последние новости и анализ нефтяного рын",
-      "severity": 62,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,19 +106,19 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.68
+      "weight": 0.81
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-economic",
       "type": "CORRELATES",
-      "weight": 0.65
+      "weight": 0.75
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-climate",
       "type": "CORRELATES",
-      "weight": 0.62
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-US",
@@ -163,48 +163,6 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-US-climate",
-      "to": "DOMAIN-US-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-US-infrastructure",
-      "to": "DOMAIN-US-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-US-economic",
-      "to": "DOMAIN-US-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-US-climate",
-      "to": "DOMAIN-US-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-US-economic",
-      "to": "DOMAIN-US-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-US-social",
-      "to": "DOMAIN-US-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
       "from": "DOMAIN-US-geopolitical",
       "to": "DOMAIN-US-infrastructure",
       "type": "ESCALATES",
@@ -226,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-US-Международ",
+      "to": "DOMAIN-US-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.73
+    },
+    {
       "from": "SIGNAL-US-США_вводят",
       "to": "DOMAIN-US-geopolitical",
       "type": "AMPLIFIES",
@@ -236,12 +200,6 @@
       "to": "DOMAIN-US-economic",
       "type": "AMPLIFIES",
       "weight": 0.65
-    },
-    {
-      "from": "SIGNAL-US-Последние_",
-      "to": "DOMAIN-US-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.62
     }
   ]
 }
