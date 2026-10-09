@@ -2,9 +2,9 @@
   "country": "HU",
   "date": "2026-10-09",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-09T14:09:18.238808+00:00",
+  "generated_at": "2026-10-09T14:27:54.976244+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-HU",
@@ -26,14 +26,14 @@
       "id": "DOMAIN-HU-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 46,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-HU-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 62,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -70,14 +70,21 @@
       "label": "technology"
     },
     {
-      "id": "DRIVER-HU-climate",
+      "id": "DRIVER-HU-economic",
       "type": "Driver",
-      "label": "climate"
+      "label": "economic"
     },
     {
       "id": "DRIVER-HU-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-HU-Венгрии_не",
+      "type": "Signal",
+      "label": "Венгрии необходимо значительно сократить",
+      "severity": 46,
+      "domain": "economic"
     },
     {
       "id": "SIGNAL-HU-Технологич",
@@ -87,18 +94,11 @@
       "domain": "technology"
     },
     {
-      "id": "SIGNAL-HU-Водный_деф",
+      "id": "SIGNAL-HU-Государств",
       "type": "Signal",
-      "label": "Водный дефицит — Венгрия",
-      "severity": 62,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-HU-Тепловая_в",
-      "type": "Signal",
-      "label": "Тепловая волна — Венгрия",
-      "severity": 62,
-      "domain": "climate"
+      "label": "Государственные финансы — Венгрия",
+      "severity": 46,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,13 +112,13 @@
       "from": "COUNTRY-HU",
       "to": "DOMAIN-HU-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-HU",
       "to": "DOMAIN-HU-climate",
       "type": "CORRELATES",
-      "weight": 0.62
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-HU",
@@ -151,7 +151,7 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-HU-climate",
+      "from": "DRIVER-HU-economic",
       "to": "COUNTRY-HU",
       "type": "CAUSES",
       "weight": 0.8
@@ -161,48 +161,6 @@
       "to": "COUNTRY-HU",
       "type": "CAUSES",
       "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-HU-climate",
-      "to": "DOMAIN-HU-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-HU-economic",
-      "to": "DOMAIN-HU-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-HU-social",
-      "to": "DOMAIN-HU-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-HU-climate",
-      "to": "DOMAIN-HU-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-HU-infrastructure",
-      "to": "DOMAIN-HU-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-HU-economic",
-      "to": "DOMAIN-HU-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
     },
     {
       "from": "DOMAIN-HU-geopolitical",
@@ -226,22 +184,22 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-HU-Венгрии_не",
+      "to": "DOMAIN-HU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.46
+    },
+    {
       "from": "SIGNAL-HU-Технологич",
       "to": "DOMAIN-HU-technology",
       "type": "AMPLIFIES",
       "weight": 0.64
     },
     {
-      "from": "SIGNAL-HU-Водный_деф",
-      "to": "DOMAIN-HU-climate",
+      "from": "SIGNAL-HU-Государств",
+      "to": "DOMAIN-HU-economic",
       "type": "AMPLIFIES",
-      "weight": 0.62
-    },
-    {
-      "from": "SIGNAL-HU-Тепловая_в",
-      "to": "DOMAIN-HU-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.62
+      "weight": 0.46
     }
   ]
 }
