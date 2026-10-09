@@ -2,7 +2,7 @@
   "country": "CA",
   "date": "2026-10-09",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-09T08:47:48.402856+00:00",
+  "generated_at": "2026-10-09T09:11:16.327906+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-CA",
       "type": "Country",
       "label": "CA",
-      "score": 58,
+      "score": 50,
       "props": {
-        "risk_score": 58
+        "risk_score": 50
       }
     },
     {
@@ -20,49 +20,49 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 48,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-climate",
       "type": "Domain",
       "label": "climate",
       "score": 50,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
-      "score": 55,
-      "trend": "stable"
+      "score": 5,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DRIVER-CA-Geopolitical",
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CA-Мэр_Монреа",
-      "type": "Signal",
-      "label": "Мэр Монреаля заявил, что город предложит",
-      "severity": 55,
-      "domain": "social"
-    },
-    {
       "id": "SIGNAL-CA-Стоимость_",
       "type": "Signal",
       "label": "Стоимость лесных пожаров в Канаде может ",
@@ -99,6 +92,13 @@
       "label": "Санкционное давление — Северная Америка",
       "severity": 65,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-CA-Шторм_—_Се",
+      "type": "Signal",
+      "label": "Шторм — Северная Америка",
+      "severity": 62,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -130,7 +130,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-social",
       "type": "CORRELATES",
-      "weight": 0.55
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CA",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-CA-geopolitical",
-      "to": "DOMAIN-CA-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-CA-infrastructure",
-      "to": "DOMAIN-CA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-CA-economic",
-      "to": "DOMAIN-CA-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "DOMAIN-CA-climate",
       "to": "DOMAIN-CA-infrastructure",
       "type": "ESCALATES",
@@ -226,10 +205,25 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-CA-Мэр_Монреа",
+      "from": "DOMAIN-CA-geopolitical",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
       "to": "DOMAIN-CA-social",
       "type": "AMPLIFIES",
-      "weight": 0.55
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-CA-Стоимость_",
@@ -242,6 +236,12 @@
       "to": "DOMAIN-CA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.65
+    },
+    {
+      "from": "SIGNAL-CA-Шторм_—_Се",
+      "to": "DOMAIN-CA-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.62
     }
   ]
 }
