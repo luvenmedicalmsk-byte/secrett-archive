@@ -2,7 +2,7 @@
   "country": "CA",
   "date": "2026-10-09",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-09T00:27:15.962780+00:00",
+  "generated_at": "2026-10-09T00:46:53.319320+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,59 +10,59 @@
       "id": "COUNTRY-CA",
       "type": "Country",
       "label": "CA",
-      "score": 44,
+      "score": 55,
       "props": {
-        "risk_score": 44
+        "risk_score": 55
       }
     },
     {
       "id": "DOMAIN-CA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 48,
-      "trend": "stable"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-climate",
       "type": "Domain",
       "label": "climate",
       "score": 46,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
-      "trend": "stable"
+      "score": 55,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-CA-Geopolitical",
@@ -75,9 +75,16 @@
       "label": "Economic"
     },
     {
-      "id": "DRIVER-CA-Economic",
+      "id": "DRIVER-CA-Social",
       "type": "Driver",
-      "label": "Economic"
+      "label": "Social"
+    },
+    {
+      "id": "SIGNAL-CA-Мэр_Монреа",
+      "type": "Signal",
+      "label": "Мэр Монреаля заявил, что город предложит",
+      "severity": 55,
+      "domain": "social"
     },
     {
       "id": "SIGNAL-CA-Санкционно",
@@ -92,13 +99,6 @@
       "label": "Шторм — Северная Америка",
       "severity": 62,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-CA-Пожарная_а",
-      "type": "Signal",
-      "label": "Пожарная активность — Северная Америка",
-      "severity": 54,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.48
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-CA",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.55
     },
     {
       "from": "COUNTRY-CA",
@@ -157,7 +157,7 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-CA-Economic",
+      "from": "DRIVER-CA-Social",
       "to": "COUNTRY-CA",
       "type": "CAUSES",
       "weight": 0.8
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-CA-climate",
-      "to": "DOMAIN-CA-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-CA-infrastructure",
-      "to": "DOMAIN-CA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-CA-economic",
-      "to": "DOMAIN-CA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-CA-geopolitical",
       "to": "DOMAIN-CA-infrastructure",
       "type": "ESCALATES",
@@ -226,6 +205,33 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-CA-climate",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-CA-Мэр_Монреа",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.55
+    },
+    {
       "from": "SIGNAL-CA-Санкционно",
       "to": "DOMAIN-CA-geopolitical",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
       "weight": 0.62
-    },
-    {
-      "from": "SIGNAL-CA-Пожарная_а",
-      "to": "DOMAIN-CA-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.54
     }
   ]
 }
