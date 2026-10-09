@@ -2,9 +2,9 @@
   "country": "RS",
   "date": "2026-10-09",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-09T02:08:01.126928+00:00",
-  "node_count": 13,
-  "edge_count": 21,
+  "generated_at": "2026-10-09T02:26:49.488352+00:00",
+  "node_count": 14,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-RS",
@@ -26,14 +26,14 @@
       "id": "DOMAIN-RS-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 34,
+      "score": 44,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-RS-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 44,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -70,27 +70,34 @@
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-RS-climate",
-      "type": "Driver",
-      "label": "climate"
-    },
-    {
       "id": "DRIVER-RS-economic",
       "type": "Driver",
       "label": "economic"
     },
     {
-      "id": "SIGNAL-RS-Пожарная_а",
-      "type": "Signal",
-      "label": "Пожарная активность — Сербия",
-      "severity": 38,
-      "domain": "climate"
+      "id": "DRIVER-RS-climate",
+      "type": "Driver",
+      "label": "climate"
     },
     {
-      "id": "SIGNAL-RS-Экономичес",
+      "id": "SIGNAL-RS-Процентная",
       "type": "Signal",
-      "label": "Экономический сигнал — Сербия",
-      "severity": 34,
+      "label": "Процентная ставка кредитного учреждения ",
+      "severity": 32,
+      "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-RS-Процентная",
+      "type": "Signal",
+      "label": "Процентная ставка по депозитам — Сербия",
+      "severity": 32,
+      "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-RS-Финансовый",
+      "type": "Signal",
+      "label": "Финансовый рынок — Сербия",
+      "severity": 32,
       "domain": "economic"
     }
   ],
@@ -105,13 +112,13 @@
       "from": "COUNTRY-RS",
       "to": "DOMAIN-RS-economic",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-RS",
       "to": "DOMAIN-RS-climate",
       "type": "CORRELATES",
-      "weight": 0.44
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-RS",
@@ -144,58 +151,16 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-RS-climate",
-      "to": "COUNTRY-RS",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
       "from": "DRIVER-RS-economic",
       "to": "COUNTRY-RS",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-RS-climate",
-      "to": "DOMAIN-RS-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-RS-infrastructure",
-      "to": "DOMAIN-RS-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-RS-economic",
-      "to": "DOMAIN-RS-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-RS-climate",
-      "to": "DOMAIN-RS-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-RS-economic",
-      "to": "DOMAIN-RS-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-RS-social",
-      "to": "DOMAIN-RS-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
+      "from": "DRIVER-RS-climate",
+      "to": "COUNTRY-RS",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DOMAIN-RS-geopolitical",
@@ -219,16 +184,22 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-RS-Пожарная_а",
-      "to": "DOMAIN-RS-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.38
-    },
-    {
-      "from": "SIGNAL-RS-Экономичес",
+      "from": "SIGNAL-RS-Процентная",
       "to": "DOMAIN-RS-economic",
       "type": "AMPLIFIES",
-      "weight": 0.34
+      "weight": 0.32
+    },
+    {
+      "from": "SIGNAL-RS-Процентная",
+      "to": "DOMAIN-RS-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.32
+    },
+    {
+      "from": "SIGNAL-RS-Финансовый",
+      "to": "DOMAIN-RS-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.32
     }
   ]
 }
