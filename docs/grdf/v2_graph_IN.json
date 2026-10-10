@@ -2,9 +2,9 @@
   "country": "IN",
   "date": "2026-10-10",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-10T10:46:39.370902+00:00",
+  "generated_at": "2026-10-10T11:07:37.250169+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-IN",
@@ -19,22 +19,22 @@
       "id": "DOMAIN-IN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
+      "score": 46,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-IN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 52,
-      "trend": "up"
+      "score": 5,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IN-climate",
       "type": "Domain",
       "label": "climate",
       "score": 57,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IN-technology",
@@ -48,7 +48,7 @@
       "type": "Domain",
       "label": "social",
       "score": 57,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IN-infrastructure",
@@ -87,18 +87,18 @@
       "domain": "social"
     },
     {
+      "id": "SIGNAL-IN-Протест_в_",
+      "type": "Signal",
+      "label": "Протест в Дели: Остановленные на полицей",
+      "severity": 53,
+      "domain": "social"
+    },
+    {
       "id": "SIGNAL-IN-Наводнение",
       "type": "Signal",
       "label": "Наводнение: India",
       "severity": 57,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-IN-Индия_объя",
-      "type": "Signal",
-      "label": "Индия объявляет чрезвычайные меры для по",
-      "severity": 52,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-economic",
       "type": "CORRELATES",
-      "weight": 0.52
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-IN",
@@ -184,6 +184,27 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-IN-geopolitical",
+      "to": "DOMAIN-IN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IN-infrastructure",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "DOMAIN-IN-climate",
       "to": "DOMAIN-IN-infrastructure",
       "type": "ESCALATES",
@@ -211,16 +232,16 @@
       "weight": 0.57
     },
     {
+      "from": "SIGNAL-IN-Протест_в_",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.53
+    },
+    {
       "from": "SIGNAL-IN-Наводнение",
       "to": "DOMAIN-IN-climate",
       "type": "AMPLIFIES",
       "weight": 0.57
-    },
-    {
-      "from": "SIGNAL-IN-Индия_объя",
-      "to": "DOMAIN-IN-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.52
     }
   ]
 }
