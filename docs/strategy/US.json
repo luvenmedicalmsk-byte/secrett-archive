@@ -2,49 +2,60 @@
   "country": "US",
   "country_name": "США",
   "date": "2026-10-10",
-  "generated_at": "2026-10-10T08:05:59.777833+00:00",
-  "strategy_score": 50,
-  "strategy_confidence": 66,
-  "urgency_level": "critical",
-  "urgency_level_ru": "Критическая",
-  "urgency_color": "#ef4444",
-  "preparedness_level": "emergency",
-  "preparedness_level_ru": "Чрезвычайная готовность",
-  "monitoring_priority": 4,
-  "monitoring_ru": "Ежечасно",
+  "generated_at": "2026-10-10T08:31:06.055917+00:00",
+  "strategy_score": 62,
+  "strategy_confidence": 67,
+  "urgency_level": "maximum",
+  "urgency_level_ru": "Максимальная",
+  "urgency_color": "#dc2626",
+  "preparedness_level": "maximum",
+  "preparedness_level_ru": "Максимальная готовность",
+  "monitoring_priority": 5,
+  "monitoring_ru": "Непрерывно",
   "actions": [
     {
-      "id": "CR-01",
+      "id": "CA-01",
       "priority": 1,
-      "action": "Контролируемая деэскалация",
-      "detail": "Критическая фаза при наличии best-сценария — сосредоточиться на факторах снижения риска",
-      "trigger": "critical + best dominant",
-      "expiry": "state transition",
+      "action": "КАСКАДНЫЙ КРИЗИС — МАКСИМАЛЬНАЯ ТРЕВОГА",
+      "detail": "Системный каскадный сбой. Все механизмы реагирования активированы немедленно",
+      "trigger": "cascade state",
+      "expiry": "cascade resolution",
       "confidence": 72,
-      "domain_context": "geopolitics",
+      "domain_context": "economy",
       "horizon_relevant": "30d"
     },
     {
-      "id": "CR-02",
-      "priority": 2,
-      "action": "Защитить деэскалационные индикаторы",
-      "detail": "Идентифицировать и поддержать факторы, ведущие к best-сценарию",
+      "id": "CA-02",
+      "priority": 1,
+      "action": "Полная активация антикризисного центра",
+      "detail": "Непрерывная работа антикризисного центра, координация всех задействованных сторон",
       "trigger": "always",
-      "expiry": "deescalation confirmed",
+      "expiry": "cascade resolved",
       "confidence": 72,
-      "domain_context": "geopolitics",
+      "domain_context": "economy",
+      "horizon_relevant": "30d"
+    },
+    {
+      "id": "CA-03",
+      "priority": 1,
+      "action": "Изоляция критических систем",
+      "detail": "Предотвратить дальнейшее распространение каскада на смежные домены",
+      "trigger": "systemic_combos > 2",
+      "expiry": "cascade isolated",
+      "confidence": 72,
+      "domain_context": "economy",
       "horizon_relevant": "30d"
     }
   ],
-  "action_count": 2,
-  "state": "critical",
+  "action_count": 3,
+  "state": "cascade",
   "dominant_scenario": "best",
-  "scenario_score": 34,
-  "instability": 19,
+  "scenario_score": 37,
+  "instability": 20,
   "calibration_grade": "good",
   "escalation_triggers": [
     {
-      "condition": "risk_score ≥ 90 (+8pt)",
+      "condition": "risk_score ≥ 91 (+8pt)",
       "leads_to": "cascade",
       "probability": 18
     },
@@ -59,7 +70,7 @@
       "probability": 22
     },
     {
-      "condition": "Новый критический драйвер в geopolitics",
+      "condition": "Новый критический драйвер в economy",
       "leads_to": "cascade",
       "probability": 18
     }
@@ -67,31 +78,31 @@
   "horizon_outlook": [
     {
       "horizon": "30 дней",
-      "score": 81,
+      "score": 89,
+      "state": "cascade",
+      "urgency": "maximum",
+      "preparedness": "maximum"
+    },
+    {
+      "horizon": "90 дней",
+      "score": 79,
       "state": "critical",
       "urgency": "critical",
       "preparedness": "emergency"
     },
     {
-      "horizon": "90 дней",
-      "score": 72,
-      "state": "escalating",
-      "urgency": "high",
-      "preparedness": "active"
-    },
-    {
       "horizon": "180 дней",
-      "score": 64,
+      "score": 70,
       "state": "escalating",
       "urgency": "high",
       "preparedness": "active"
     },
     {
       "horizon": "365 дней",
-      "score": 57,
-      "state": "contained",
-      "urgency": "moderate",
-      "preparedness": "enhanced"
+      "score": 62,
+      "state": "escalating",
+      "urgency": "high",
+      "preparedness": "active"
     }
   ],
   "probabilities": {
