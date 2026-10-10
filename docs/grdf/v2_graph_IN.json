@@ -2,67 +2,67 @@
   "country": "IN",
   "date": "2026-10-10",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-10T03:47:10.635228+00:00",
+  "generated_at": "2026-10-10T04:07:07.156660+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-IN",
       "type": "Country",
       "label": "IN",
-      "score": 57,
+      "score": 65,
       "props": {
-        "risk_score": 57
+        "risk_score": 65
       }
     },
     {
       "id": "DOMAIN-IN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
-      "trend": "stable"
+      "score": 70,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 47,
-      "trend": "stable"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-climate",
       "type": "Domain",
       "label": "climate",
       "score": 57,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-social",
       "type": "Domain",
       "label": "social",
-      "score": 83,
-      "trend": "stable"
+      "score": 52,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-IN-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IN-Полиция_ра",
+      "type": "Signal",
+      "label": "Полиция развернула силы с камерами на те",
+      "severity": 64,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-IN-Наводнение",
       "type": "Signal",
       "label": "Наводнение: India",
@@ -87,17 +94,10 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-IN-Администра",
+      "id": "SIGNAL-IN-Индия_стяг",
       "type": "Signal",
-      "label": "Административный кризис в Университете А",
-      "severity": 47,
-      "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-IN-Социальный",
-      "type": "Signal",
-      "label": "Социальный процесс — Индия",
-      "severity": 83,
+      "label": "Индия стягивает полицию — Нью-Дели перед",
+      "severity": 52,
       "domain": "social"
     }
   ],
@@ -106,13 +106,13 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.7
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-economic",
       "type": "CORRELATES",
-      "weight": 0.47
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-IN",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-social",
       "type": "CORRELATES",
-      "weight": 0.83
+      "weight": 0.52
     },
     {
       "from": "COUNTRY-IN",
@@ -184,6 +184,27 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-IN-geopolitical",
+      "to": "DOMAIN-IN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IN-infrastructure",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "DOMAIN-IN-climate",
       "to": "DOMAIN-IN-infrastructure",
       "type": "ESCALATES",
@@ -205,22 +226,22 @@
       "lag_days": 30
     },
     {
+      "from": "SIGNAL-IN-Полиция_ра",
+      "to": "DOMAIN-IN-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.64
+    },
+    {
       "from": "SIGNAL-IN-Наводнение",
       "to": "DOMAIN-IN-climate",
       "type": "AMPLIFIES",
       "weight": 0.57
     },
     {
-      "from": "SIGNAL-IN-Администра",
-      "to": "DOMAIN-IN-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.47
-    },
-    {
-      "from": "SIGNAL-IN-Социальный",
+      "from": "SIGNAL-IN-Индия_стяг",
       "to": "DOMAIN-IN-social",
       "type": "AMPLIFIES",
-      "weight": 0.83
+      "weight": 0.52
     }
   ]
 }
