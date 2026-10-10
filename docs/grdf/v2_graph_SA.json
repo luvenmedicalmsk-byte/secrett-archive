@@ -2,7 +2,7 @@
   "country": "SA",
   "date": "2026-10-10",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-10T18:28:13.158299+00:00",
+  "generated_at": "2026-10-10T18:48:17.670512+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -10,17 +10,17 @@
       "id": "COUNTRY-SA",
       "type": "Country",
       "label": "SA",
-      "score": 90,
+      "score": 92,
       "props": {
-        "risk_score": 90
+        "risk_score": 92
       }
     },
     {
       "id": "DOMAIN-SA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 75,
-      "trend": "stable"
+      "score": 87,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-economic",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-SA-Ракетные_у",
+      "type": "Signal",
+      "label": "Ракетные удары по пассажирскому терминал",
+      "severity": 79,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-SA-Как_миниму",
       "type": "Signal",
       "label": "Как минимум три человека погибли при ата",
@@ -92,13 +99,6 @@
       "label": "Два человека погибли — саудовский удар п",
       "severity": 75,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-SA-Совет_безо",
-      "type": "Signal",
-      "label": "Совет безопасности: Йемен — внимание на ",
-      "severity": 75,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.75
+      "weight": 0.87
     },
     {
       "from": "COUNTRY-SA",
@@ -184,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-SA-Ракетные_у",
+      "to": "DOMAIN-SA-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.79
+    },
+    {
       "from": "SIGNAL-SA-Как_миниму",
       "to": "DOMAIN-SA-geopolitical",
       "type": "AMPLIFIES",
@@ -191,12 +197,6 @@
     },
     {
       "from": "SIGNAL-SA-Два_челове",
-      "to": "DOMAIN-SA-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.75
-    },
-    {
-      "from": "SIGNAL-SA-Совет_безо",
       "to": "DOMAIN-SA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.75
