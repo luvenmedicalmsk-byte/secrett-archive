@@ -13613,6 +13613,11 @@ def _apply_geo_contract(events):
                 # process_place_type, zone_type, zone_id, is_global, region.
                 # Фронт читает именно process_place_type == 'global'.
                 e['event_country'] = ''; e['primary_country'] = ''
+            elif gc.zone_type == 'disputed':
+                # ADR-284D: спорная территория — место, а не страна. Название
+                # территории в event_country не пишется (поле страновое).
+                e['event_country'] = ''; e['primary_country'] = ''
+                e['territory_status'] = 'disputed'
             else:
                 e['event_country'] = gc.region; e['primary_country'] = ''
             e['country_code'] = ''
@@ -13776,6 +13781,7 @@ def _apply_geo_contract(events):
         _EU_REG = ('ЕС', 'Европа', 'Евросоюз', 'EU')
         for e in events:
             if (not e.get('primary_country')) and ((e.get('region') or '') not in _EU_REG) \
+               and e.get('territory_status') != 'disputed' \
                and _ru_place_in_title(e.get('title') or ''):
                 _gd_prev = (e.get('geo_decision') or {}).get('primary')
                 e['primary_country'] = 'RU'; e['country_code'] = 'RU'
@@ -23215,6 +23221,8 @@ def _zone_place(events):
         reg = str(e.get('region') or '').strip()
         if not reg or str(e.get('country_code') or '').strip():
             continue
+        if e.get('territory_status') == 'disputed':
+            continue                    # ADR-284D: страна спорной территории не назначается
         ment = [c for c in (e.get('mentioned_countries') or []) if c]
         if not ment:
             continue

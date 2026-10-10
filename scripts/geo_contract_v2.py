@@ -140,8 +140,56 @@ def _eu_bloc(gc):
     return gc
 
 
+# ══ ADR-284D · D4 · СПОРНЫЕ ТЕРРИТОРИИ (вариант C) ═══════════════════════════
+# Закрытый список мест, для которых PLACE не превращается в COUNTRY:
+# country = NULL, place = территория, zone_type = 'disputed'. Слой стоит НАД
+# словарями стран: ни газетир, ни ru_subject, ни fallback не возвращают RU/UA.
+# Срабатывает только когда территория — МЕСТО события в заголовке (предлог места
+# или рубрика CAP «Явление: <область>»), а не тема («вопрос о Крыме», «кроме
+# Крымского полуострова»). impact_countries из факта спорности не создаётся.
+# Точность не повышается: точка источника сохраняется только если уже была
+# точной и лежит в рамке территории, иначе центр территории как centroid.
+# ОТКАТ: GEO_DISPUTED = False.
+GEO_DISPUTED = True
+_DP_PRE = r'(?:^|[:—–\-]\s*|(?:^|\s)(?:в|во|на|по|из|под|над|у|близ|около|возле)\s+(?:оккупированн\w+\s+(?:россией\s+)?(?:части\s+)?|аннексированн\w+\s+)?)'
+_DISPUTED = (
+    ('disputed_zaporizhzhia', re.compile(_DP_PRE + r'запорожск(?:ая|ой|ую)\s+(?:обл|област)', re.I)),
+    ('disputed_kherson',      re.compile(_DP_PRE + r'херсонск(?:ая|ой|ую)\s+(?:обл|област)', re.I)),
+    ('disputed_donetsk',      re.compile(_DP_PRE + r'(?:донецк(?:ая|ой|ую)\s+(?:обл|област)|днр\b)', re.I)),
+    ('disputed_luhansk',      re.compile(_DP_PRE + r'(?:луганск(?:ая|ой|ую)\s+(?:обл|област)|лнр\b)', re.I)),
+    ('disputed_sevastopol',   re.compile(_DP_PRE + r'севастопол(?:ь|е|ю|я)(?![а-яё])', re.I)),
+    ('disputed_crimea',       re.compile(_DP_PRE + r'(?:республик\w+\s+)?крым(?:у|е|а)?(?![а-яё])', re.I)),
+    ('disputed_kurils_south', re.compile(_DP_PRE + r'курильские\s+острова,\s*юг', re.I)),
+)
+def _disputed(gc, title):
+    if not GEO_DISPUTED or gc is None:
+        return gc
+    if gc.country not in (None, 'RU', 'UA'):
+        return gc
+    t = (title or '')
+    hit = None
+    for zid, rx in _DISPUTED:
+        if rx.search(t):
+            hit = zid
+            break
+    if not hit:
+        return gc
+    import geo_contract as _g
+    name, ztype, zlat, zlng, zb = _g.ZONES[hit]
+    lat, lng, prec = zlat, zlng, 'centroid'
+    try:
+        if gc.precision == 'exact' and gc.lat is not None and _g._zone_contains(zb, float(gc.lat), float(gc.lng)):
+            lat, lng, prec = gc.lat, gc.lng, 'exact'
+    except Exception:
+        pass
+    act = gc.actor_country if gc.actor_country not in ('RU', 'UA') or gc.country is None else gc.actor_country
+    return _g.GeoContract(None, None, name, lat, lng, (), act, prec,
+                          gc.confidence, gc.source, process_place_type='zone',
+                          zone_id=hit, zone_type=ztype)
+
+
 def resolve_geo_v2(title, summary='', raw_coords=None, domain=None):
-    return _eu_bloc(_resolve_geo_v2_core(title, summary, raw_coords, domain))
+    return _disputed(_eu_bloc(_resolve_geo_v2_core(title, summary, raw_coords, domain)), title)
 
 
 def _resolve_geo_v2_core(title, summary='', raw_coords=None, domain=None):
