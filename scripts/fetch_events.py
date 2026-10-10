@@ -4464,7 +4464,7 @@ def fetch_nasa_eonet():
                     'date': parse_date(date_raw),
                     'source': 'NASA EONET',
                     'source_bias': bias,
-                    '_lat': lat, '_lng': lng, '_region': region,
+                    '_lat': lat, '_lng': lng, '_coord_origin': 'source', '_region': region,
                     '_domain': domain
                 })
         except Exception as e:
@@ -4507,7 +4507,7 @@ def fetch_eonet_ice():
                     'date': _today,
                     'source': 'NASA EONET Ice',
                     'source_bias': bias,
-                    '_lat': lat, '_lng': lng, '_region': region,
+                    '_lat': lat, '_lng': lng, '_coord_origin': 'source', '_region': region,
                     '_domain': 'climate'
                 })
             except Exception:
@@ -4579,7 +4579,7 @@ def fetch_nsidc_seaice():
                 'date': _today,
                 'source': 'NSIDC Sea Ice',
                 'source_bias': bias,
-                '_lat': plat, '_lng': plng, '_region': region_ru,
+                '_lat': plat, '_lng': plng, '_coord_origin': 'dictionary', '_region': region_ru,
                 '_domain': 'climate'
             })
         except Exception as e:
@@ -7444,6 +7444,7 @@ def process_events(raw_items):
         # NASA EONET уже имеет координаты
         if '_lat' in item:
             lat, lng = item['_lat'], item['_lng']
+            _co = item.get('_coord_origin') or 'unknown'   # TASK-287 R1: наличие _lat не доказывает source
             region = item['_region']
             domain = item['_domain']
             severity = _severity_for(item, _gov.get('weight', 1.0))
@@ -7487,13 +7488,16 @@ def process_events(raw_items):
                 _foreign = _foreign_country(((item.get('title','') or '') + ' ' + (item.get('desc','') or '')))[0]
                 if str(_src).startswith('Telegram') or _src == 'Downdetector RU':
                     lat, lng, region = _ru_default(item['title']); _trace(_tid,'GEO','modified',reason='global_marker'); _lost('global_marker', item)
+                    _co = 'random'   # TASK-287 R1
                 elif _foreign:
                     # иностранное место без координат: снапшот восстановит страну (D2).
                     # Публикуем в ленте без карты, метка страны придёт из GeoContract.
                     lat, lng, region = None, None, ''
+                    _co = None   # TASK-287 R1
                     item['map_visible'] = False; _trace(_tid,'NO_GEO','modified',reason='nogeo_valid'); _lost('nogeo_valid', item)
                 elif _home:
                     lat, lng, region = _home; _trace(_tid,'GEO','modified',reason='global_marker'); _lost('global_marker', item)
+                    _co = 'random'   # TASK-287 R1
                 else:
                     # VALID_NO_GEO RECOVERY: процесс без физического места.
                     # Аналитический сигнал (кибер/эконом/техно/санкции) → в ленту без карты;
@@ -7501,11 +7505,13 @@ def process_events(raw_items):
                     _cls = _classify_no_geo(item.get('title',''), item.get('desc',''), domain)
                     if _cls == 'VALID':
                         lat, lng, region = None, None, ''
+                        _co = None   # TASK-287 R1
                         item['map_visible'] = False; _trace(_tid,'NO_GEO','modified',reason='nogeo_valid'); _lost('nogeo_valid', item)
                     else:
                         _trace(_tid,'NO_GEO','removed',reason='nogeo_noise'); _lost('nogeo_noise', item); continue
             else:
                 lat, lng, region = geo
+                _co = 'random'   # TASK-287 R1
             # REGION FALLBACK. Панель «Страны» строится по полю region:
             # _grdfCountriesFromEvents группирует события именно по нему.
             # При этом region заполняется только из координат через
@@ -7956,6 +7962,7 @@ def process_events(raw_items):
             "domain": domain,
             "severity": severity,
             "lat": lat, "lng": lng,
+            "_coord_origin": (_co if lat is not None else None),   # TASK-287 R1
             "svgX": svgX, "svgY": svgY,
             "region": region,
             "summary": _strip_promo(summary) or _clean_title(item['title']),
@@ -13537,6 +13544,10 @@ def _attach_signal_state(events):
 # 284D · флаги (откат: False)
 CAP_MA_SCOPE = True
 CAP_FALLBACK_NO_COORDS = True
+# TASK-287 R1 · происхождение координаты (аддитивно; откат: False).
+# geo.coord_origin — откуда опубликованная точка; geo.raw_origin — откуда точка на входе контракта;
+# geo.coord_reused — 'retained', если вход взят из прошлой публикации (_retain_critical).
+COORD_ORIGIN = True
 
 
 def _apply_geo_contract(events):
@@ -13551,6 +13562,7 @@ def _apply_geo_contract(events):
     st = {'country': 0, 'zone': 0, 'global': 0, 'none': 0, 'validate_fail': 0,
           'exact': 0, 'centroid': 0}
     for e in events:
+        _pg_prev = e.get('geo') if isinstance(e.get('geo'), dict) else None   # TASK-287 R1
         lat, lng = e.get('lat'), e.get('lng')
         rc = (lat, lng) if isinstance(lat, (int, float)) and isinstance(lng, (int, float)) else None
         gc = resolve_geo(e.get('title', ''), e.get('summary', '') or e.get('description', ''),
@@ -13560,6 +13572,18 @@ def _apply_geo_contract(events):
             st['validate_fail'] += 1
             gc = type(gc)(None, None, None, None, None, (), None, 'none', 0.0, 'gate_fail')
         e['geo'] = gc.as_dict()
+        if COORD_ORIGIN:   # TASK-287 R1: только новые поля, координаты и точность не меняются
+            _ret = bool((e.get('meta') or {}).get('retained'))
+            _ro = None
+            if rc:
+                _ro = (((_pg_prev or {}).get('coord_origin')) if _ret else e.get('_coord_origin')) or 'unknown'
+            _fo = None
+            if gc.lat is not None:
+                _fo = _ro if (rc and abs(gc.lat - rc[0]) < 1e-9 and abs(gc.lng - rc[1]) < 1e-9) else 'dictionary'
+            e['geo']['coord_origin'] = _fo
+            e['geo']['raw_origin'] = _ro
+            e['geo']['coord_reused'] = 'retained' if (_ret and rc) else None
+        e.pop('_coord_origin', None)
         ppt = gc.process_place_type
         _imp = [c for c in (gc.impact_countries or ()) if c]
         if ppt == 'country':
@@ -13763,6 +13787,7 @@ def _apply_geo_contract(events):
                         _gd['precision'] = 'mentioned'
                         _gd['source'] = 'упомянута в заголовке'
                         _gd['lat'], _gd['lng'] = _g[2], _g[3]
+                        if COORD_ORIGIN: _gd['coord_origin'] = 'dictionary'   # TASK-287 R1
                         e['geo'] = _gd
                         e['geo_mentioned_xy'] = _cc
                 except Exception:
@@ -14271,7 +14296,7 @@ def save(events):
         _fxb=((_fxe.get('title','') or '')+' '+(_fxe.get('summary','') or '')).lower()
         # BC: закэшированный мисрезолв GB->CA (провинция Канады)
         if 'британск' in _fxb and 'колумби' in _fxb and (_fxe.get('geo') or {}).get('country')=='GB':
-            _fxe['geo'].update({'country':'CA','country_ru':'Канада','region':'Британская Колумбия','lat':53.7,'lng':-127.6})
+            _fxe['geo'].update({'country':'CA','country_ru':'Канада','region':'Британская Колумбия','lat':53.7,'lng':-127.6,'coord_origin':'override'})
             _fxe['lat']=53.7; _fxe['lng']=-127.6; _fxe['region']='Британская Колумбия'
         # нейтрализация пропаганд. терминов (display, 0 churn)
         for _fxf in ('title','summary','_headline'):
@@ -14606,6 +14631,7 @@ def fetch_gdacs():
                     lng = float(lng_el.text)
                     item_data['_lat'] = lat
                     item_data['_lng'] = lng
+                    item_data['_coord_origin'] = 'source'   # TASK-287 R1
                     item_data['_region'] = detect_region_by_coords(lat, lng)
                     item_data['_domain'] = 'climate'
                 except:
@@ -14814,7 +14840,7 @@ def fetch_usgs_earthquakes():
                     'date': datetime.now(timezone.utc).strftime('%Y-%m-%d'),
                     'source': 'USGS',
                     '_force_severity': normalize_severity('earthquake', {'magnitude': mag, 'depth': _depth}),
-                    '_lat': lat, '_lng': lng,
+                    '_lat': lat, '_lng': lng, '_coord_origin': 'source',
                     '_region': _region,
                     '_domain': 'climate',
                     # Ключ ревизии: USGS event id постоянен между уточнениями,
@@ -15733,7 +15759,7 @@ def fetch_copernicus_ems():
             'desc': desc,
             'date': p['date'],
             'source': 'Copernicus EMS',
-            '_lat': p['lat'], '_lng': p['lng'],
+            '_lat': p['lat'], '_lng': p['lng'], '_coord_origin': 'source',
             '_region': detect_region_by_coords(p['lat'], p['lng']),
             '_domain': p['ev_domain'],
             '_force_severity': p['sev'],
@@ -15881,7 +15907,7 @@ def fetch_rosgidromet_cap():
             "desc": f"{dtext} · Росгидромет, {areaDesc}, Россия".strip(" ·"),
             "date": now.strftime("%Y-%m-%d"),
             "source": "Росгидромет CAP",
-            "_lat": lat, "_lng": lng,
+            "_lat": lat, "_lng": lng, '_coord_origin': 'computed',
             "_region": (f"{areaDesc}, Россия" if areaDesc else "Россия"),
             "_domain": "climate",
             "_force_severity": score,
@@ -16578,7 +16604,7 @@ def fetch_notam():
                 "desc": _notam_desc(reg_ru, c23, gnss, nid, fir, n.get('radius'), ad_closed),
                 "date": now.strftime("%Y-%m-%d"),
                 "source": "EUROCONTROL NOTAM",
-                "_lat": lat, "_lng": lng,
+                "_lat": lat, "_lng": lng, '_coord_origin': 'source',
                 "_region": reg_ru,
                 "_country_code": cc,
                 "_domain": "geopolitics",
@@ -16762,7 +16788,7 @@ def fetch_mgm_turkey():
                      f"действующих предупреждений: {g['n']}. Турция").strip(" ·"),  # здесь всегда род. мн., число стоит после двоеточия
             "date": now.strftime("%Y-%m-%d"),
             "source": "MGM Турция",
-            "_lat": 39.0, "_lng": 35.0,  # центр Турции (детальной геопривязки по town-кодам нет)
+            "_lat": 39.0, "_lng": 35.0, '_coord_origin': 'capital',  # центр Турции (детальной геопривязки по town-кодам нет)
             "_region": "Турция",
             "_domain": "climate",
             "_force_severity": score,
@@ -16858,7 +16884,7 @@ def fetch_cbr_russia():
                  f"за месяц {month_dev:+.1f}%. Источник: Банк России. Россия"),
         "date": end.strftime("%Y-%m-%d"),
         "source": "Банк России",
-        "_lat": 55.75, "_lng": 37.62,
+        "_lat": 55.75, "_lng": 37.62, '_coord_origin': 'capital',
         "_region": "Россия",
         "_domain": "economy",
         "_force_severity": sev,
@@ -16933,7 +16959,7 @@ def fetch_cbrt_turkey():
                  f"за месяц {month_dev:+.1f}%. Источник: CBRT. Турция"),
         "date": now.strftime("%Y-%m-%d"),
         "source": "ЦБ Турции",
-        "_lat": 39.93, "_lng": 32.85,
+        "_lat": 39.93, "_lng": 32.85, '_coord_origin': 'capital',
         "_region": "Турция",
         "_domain": "economy",
         "_force_severity": sev,
@@ -17016,7 +17042,7 @@ def fetch_glofas():
                     'title': f"GloFAS: высокий речной сток, прогноз 24ч ({disq:.0f} м³/с)",
                     'desc': "CEMS/GloFAS: прогнозируемый расход реки в верхнем перцентиле — риск разлива.",
                     'date': today_s, 'source': 'GloFAS',
-                    '_lat': round(la, 3), '_lng': round(lo, 3),
+                    '_lat': round(la, 3), '_lng': round(lo, 3), '_coord_origin': 'computed',
                     '_region': 'GloFAS · бассейн реки', '_domain': 'climate',
                     '_force_severity': sev,
                 })
@@ -17918,7 +17944,7 @@ def fetch_russia_climate():
                                 'date': parse_date(pub_date),
                                 'source': 'GDACS/Россия',
                                 'source_bias': 12,
-                                '_lat': lat, '_lng': lng,
+                                '_lat': lat, '_lng': lng, '_coord_origin': 'source',
                                 '_region': 'Россия',
                                 '_domain': 'climate'
                             })
@@ -17975,6 +18001,7 @@ def fetch_copernicus_floods():
                 desc = flood.get('desc', '')
                 lat = flood.get('lat')
                 lng = flood.get('lng')
+                _co_gf = 'source'   # TASK-287 R1
                 # severity строго по уровню алерта GDACS (green/orange/red),
                 # иначе зелёный (0 жертв) раздувался до ~78 по ключевым словам
                 sev_str = (flood.get('severity') or 'low').lower()
@@ -18000,6 +18027,7 @@ def fetch_copernicus_floods():
                     for country, coords in COUNTRY_COORDS.items():
                         if country in text_lower:
                             lat = coords[0] + random.uniform(-1, 1)
+                            _co_gf = 'random'   # TASK-287 R1
                             lng = coords[1] + random.uniform(-2, 2)
                             break
                 
@@ -18013,7 +18041,7 @@ def fetch_copernicus_floods():
                     'source': 'GDACS/Copernicus',
                     'source_bias': 20,
                     '_force_severity': force_sev,
-                    '_lat': float(lat), '_lng': float(lng),
+                    '_lat': float(lat), '_lng': float(lng), '_coord_origin': _co_gf,
                     '_region': detect_region_by_coords(float(lat), float(lng)),
                     '_domain': 'climate'
                 })
@@ -18039,7 +18067,7 @@ def fetch_copernicus_floods():
                     'date': flood.get('date', datetime.now(timezone.utc).strftime('%Y-%m-%d')),
                     'source': 'Floodlist',
                     'source_bias': 18,
-                    '_lat': float(lat), '_lng': float(lng),
+                    '_lat': float(lat), '_lng': float(lng), '_coord_origin': 'random',
                     '_region': detect_region_by_coords(float(lat), float(lng)),
                     '_domain': 'climate'
                 })
@@ -18064,7 +18092,7 @@ def fetch_copernicus_floods():
                     'date': flood.get('date', datetime.now(timezone.utc).strftime('%Y-%m-%d')),
                     'source': 'ReliefWeb/UN',
                     'source_bias': 16,
-                    '_lat': float(lat), '_lng': float(lng),
+                    '_lat': float(lat), '_lng': float(lng), '_coord_origin': 'random',
                     '_region': detect_region_by_coords(float(lat), float(lng)),
                     '_domain': 'climate'
                 })
@@ -18193,7 +18221,7 @@ def fetch_copernicus_cyber():
                     'netblocks': 'NetBlocks',
                 }.get(etype, 'Cyber Intel'),
                 'source_bias': base_severity - 50,
-                '_lat': round(lat, 2), '_lng': round(lng, 2),
+                '_lat': round(lat, 2), '_lng': round(lng, 2), '_coord_origin': 'random',
                 '_region': region, '_domain': 'technology'
             })
     
@@ -18249,6 +18277,7 @@ def fetch_copernicus():
                 }
                 if geo:
                     base['_lat'], base['_lng'], base['_region'] = geo
+                    base['_coord_origin'] = 'random'   # TASK-287 R1
                     base['_domain'] = domain
                 items.append(base)
         except Exception as e:
@@ -18283,6 +18312,7 @@ def fetch_copernicus():
                     }
                     if geo:
                         base['_lat'], base['_lng'], base['_region'] = geo
+                        base['_coord_origin'] = 'random'   # TASK-287 R1
                         base['_domain'] = 'climate'
                     items.append(base)
         except: pass
@@ -18329,6 +18359,7 @@ def fetch_copernicus_sentinel(api_key=None):
                     }
                     if geo:
                         base['_lat'], base['_lng'], base['_region'] = geo
+                        base['_coord_origin'] = 'random'   # TASK-287 R1
                         base['_domain'] = 'climate'
                     items.append(base)
         except: pass
@@ -18553,7 +18584,7 @@ def fetch_cloudflare_radar(token=None):
             items.append({
                 'title': title, 'desc': desc, 'date': eff_date,
                 'source': 'Cloudflare Radar',
-                '_force_severity': sev, '_lat': lat, '_lng': lng,
+                '_force_severity': sev, '_lat': lat, '_lng': lng, '_coord_origin': 'capital',
                 '_region': cname,
                 '_domain': 'technology',
                 '_meta': {'kind': 'radar_outage', 'outage_type': ot, 'cause': cause, 'verified': True}
@@ -18600,7 +18631,7 @@ def fetch_cloudflare_radar(token=None):
             items.append({
                 'title': f"Аномалия трафика: {cname}", 'desc': desc, 'date': eff_date,
                 'source': 'Cloudflare Radar',
-                '_force_severity': (54 if verified else 46), '_lat': lat, '_lng': lng,
+                '_force_severity': (54 if verified else 46), '_lat': lat, '_lng': lng, '_coord_origin': 'capital',
                 '_region': cname, '_domain': 'technology',
                 '_meta': {'kind': 'radar_anomaly', 'status': (ta.get('status') or ''), 'verified': verified}
             })
@@ -18708,7 +18739,7 @@ def fetch_ioda():
                 + ". Источники: активное зондирование, маршрутизация BGP, фоновый трафик.")
         items.append({
             'title': title, 'desc': desc, 'date': today_s, 'source': 'IODA',
-            '_force_severity': sev, '_lat': lat, '_lng': lng, '_region': cname, '_domain': 'technology',
+            '_force_severity': sev, '_lat': lat, '_lng': lng, '_coord_origin': 'capital', '_region': cname, '_domain': 'technology',
             '_meta': {'kind': 'ioda_outage', 'score': int(info['score'] or 0), 'duration_h': hrs, 'verified': True}
         })
         _n += 1
@@ -18805,7 +18836,7 @@ def fetch_netblocks_rss():
             'title': '%s: %s' % (head, cname),
             'desc': 'NetBlocks: \u0437\u0430\u0444\u0438\u043a\u0441\u0438\u0440\u043e\u0432\u0430\u043d\u043e %s \u2014 %s%s.' % (ptype, cname, ctx),
             'date': parse_date(pub), 'source': 'NetBlocks',
-            '_force_severity': sev, '_lat': lat, '_lng': lng, '_region': cname, '_domain': dom,
+            '_force_severity': sev, '_lat': lat, '_lng': lng, '_coord_origin': 'capital', '_region': cname, '_domain': dom,
             '_meta': {'kind': 'netblocks_' + kind, 'verified': True}
         })
         _n += 1
@@ -18948,7 +18979,7 @@ def fetch_nasa_firms(api_key=None):
                 'date': fire['date'],
                 'source': 'NASA FIRMS',
                 '_force_severity': normalize_severity('firms', {'bright': fire['bright'], 'frp': _frp, 'confidence': _conf, 'cluster_n': _cn, 'persist_days': _pdays, 'exposure': _expo}),
-                '_lat': fire['lat'], '_lng': fire['lng'],
+                '_lat': fire['lat'], '_lng': fire['lng'], '_coord_origin': 'source',
                 '_region': reg, '_domain': 'climate',
                 '_meta': {'kind': 'firms', 'unconfirmed': True, 'confidence': _conf,
                           'frp': _frp, 'cluster_n': _cn, 'bright': round(fire['bright']),
@@ -18996,6 +19027,7 @@ def fetch_global_forest_watch():
                     }
                     if geo:
                         base['_lat'], base['_lng'], base['_region'] = geo
+                        base['_coord_origin'] = 'random'   # TASK-287 R1
                         base['_domain'] = 'climate'
                     items.append(base)
         except Exception as e:
@@ -19021,6 +19053,7 @@ def fetch_global_forest_watch():
                     }
                     if geo:
                         base['_lat'], base['_lng'], base['_region'] = geo
+                        base['_coord_origin'] = 'random'   # TASK-287 R1
                         base['_domain'] = 'climate'
                     items.append(base)
         except: pass
@@ -19082,6 +19115,7 @@ def fetch_flood_observatory():
                     try:
                         lng, lat = float(coords[0]), float(coords[1])
                         base['_lat'], base['_lng'] = lat, lng
+                        base['_coord_origin'] = 'source'   # TASK-287 R1
                         base['_region'] = detect_region_by_coords(lat, lng)
                     except Exception:
                         pass
@@ -19094,6 +19128,7 @@ def fetch_flood_observatory():
                             _v1, _v2 = p.get(_la), p.get(_lo)
                             if _v1 is not None and _v2 is not None:
                                 base['_lat'], base['_lng'] = float(_v1), float(_v2)
+                                base['_coord_origin'] = 'source'   # TASK-287 R1
                                 base['_region'] = detect_region_by_coords(base['_lat'], base['_lng'])
                                 break
                         except Exception:
@@ -19106,11 +19141,13 @@ def fetch_flood_observatory():
                     _cc = COUNTRY_COORDS.get(country.strip().lower())
                     if _cc:
                         base['_lat'], base['_lng'] = _cc[0], _cc[1]
+                        base['_coord_origin'] = 'capital'   # TASK-287 R1
                         base['_region'] = detect_region_by_coords(_cc[0], _cc[1])
                 if '_lat' not in base:
                     geo = detect_coords(title, base['desc'])
                     if geo:
                         base['_lat'], base['_lng'], base['_region'] = geo
+                        base['_coord_origin'] = 'random'   # TASK-287 R1
                 items.append(base)
         except Exception as e:
             print("  [WARN] GDACS Floods JSON: " + str(e), file=sys.stderr)
@@ -19154,6 +19191,7 @@ def fetch_flood_observatory():
                         try:
                             lat, lng = float(la.text), float(lo.text)
                             base['_lat'], base['_lng'] = lat, lng
+                            base['_coord_origin'] = 'source'   # TASK-287 R1
                             base['_region'] = detect_region_by_coords(lat, lng)
                         except Exception:
                             pass
@@ -19165,6 +19203,7 @@ def fetch_flood_observatory():
                             _cc = COUNTRY_COORDS.get(_m.group(1).strip().lower())
                             if _cc:
                                 base['_lat'], base['_lng'] = _cc[0], _cc[1]
+                                base['_coord_origin'] = 'capital'   # TASK-287 R1
                                 base['_region'] = detect_region_by_coords(_cc[0], _cc[1])
                     if '_lat' not in base:
                         # 24.09.2026. Заголовок бывает и одним лишь названием
@@ -19177,11 +19216,13 @@ def fetch_flood_observatory():
                         _cc = COUNTRY_COORDS.get(_bare.lower())
                         if _cc:
                             base['_lat'], base['_lng'] = _cc[0], _cc[1]
+                            base['_coord_origin'] = 'capital'   # TASK-287 R1
                             base['_region'] = detect_region_by_coords(_cc[0], _cc[1])
                     if '_lat' not in base:
                         geo = detect_coords(ttl, desc)
                         if geo:
                             base['_lat'], base['_lng'], base['_region'] = geo
+                            base['_coord_origin'] = 'random'   # TASK-287 R1
                     items.append(base)
             except Exception as e:
                 print("  [WARN] GDACS Floods RSS: " + str(e), file=sys.stderr)
@@ -19379,7 +19420,7 @@ def fetch_russia_signals():
                     'domain': 'climate',
                     'region': _subj,
                     'lat': _cla, 'lng': _clo,
-                    '_lat': _cla, '_lng': _clo,
+                    '_lat': _cla, '_lng': _clo, '_coord_origin': 'dictionary',
                     '_region': _subj,
                     '_domain': 'climate',
                 })
@@ -19469,7 +19510,7 @@ def fetch_russia_signals():
                     'source': 'Open-Meteo',
                     'domain': 'climate',
                     'region': city_subj,
-                    '_lat': lat, '_lng': lng,
+                    '_lat': lat, '_lng': lng, '_coord_origin': 'dictionary',
                     '_region': city_subj,
                     '_domain': 'climate',
                     '_force_severity': normalize_severity('weather', {'severity_add': severity_add}),
@@ -19502,7 +19543,7 @@ def fetch_russia_signals():
                 'source': 'EMSC',
                 'domain': 'climate',
                 'region': detect_region_by_coords(coords[1], coords[0]),
-                '_lat': coords[1], '_lng': coords[0],
+                '_lat': coords[1], '_lng': coords[0], '_coord_origin': 'source',
                 '_region': _emsc_place(place),
                 '_domain': 'climate',
                 '_force_severity': normalize_severity('earthquake', {'magnitude': mag, 'depth': (coords[2] if len(coords) > 2 else None)}),
@@ -19824,6 +19865,7 @@ def fetch_russia_climate_v2():
                 }
                 if geo:
                     base['_lat'], base['_lng'], base['_region'] = geo
+                    base['_coord_origin'] = 'random'   # TASK-287 R1
                     base['_domain'] = 'climate'
                 items.append(base)
         except Exception as e:
@@ -19864,6 +19906,7 @@ def fetch_russia_climate_v2():
                     }
                     if geo:
                         base['_lat'], base['_lng'], base['_region'] = geo
+                        base['_coord_origin'] = 'random'   # TASK-287 R1
                         base['_domain'] = 'climate'
                     items.append(base)
         except: pass
@@ -19901,7 +19944,7 @@ def fetch_russia_climate_v2():
                         'date': parse_date(pub_date),
                         'source': url.split('/')[2],
                         'source_bias': 10,
-                        '_lat': lat, '_lng': lng,
+                        '_lat': lat, '_lng': lng, '_coord_origin': 'random',
                         '_region': 'Арктика/Сибирь', '_domain': 'climate'
                     })
         except: pass
@@ -19939,6 +19982,7 @@ def fetch_russia_climate_v2():
                     }
                     if geo:
                         base['_lat'], base['_lng'], base['_region'] = geo
+                        base['_coord_origin'] = 'random'   # TASK-287 R1
                         base['_domain'] = 'climate'
                     items.append(base)
         except: pass
@@ -20328,7 +20372,7 @@ def _ma_parse(xml_text, cc, country_name, lat, lng):
             'date': g['date'] or today,
             'source': 'MeteoAlarm CAP',
             'source_bias': 9,
-            '_lat': lat, '_lng': lng,
+            '_lat': lat, '_lng': lng, '_coord_origin': 'capital',
             '_region': country_name,
             '_country_code': cc,
             '_domain': 'climate',
@@ -20880,6 +20924,7 @@ def _llm_extract_countries(events):
                 e['region'] = 'Россия, ' + _subj
                 e['geo_fix'] = {'subject': _subj, 'from': 'Глобально', 'to': 'Россия, ' + _subj}
                 e['lat'] = round(_la + _rnd.uniform(-4, 4), 2); e['lng'] = round(_ln + _rnd.uniform(-12, 12), 2)
+                e['_coord_origin'] = 'random'   # TASK-287 R1
                 fixed += 1
                 continue
         if not cc:
@@ -20894,6 +20939,7 @@ def _llm_extract_countries(events):
                 e['region'] = name
                 e['lat'] = round(lat + _rnd.uniform(-1.2, 1.2), 2)
                 e['lng'] = round(lng + _rnd.uniform(-1.2, 1.2), 2)
+                e['_coord_origin'] = 'random'   # TASK-287 R1
             fixed += 1
     print('  LLM-\u0441\u0442\u0440\u0430\u043d\u0430: \u0443\u0442\u043e\u0447\u043d\u0435\u043d\u043e %d, \u0433\u043b\u043e\u0431\u0430\u043b\u044c\u043d\u044b\u0445 %d (\u0438\u0437 %d)' % (fixed, glob, len(events)), file=_sys.stderr)
     return events
@@ -21528,6 +21574,7 @@ def _signal_quality_pass(events):
                         e['region'] = 'Европа'
                         # координаты -> центр Европы (иначе маркер/ярлык падает в РФ/США)
                         e['lat'] = 50.1; e['lon'] = 9.9
+                        e['_coord_origin'] = 'override'   # TASK-287 R1
                 except Exception:
                     pass
                 # пере-скоринг сохранённых катастроф по количественному масштабу (аудит калибровки)
@@ -21564,6 +21611,7 @@ def _signal_quality_pass(events):
                                 _PC = {'MC':(43.7384,7.4246),'LI':(47.16,9.55),'SM':(43.94,12.46),'AD':(42.51,1.52),'VA':(41.90,12.45),'LU':(49.61,6.13),'MT':(35.9,14.5),'IS':(64.96,-19.02)}
                                 if _cc in _PC:
                                     e['lat'], e['lng'] = _PC[_cc]
+                                    e['_coord_origin'] = 'override'   # TASK-287 R1
                             break
                 except Exception:
                     pass
@@ -21578,6 +21626,7 @@ def _signal_quality_pass(events):
                                 e['country_codes'] = [x for x in e['country_codes'] if x != 'US']
                             e['region'] = 'Мексика'
                             e['lat'] = 24.5; e['lng'] = -110.0
+                            e['_coord_origin'] = 'override'   # TASK-287 R1
                 except Exception:
                     pass
                 # убрать собственное имя источника из текста сигнала (источник — только в поле source)
@@ -24907,7 +24956,7 @@ def save_enriched(events, previous_snapshot=None):
             for _bce in enriched["events"]:
                 _bcb=((_bce.get('title','') or '')+' '+(_bce.get('summary','') or '')).lower()
                 if 'британск' in _bcb and 'колумби' in _bcb and (_bce.get('geo') or {}).get('country')=='GB':
-                    _bce['geo'].update({'country':'CA','country_ru':'Канада','region':'Британская Колумбия','lat':53.7,'lng':-127.6})
+                    _bce['geo'].update({'country':'CA','country_ru':'Канада','region':'Британская Колумбия','lat':53.7,'lng':-127.6,'coord_origin':'override'})
                     _bce['lat']=53.7; _bce['lng']=-127.6; _bce['region']='Британская Колумбия'
             # ХОТФИКС: застрявший домен climate у финансово-военного события НАТО/€140 млрд (персист старого инжеста; live-классификатор даёт geopolitics/economy)
             for _nte in enriched["events"]:
