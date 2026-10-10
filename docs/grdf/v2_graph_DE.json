@@ -2,7 +2,7 @@
   "country": "DE",
   "date": "2026-10-10",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-10T11:07:37.244397+00:00",
+  "generated_at": "2026-10-10T11:26:14.500294+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -47,7 +47,7 @@
       "id": "DOMAIN-DE-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
+      "score": 32,
       "trend": "stable"
     },
     {
@@ -82,7 +82,7 @@
     {
       "id": "SIGNAL-DE-Ветер:_Гер",
       "type": "Signal",
-      "label": "Ветер: Германия (красный уровень, 93 пре",
+      "label": "Ветер: Германия (красный уровень, 94 пре",
       "severity": 88,
       "domain": "climate"
     },
@@ -94,11 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-DE-Климатичес",
+      "id": "SIGNAL-DE-Кровати_в_",
       "type": "Signal",
-      "label": "Климатический сигнал — Германия",
-      "severity": 88,
-      "domain": "climate"
+      "label": "Кровати в больницах Германии",
+      "severity": 32,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -130,7 +130,7 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-DE",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-DE-climate",
-      "to": "DOMAIN-DE-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-DE-infrastructure",
-      "to": "DOMAIN-DE-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-DE-economic",
-      "to": "DOMAIN-DE-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-DE-climate",
       "to": "DOMAIN-DE-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,6 +184,27 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-DE-climate",
+      "to": "DOMAIN-DE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-DE-infrastructure",
+      "to": "DOMAIN-DE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-DE-economic",
+      "to": "DOMAIN-DE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-DE-Ветер:_Гер",
       "to": "DOMAIN-DE-climate",
       "type": "AMPLIFIES",
@@ -217,10 +217,10 @@
       "weight": 0.72
     },
     {
-      "from": "SIGNAL-DE-Климатичес",
-      "to": "DOMAIN-DE-climate",
+      "from": "SIGNAL-DE-Кровати_в_",
+      "to": "DOMAIN-DE-social",
       "type": "AMPLIFIES",
-      "weight": 0.88
+      "weight": 0.32
     }
   ]
 }

@@ -2,39 +2,39 @@
   "country": "IN",
   "date": "2026-10-10",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-10T11:07:37.250169+00:00",
+  "generated_at": "2026-10-10T11:26:14.505389+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-IN",
       "type": "Country",
       "label": "IN",
-      "score": 58,
+      "score": 57,
       "props": {
-        "risk_score": 58
+        "risk_score": 57
       }
     },
     {
       "id": "DOMAIN-IN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 46,
+      "score": 5,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-IN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
-      "trend": "stable"
+      "score": 52,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IN-climate",
       "type": "Domain",
       "label": "climate",
       "score": 57,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IN-technology",
@@ -47,7 +47,7 @@
       "id": "DOMAIN-IN-social",
       "type": "Domain",
       "label": "social",
-      "score": 57,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,24 +80,24 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IN-Протестующ",
-      "type": "Signal",
-      "label": "Протестующие CJP ищут укрытие — гурдавар",
-      "severity": 57,
-      "domain": "social"
-    },
-    {
-      "id": "SIGNAL-IN-Протест_в_",
-      "type": "Signal",
-      "label": "Протест в Дели: Остановленные на полицей",
-      "severity": 53,
-      "domain": "social"
-    },
-    {
       "id": "SIGNAL-IN-Наводнение",
       "type": "Signal",
       "label": "Наводнение: India",
       "severity": 57,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-IN-Индия_объя",
+      "type": "Signal",
+      "label": "Индия объявляет чрезвычайные меры для по",
+      "severity": 52,
+      "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-IN-Для_индийс",
+      "type": "Signal",
+      "label": "Для индийских сообществ фабрики по произ",
+      "severity": 48,
       "domain": "climate"
     }
   ],
@@ -106,13 +106,13 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.46
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.52
     },
     {
       "from": "COUNTRY-IN",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-social",
       "type": "CORRELATES",
-      "weight": 0.57
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-IN",
@@ -164,48 +164,6 @@
     },
     {
       "from": "DOMAIN-IN-climate",
-      "to": "DOMAIN-IN-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-IN-economic",
-      "to": "DOMAIN-IN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-IN-social",
-      "to": "DOMAIN-IN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-IN-geopolitical",
-      "to": "DOMAIN-IN-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-IN-infrastructure",
-      "to": "DOMAIN-IN-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-IN-economic",
-      "to": "DOMAIN-IN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
-      "from": "DOMAIN-IN-climate",
       "to": "DOMAIN-IN-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -226,22 +184,43 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-IN-Протестующ",
-      "to": "DOMAIN-IN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.57
+      "from": "DOMAIN-IN-climate",
+      "to": "DOMAIN-IN-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
     },
     {
-      "from": "SIGNAL-IN-Протест_в_",
+      "from": "DOMAIN-IN-economic",
       "to": "DOMAIN-IN-social",
       "type": "AMPLIFIES",
-      "weight": 0.53
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-IN-social",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "SIGNAL-IN-Наводнение",
       "to": "DOMAIN-IN-climate",
       "type": "AMPLIFIES",
       "weight": 0.57
+    },
+    {
+      "from": "SIGNAL-IN-Индия_объя",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.52
+    },
+    {
+      "from": "SIGNAL-IN-Для_индийс",
+      "to": "DOMAIN-IN-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.48
     }
   ]
 }
