@@ -2,9 +2,9 @@
   "country": "CA",
   "date": "2026-10-10",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-10T20:47:02.032715+00:00",
+  "generated_at": "2026-10-10T21:07:34.777954+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-CA",
@@ -26,14 +26,14 @@
       "id": "DOMAIN-CA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
+      "score": 5,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-CA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 32,
+      "score": 55,
       "trend": "stable"
     },
     {
@@ -94,11 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-CA-Новый_нефт",
+      "id": "SIGNAL-CA-Шторм_—_Се",
       "type": "Signal",
-      "label": "Новый нефтепровод Канады оспаривается Пе",
-      "severity": 32,
-      "domain": "economic"
+      "label": "Шторм — Северная Америка",
+      "severity": 74,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -112,13 +112,13 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-climate",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.55
     },
     {
       "from": "COUNTRY-CA",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-CA-climate",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-CA-climate",
+      "to": "DOMAIN-CA-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-CA-social",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "SIGNAL-CA-ФБР_аресто",
       "to": "DOMAIN-CA-technology",
       "type": "AMPLIFIES",
@@ -175,10 +217,10 @@
       "weight": 0.32
     },
     {
-      "from": "SIGNAL-CA-Новый_нефт",
-      "to": "DOMAIN-CA-economic",
+      "from": "SIGNAL-CA-Шторм_—_Се",
+      "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.74
     }
   ]
 }
