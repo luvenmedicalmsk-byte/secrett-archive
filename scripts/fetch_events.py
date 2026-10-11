@@ -24374,6 +24374,110 @@ _CAP_SRC = re.compile(
     re.I)
 
 
+# ── ОДИН ИНЦИДЕНТ — ОДНА ТОЧКА (INCIDENT_COLLAPSE, 11.10.2026) ────────────────
+# Удар по аэропорту Эр-Рияда пришёл из 13 источников: 13 точек вокруг города с
+# индексами от 55 до 95 («Мия: событие на 95, а тут ещё одно, но ниже»).
+# Группа = удар/атака + один и тот же объект (аэропорт, НПЗ, порт…) + одна
+# страна + общее название места в заголовке + даты в пределах 3 суток.
+# В ленте и на карте остаётся запись с наибольшим индексом; остальные скрыты
+# (feed_visible = False, incident_of = id главной) и продолжают кормить
+# аналитику. У главной: dup_count / dup_sources — «+ ещё N (источники)».
+# Пометки пересчитываются каждый прогон (удержанные приходят со старыми).
+# Откат: INCIDENT_COLLAPSE = False.
+INCIDENT_COLLAPSE = True
+INCIDENT_DAYS = 3
+_IC_KIN = re.compile(r'удар|атак|обстрел|ракет|взрыв|беспилот|дрон|бпла|бомб|подверг|поражен', re.I)
+_IC_OBJ = (('аэропорт', 'аэропорт'), ('терминал', 'аэропорт'), ('авиабаз', 'авиабаза'), ('нпз', 'нпз'),
+           ('нефтеперерабат', 'нпз'), ('нефтебаз', 'нефтебаза'), ('морской порт', 'порт'), ('порт ', 'порт'),
+           ('аэс', 'аэс'), ('электростанц', 'электростанция'), ('посольств', 'посольство'), ('вокзал', 'вокзал'))
+_IC_COMPOSITE = re.compile(r'в то время как|тогда как|мониторинг|дайджест|кратко|главное за|обзор', re.I)
+_IC_STOP = ('росси', 'сша', 'украи', 'иран', 'израи', 'саудо', 'арави', 'йемен', 'хусит', 'индия', 'индии',
+            'китай', 'европ', 'коали', 'генер', 'секре', 'оон', 'трамп', 'reute', 'assoc', 'press', 'times')
+
+
+def _ic_places(t):
+    out = set()
+    for w in re.findall(r'(?<![\w-])[А-ЯЁA-Z][\w-]{3,}', t[1:] if t else ''):
+        w = w.lower()
+        if w.startswith('эр-') or w.startswith('аль-') or w.startswith('эль-'):
+            w = w.split('-', 1)[1]
+        if len(w) < 4 or any(w.startswith(x) for x in _IC_STOP):
+            continue
+        out.add(w[:4])
+    return out
+
+
+def _ic_object(t):
+    tl = (t or '').lower()
+    for k, v in _IC_OBJ:
+        if k in tl:
+            return v
+    return None
+
+
+def _incident_reset(events):
+    """Снимает пометки прошлого прогона (удержанные события приходят с ними)."""
+    if not INCIDENT_COLLAPSE:
+        return
+    for e in events:
+        if e.pop('incident_of', None) is not None and not e.get('context_only') and not e.get('alerts_only'):
+            e['feed_visible'] = True
+        if e.pop('incident_count', None) is not None:
+            e.pop('dup_count', None); e.pop('dup_sources', None)
+
+
+def _incident_collapse(events):
+    if not INCIDENT_COLLAPSE:
+        return 0
+    from datetime import date as _d
+    cand = []
+    for e in events:
+        if e.get('feed_visible') is False or e.get('domain') != 'geopolitics':
+            continue
+        t = e.get('title') or ''
+        if not _IC_KIN.search(t) or _IC_COMPOSITE.search(t):
+            continue                      # сводки про несколько событий не сворачиваются
+        o = _ic_object(t)
+        cc = e.get('primary_country') or (e.get('geo') or {}).get('country')
+        pl = _ic_places(t)
+        if not o or not cc or not pl:
+            continue
+        try:
+            dd = _d.fromisoformat((e.get('date') or '')[:10])
+        except Exception:
+            continue
+        cand.append((e, o, cc, pl, dd))
+    cand.sort(key=lambda x: (-(x[0].get('severity') or 0), str(x[0].get('id'))))
+    groups = []
+    for e, o, cc, pl, dd in cand:
+        for g in groups:
+            if g['o'] == o and g['cc'] == cc and (g['pl'] & pl) and abs((g['d'] - dd).days) <= INCIDENT_DAYS:
+                g['m'].append(e); g['pl'] |= pl
+                break
+        else:
+            groups.append({'o': o, 'cc': cc, 'pl': set(pl), 'd': dd, 'm': [e]})
+    n = 0
+    for g in groups:
+        if len(g['m']) < 2:
+            continue
+        head = g['m'][0]
+        srcs = []
+        for e in g['m'][1:]:
+            e['feed_visible'] = False
+            e['incident_of'] = head.get('id')
+            s_ = str(e.get('source') or '')
+            if s_ and s_ != head.get('source') and s_ not in srcs:
+                srcs.append(s_)
+            n += 1
+        head['incident_count'] = len(g['m'])
+        head['dup_count'] = len(g['m']) - 1
+        head['dup_sources'] = srcs[:8]
+    if n:
+        print('  [INCIDENT] свёрнуто дублей инцидентов: %d в %d группах'
+              % (n, sum(1 for g in groups if len(g['m']) > 1)), file=sys.stderr)
+    return n
+
+
 def _cap_feed_gate(events):
     """Официальные предупреждения — на вкладке «Риски», не в ленте событий.
 
@@ -25185,8 +25289,10 @@ def save_enriched(events, previous_snapshot=None):
                 # Предупреждения метятся ПЕРВЫМИ: иначе запись, отнесённая
                 # интентом к комментарию, уходит в контекст и на вкладку
                 # предупреждений уже не попадает как предупреждение.
+                _incident_reset(enriched["events"])
                 _cap_feed_gate(enriched["events"])
                 _context_feed_gate(enriched["events"])
+                _incident_collapse(enriched["events"])
                 _sic_shadow_report(enriched["events"], OUTPUT_PATH.parent)
                 _adr039a_shadow_report(enriched["events"], OUTPUT_PATH.parent)
             except Exception as _se:
