@@ -23821,6 +23821,11 @@ def _unverified_feed_gate(events):
         low = ((e.get('title') or '') + ' ' + (e.get('summary') or '')).strip().lower()
         if not low:
             continue
+        # 12.10.2026: официальные машинные ленты (ВОЗ, ФАО, санкции, NOAA, NOTAM…)
+        # не интервью и не слух. «Выпуск ФАО» ловился как формат мнения.
+        if ((e.get('meta') or {}).get('kind') in _OFFICIAL_SIGNAL_KINDS
+                and (e.get('meta') or {}).get('verified')):
+            continue
         # ① НЕ ПОДТВЕРЖДЕНО официальными источниками («Взрывы слышны в Дубае»)
         if _SIC_UNVERIFIED.search(low) and not _SIC_VERIFIED.search(low):
             e['unverified'] = True
