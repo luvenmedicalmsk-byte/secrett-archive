@@ -8465,6 +8465,12 @@ def process_events(raw_items):
     _dom_trace(top_events, 'CLASSIFIER')          # TASK-278 · точка 1
     _moved = 0
     for e in top_events:
+        # 11.10.2026: у официальных машинных лент домен задан источником
+        # (санкции — экономика, помехи GPS и NOTAM — геополитика, космическая
+        # погода — технологии). Переназначение по словам их путало.
+        if ((e.get('meta') or {}).get('kind') in _OFFICIAL_SIGNAL_KINDS
+                and (e.get('meta') or {}).get('verified')):
+            continue
         _nd = _reclass_domain(e.get('title',''), e.get('summary',''), e.get('domain',''))
         if _nd and _nd != e.get('domain'):
             e['domain'] = _nd; _moved += 1
@@ -16400,7 +16406,11 @@ def _notam_summary(agg, now, fir_total, prev):
     hist = [h for h in (prev or {}).get('история', []) if isinstance(h, dict)]
     today = now.strftime('%Y-%m-%d')
     hist = [h for h in hist if h.get('дата') != today]
-    hist.append({'дата': today, 'действует': len(agg),
+    _by_cc = {}
+    for d in rows:
+        if isinstance(d.get('за сутки'), int) and d.get('код страны'):
+            _by_cc[d['код страны']] = _by_cc.get(d['код страны'], 0) + d['за сутки']
+    hist.append({'дата': today, 'действует': len(agg), 'по странам': _by_cc,
                  'за сутки': (sum(1 for r in agg if r['момент'] is not None
                                   and 0 <= (now - r['момент']).total_seconds() <= 86400)
                               if day_ok else None)})
@@ -16459,6 +16469,86 @@ def _notam_shadow_write(rep):
         print('  [WARN] NOTAM shadow report: %s' % _ne, file=sys.stderr)
 
 
+# ── NOTAM → сигналы по странам (NOTAM_SIGNALS, 11.10.2026) ───────────────────
+# Отдельные уведомления в ленту не идут (NOTAM_GATE = False: 100–260 в сутки,
+# это шум). Сигналом становится СВОДКА по стране, когда за сутки объявлено
+# много новых ограничений или есть помехи спутниковой навигации. Сводка
+# обновляется раз в 4 часа (лимит токенов), поэтому сигнал строится и из
+# прошлой сводки, если ей не больше NOTAM_SIG_MAX_AGE_H часов: иначе он
+# пропадал бы из ленты на три прогона из четырёх. Заголовок постоянный на
+# страну, числа в описании: id записи не меняется от прогона к прогону.
+# Текст NOTAM не публикуется (условие autorouter, case 9853): только счётчики.
+# Откат: NOTAM_SIGNALS = False.
+NOTAM_SIGNALS = True
+NOTAM_SIG_MIN_DAY = 15        # новых ограничений за сутки по стране
+NOTAM_SIG_MAX_AGE_H = 8
+_NOTAM_DRONE_T = 'объявлены полёты беспилотных аппаратов'
+_NOTAM_CC_XY = {'PL': (52.1, 19.4), 'LT': (55.3, 23.9), 'LV': (56.9, 24.6), 'EE': (58.6, 25.0),
+                'FI': (64.0, 26.0), 'BY': (53.7, 28.0), 'RO': (45.9, 24.97), 'BG': (42.7, 25.5)}
+
+
+def _notam_signals(summary):
+    if not NOTAM_SIGNALS or not isinstance(summary, dict):
+        return []
+    try:
+        dt = datetime.fromisoformat(str(summary.get('дата')).replace('Z', '+00:00'))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+    except Exception:
+        return []
+    if (datetime.now(timezone.utc) - dt).total_seconds() > NOTAM_SIG_MAX_AGE_H * 3600:
+        return []
+    # База по стране: медиана «за сутки» прошлых дней из истории сводки
+    hist = [h for h in (summary.get('история') or []) if isinstance(h, dict)]
+    base = {}
+    for h in hist[:-1]:
+        for cc, v in (h.get('по странам') or {}).items():
+            if isinstance(v, int):
+                base.setdefault(cc, []).append(v)
+    items = []
+    for r in summary.get('страны') or []:
+        n24 = r.get('за сутки')
+        gn = int(r.get('помехи навигации') or 0)
+        typ = r.get('по типу') or {}
+        drones = int(typ.get(_NOTAM_DRONE_T) or 0)
+        if not isinstance(n24, int):
+            n24 = 0
+        if n24 < NOTAM_SIG_MIN_DAY and gn < 2:
+            continue                      # одиночная помеха — не сигнал
+        cc, name = r.get('код страны') or '', r.get('страна') or r.get('fir') or ''
+        sev = 50 + min(14, n24 // 10) + (8 if gn >= 3 else 4 if gn >= 1 else 0) + (4 if drones >= 20 else 0)
+        trend = ''
+        b = sorted(base.get(cc) or [])
+        if b:
+            med = b[len(b) // 2]
+            if med and n24 >= 2 * med and n24 >= NOTAM_SIG_MIN_DAY:
+                sev += 6
+                trend = f' Это в {n24 / med:.1f} раза больше обычного (медиана {med} в сутки).'
+            else:
+                trend = f' Обычный уровень — около {med} в сутки.'
+        top = sorted(typ.items(), key=lambda kv: -kv[1])[:3]
+        what = ('всплеск ограничений полётов' if n24 >= NOTAM_SIG_MIN_DAY
+                else 'помехи спутниковой навигации')
+        items.append({
+            'title': f"Воздушное пространство — {name}: {what}"[:130],
+            'desc': (f"По уведомлениям NOTAM (EUROCONTROL EAD) за сутки объявлено {n24} "
+                     f"{_plural_ru(n24, 'новое ограничение', 'новых ограничения', 'новых ограничений')}, "
+                     f"всего действует {r.get('действует')}. Помехи спутниковой навигации: {gn}. "
+                     f"Основные виды: " + '; '.join(f'{k} — {v}' for k, v in top) + '.' + trend +
+                     f" Сводка на {dt.strftime('%d.%m.%Y %H:%M')} UTC.").strip(),
+            'date': dt.strftime('%Y-%m-%d'),
+            'source': 'EUROCONTROL NOTAM',
+            '_region': name, '_country_code': cc,
+            **({'_lat': _NOTAM_CC_XY[cc][0], '_lng': _NOTAM_CC_XY[cc][1], '_coord_origin': 'dictionary'}
+               if cc in _NOTAM_CC_XY else {}),
+            '_domain': 'geopolitics', '_force_severity': min(sev, 74),
+            '_meta': {'kind': 'airspace', 'verified': True, 'fir': r.get('fir'), 'new_24h': n24,
+                      'active': r.get('действует'), 'gnss': gn, 'drones': drones},
+        })
+    print(f"  NOTAM-сигналы: {len(items)} стран", file=sys.stderr)
+    return items
+
+
 def fetch_notam():
     """Действующие NOTAM по FIR восточного фланга, Балтики и Чёрного моря.
     В ленту идут только изменения режима воздушного пространства и глушение
@@ -16479,7 +16569,7 @@ def fetch_notam():
             if 0 <= _age < _NOTAM_MIN_INTERVAL_MIN:
                 print('  [SKIP] NOTAM: выдержка, прошлая сводка %d мин назад' % _age,
                       file=sys.stderr)
-                return items
+                return _notam_signals(_prev)
         except (ValueError, TypeError):
             pass          # нечитаемая дата не должна останавливать источник
     # Отступ при исчерпании токенов: ждём дольше, пока провайдер не освободит пул.
@@ -16495,7 +16585,7 @@ def fetch_notam():
                 if 0 <= _sa < _NOTAM_BACKOFF_MIN:
                     print('  [SKIP] NOTAM: пул токенов исчерпан, отступ, прошло %d мин' % _sa,
                           file=sys.stderr)
-                    return items
+                    return _notam_signals(_prev)
     except (ValueError, TypeError, OSError):
         pass          # нечитаемый отчёт не должен останавливать источник
     tok = _notam_token()
@@ -16504,7 +16594,7 @@ def fetch_notam():
         _notam_shadow_write({'режим': 'замер не состоялся',
                              'причина': _NOTAM_LAST_ERR or 'токен пустой без объяснения',
                              'FIR под наблюдением': len(_NOTAM_FIR)})
-        return items
+        return _notam_signals(_prev)
     now = datetime.now(timezone.utc)
     seen, total, kept = set(), 0, 0
     # Диагностика разбора координат: первый замер 03.10.2026 дал 417
@@ -16639,7 +16729,8 @@ def fetch_notam():
                           "radius": n.get('radius')},
             })
             kept += 1
-    _notam_summary_write(_notam_summary(agg, now, fir_total, _notam_summary_prev()))
+    _notam_sum = _notam_summary(agg, now, fir_total, _notam_summary_prev())
+    _notam_summary_write(_notam_sum)
     print(f"  NOTAM: {kept} из {total} записей прошли фильтр Q-кода "
           f"({len(_NOTAM_FIR)} FIR)", file=sys.stderr)
     if not NOTAM_GATE:
@@ -16674,7 +16765,7 @@ def fetch_notam():
             })
         except Exception as _ne:
             print("  [WARN] NOTAM shadow report: %s" % _ne, file=sys.stderr)
-        return []
+        return _notam_signals(_notam_sum)
     return items
 
 
@@ -24780,7 +24871,7 @@ def _scale_revert(events):
 # Официальные машинные сообщения ведомств: сам факт публикации и есть событие
 # (вспышка, зарегистрированная ВОЗ; внесение в санкционный список). Интент-
 # классификатор видит в них атрибуцию («ВОЗ сообщает») и относит к комментарию.
-_OFFICIAL_SIGNAL_KINDS = ('outbreak', 'sanctions', 'cloud_outage', 'tropical_cyclone', 'space_weather', 'tsunami', 'gps_jamming')
+_OFFICIAL_SIGNAL_KINDS = ('outbreak', 'sanctions', 'cloud_outage', 'tropical_cyclone', 'space_weather', 'tsunami', 'gps_jamming', 'airspace')
 
 
 def _context_feed_gate(events):
