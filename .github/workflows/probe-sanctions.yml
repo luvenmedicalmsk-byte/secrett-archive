@@ -18,8 +18,10 @@ jobs:
           rm -rf probe; mkdir -p probe
           get(){ n=$1; u=$2; code=$(curl -sSL -m 60 --retry 1 -A "ArchiveBot/2.0" -o "probe/$n" -w "%{http_code}" "$u" || echo ERR); echo "$n $code $(stat -c %s probe/$n 2>/dev/null || echo 0) $u" >> probe/_index.txt; }
           get(){ n=$1; u=$2; code=$(curl -gsSL -m 60 --retry 1 -A "ArchiveBot/2.0" -o "probe/$n" -w "%{http_code}" "$u" || echo ERR); echo "$n $code $(stat -c %s probe/$n 2>/dev/null || echo 0) $u" >> probe/_index.txt; }
-          get jtwc_wp27.txt "https://www.metoc.navy.mil/jtwc/products/wp2726web.txt"
-          get ioda_alerts.json "https://api.ioda.inetintel.cc.gatech.edu/v2/outages/alerts?from=$(($(date +%s)-86400))&until=$(date +%s)&limit=20"
+          get fao_page.html "https://www.fao.org/worldfoodsituation/foodpricesindex/en/"
+          get fao_csv_old.csv "https://www.fao.org/fileadmin/templates/worldfood/Reports_and_docs/Food_price_indices_data.csv"
+          get fao_rss.xml "https://www.fao.org/worldfoodsituation/foodpricesindex/rss/en/"
+          grep -oiE 'href="[^"]*(csv|xls[x]?)[^"]*"' probe/fao_page.html | head -20 > probe/fao_links.txt || true
           cat probe/_index.txt
           for f in probe/*; do echo "== $f"; head -c 300 "$f"; echo; done; find probe -size +5M -delete; rm -f probe/*.csv
       - name: Commit
