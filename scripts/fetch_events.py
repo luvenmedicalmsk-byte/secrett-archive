@@ -20632,6 +20632,319 @@ def fetch_who_don():
     return items
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# ИНФРАСТРУКТУРА И ПРИРОДНЫЕ УГРОЗЫ: официальные машинные ленты (11.10.2026).
+# Все без ключей. Каждый загрузчик независим и за своим флагом; отказ одного
+# источника не влияет на остальные. Заголовки сразу на русском: данные
+# структурные, перевод не нужен.
+#   CLOUD_STATUS_FEED  — сбои AWS, Google Cloud, Azure, Cloudflare (статус-страницы)
+#   TROPICAL_FEED      — ураганы NOAA NHC (Атлантика, вост. Тихий океан) и
+#                        тайфуны/циклоны JTWC (запад Тихого, Индийский океан)
+#                        GDACS приносит те же циклоны, но его записи уходят во
+#                        вкладку «Риски» или теряются без домена (замер 11.10:
+#                        SIMON-26 и ISAIAS-26 — no_domain / feed_hidden).
+#   SPACE_WX_FEED      — геомагнитные бури и радиопомехи NOAA SWPC, уровень 3+
+#   TSUNAMI_FEED       — предупреждения NOAA PTWC/NTWC (информационные — нет)
+# ══════════════════════════════════════════════════════════════════════════════
+CLOUD_STATUS_FEED = True
+TROPICAL_FEED = True
+SPACE_WX_FEED = True
+TSUNAMI_FEED = True
+_INFRA_HOURS = 48
+
+
+def _ago_h(dt):
+    try:
+        return (datetime.now(timezone.utc) - dt).total_seconds() / 3600.0
+    except Exception:
+        return 1e9
+
+
+def _iso_dt(s):
+    s = str(s or '').strip()
+    for f in ('%Y-%m-%dT%H:%M:%S%z', '%Y-%m-%dT%H:%M:%S.%f%z'):
+        try:
+            return datetime.strptime(s.replace('Z', '+00:00'), f)
+        except Exception:
+            pass
+    try:
+        return datetime.fromtimestamp(float(s), timezone.utc)
+    except Exception:
+        return None
+
+
+def fetch_cloud_status():
+    """Сбои крупнейших облачных платформ за последние _INFRA_HOURS часов."""
+    if not CLOUD_STATUS_FEED:
+        return []
+    items = []
+
+    def _add(title, desc, dt, src, sev, meta):
+        items.append({'title': title[:160], 'desc': desc[:600], 'date': dt.strftime('%Y-%m-%d'),
+                      'source': src, '_domain': 'technology', '_force_severity': sev,
+                      '_meta': dict(meta, kind='cloud_outage', verified=True)})
+    # Google Cloud
+    try:
+        raw = fetch_url('https://status.cloud.google.com/incidents.json', timeout=20)
+        for x in (json.loads(raw) if raw else [])[:30]:
+            sevw = str(x.get('severity') or '').lower()
+            if sevw not in ('high', 'medium'):
+                continue
+            b = _iso_dt(x.get('begin'))
+            e = _iso_dt(x.get('end')) if x.get('end') else None
+            last = e or _iso_dt(x.get('modified')) or b
+            if not b or _ago_h(last) > _INFRA_HOURS:
+                continue
+            prods = [p.get('title') for p in (x.get('affected_products') or []) if p.get('title')]
+            st = 'устранён' if e else 'продолжается'
+            _add(f"Сбой Google Cloud: {', '.join(prods[:3]) or 'несколько сервисов'} ({st})",
+                 f"{x.get('external_desc') or ''} Начало {b.strftime('%d.%m %H:%M')} UTC.",
+                 b, 'Google Cloud Status', 68 if sevw == 'high' else 58, {'id': x.get('id'), 'ongoing': not e})
+    except Exception as ex:
+        print(f"  [WARN] Google Cloud status: {ex}", file=sys.stderr)
+    # Cloudflare: только значимые (major/critical) — minor идут десятками в сутки
+    try:
+        raw = fetch_url('https://www.cloudflarestatus.com/api/v2/incidents.json', timeout=20)
+        for x in (json.loads(raw).get('incidents', []) if raw else [])[:40]:
+            imp = str(x.get('impact') or '')
+            if imp not in ('major', 'critical'):
+                continue
+            c = _iso_dt(x.get('created_at'))
+            if not c or _ago_h(c) > _INFRA_HOURS:
+                continue
+            _add(f"Сбой Cloudflare: {x.get('name') or ''}",
+                 f"Статус: {x.get('status')}. Масштаб: {imp}. {', '.join(cmp.get('name','') for cmp in (x.get('components') or [])[:5])}",
+                 c, 'Cloudflare Status', 72 if imp == 'critical' else 62, {'id': x.get('id'), 'impact': imp})
+    except Exception as ex:
+        print(f"  [WARN] Cloudflare status: {ex}", file=sys.stderr)
+    # AWS: текущие события (ответ в UTF-16)
+    try:
+        raw = fetch_url('https://health.aws.amazon.com/public/currentevents', timeout=20)
+        if raw:
+            for enc in ('utf-16', 'utf-8-sig', 'utf-8'):
+                try:
+                    lst = json.loads(raw.decode(enc) if isinstance(raw, bytes) else raw)
+                    break
+                except Exception:
+                    lst = []
+            for x in lst or []:
+                stt = str(x.get('status') or '')
+                if stt not in ('2', '3'):
+                    continue
+                log = x.get('event_log') or []
+                if isinstance(log, str):
+                    log = []
+                ts = [_iso_dt(l.get('timestamp')) for l in log if isinstance(l, dict)]
+                last = max([t for t in ts if t] or [_iso_dt(x.get('date'))] or [None])
+                if not last or _ago_h(last) > _INFRA_HOURS:
+                    continue
+                start = _iso_dt(x.get('date')) or last
+                msg = ''
+                if log and isinstance(log[-1], dict):
+                    msg = re.sub(r'\s+', ' ', str(log[-1].get('message') or ''))[:300]
+                _add(f"Сбой AWS: {x.get('service_name') or 'сервисы'}, регион {x.get('region_name') or '?'}",
+                     f"{x.get('summary') or ''}. {msg} Начало {start.strftime('%d.%m.%Y')}.",
+                     last, 'AWS Health', 66 if stt == '3' else 56, {'arn': str(x.get('arn'))[:120]})
+    except Exception as ex:
+        print(f"  [WARN] AWS health: {ex}", file=sys.stderr)
+    # Azure: RSS пуст, когда инцидентов нет
+    try:
+        import xml.etree.ElementTree as _ET
+        raw = fetch_url('https://azure.status.microsoft/en-us/status/feed/', timeout=20)
+        if raw:
+            for it in _ET.fromstring(raw).iter('item'):
+                t = (it.findtext('title') or '').strip()
+                pd = parse_date(it.findtext('pubDate') or '')
+                try:
+                    d = datetime.strptime(pd[:10], '%Y-%m-%d').replace(tzinfo=timezone.utc)
+                except Exception:
+                    continue
+                if not t or _ago_h(d) > _INFRA_HOURS + 24:
+                    continue
+                _add(f"Сбой Microsoft Azure: {t}", re.sub('<[^>]+>', ' ', it.findtext('description') or ''),
+                     d, 'Azure Status', 66, {})
+    except Exception as ex:
+        print(f"  [WARN] Azure status: {ex}", file=sys.stderr)
+    print(f"  Облака: {len(items)} сбоев", file=sys.stderr)
+    return items
+
+
+def _tc_scale(kt):
+    """(категория по Саффиру-Симпсону, severity) по скорости ветра в узлах."""
+    if kt >= 137: return 5, 88
+    if kt >= 113: return 4, 82
+    if kt >= 96: return 3, 75
+    if kt >= 83: return 2, 68
+    if kt >= 64: return 1, 62
+    return 0, 55
+
+
+def fetch_tropical_cyclones():
+    """Активные тропические циклоны: NOAA NHC + JTWC (без дублей бассейнов NHC)."""
+    if not TROPICAL_FEED:
+        return []
+    items = []
+
+    def _add(kind, name, kt, lat, lng, dt, src, extra, sid):
+        cat, sev = _tc_scale(kt)
+        kmh = int(round(kt * 1.852))
+        if kind == 'шторм':
+            head = f"Тропический шторм «{name}»"
+        else:
+            head = f"{kind.capitalize()} «{name}» {cat}-й категории" if cat else f"{kind.capitalize()} «{name}»"
+        items.append({
+            'title': f"{head}: ветер до {kmh} км/ч"[:160],
+            'desc': f"{head}. Максимальный устойчивый ветер {kt} уз ({kmh} км/ч). Центр: {lat:.1f}°, {lng:.1f}°. {extra}".strip(),
+            'date': dt.strftime('%Y-%m-%d'), 'source': src,
+            '_lat': lat, '_lng': lng, '_coord_origin': 'source', '_region': detect_region_by_coords(lat, lng),
+            '_domain': 'climate', '_force_severity': sev,
+            '_meta': {'kind': 'tropical_cyclone', 'verified': True, 'storm_id': sid, 'wind_kt': kt, 'category': cat},
+        })
+    seen = set()
+    try:
+        raw = fetch_url('https://www.nhc.noaa.gov/CurrentStorms.json', timeout=20)
+        for s_ in (json.loads(raw).get('activeStorms', []) if raw else []):
+            cls = str(s_.get('classification') or '')
+            if cls not in ('HU', 'TS', 'STS'):
+                continue                       # депрессии и посттропические — не сигнал
+            kt = int(float(s_.get('intensity') or 0))
+            dt = _iso_dt(s_.get('lastUpdate')) or datetime.now(timezone.utc)
+            name = str(s_.get('name') or '').strip()
+            _add('ураган' if cls == 'HU' else 'шторм', name, kt, float(s_['latitudeNumeric']), float(s_['longitudeNumeric']),
+                 dt, 'NOAA NHC', f"Давление {s_.get('pressure')} гПа, движение {s_.get('movementDir')}° со скоростью {s_.get('movementSpeed')} уз.",
+                 str(s_.get('id') or ''))
+            seen.add(name.lower())
+    except Exception as ex:
+        print(f"  [WARN] NHC: {ex}", file=sys.stderr)
+    try:
+        import html as _h
+        raw = fetch_url('https://www.metoc.navy.mil/jtwc/rss/jtwc.rss', timeout=20)
+        txt = _h.unescape(raw.decode('utf-8', 'ignore') if isinstance(raw, bytes) else (raw or ''))
+        for kind_en, num, name, url in re.findall(
+                r'(Super Typhoon|Typhoon|Tropical Storm|Tropical Cyclone|Hurricane)\s+(\d+[A-Z])\s+\(([^)]+)\)\s+Warning.*?href=.(https://www\.metoc\.navy\.mil/jtwc/products/[a-z]{2}\d{4}web\.txt)',
+                txt, re.S):
+            if num[-1] in ('E', 'L', 'C') or name.lower() in seen:
+                continue                       # бассейны NHC уже взяты выше
+            w = fetch_url(url, timeout=20)
+            w = w.decode('utf-8', 'ignore') if isinstance(w, bytes) else (w or '')
+            m = re.search(r'WARNING POSITION:\s*\n\s*\d{6}Z\s*---\s*NEAR\s+(\d+\.\d)([NS])\s+(\d+\.\d)([EW])', w)
+            k = re.search(r'MAX SUSTAINED WINDS - (\d+) KT', w)
+            if not m or not k:
+                continue
+            lat = float(m.group(1)) * (1 if m.group(2) == 'N' else -1)
+            lng = float(m.group(3)) * (1 if m.group(4) == 'E' else -1)
+            kt = int(k.group(1))
+            if kt < 34:
+                continue
+            basin_ru = 'тайфун' if lng > 100 and lat > 0 else 'циклон'
+            kind = 'шторм' if kind_en == 'Tropical Storm' or kt < 64 else ('супертайфун' if kind_en == 'Super Typhoon' else basin_ru)
+            name = name.strip().capitalize()
+            _add(kind, name, kt, lat, lng, datetime.now(timezone.utc), 'JTWC', f"Система {num}.", num)
+            seen.add(name.lower())
+    except Exception as ex:
+        print(f"  [WARN] JTWC: {ex}", file=sys.stderr)
+    print(f"  Тропические циклоны: {len(items)}", file=sys.stderr)
+    return items
+
+
+_SWX_RU = {
+    'G': ('Геомагнитная буря', 'энергосети, спутники и спутниковая навигация', {3: 62, 4: 72, 5: 82}),
+    'R': ('Радиопомехи от солнечной вспышки', 'КВ-радиосвязь и навигация на дневной стороне Земли', {3: 58, 4: 66, 5: 75}),
+    'S': ('Радиационный шторм', 'спутники, полярные авиарейсы, космонавты', {3: 58, 4: 66, 5: 75}),
+}
+_SWX_WORD = {3: 'сильная', 4: 'очень сильная', 5: 'экстремальная'}
+
+
+def fetch_space_weather():
+    """NOAA SWPC: события уровня 3+ по шкалам G/R/S за _INFRA_HOURS часов; одна запись на шкалу."""
+    if not SPACE_WX_FEED:
+        return []
+    items, best = [], {}
+    try:
+        raw = fetch_url('https://services.swpc.noaa.gov/products/alerts.json', timeout=20)
+        for x in (json.loads(raw) if raw else []):
+            msg = str(x.get('message') or '')
+            if 'ALERT' not in msg and 'WARNING' not in msg and 'SUMMARY' not in msg:
+                continue
+            m = re.search(r'NOAA Scale:\s*([GRS])(\d)', msg)
+            if not m or int(m.group(2)) < 3:
+                continue
+            try:
+                dt = datetime.strptime(str(x.get('issue_datetime'))[:19], '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
+            except Exception:
+                continue
+            if _ago_h(dt) > _INFRA_HOURS:
+                continue
+            sc, lv = m.group(1), int(m.group(2))
+            if sc not in best or (lv, dt) > (best[sc][0], best[sc][1]):
+                best[sc] = (lv, dt, msg)
+    except Exception as ex:
+        print(f"  [WARN] SWPC: {ex}", file=sys.stderr)
+    for sc, (lv, dt, msg) in best.items():
+        name, hit, sevs = _SWX_RU[sc]
+        word = _SWX_WORD.get(lv, '')
+        title = (f"{word.capitalize()} геомагнитная буря {sc}{lv}" if sc == 'G' else f"{name} уровня {sc}{lv}")
+        imp = re.search(r'Potential Impacts:(.*?)(?:\n\n|$)', msg, re.S)
+        items.append({
+            'title': f"{title}: риск для систем — {hit}"[:160],
+            'desc': (f"NOAA SWPC, {dt.strftime('%d.%m.%Y %H:%M')} UTC: событие уровня {sc}{lv} по шкале космической погоды. "
+                     f"Под угрозой: {hit}. " + (re.sub(r'\s+', ' ', imp.group(1))[:300] if imp else '')).strip(),
+            'date': dt.strftime('%Y-%m-%d'), 'source': 'NOAA SWPC',
+            '_domain': 'technology', '_force_severity': sevs.get(lv, 58),
+            '_meta': {'kind': 'space_weather', 'verified': True, 'scale': f'{sc}{lv}'},
+        })
+    print(f"  Космическая погода: {len(items)}", file=sys.stderr)
+    return items
+
+
+def fetch_tsunami():
+    """NOAA: предупреждения о цунами (Warning/Advisory/Watch). Информационные сообщения пропускаются."""
+    if not TSUNAMI_FEED:
+        return []
+    import xml.etree.ElementTree as _ET
+    items, seen = [], set()
+    ns = {'a': 'http://www.w3.org/2005/Atom', 'geo': 'http://www.w3.org/2003/01/geo/wgs84_pos#'}
+    for url in ('https://www.tsunami.gov/events/xml/PAAQAtom.xml', 'https://www.tsunami.gov/events/xml/PHEBAtom.xml'):
+        try:
+            raw = fetch_url(url, timeout=20)
+            if not raw:
+                continue
+            root = _ET.fromstring(raw)
+            for en in root.findall('a:entry', ns):
+                t = re.sub(r'\s+', ' ', en.findtext('a:title', '', ns)).strip()
+                tl = t.lower()
+                lvl = 'warning' if 'warning' in tl else 'advisory' if 'advisory' in tl else 'watch' if 'watch' in tl else None
+                if not lvl or 'cancel' in tl:
+                    continue
+                dt = _iso_dt(en.findtext('a:updated', '', ns))
+                if not dt or _ago_h(dt) > _INFRA_HOURS:
+                    continue
+                summ = re.sub('<[^>]+>', ' ', en.findtext('a:summary', '', ns) or en.findtext('a:content', '', ns) or '')
+                summ = re.sub(r'\s+', ' ', summ).strip()
+                key = (lvl, dt.strftime('%Y-%m-%d'), summ[:40])
+                if key in seen:
+                    continue
+                seen.add(key)
+                ru = {'warning': 'Предупреждение об угрозе цунами', 'advisory': 'Оповещение о цунами',
+                      'watch': 'Возможная угроза цунами'}[lvl]
+                it = {'title': f"{ru}: {summ[:90]}"[:160], 'desc': f"NOAA Tsunami Warning Center: {t}. {summ}"[:600],
+                      'date': dt.strftime('%Y-%m-%d'), 'source': 'NOAA Tsunami',
+                      '_domain': 'climate', '_force_severity': {'warning': 85, 'advisory': 70, 'watch': 65}[lvl],
+                      '_meta': {'kind': 'tsunami', 'verified': True, 'level': lvl}}
+                la, lo = en.findtext('geo:lat', None, ns), en.findtext('geo:long', None, ns)
+                try:
+                    if la and lo:
+                        it.update({'_lat': float(la), '_lng': float(lo), '_coord_origin': 'source',
+                                   '_region': detect_region_by_coords(float(la), float(lo))})
+                except Exception:
+                    pass
+                items.append(it)
+        except Exception as ex:
+            print(f"  [WARN] Tsunami {url[-14:]}: {ex}", file=sys.stderr)
+    print(f"  Цунами: {len(items)}", file=sys.stderr)
+    return items
+
+
 def fetch_meteoalarm():
     """Официальные предупреждения европейских метеослужб. Красный и оранжевый."""
     if not METEOALARM:
@@ -24312,7 +24625,7 @@ def _scale_revert(events):
 # Официальные машинные сообщения ведомств: сам факт публикации и есть событие
 # (вспышка, зарегистрированная ВОЗ; внесение в санкционный список). Интент-
 # классификатор видит в них атрибуцию («ВОЗ сообщает») и относит к комментарию.
-_OFFICIAL_SIGNAL_KINDS = ('outbreak', 'sanctions')
+_OFFICIAL_SIGNAL_KINDS = ('outbreak', 'sanctions', 'cloud_outage', 'tropical_cyclone', 'space_weather', 'tsunami')
 
 
 def _context_feed_gate(events):
@@ -25937,6 +26250,10 @@ if __name__ == '__main__':
             ('meteoalarm',         fetch_meteoalarm),
             ('sanctions',          fetch_sanctions),
             ('who_don',            fetch_who_don),
+            ('cloud_status',       fetch_cloud_status),
+            ('tropical',           fetch_tropical_cyclones),
+            ('space_weather',      fetch_space_weather),
+            ('tsunami',            fetch_tsunami),
         ], max_workers=12)
 
 
