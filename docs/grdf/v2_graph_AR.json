@@ -2,9 +2,9 @@
   "country": "AR",
   "date": "2026-10-11",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-11T13:55:49.315505+00:00",
+  "generated_at": "2026-10-11T14:08:38.421083+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-AR",
@@ -33,7 +33,7 @@
       "id": "DOMAIN-AR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 36,
+      "score": 49,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-AR-Аргентина:",
+      "type": "Signal",
+      "label": "Аргентина: Плоские/Мгновенные наводнения",
+      "severity": 46,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-AR-Геополитич",
       "type": "Signal",
       "label": "Геополитический процесс — Аргентина",
@@ -92,13 +99,6 @@
       "label": "Киберугроза — Латинская Америка",
       "severity": 53,
       "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-AR-Климатичес",
-      "type": "Signal",
-      "label": "Климатическая политика — Латинская Амери",
-      "severity": 48,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-AR",
       "to": "DOMAIN-AR-climate",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.49
     },
     {
       "from": "COUNTRY-AR",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-AR-climate",
+      "to": "DOMAIN-AR-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-AR-economic",
+      "to": "DOMAIN-AR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-AR-social",
+      "to": "DOMAIN-AR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-AR-climate",
+      "to": "DOMAIN-AR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-AR-infrastructure",
+      "to": "DOMAIN-AR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-AR-economic",
+      "to": "DOMAIN-AR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "DOMAIN-AR-geopolitical",
       "to": "DOMAIN-AR-infrastructure",
       "type": "ESCALATES",
@@ -184,6 +226,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-AR-Аргентина:",
+      "to": "DOMAIN-AR-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.46
+    },
+    {
       "from": "SIGNAL-AR-Геополитич",
       "to": "DOMAIN-AR-geopolitical",
       "type": "AMPLIFIES",
@@ -194,12 +242,6 @@
       "to": "DOMAIN-AR-technology",
       "type": "AMPLIFIES",
       "weight": 0.53
-    },
-    {
-      "from": "SIGNAL-AR-Климатичес",
-      "to": "DOMAIN-AR-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.48
     }
   ]
 }
