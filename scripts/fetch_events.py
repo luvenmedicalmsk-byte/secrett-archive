@@ -4267,16 +4267,34 @@ def fetch_gdelt():
     print(f"  GDELT: {len(items)} статей", file=sys.stderr)
     return items
 
+# ReliefWeb (11.10.2026). Отчёты не приходили: фильтр type.name API отклонял
+# с ошибкой 400 («Unrecognized filter field»), формат отчёта — поле format.name.
+# Один отчёт публикуется на нескольких языках: берётся только английская версия.
+# Рутинные сводки (страновые брифы, бюллетени, мониторинг рынков) не сигнал.
+# Бедствия: date.event — дата НАЧАЛА (июль для идущей вспышки), такие записи
+# отсекались как старые все до одной. Берётся date.created — когда ReliefWeb
+# зарегистрировал бедствие: новое бедствие = новый сигнал.
+_RW_ROUTINE = re.compile(r'country brief|bulletin|market monitor|dashboard|factsheet|fact sheet|snapshot|'
+                         r'monthly|weekly|annual report|activity report|funding update|newsletter', re.I)
+
+
+def _rw_skip(fields, title):
+    langs = [l.get('code') for l in (fields.get('language') or []) if l.get('code')]
+    if langs and 'en' not in langs:
+        return True
+    return bool(_RW_ROUTINE.search(title))
+
+
 def fetch_reliefweb():
     items = []
     url = ("https://api.reliefweb.int/v2/reports"
            "?appname=atlas-riskmonitor-x7k2"
            "&limit=30"
            "&sort[]=date:desc"
-           "&filter[field]=type.name&filter[value]=Situation+Report"
+           "&filter[field]=format.name&filter[value]=Situation+Report"
            "&fields[include][]=title&fields[include][]=body"
            "&fields[include][]=date.created&fields[include][]=source.name"
-           "&fields[include][]=country.name")
+           "&fields[include][]=country.name&fields[include][]=language.code")
     data = fetch_url(url)
     if data:
         try:
@@ -4285,6 +4303,7 @@ def fetch_reliefweb():
                 f = item.get('fields', {})
                 title = f.get('title','').strip()
                 if not title: continue
+                if _rw_skip(f, title): continue
                 body = f.get('body','')[:300]
                 countries = [c.get('name','') for c in f.get('country',[])]
                 date_raw = f.get('date',{}).get('created','')
@@ -4318,7 +4337,7 @@ def fetch_reliefweb():
                 items.append({
                     'title': name,
                     'desc': f"{dtype} affecting {', '.join(countries)}",
-                    'date': parse_date(f.get('date',{}).get('event','')),
+                    'date': parse_date(f.get('date',{}).get('created','') or f.get('date',{}).get('event','')),
                     'source': 'ReliefWeb Disasters',
                     'source_bias': 8
                 })
@@ -4338,10 +4357,10 @@ def fetch_reliefweb():
                "?appname=atlas-riskmonitor-x7k2"
                "&limit=15"
                "&sort[]=date:desc"
-               "&filter[field]=type.name&filter[value]=" + _rw_type +
+               "&filter[field]=format.name&filter[value]=" + _rw_type +
                "&fields[include][]=title&fields[include][]=body"
                "&fields[include][]=date.created&fields[include][]=source.name"
-               "&fields[include][]=country.name")
+               "&fields[include][]=country.name&fields[include][]=language.code")
         _d2 = fetch_url(_u2)
         if not _d2:
             continue
@@ -4350,7 +4369,7 @@ def fetch_reliefweb():
             for _it in _j2.get('data', []):
                 _f = _it.get('fields', {})
                 _t = (_f.get('title') or '').strip()
-                if not _t:
+                if not _t or _rw_skip(_f, _t):
                     continue
                 _b = (_f.get('body') or '')[:300]
                 _cc = [c.get('name') for c in (_f.get('country') or []) if c.get('name')]
@@ -14670,7 +14689,7 @@ def fetch_reliefweb_v2():
                 if not name: continue
                 countries = [c.get('name','') for c in f.get('country',[])]
                 dtype = f.get('type',[{}])[0].get('name','') if f.get('type') else ''
-                date_raw = f.get('date',{}).get('event','')
+                date_raw = f.get('date',{}).get('created','') or f.get('date',{}).get('event','')
                 desc = f"{dtype} в {', '.join(countries)}" if countries else dtype
                 items.append({
                     'title': name,
@@ -20545,6 +20564,72 @@ def fetch_sanctions():
     return items
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# ИСТОЧНИК: ВОЗ — сообщения о вспышках болезней (Disease Outbreak News), 11.10.2026.
+# Старая RSS-лента DON (who.int/feeds/entity/csr/don/...) отдаёт 404: вспышки ВОЗ
+# до ленты не доходили. Берётся официальный JSON API сайта ВОЗ, без ключа.
+# Одно сообщение DON = одна запись; окно WHO_DON_DAYS суток по дате публикации.
+# Источник 'WHO Outbreaks' уже в доверенных списках домена «Социум».
+# Откат: WHO_DON_FEED = False.
+# ══════════════════════════════════════════════════════════════════════════════
+WHO_DON_FEED = True
+WHO_DON_DAYS = 14
+_WHO_DON_HIGH = re.compile(
+    r'ebola|marburg|nipah|mers|middle east respiratory|avian influenza|h5n1|h7n9|h5n6|'
+    r'plague|undetermined|unknown etiology|novel|smallpox|mpox clade i|lassa|crimean|cholera', re.I)
+
+
+def fetch_who_don():
+    """ВОЗ: сообщения о вспышках (Disease Outbreak News) за WHO_DON_DAYS суток."""
+    if not WHO_DON_FEED:
+        return []
+    import html as _h
+    url = ("https://www.who.int/api/news/diseaseoutbreaknews?sf_culture=en"
+           "&$orderby=PublicationDateAndTime%20desc&$top=12")
+    raw = fetch_url(url, timeout=25)
+    items = []
+    if not raw:
+        print("  [WARN] WHO DON: API недоступен", file=sys.stderr)
+        return items
+    try:
+        vals = json.loads(raw).get('value', [])
+    except Exception as e:
+        print(f"  [WARN] WHO DON parse: {e}", file=sys.stderr)
+        return items
+    now = datetime.now(timezone.utc)
+    seen = set()
+    for v in vals:
+        title = (v.get('OverrideTitle') if str(v.get('UseOverrideTitle')) == 'True' else '') or v.get('Title') or ''
+        title = re.sub(r'\s+', ' ', title).strip()
+        don = v.get('DonId') or v.get('UrlName') or ''
+        ds = v.get('PublicationDateAndTime') or v.get('PublicationDate') or ''
+        try:
+            d = datetime.strptime(ds[:19], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone.utc)
+        except Exception:
+            continue
+        if not title or (now - d).days > WHO_DON_DAYS or title in seen:
+            continue                                   # одно (последнее) сообщение на вспышку
+        seen.add(title)
+        summ = v.get('Summary') or re.sub('<[^>]+>', ' ', v.get('Overview') or '')
+        summ = re.sub(r'\s+', ' ', _h.unescape(summ)).strip()[:600]
+        # «Болезнь - Страна» / «Болезнь, Страна & Страна»: страна в конце заголовка
+        m = re.search(r'\s[-–,]\s(.+)$', title)
+        place = m.group(1).strip() if m else ''
+        sev = 70 if _WHO_DON_HIGH.search(title) else 60
+        items.append({
+            'title': f"WHO reports outbreak: {title}"[:160],
+            'desc': f"{summ} {place}".strip(),
+            'date': d.strftime('%Y-%m-%d'),
+            'source': 'WHO Outbreaks',
+            'url': 'https://www.who.int/emergencies/disease-outbreak-news/item/' + (v.get('UrlName') or don),
+            '_domain': 'social',
+            '_force_severity': sev,
+            '_meta': {'kind': 'outbreak', 'issuer': 'WHO', 'verified': True, 'don_id': don, 'place': place},
+        })
+    print(f"  WHO DON: {len(items)} сообщений", file=sys.stderr)
+    return items
+
+
 def fetch_meteoalarm():
     """Официальные предупреждения европейских метеослужб. Красный и оранжевый."""
     if not METEOALARM:
@@ -25730,6 +25815,7 @@ if __name__ == '__main__':
             ('europe_latam',       fetch_europe_latam),
             ('meteoalarm',         fetch_meteoalarm),
             ('sanctions',          fetch_sanctions),
+            ('who_don',            fetch_who_don),
         ], max_workers=12)
 
 
