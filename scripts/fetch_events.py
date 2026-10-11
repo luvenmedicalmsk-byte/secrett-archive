@@ -20617,7 +20617,9 @@ def fetch_who_don():
         place = m.group(1).strip() if m else ''
         sev = 70 if _WHO_DON_HIGH.search(title) else 60
         items.append({
-            'title': f"WHO reports outbreak: {title}"[:160],
+            # Заголовок — факт вспышки, а не «ВОЗ сообщает…»: формулировка с
+            # атрибуцией уводила запись в контекст как комментарий (11.10.2026).
+            'title': f"Outbreak: {title} (WHO)"[:160],
             'desc': f"{summ} {place}".strip(),
             'date': d.strftime('%Y-%m-%d'),
             'source': 'WHO Outbreaks',
@@ -24302,6 +24304,12 @@ def _scale_revert(events):
     return n
 
 
+# Официальные машинные сообщения ведомств: сам факт публикации и есть событие
+# (вспышка, зарегистрированная ВОЗ; внесение в санкционный список). Интент-
+# классификатор видит в них атрибуцию («ВОЗ сообщает») и относит к комментарию.
+_OFFICIAL_SIGNAL_KINDS = ('outbreak', 'sanctions')
+
+
 def _context_feed_gate(events):
     """Записи, которые интент отнёс к контексту, вне оперативной ленты."""
     if not CONTEXT_FEED_GATE:
@@ -24317,6 +24325,8 @@ def _context_feed_gate(events):
             continue                      # класс не присвоен: не наше дело
         if ((e.get('basis') or {}).get('severity') or {}).get('route') == 'cyber':
             continue                      # бюллетени об уязвимостях это сигнал
+        if (e.get('meta') or {}).get('kind') in _OFFICIAL_SIGNAL_KINDS and (e.get('meta') or {}).get('verified'):
+            continue                      # официальное сообщение ведомства (ВОЗ DON, санкции) это сигнал
         if e.get('feed_visible') is not False:
             e['feed_visible'] = False
             e['context_only'] = True
