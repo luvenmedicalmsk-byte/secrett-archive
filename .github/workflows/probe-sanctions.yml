@@ -17,18 +17,16 @@ jobs:
         run: |
           rm -rf probe; mkdir -p probe
           get(){ n=$1; u=$2; code=$(curl -sSL -m 90 --retry 1 -A "ArchiveBot/2.0" -o "probe/$n" -w "%{http_code}" "$u" || echo ERR); echo "$n $code $(stat -c %s probe/$n 2>/dev/null || echo 0) $u" >> probe/_index.txt; }
-          get who_don_api.json "https://www.who.int/api/news/diseaseoutbreaknews?sf_culture=en&\$orderby=PublicationDateAndTime%20desc&\$top=15"
-          get who_news_api.json "https://www.who.int/api/news/newsitems?sf_culture=en&\$orderby=PublicationDateAndTime%20desc&\$top=15"
-          get who_news.rss "https://www.who.int/rss-feeds/news-english.xml"
-          get who_don_old.rss "https://www.who.int/feeds/entity/csr/don/en/rss.xml"
-          get rw_sitrep.json "https://api.reliefweb.int/v2/reports?appname=atlas-riskmonitor-x7k2&limit=5&sort[]=date:desc&filter[field]=type.name&filter[value]=Situation+Report&fields[include][]=title&fields[include][]=date.created&fields[include][]=source.name&fields[include][]=country.name"
-          get rw_disasters.json "https://api.reliefweb.int/v2/disasters?appname=atlas-riskmonitor-x7k2&limit=20&sort[]=date:desc&fields[include][]=name&fields[include][]=date&fields[include][]=type.name&fields[include][]=country.name&fields[include][]=status&filter[field]=status&filter[value]=current"
-          get rw_alert.json "https://api.reliefweb.int/v2/disasters?appname=atlas-riskmonitor-x7k2&limit=20&sort[]=date.created:desc&fields[include][]=name&fields[include][]=date&fields[include][]=type.name&fields[include][]=country.name&fields[include][]=status&fields[include][]=glide"
-          get rw_updates.rss "https://reliefweb.int/updates/rss.xml"
-          get rw_disasters.rss "https://reliefweb.int/disasters/rss.xml"
+          get(){ n=$1; u=$2; code=$(curl -gsSL -m 90 --retry 1 -A "ArchiveBot/2.0" -o "probe/$n" -w "%{http_code}" "$u" || echo ERR); echo "$n $code $(stat -c %s probe/$n 2>/dev/null || echo 0) $u" >> probe/_index.txt; }
+          B="https://api.reliefweb.int/v2"; A="appname=atlas-riskmonitor-x7k2"
+          get rw_sitrep.json "$B/reports?$A&limit=5&sort[]=date:desc&filter[field]=type.name&filter[value]=Situation+Report&fields[include][]=title&fields[include][]=date.created&fields[include][]=source.name&fields[include][]=country.name"
+          get rw_disasters.json "$B/disasters?$A&limit=30&sort[]=date.created:desc&fields[include][]=name&fields[include][]=date&fields[include][]=type.name&fields[include][]=country.name&fields[include][]=status&fields[include][]=glide&fields[include][]=description"
+          get rw_disasters_cur.json "$B/disasters?$A&limit=25&sort[]=date:desc&fields[include][]=name&fields[include][]=date&fields[include][]=type&fields[include][]=country&fields[include][]=status&filter[field]=status&filter[value]=current"
+          get rw_analysis.json "$B/reports?$A&limit=5&sort[]=date:desc&filter[field]=type.name&filter[value]=Analysis&fields[include][]=title&fields[include][]=date.created"
+          get rw_noapp.json "$B/disasters?limit=3"
           cat probe/_index.txt
           for f in probe/*; do echo "== $f"; head -c 400 "$f"; echo; done
       - name: Commit
         run: |
           git config user.name "probe-bot"; git config user.email "probe-bot@users.noreply.github.com"
-          git add -A probe && git commit -m "probe: health/humanitarian samples" && git push origin HEAD:probe/sanctions
+          git add -A probe && git commit -m "probe: reliefweb samples" && git push origin HEAD:probe/sanctions
