@@ -21191,6 +21191,81 @@ def fetch_gpsjam():
     return items
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# ИСТОЧНИК: индекс продовольственных цен ФАО (FAO Food Price Index), 12.10.2026.
+# Ежемесячный выпуск (первая пятница месяца) за прошлый месяц, 2014–2016 = 100.
+# Одна запись: последнее значение, изменение за месяц и за год, подындексы
+# (мясо, молочные продукты, зерновые, растительные масла, сахар). Сигнал
+# держится FAO_FFPI_DAYS суток после выпуска; дата записи — день прогона,
+# месяц данных указан в заголовке. Без ключа. Откат: FAO_FFPI_FEED = False.
+# ══════════════════════════════════════════════════════════════════════════════
+FAO_FFPI_FEED = True
+FAO_FFPI_DAYS = 21
+_FAO_FFPI_URL = 'https://www.fao.org/media/docs/worldfoodsituationlibraries/wfs-library/food_price_indices_data.csv'
+_FAO_SUB = (('Мясо', 2), ('Молочные продукты', 3), ('Зерновые', 4), ('Растительные масла', 5), ('Сахар', 6))
+_RU_MONTH_P = ('январе', 'феврале', 'марте', 'апреле', 'мае', 'июне', 'июле', 'августе', 'сентябре',
+               'октябре', 'ноябре', 'декабре')
+
+
+def fetch_fao_ffpi():
+    if not FAO_FFPI_FEED:
+        return []
+    raw = fetch_url(_FAO_FFPI_URL, timeout=25)
+    if not raw:
+        print("  [WARN] FAO FFPI: файл недоступен", file=sys.stderr)
+        return []
+    rows = {}
+    for ln in raw.splitlines():
+        p = [x.strip() for x in ln.split(',')]
+        if len(p) >= 7 and re.fullmatch(r'\d{4}-\d{2}', p[0] or ''):
+            try:
+                rows[p[0]] = [float(x) for x in p[1:7]]
+            except ValueError:
+                continue
+    if len(rows) < 13:
+        return []
+    keys = sorted(rows)
+    cur_k, prev_k = keys[-1], keys[-2]
+    y, m = int(cur_k[:4]), int(cur_k[5:])
+    yoy_k = '%04d-%02d' % (y - 1, m)
+    # дата выпуска: первая пятница следующего месяца
+    ny, nm = (y + 1, 1) if m == 12 else (y, m + 1)
+    rel = datetime(ny, nm, 1, tzinfo=timezone.utc)
+    rel = rel + timedelta(days=(4 - rel.weekday()) % 7)
+    now = datetime.now(timezone.utc)
+    if not (0 <= (now - rel).days <= FAO_FFPI_DAYS):
+        return []
+    cur, prev = rows[cur_k], rows[prev_k]
+    mm = 100.0 * (cur[0] / prev[0] - 1)
+    yy = 100.0 * (cur[0] / rows[yoy_k][0] - 1) if yoy_k in rows else None
+    subs = []
+    jump = False
+    for name, i in _FAO_SUB:
+        d = 100.0 * (cur[i - 1] / prev[i - 1] - 1)
+        subs.append((name, cur[i - 1], d))
+        jump |= abs(d) >= 5
+    sev = 52 + (8 if mm >= 2 else 4 if mm >= 1 else 0) + ((8 if yy >= 10 else 4 if yy >= 5 else 0) if yy is not None else 0) + (4 if jump else 0)
+    if mm <= -2:
+        sev = max(46, sev - 6)
+    fmt = lambda v: ('%+.1f' % v).replace('.', ',')
+    num = ('%.1f' % cur[0]).replace('.', ',')
+    title = (f"Индекс цен на продовольствие ФАО в {_RU_MONTH_P[m - 1]}: {num} "
+             f"({fmt(mm)}% за месяц{', ' + fmt(yy) + '% за год' if yy is not None else ''})")
+    subs_s = sorted(subs, key=lambda x: -abs(x[2]))
+    desc = (f"ФАО ООН, выпуск {rel.strftime('%d.%m.%Y')}: индекс продовольственных цен за {cur_k} — {num} пункта "
+            f"(2014–2016 = 100), за месяц {fmt(mm)}%"
+            + (f", за год {fmt(yy)}%" if yy is not None else '') + ". Подындексы за месяц: "
+            + '; '.join(f"{n} {('%.1f' % v).replace('.', ',')} ({fmt(d)}%)" for n, v, d in subs_s) + '.')
+    print(f"  FAO FFPI: {cur_k} {cur[0]} ({mm:+.1f}% м/м)", file=sys.stderr)
+    return [{
+        'title': title[:160], 'desc': desc, 'date': now.strftime('%Y-%m-%d'),
+        'source': 'ФАО ООН', 'url': 'https://www.fao.org/worldfoodsituation/foodpricesindex/en/',
+        '_domain': 'economy', '_force_severity': min(sev, 72),
+        '_meta': {'kind': 'food_prices', 'verified': True, 'month': cur_k, 'value': cur[0],
+                  'mom': round(mm, 2), 'yoy': (round(yy, 2) if yy is not None else None)},
+    }]
+
+
 def fetch_meteoalarm():
     """Официальные предупреждения европейских метеослужб. Красный и оранжевый."""
     if not METEOALARM:
@@ -24871,7 +24946,7 @@ def _scale_revert(events):
 # Официальные машинные сообщения ведомств: сам факт публикации и есть событие
 # (вспышка, зарегистрированная ВОЗ; внесение в санкционный список). Интент-
 # классификатор видит в них атрибуцию («ВОЗ сообщает») и относит к комментарию.
-_OFFICIAL_SIGNAL_KINDS = ('outbreak', 'sanctions', 'cloud_outage', 'tropical_cyclone', 'space_weather', 'tsunami', 'gps_jamming', 'airspace')
+_OFFICIAL_SIGNAL_KINDS = ('outbreak', 'sanctions', 'cloud_outage', 'tropical_cyclone', 'space_weather', 'tsunami', 'gps_jamming', 'airspace', 'food_prices')
 
 
 def _context_feed_gate(events):
@@ -26586,6 +26661,7 @@ if __name__ == '__main__':
             ('space_weather',      fetch_space_weather),
             ('tsunami',            fetch_tsunami),
             ('gpsjam',             fetch_gpsjam),
+            ('fao_ffpi',           fetch_fao_ffpi),
         ], max_workers=12)
 
 
