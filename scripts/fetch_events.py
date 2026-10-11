@@ -24933,6 +24933,90 @@ _CAP_SRC = re.compile(
     re.I)
 
 
+# ── ФИЛЬТР НЕПРИСТОЙНОЙ ЛЕКСИКИ (DECENCY_FILTER, 11.10.2026) ──────────────────
+# Повод: «Хакеры слили на порносайт… Покажи письку… Фулл не дадим, не
+# спрашивайте» (Telegram, e086910e6). Атлас — аналитическая платформа.
+#  • грубая лексика в описании: короткий вводный оборот с ней удаляется,
+#    иначе удаляется всё предложение;
+#  • грубая лексика в заголовке: запись снимается с ленты и карты;
+#  • «порносайт», «порно» заменяются нейтральными формулировками;
+#  • телеграм-приписки («фулл не дадим», «не спрашивайте», подпись канала
+#    одним-двумя словами в конце) удаляются.
+# Правило действует на каждом прогоне, в том числе на удержанных записях.
+# Откат: DECENCY_FILTER = False.
+DECENCY_FILTER = True
+_DEC_HARD = re.compile(
+    r'(?<![а-яё])(?:письк\w*|сиськ\w*|хуй\w*|хуе\w*|хуё\w*|хуя\w*|пизд\w*|бля(?:дь|ть|ди|дск\w*|дин\w*)?|'
+    r'(?:за|вы|у|на|про|от|раз)?[её]б(?:ать|ал\w*|ан\w*|ну\w*|ут|ет|ёт|уч\w*|лан\w*|ыр\w*)|'
+    r'сук(?:а|и|ой)|жоп\w*|залуп\w*|шлюх\w*|дроч\w*|муда[кч]\w*|говн\w*|дерьм\w*)(?![а-яё])', re.I)
+_DEC_SOFT = (
+    (re.compile(r'(?<![а-яё])порносайт(?:ах|ами|ам|ов|ом|ы|е|а|у)?(?![а-яё])', re.I), 'сайт для взрослых'),
+    (re.compile(r'(?<![а-яё])порно(?:видео|ролик\w*|контент\w*)(?![а-яё])', re.I), 'откровенные материалы'),
+    (re.compile(r'(?<![а-яё])порнограф\w*(?![а-яё])', re.I), 'непристойные материалы'),
+    (re.compile(r'(?<![а-яё])порно(?![а-яё])', re.I), 'контент для взрослых'),
+)
+_DEC_FLUFF = re.compile(r'[^.!?]*(?:фулл\s+не\s+дадим|не\s+спрашивайте|подписывайтесь|подпишись)[^.!?]*[.!?]?', re.I)
+
+
+def _dec_clean(text, tg=False):
+    if not text:
+        return text, False
+    t, hit = str(text), False
+    t2 = _DEC_FLUFF.sub(' ', t)
+    hit |= t2 != t
+    t = t2
+    parts = re.split(r'(?<=[.!?…])\s+', t)
+    out = []
+    for sp in parts:
+        if _DEC_HARD.search(sp):
+            hit = True
+            # вводный оборот в начале («Покажи письку Хакеры…»): срезаем до слова включительно
+            m = re.match(r'^\s*(?:\S+\s+){0,2}?\S*?' + r'(?:' + _DEC_HARD.pattern + r')' + r'[\s,:;!—-]+', sp, re.I)
+            rest = sp[m.end():] if m else ''
+            if m and len(rest) >= 30 and not _DEC_HARD.search(rest):
+                out.append(rest[:1].upper() + rest[1:])
+            continue
+        out.append(sp)
+    t = ' '.join(out)
+    for rx, rep in _DEC_SOFT:
+        t2 = rx.sub(rep, t)
+        hit |= t2 != t
+        t = t2
+    # подпись канала в конце после последней точки
+    # (одно слово; у не-телеграм источников — только слитное имя вида «НеКасперский»)
+    m = re.search(r'([.!?…])\s+([A-Za-zА-ЯЁа-яё@_][\w@-]*)\s*$', t)
+    if (m and not re.search(r'[.!?…]$', t.strip()) and len(m.group(2)) <= 30
+            and (tg or re.fullmatch(r'[А-ЯЁA-Z][а-яёa-z]+[А-ЯЁA-Z][\w-]*', m.group(2)))):
+        t = t[:m.start(2)].rstrip()
+        hit = True
+    t = re.sub(r'\s{2,}', ' ', t).strip()
+    return t, hit
+
+
+def _decency_filter(events):
+    if not DECENCY_FILTER:
+        return 0
+    n = 0
+    for e in events:
+        hard_title = bool(_DEC_HARD.search(e.get('title') or ''))
+        ch = False
+        for k in ('title', 'summary', 'desc'):
+            if e.get(k):
+                v, h = _dec_clean(e[k], str(e.get('source') or '').lower().startswith('telegram/'))
+                if h and v:
+                    e[k] = v
+                    ch = True
+        if hard_title:
+            e['feed_visible'] = False
+            e['map_visible'] = False
+            e['decency_hidden'] = True
+            ch = True
+        if ch:
+            n += 1
+    if n:
+        print('  [DECENCY] очищено записей: %d' % n, file=sys.stderr)
+    return n
+
 # ── ОДИН ИНЦИДЕНТ — ОДНА ТОЧКА (INCIDENT_COLLAPSE, 11.10.2026) ────────────────
 # Удар по аэропорту Эр-Рияда пришёл из 13 источников: 13 точек вокруг города с
 # индексами от 55 до 95 («Мия: событие на 95, а тут ещё одно, но ниже»).
@@ -25849,6 +25933,7 @@ def save_enriched(events, previous_snapshot=None):
                 # интентом к комментарию, уходит в контекст и на вкладку
                 # предупреждений уже не попадает как предупреждение.
                 _incident_reset(enriched["events"])
+                _decency_filter(enriched["events"])
                 _cap_feed_gate(enriched["events"])
                 _context_feed_gate(enriched["events"])
                 _incident_collapse(enriched["events"])
