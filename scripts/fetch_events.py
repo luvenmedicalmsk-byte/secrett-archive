@@ -20945,6 +20945,159 @@ def fetch_tsunami():
     return items
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# ИСТОЧНИК: подавление GPS по данным GPSJam (11.10.2026).
+# GPSJam публикует суточный файл: шестиугольники H3 (уровень 4, ~1 770 км²) с
+# числом самолётов, сообщивших хорошую и плохую точность навигации (ADS-B).
+# Зона «подавлена», если плохих > 10 % при не менее чем 3 бортах (порог красного
+# цвета на gpsjam.org). Смежные зоны склеиваются в очаги; в ленту идут очаги от
+# GPS_MIN_HEX зон. Сравнение с предыдущими сутками даёт рост или спад очага.
+# Требует пакет h3 (scripts/requirements-update.txt). Нет пакета — пропуск.
+# Откат: GPSJAM_FEED = False.
+# ══════════════════════════════════════════════════════════════════════════════
+GPSJAM_FEED = True
+GPS_MIN_HEX = 20
+GPS_MAX_ITEMS = 6
+# Известные районы помех: подпись очага по ближайшему (до 600 км), иначе регион.
+_GPS_AREAS = (
+    (54.7, 20.5, 'Калининград и юг Балтики'), (59.6, 25.5, 'Финский залив'), (57.0, 22.0, 'Балтийское море'),
+    (44.0, 30.5, 'Чёрное море и Румыния'), (45.5, 34.0, 'Крым и Чёрное море'), (34.6, 34.8, 'Восточное Средиземноморье'),
+    (32.0, 35.0, 'Израиль и Ливан'), (43.5, 50.5, 'Каспийское море'), (57.5, 53.5, 'Удмуртия и Прикамье'),
+    (56.5, 60.0, 'Средний Урал'), (55.7, 37.6, 'Москва и область'), (51.7, 39.2, 'Центральное Черноземье'),
+    (47.5, 39.5, 'Ростовская область и Приазовье'), (31.0, 73.0, 'граница Пакистана и Индии'),
+    (26.5, 68.5, 'Синд и юг Пакистана'), (17.0, 96.5, 'Мьянма'), (33.0, 44.0, 'Ирак'), (35.0, 51.0, 'Иран'),
+    (26.5, 52.0, 'Персидский залив'), (15.5, 42.5, 'Красное море и Йемен'), (42.0, 44.8, 'Южный Кавказ'),
+    (52.2, 104.5, 'Иркутская область'), (61.8, 25.0, 'юг Финляндии'), (51.9, 23.6, 'граница Польши и Беларуси'),
+    (9.0, 38.8, 'Эфиопия'), (38.5, 127.0, 'Корейский полуостров'),
+)
+
+
+def _gps_area(lat, lng):
+    import math
+    best, bd = None, 600.0
+    for a_, b_, nm in _GPS_AREAS:
+        d = 111.2 * math.hypot(lat - a_, (lng - b_) * math.cos(math.radians(lat)))
+        if d < bd:
+            best, bd = nm, d
+    return best
+
+
+def _plural_ru(n, one, few, many):
+    a, b = n % 10, n % 100
+    return one if a == 1 and b != 11 else few if 2 <= a <= 4 and not 12 <= b <= 14 else many
+
+
+def _gpsjam_day(day):
+    import gzip as _gz
+    raw = fetch_url(f'https://gpsjam.org/data/{day}-h3_4.csv', timeout=30)
+    if not raw:
+        return None
+    try:
+        txt = _gz.decompress(raw).decode() if raw[:2] == b'\x1f\x8b' else raw.decode()
+    except Exception:
+        return None
+    red = {}
+    for ln in txt.splitlines()[1:]:
+        p = ln.split(',')
+        if len(p) != 3:
+            continue
+        try:
+            g, b = int(p[1]), int(p[2])
+        except Exception:
+            continue
+        if g + b >= 3 and b / (g + b) > 0.10:
+            red[p[0]] = b
+    return red
+
+
+def _gpsjam_clusters(red):
+    import h3 as _h3
+    seen, out = set(), []
+    for h in red:
+        if h in seen:
+            continue
+        st, comp = [h], []
+        seen.add(h)
+        while st:
+            x = st.pop()
+            comp.append(x)
+            for y in _h3.grid_disk(x, 1):
+                if y in red and y not in seen:
+                    seen.add(y)
+                    st.append(y)
+        ll = [_h3.cell_to_latlng(x) for x in comp]
+        out.append({'n': len(comp), 'lat': sum(p[0] for p in ll) / len(ll), 'lng': sum(p[1] for p in ll) / len(ll),
+                    'bad': sum(red[x] for x in comp)})
+    out.sort(key=lambda c: -c['n'])
+    return out
+
+
+def fetch_gpsjam():
+    if not GPSJAM_FEED:
+        return []
+    try:
+        import h3  # noqa: F401
+    except Exception:
+        print("  [SKIP] GPSJam: нет пакета h3", file=sys.stderr)
+        return []
+    import math
+    man = fetch_url('https://gpsjam.org/data/manifest.csv', timeout=20)
+    if not man:
+        print("  [WARN] GPSJam: манифест недоступен", file=sys.stderr)
+        return []
+    try:
+        import gzip as _gz
+        man = _gz.decompress(man).decode() if man[:2] == b'\x1f\x8b' else man.decode()
+        days = [l.split(',')[0] for l in man.splitlines()[1:] if l.count(',') >= 2 and l.split(',')[1] == 'false']
+        day, prev_day = days[-1], days[-2]
+    except Exception as e:
+        print(f"  [WARN] GPSJam манифест: {e}", file=sys.stderr)
+        return []
+    if (datetime.now(timezone.utc) - datetime.strptime(day, '%Y-%m-%d').replace(tzinfo=timezone.utc)).days > 3:
+        return []
+    red = _gpsjam_day(day)
+    if not red:
+        return []
+    cur = [c for c in _gpsjam_clusters(red) if c['n'] >= GPS_MIN_HEX][:GPS_MAX_ITEMS]
+    prev_red = _gpsjam_day(prev_day) or {}
+    prev = _gpsjam_clusters(prev_red) if prev_red else []
+    items = []
+    for c in cur:
+        pn = 0
+        for p in prev:   # тот же очаг вчера: центр ближе 300 км
+            dk = 111.2 * math.hypot(c['lat'] - p['lat'], (c['lng'] - p['lng']) * math.cos(math.radians(c['lat'])))
+            if dk < 300:
+                pn = max(pn, p['n'])
+        sev = 66 if c['n'] >= 80 else 60 if c['n'] >= 40 else 54
+        trend = ''
+        if prev_red:
+            if pn == 0:
+                trend, sev = 'новый очаг (вчера не было)', sev + 6
+            elif c['n'] >= pn * 1.5:
+                trend, sev = f'рост: вчера {pn} зон', sev + 4
+            elif c['n'] <= pn * 0.67:
+                trend = f'спад: вчера {pn} зон'
+            else:
+                trend = f'устойчиво: вчера {pn} зон'
+        reg = detect_region_by_coords(c['lat'], c['lng']) or ''
+        place = _gps_area(c['lat'], c['lng']) or reg
+        area = int(round(c['n'] * 1.77))
+        items.append({
+            'title': (f"Подавление GPS{(' — ' + place) if place else ''}: {c['n']} "
+                      f"{_plural_ru(c['n'], 'участок', 'участка', 'участков')}, около {area} тыс. км²")[:160],
+            'desc': (f"По данным GPSJam за {datetime.strptime(day, '%Y-%m-%d').strftime('%d.%m.%Y')}: очаг помех спутниковой "
+                     f"навигации из {c['n']} смежных зон (H3, ~1 770 км² каждая), где более 10 % самолётов сообщали "
+                     f"о деградации GPS; бортов с помехами — {c['bad']}. {trend.capitalize() + '.' if trend else ''} "
+                     f"Центр очага: {c['lat']:.2f}°, {c['lng']:.2f}°.").strip(),
+            'date': day, 'source': 'GPSJam',
+            '_lat': round(c['lat'], 3), '_lng': round(c['lng'], 3), '_coord_origin': 'source', '_region': reg,
+            '_domain': 'geopolitics', '_force_severity': min(sev, 72),
+            '_meta': {'kind': 'gps_jamming', 'verified': True, 'hexes': c['n'], 'prev_hexes': pn, 'day': day},
+        })
+    print(f"  GPSJam: {len(items)} очагов (день {day})", file=sys.stderr)
+    return items
+
+
 def fetch_meteoalarm():
     """Официальные предупреждения европейских метеослужб. Красный и оранжевый."""
     if not METEOALARM:
@@ -24625,7 +24778,7 @@ def _scale_revert(events):
 # Официальные машинные сообщения ведомств: сам факт публикации и есть событие
 # (вспышка, зарегистрированная ВОЗ; внесение в санкционный список). Интент-
 # классификатор видит в них атрибуцию («ВОЗ сообщает») и относит к комментарию.
-_OFFICIAL_SIGNAL_KINDS = ('outbreak', 'sanctions', 'cloud_outage', 'tropical_cyclone', 'space_weather', 'tsunami')
+_OFFICIAL_SIGNAL_KINDS = ('outbreak', 'sanctions', 'cloud_outage', 'tropical_cyclone', 'space_weather', 'tsunami', 'gps_jamming')
 
 
 def _context_feed_gate(events):
@@ -26254,6 +26407,7 @@ if __name__ == '__main__':
             ('tropical',           fetch_tropical_cyclones),
             ('space_weather',      fetch_space_weather),
             ('tsunami',            fetch_tsunami),
+            ('gpsjam',             fetch_gpsjam),
         ], max_workers=12)
 
 
