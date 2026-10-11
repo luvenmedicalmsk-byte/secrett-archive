@@ -1,0 +1,30 @@
+# Временная разведка форматов санкционных списков (TASK санкции, 11.10.2026).
+# Срабатывает ТОЛЬКО на push в ветку probe/sanctions. В main не попадает; ветка удаляется после разбора.
+name: Probe sanctions sources
+on:
+  push:
+    branches: [probe/sanctions]
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: probe/sanctions }
+      - name: Download
+        run: |
+          mkdir -p probe
+          get(){ n=$1; u=$2; code=$(curl -sSL -m 120 --retry 2 -A "ArchiveBot/2.0" -o "probe/$n" -w "%{http_code}" "$u" || echo ERR); echo "$n $code $(stat -c %s probe/$n 2>/dev/null || echo 0) $u" >> probe/_index.txt; }
+          get ofac_sdn.xml "https://sanctionslistservice.ofac.treas.gov/api/PublicationPreview/exports/SDN.XML"
+          get ofac_recent.html "https://ofac.treasury.gov/recent-actions"
+          get eu_fsf.xml "https://webgate.ec.europa.eu/fsd/fsf/public/files/xmlFullSanctionsList_1_1/content?token=dG9rZW4tMjAxNw"
+          get uk_list.xml "https://sanctionslist.fcdo.gov.uk/docs/UK-Sanctions-List.xml"
+          get uk_ofsi.xml "https://ofsistorage.blob.core.windows.net/publishlive/2022format/ConList.xml"
+          cat probe/_index.txt
+          gzip -9 probe/*.xml probe/*.html || true
+      - name: Commit
+        run: |
+          git config user.name "probe-bot"; git config user.email "probe-bot@users.noreply.github.com"
+          git add probe && git commit -m "probe: sanctions source samples" && git push origin HEAD:probe/sanctions
