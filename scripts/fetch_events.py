@@ -20383,6 +20383,168 @@ def _ma_parse(xml_text, cc, country_name, lat, lng):
     return out
 
 
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ИСТОЧНИК: санкционные действия (11.10.2026). Домен «Экономика · санкции».
+# Официальные публикации, без ключей и без хранения состояния:
+#   OFAC (Минфин США) — страница Recent Actions: одно действие = одна запись;
+#   берутся только назначения (Designations) за последние SANCTIONS_DAYS суток.
+#   Великобритания (FCDO, UK Sanctions List) — у каждой записи есть DateDesignated;
+#   новые назначения за SANCTIONS_DAYS суток группируются по режиму.
+# Список ЕС (FSF, публичный токен) не подключён: файл отстаёт от реальных пакетов
+# (последняя дата публикации в выгрузке 23.07.2026 при генерации 22.09.2026).
+# Координат нет: санкции не физическое событие, место решает Geo Contract.
+# Откат: SANCTIONS_FEED = False.
+# ══════════════════════════════════════════════════════════════════════════════
+SANCTIONS_FEED = True
+SANCTIONS_DAYS = 3
+_OFAC_PROG = (
+    (r'russia', 'Россия'), (r'iran', 'Иран'), (r'venezuela', 'Венесуэла'), (r'belarus', 'Беларусь'),
+    (r'north korea|dprk', 'КНДР'), (r'syria', 'Сирия'), (r'cuba', 'Куба'), (r'sudan', 'Судан'),
+    (r'burma|myanmar', 'Мьянма'), (r'libya', 'Ливия'), (r'yemen|houthi', 'Йемен'), (r'iraq', 'Ирак'),
+    (r'lebanon|hizballah|hezbollah', 'Ливан'), (r'afghanistan', 'Афганистан'), (r'balkans', 'Балканы'),
+    (r'nicaragua', 'Никарагуа'), (r'ukraine', 'Украина'), (r'china|hong kong', 'Китай'),
+    (r'counter terrorism', 'контртерроризм'), (r'counter narcotics', 'наркотрафик'),
+    (r'transnational criminal', 'транснациональная преступность'), (r'non-proliferation', 'нераспространение ОМУ'),
+    (r'cyber', 'киберпреступность'), (r'global magnitsky', 'Глобальный закон Магнитского'),
+    (r'international criminal court', 'Международный уголовный суд'),
+)
+_UK_REGIME_RU = {
+    'Russia': 'Россия', 'Iran': 'Иран', 'Iran (Nuclear)': 'Иран, ядерная программа', 'Belarus': 'Беларусь',
+    'Syria': 'Сирия', 'Democratic People\'s Republic of Korea': 'КНДР', 'Global Human Rights': 'права человека',
+    'Global Anti-Corruption': 'коррупция', 'Global Irregular Migration and Trafficking in Persons': 'нелегальная миграция',
+    'Cyber': 'кибератаки', 'Counter-Terrorism (International Sanctions)': 'контртерроризм',
+    'Chemical Weapons': 'химическое оружие', 'Libya': 'Ливия', 'Sudan': 'Судан', 'Venezuela': 'Венесуэла',
+    'Myanmar': 'Мьянма', 'Afghanistan': 'Афганистан', 'Yemen': 'Йемен', 'Iraq': 'Ирак', 'Mali': 'Мали',
+    'Nicaragua': 'Никарагуа', 'Somalia': 'Сомали', 'South Sudan': 'Южный Судан', 'Haiti': 'Гаити',
+}
+_SANC_HIGH = ('Россия', 'Иран', 'КНДР', 'Беларусь')
+
+
+def _sanc_get(url, timeout=40):
+    try:
+        req = urllib.request.Request(url, headers={'User-Agent': 'ArchiveBot/2.0'})
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return r.read()
+    except Exception as e:
+        print(f"  [WARN] санкции: {url.split('/')[2]} недоступен: {e}", file=sys.stderr)
+        return None
+
+
+def _ofac_actions(html_text, now):
+    import html as _h
+    items = []
+    seen = set()
+    for href, _ymd, raw in re.findall(r'<a href="(/recent-actions/(\d{8})[^"]*)"[^>]*>(.*?)</a>', html_text, re.S):
+        if href in seen:
+            continue
+        seen.add(href)
+        try:
+            d = datetime.strptime(href.split('/')[-1][:8], '%Y%m%d').replace(tzinfo=timezone.utc)
+        except Exception:
+            continue
+        if (now - d).days > SANCTIONS_DAYS:
+            continue
+        t = re.sub(r'\s+', ' ', _h.unescape(re.sub('<[^>]+>', '', raw))).strip()
+        tl = t.lower()
+        if 'designation' not in tl:
+            continue                                   # только новые назначения
+        # программа берётся только из частей заголовка с назначениями: лицензии,
+        # исключения и обновления в той же записи не являются новыми санкциями
+        _cl = [c for c in (re.sub(r'designations? (?:removals?|updates?)', '', x).strip()
+                           for x in re.split(r';', tl)) if 'designation' in c]
+        if not _cl:
+            continue
+        progs = []
+        for rx, ru in _OFAC_PROG:
+            if any(re.search(rx, c) for c in _cl) and ru not in progs:
+                progs.append(ru)
+        what = ', '.join(progs) if progs else 'новые назначения'
+        sev = 64 if any(p in _SANC_HIGH for p in progs) else 58
+        items.append({
+            'title': f"США ввели новые санкции: {what}"[:130],
+            'desc': (f"Минфин США (OFAC) объявил санкционные действия {d.strftime('%d.%m.%Y')}: {t}. "
+                     f"Лица и компании внесены в список SDN: активы блокируются, сделки с ними запрещены."),
+            'date': d.strftime('%Y-%m-%d'),
+            'source': 'OFAC (Минфин США)',
+            '_domain': 'economy',
+            '_force_severity': sev,
+            '_meta': {'kind': 'sanctions', 'issuer': 'US-OFAC', 'verified': True, 'programs': progs,
+                      'action': t[:300], 'url': 'https://ofac.treasury.gov' + href},
+        })
+    return items
+
+
+def _uk_designations(xml_bytes, now):
+    import xml.etree.ElementTree as _ET
+    items = []
+    try:
+        root = _ET.fromstring(xml_bytes)
+    except Exception as e:
+        print(f"  [WARN] UK sanctions parse: {e}", file=sys.stderr)
+        return items
+    groups = {}
+    for d in root.findall('Designation'):
+        try:
+            dd = datetime.strptime(d.findtext('DateDesignated') or '', '%d/%m/%Y').replace(tzinfo=timezone.utc)
+        except Exception:
+            continue
+        if (now - dd).days > SANCTIONS_DAYS or dd > now:
+            continue
+        reg = d.findtext('RegimeName') or ''
+        m = re.search(r'The (.+?) \(Sanctions\)', reg)
+        key = (m.group(1) if m else reg).strip()
+        name = ''
+        for n in d.findall('Names/Name'):
+            if (n.findtext('NameType') or '') == 'Primary Name':
+                name = ' '.join(x.text for x in n if x.tag.startswith('Name') and x.tag != 'NameType' and x.text)
+                break
+        g = groups.setdefault((dd.strftime('%Y-%m-%d'), key), {'n': 0, 'ent': 0, 'ind': 0, 'names': []})
+        g['n'] += 1
+        if (d.findtext('IndividualEntityShip') or '') == 'Individual':
+            g['ind'] += 1
+        else:
+            g['ent'] += 1
+        if name and len(g['names']) < 3:
+            g['names'].append(name.strip())
+    for (day, key), g in sorted(groups.items()):
+        ru = _UK_REGIME_RU.get(key, key)
+        sev = min(78, (58 if ru in _SANC_HIGH else 52) + g['n'] // 3)
+        who = f"{g['n']} лиц и компаний" if g['ind'] and g['ent'] else (f"{g['n']} компаний" if g['ent'] else f"{g['n']} лиц")
+        items.append({
+            'title': f"Великобритания ввела санкции против {who} — режим «{ru}»"[:130],
+            'desc': (f"Правительство Великобритании (UK Sanctions List) внесло в санкционный список {g['n']} позиций "
+                     f"по режиму «{ru}» {datetime.strptime(day, '%Y-%m-%d').strftime('%d.%m.%Y')}: физических лиц {g['ind']}, "
+                     f"организаций и судов {g['ent']}. Среди них: {'; '.join(g['names'])}."),
+            'date': day,
+            'source': 'UK Sanctions List (FCDO)',
+            '_domain': 'economy',
+            '_force_severity': sev,
+            '_meta': {'kind': 'sanctions', 'issuer': 'UK-FCDO', 'verified': True, 'regime': key,
+                      'count': g['n'], 'individuals': g['ind'], 'entities': g['ent']},
+        })
+    return items
+
+
+def fetch_sanctions():
+    """Санкционные действия США (OFAC) и Великобритании (UK Sanctions List)."""
+    if not SANCTIONS_FEED:
+        return []
+    now = datetime.now(timezone.utc)
+    items = []
+    raw = _sanc_get('https://ofac.treasury.gov/recent-actions', timeout=25)
+    if raw:
+        try:
+            items += _ofac_actions(raw.decode('utf-8', 'ignore'), now)
+        except Exception as e:
+            print(f"  [WARN] OFAC parse: {e}", file=sys.stderr)
+    raw = _sanc_get('https://sanctionslist.fcdo.gov.uk/docs/UK-Sanctions-List.xml', timeout=60)
+    if raw:
+        items += _uk_designations(raw, now)
+    print(f"  Санкции: {len(items)} записей (OFAC + UK)", file=sys.stderr)
+    return items
+
+
 def fetch_meteoalarm():
     """Официальные предупреждения европейских метеослужб. Красный и оранжевый."""
     if not METEOALARM:
@@ -25567,6 +25729,7 @@ if __name__ == '__main__':
             ('uk_canada_nordic',   fetch_uk_canada_nordic),
             ('europe_latam',       fetch_europe_latam),
             ('meteoalarm',         fetch_meteoalarm),
+            ('sanctions',          fetch_sanctions),
         ], max_workers=12)
 
 
