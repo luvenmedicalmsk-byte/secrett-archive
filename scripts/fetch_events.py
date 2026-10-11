@@ -21970,12 +21970,17 @@ def _retain_critical(evs, prev):
         # проверки id удержание добавляло вторую, английскую копию рядом с
         # переведённой (eaf283e3c, e54122007, e6d8297f1 на 0e9d898e).
         have_id={e.get('id') for e in evs if e.get('id')} if RETAIN_ID_DEDUP else set()
+        # 11.10.2026: сообщение ВОЗ DON узнаётся по номеру DON. После смены
+        # заголовка (TASK-291) у свежей копии другой id и fingerprint, и
+        # удержание возвращало старую копию рядом с новой.
+        have_don={(e.get('meta') or {}).get('don_id') for e in evs} - {None, ''}
         from datetime import datetime as _dt, timezone as _tz
         _now=_dt.now(_tz.utc); kept=[]; _dropped=0
         for e in pevs:
             if (e.get('severity') or 0) < _RETAIN_MIN_SEV: continue
             key=e.get('fingerprint') or e.get('id') or (e.get('title') or '')[:60]
             if key in have or (e.get('title') or '')[:60] in have_t: continue
+            if (e.get('meta') or {}).get('don_id') in have_don: continue
             if RETAIN_ID_DEDUP and e.get('id'):
                 if e['id'] in have_id: continue
                 have_id.add(e['id'])
