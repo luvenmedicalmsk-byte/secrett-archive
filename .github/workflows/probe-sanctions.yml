@@ -18,27 +18,10 @@ jobs:
           rm -rf probe; mkdir -p probe
           get(){ n=$1; u=$2; code=$(curl -sSL -m 60 --retry 1 -A "ArchiveBot/2.0" -o "probe/$n" -w "%{http_code}" "$u" || echo ERR); echo "$n $code $(stat -c %s probe/$n 2>/dev/null || echo 0) $u" >> probe/_index.txt; }
           get(){ n=$1; u=$2; code=$(curl -gsSL -m 60 --retry 1 -A "ArchiveBot/2.0" -o "probe/$n" -w "%{http_code}" "$u" || echo ERR); echo "$n $code $(stat -c %s probe/$n 2>/dev/null || echo 0) $u" >> probe/_index.txt; }
-          get aws.json "https://health.aws.amazon.com/public/currentevents"
-          get aws.rss "https://status.aws.amazon.com/rss/all.rss"
-          get azure.rss "https://azure.status.microsoft/en-us/status/feed/"
-          get gcp.json "https://status.cloud.google.com/incidents.json"
-          get cf_unres.json "https://www.cloudflarestatus.com/api/v2/incidents/unresolved.json"
-          get cf_inc.json "https://www.cloudflarestatus.com/api/v2/incidents.json"
-          get gh_inc.json "https://www.githubstatus.com/api/v2/incidents.json"
-          get nhc.json "https://www.nhc.noaa.gov/CurrentStorms.json"
-          get jtwc.rss "https://www.metoc.navy.mil/jtwc/rss/jtwc.rss"
-          get swpc_alerts.json "https://services.swpc.noaa.gov/products/alerts.json"
-          get swpc_kp.json "https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json"
-          get tsu_pac.xml "https://www.tsunami.gov/events/xml/PAAQAtom.xml"
-          get tsu_hi.xml "https://www.tsunami.gov/events/xml/PHEBAtom.xml"
-          get gvp.rss "https://volcano.si.edu/news/WeeklyVolcanoRSS.xml"
-          get ukmto.html "https://www.ukmto.org/recent-incidents"
-          get ukmto_api.json "https://www.ukmto.org/api/incidents"
-          get marad.html "https://www.maritime.dot.gov/msci-advisories"
-          get gpsjam.csv "https://gpsjam.org/data/2026-10-10-h3_4.csv"
-          get gpsjam_man.csv "https://gpsjam.org/data/manifest.csv"
+          get jtwc_wp27.txt "https://www.metoc.navy.mil/jtwc/products/wp2726web.txt"
+          get ioda_alerts.json "https://api.ioda.inetintel.cc.gatech.edu/v2/outages/alerts?from=$(($(date +%s)-86400))&until=$(date +%s)&limit=20"
           cat probe/_index.txt
-          for f in probe/*; do echo "== $f"; head -c 300 "$f"; echo; done; find probe -size +5M -delete
+          for f in probe/*; do echo "== $f"; head -c 300 "$f"; echo; done; find probe -size +5M -delete; rm -f probe/*.csv
       - name: Commit
         run: |
           git config user.name "probe-bot"; git config user.email "probe-bot@users.noreply.github.com"
