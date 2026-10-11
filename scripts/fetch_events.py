@@ -20441,6 +20441,8 @@ _SANC_HIGH = ('Россия', 'Иран', 'КНДР', 'Беларусь')
 
 
 def _sanc_get(url, timeout=40):
+    # Сырые байты. fetch_url возвращает текст, декодированный как UTF-8 с
+    # игнорированием ошибок: gzip (GPSJam) и UTF-16 (AWS) он портит.
     try:
         req = urllib.request.Request(url, headers={'User-Agent': 'ArchiveBot/2.0'})
         with urllib.request.urlopen(req, timeout=timeout) as r:
@@ -20719,7 +20721,7 @@ def fetch_cloud_status():
         print(f"  [WARN] Cloudflare status: {ex}", file=sys.stderr)
     # AWS: текущие события (ответ в UTF-16)
     try:
-        raw = fetch_url('https://health.aws.amazon.com/public/currentevents', timeout=20)
+        raw = _sanc_get('https://health.aws.amazon.com/public/currentevents', timeout=20)   # байты: ответ в UTF-16
         if raw:
             for enc in ('utf-16', 'utf-8-sig', 'utf-8'):
                 try:
@@ -20989,7 +20991,7 @@ def _plural_ru(n, one, few, many):
 
 def _gpsjam_day(day):
     import gzip as _gz
-    raw = fetch_url(f'https://gpsjam.org/data/{day}-h3_4.csv', timeout=30)
+    raw = _sanc_get(f'https://gpsjam.org/data/{day}-h3_4.csv', timeout=30)   # байты: файл в gzip
     if not raw:
         return None
     try:
@@ -21041,7 +21043,7 @@ def fetch_gpsjam():
         print("  [SKIP] GPSJam: нет пакета h3", file=sys.stderr)
         return []
     import math
-    man = fetch_url('https://gpsjam.org/data/manifest.csv', timeout=20)
+    man = _sanc_get('https://gpsjam.org/data/manifest.csv', timeout=20)
     if not man:
         print("  [WARN] GPSJam: манифест недоступен", file=sys.stderr)
         return []
