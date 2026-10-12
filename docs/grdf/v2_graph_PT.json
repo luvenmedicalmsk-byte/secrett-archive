@@ -2,67 +2,67 @@
   "country": "PT",
   "date": "2026-10-12",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-12T06:27:28.587859+00:00",
+  "generated_at": "2026-10-12T06:48:37.898325+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-PT",
       "type": "Country",
       "label": "PT",
-      "score": 42,
+      "score": 61,
       "props": {
-        "risk_score": 42
+        "risk_score": 61
       }
     },
     {
       "id": "DOMAIN-PT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 36,
-      "trend": "stable"
+      "score": 65,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
-      "trend": "stable"
+      "score": 63,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-climate",
       "type": "Domain",
       "label": "climate",
       "score": 72,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-PT-climate",
@@ -80,25 +80,25 @@
       "label": "economic"
     },
     {
+      "id": "SIGNAL-PT-Премьер-ми",
+      "type": "Signal",
+      "label": "Премьер-министр Португалии призывает пол",
+      "severity": 61,
+      "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-PT-Топливный_",
+      "type": "Signal",
+      "label": "Топливный рынок — Португалия",
+      "severity": 61,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-PT-Шторм_—_По",
       "type": "Signal",
       "label": "Шторм — Португалия",
       "severity": 72,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-PT-Экономичес",
-      "type": "Signal",
-      "label": "Экономический сигнал — Португалия",
-      "severity": 32,
-      "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-PT-Торговый_б",
-      "type": "Signal",
-      "label": "Торговый баланс — Португалия",
-      "severity": 32,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.65
     },
     {
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.63
     },
     {
       "from": "COUNTRY-PT",
@@ -205,22 +205,43 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-PT-geopolitical",
+      "to": "DOMAIN-PT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-PT-infrastructure",
+      "to": "DOMAIN-PT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-PT-economic",
+      "to": "DOMAIN-PT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-PT-Премьер-ми",
+      "to": "DOMAIN-PT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.61
+    },
+    {
+      "from": "SIGNAL-PT-Топливный_",
+      "to": "DOMAIN-PT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.61
+    },
+    {
       "from": "SIGNAL-PT-Шторм_—_По",
       "to": "DOMAIN-PT-climate",
       "type": "AMPLIFIES",
       "weight": 0.72
-    },
-    {
-      "from": "SIGNAL-PT-Экономичес",
-      "to": "DOMAIN-PT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.32
-    },
-    {
-      "from": "SIGNAL-PT-Торговый_б",
-      "to": "DOMAIN-PT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.32
     }
   ]
 }
