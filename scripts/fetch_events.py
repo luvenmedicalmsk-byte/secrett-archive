@@ -22504,7 +22504,7 @@ def _signal_quality_pass(events):
                 # Калифорнийский залив / у берегов Мексики -> MX (перебивает ошибочный штат Калифорния=US)
                 try:
                     _mt = ((e.get('title') or '') + ' ' + (e.get('summary') or '')).lower()
-                    if ('калифорнийск' in _mt and ('залив' in _mt or 'мексик' in _mt)) or (re.search(r'(?<![а-яёa-z])мексик', _mt) and 'калифорни' in _mt) or 'у берегов мексики' in _mt or 'мексиканск' in _mt:
+                    if ('калифорнийск' in _mt and ('залив' in _mt or 'мексик' in _mt)) or (re.search(r'(?<![а-яёa-z])мексик', _mt) and 'калифорни' in _mt) or 'у берегов мексики' in _mt or re.search(r'мексиканск(?!\w*\s+залив)', _mt):   # 12.10: «Мексиканский залив» омывает США (ураган Исайяс → точка в Мексике)
                         if e.get('primary_country') != 'MX':
                             e['primary_country'] = 'MX'; e['event_country'] = 'MX'; e['country_code'] = 'MX'
                             e['country_codes'] = sorted(set((e.get('country_codes') or []) + ['MX']))
@@ -25206,7 +25206,7 @@ def _feed_hygiene(events):
     for src, lst in bysrc.items():
         if len(lst) < 2 or src == 'IODA':
             continue
-        lst.sort(key=lambda e: (str(e.get('first_seen') or e.get('date') or ''), e.get('severity') or 0), reverse=True)
+        lst.sort(key=lambda e: (str(e.get('date') or ''), str(e.get('first_seen') or ''), e.get('severity') or 0), reverse=True)
         kept = []
         for e in lst:
             te = _hyg_toks(e.get('title'))
