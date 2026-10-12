@@ -2,9 +2,9 @@
   "country": "CN",
   "date": "2026-10-12",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-12T10:48:27.923757+00:00",
+  "generated_at": "2026-10-12T11:08:13.722977+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-CN",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-CN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
+      "score": 50,
       "trend": "stable"
     },
     {
@@ -94,11 +94,11 @@
       "domain": "technology"
     },
     {
-      "id": "SIGNAL-CN-Активно_эк",
+      "id": "SIGNAL-CN-Социальный",
       "type": "Signal",
-      "label": "Активно эксплуатируемые уязвимости: 7 за",
-      "severity": 52,
-      "domain": "technology"
+      "label": "Социальный процесс — Китай",
+      "severity": 68,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-CN",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-CN-geopolitical",
+      "to": "DOMAIN-CN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CN-infrastructure",
+      "to": "DOMAIN-CN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CN-economic",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-CN-Демографич",
       "to": "DOMAIN-CN-social",
       "type": "AMPLIFIES",
@@ -175,10 +196,10 @@
       "weight": 0.6
     },
     {
-      "from": "SIGNAL-CN-Активно_эк",
-      "to": "DOMAIN-CN-technology",
+      "from": "SIGNAL-CN-Социальный",
+      "to": "DOMAIN-CN-social",
       "type": "AMPLIFIES",
-      "weight": 0.52
+      "weight": 0.68
     }
   ]
 }
