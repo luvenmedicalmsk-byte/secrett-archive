@@ -20891,7 +20891,8 @@ def fetch_tropical_cyclones():
             'date': dt.strftime('%Y-%m-%d'), 'source': src,
             '_lat': lat, '_lng': lng, '_coord_origin': 'source', '_region': detect_region_by_coords(lat, lng),
             '_domain': 'climate', '_force_severity': sev,
-            '_meta': {'kind': 'tropical_cyclone', 'verified': True, 'storm_id': sid, 'wind_kt': kt, 'category': cat},
+            '_meta': {'kind': 'tropical_cyclone', 'verified': True, 'storm_id': sid, 'wind_kt': kt, 'category': cat,
+                      'src_xy': [round(lat, 3), round(lng, 3)]},
         })
     seen = set()
     try:
@@ -21027,6 +21028,7 @@ def fetch_tsunami():
                 la, lo = en.findtext('geo:lat', None, ns), en.findtext('geo:long', None, ns)
                 try:
                     if la and lo:
+                        it['_meta']['src_xy'] = [round(float(la), 3), round(float(lo), 3)]
                         it.update({'_lat': float(la), '_lng': float(lo), '_coord_origin': 'source',
                                    '_region': detect_region_by_coords(float(la), float(lo))})
                 except Exception:
@@ -21185,7 +21187,8 @@ def fetch_gpsjam():
             'date': day, 'source': 'GPSJam',
             '_lat': round(c['lat'], 3), '_lng': round(c['lng'], 3), '_coord_origin': 'source', '_region': reg,
             '_domain': 'geopolitics', '_force_severity': min(sev, 72),
-            '_meta': {'kind': 'gps_jamming', 'verified': True, 'hexes': c['n'], 'prev_hexes': pn, 'day': day},
+            '_meta': {'kind': 'gps_jamming', 'verified': True, 'hexes': c['n'], 'prev_hexes': pn, 'day': day,
+                      'src_xy': [round(c['lat'], 3), round(c['lng'], 3)]},
         })
     print(f"  GPSJam: {len(items)} очагов (день {day})", file=sys.stderr)
     return items
@@ -25097,6 +25100,131 @@ def _decency_filter(events):
         print('  [DECENCY] очищено записей: %d' % n, file=sys.stderr)
     return n
 
+# ── ГИГИЕНА ЛЕНТЫ (FEED_HYGIENE, 12.10.2026, аудит ленты) ─────────────────────
+# Замер на публикации 12.10 10:50 (200 записей оперативной ленты):
+#  • официальные машинные ленты получали sic_class COMMENTARY и уходили во
+#    вкладку «Контекст» (все очаги GPS) — им ставится EVENT;
+#  • точки с координатами источника (GPS, циклоны, цунами) Geo Contract
+#    подменял центроидом страны (Финский залив → центр Финляндии, Удмуртия
+#    без точки) — возвращаются координаты источника;
+#  • 27 записей старше 5 суток (до 14 дней) в оперативной ленте — скрываются
+#    записи старше FEED_MAX_AGE (по домену); в аналитике остаются;
+#  • 15 из 200 — «Падение интернет-связи: страна» (IODA) — в ленте не больше
+#    FEED_IODA_MAX самых сильных;
+#  • обновления одной новости из одного источника («13 шахтёров» → «72
+#    шахтёра») — остаётся последняя;
+#  • заголовки, обрезанные источником многоточием, дополняются из описания.
+# Скрытие: feed_visible = False + hygiene = причина. Откат: FEED_HYGIENE = False.
+FEED_HYGIENE = True
+FEED_MAX_AGE = {'geopolitics': 4, 'economy': 7, 'climate': 7, 'social': 7, 'technology': 7}
+FEED_IODA_MAX = 5
+# Рубрики, награды, конкурсы — не сигнал (аудит 12.10: «Награды Spirit of Hong Kong» 76,
+# «Следующая героиня рубрики «Лица Роспотребнадзора»»). Геополитика не затрагивается:
+# там «премия» и «награда» бывают частью события (Нобелевская премия мира, лауреат…).
+_HYG_PR = re.compile(r'(?<![а-яё])(?:наград[аыу]|премия|премии|рубрик\w*|героин[яи]|конкурс\w*|фестивал\w*|'
+                     r'чемпионат\w*|юбиле\w*|awards?)(?![а-яё])', re.I)
+
+
+def _official_event_class(events):
+    """Официальные машинные ленты — события, а не комментарий."""
+    for e in events:
+        m = e.get('meta') or {}
+        if m.get('kind') in _OFFICIAL_SIGNAL_KINDS and m.get('verified'):
+            if e.get('sic_class') in ('COMMENTARY', 'BACKGROUND', 'FEATURE'):
+                e['sic_class_raw'] = e['sic_class']
+                e['sic_class'] = 'EVENT'
+            e.pop('context_only', None)
+
+
+def _hyg_toks(t):
+    return set(w[:5] for w in re.findall(r'[а-яёa-z]{4,}', (t or '').lower()))
+
+
+def _feed_hygiene(events):
+    if not FEED_HYGIENE:
+        return 0
+    from datetime import date as _d
+    today = datetime.now(timezone.utc).date()
+    cnt = {}
+
+    def hide(e, why):
+        if e.get('feed_visible') is not False:
+            e['feed_visible'] = False
+            e['hygiene'] = why
+            cnt[why] = cnt.get(why, 0) + 1
+    for e in events:
+        m = e.get('meta') or {}
+        # координаты источника
+        xy = m.get('src_xy')
+        if m.get('verified') and isinstance(xy, list) and len(xy) == 2:
+            e['lat'], e['lng'] = xy
+            e['map_visible'] = True
+            g = e.get('geo')
+            if isinstance(g, dict):
+                g['lat'], g['lng'] = xy
+                g['coord_origin'] = 'source'
+        # заголовок, обрезанный многоточием
+        t = (e.get('title') or '').strip()
+        if t.endswith('…') or t.endswith('...'):
+            stem = t.rstrip('.…').strip()
+            sm = (e.get('summary') or '').strip()
+            if len(stem) > 20 and sm.startswith(stem):
+                cont = sm[len(stem):]
+                mm = re.search(r',\s*—|\s—\s|[.!?\n]|,\s*(?:сообщает|сообщил|пишет|заявил|передает|передаёт|по данным|со ссылкой)', cont)
+                cont = cont[:mm.start()] if mm else cont
+                if len(stem) + len(cont) > 170:
+                    cut = cont[:170 - len(stem)].rfind(',')
+                    cont = cont[:cut] if cut > 0 else None
+                if cont is not None:          # пустое продолжение: фраза кончилась на обрезке
+                    e['title'] = (stem + cont).strip().rstrip(',;:—- ')
+    vis = [e for e in events if e.get('feed_visible') is not False and not e.get('alerts_only')]
+    # возраст
+    for e in vis:
+        if (e.get('meta') or {}).get('kind') in _OFFICIAL_SIGNAL_KINDS:
+            continue
+        try:
+            age = (today - _d.fromisoformat((e.get('date') or '')[:10])).days
+        except Exception:
+            continue
+        if age > FEED_MAX_AGE.get(e.get('domain'), 7):
+            hide(e, 'устарело')
+    # рубрики и награды
+    for e in vis:
+        if (e.get('domain') != 'geopolitics' and e.get('feed_visible') is not False
+                and not (e.get('meta') or {}).get('verified') and _HYG_PR.search(e.get('title') or '')):
+            hide(e, 'рубрика/награда')
+    # IODA
+    io_ = sorted([e for e in vis if e.get('source') == 'IODA' and e.get('feed_visible') is not False],
+                 key=lambda e: (-(e.get('severity') or 0), str(e.get('id'))))
+    for e in io_[FEED_IODA_MAX:]:
+        hide(e, 'лимит IODA')
+    # обновления одной новости из одного источника
+    vis = [e for e in vis if e.get('feed_visible') is not False]
+    bysrc = {}
+    for e in vis:
+        bysrc.setdefault(e.get('source'), []).append(e)
+    for src, lst in bysrc.items():
+        if len(lst) < 2 or src == 'IODA':
+            continue
+        lst.sort(key=lambda e: (str(e.get('first_seen') or e.get('date') or ''), e.get('severity') or 0), reverse=True)
+        kept = []
+        for e in lst:
+            te = _hyg_toks(e.get('title'))
+            dup = None
+            for k in kept:
+                tk = _hyg_toks(k.get('title'))
+                if te and tk and len(te & tk) / len(te | tk) >= 0.7:
+                    dup = k
+                    break
+            if dup is not None:
+                hide(e, 'обновление той же новости')
+                e['incident_of'] = e.get('incident_of') or dup.get('id')
+            else:
+                kept.append(e)
+    if cnt:
+        print('  [HYGIENE] скрыто из ленты: %s' % ', '.join('%s %d' % kv for kv in cnt.items()), file=sys.stderr)
+    return sum(cnt.values())
+
 # ── ОДИН ИНЦИДЕНТ — ОДНА ТОЧКА (INCIDENT_COLLAPSE, 11.10.2026) ────────────────
 # Удар по аэропорту Эр-Рияда пришёл из 13 источников: 13 точек вокруг города с
 # индексами от 55 до 95 («Мия: событие на 95, а тут ещё одно, но ниже»).
@@ -25143,7 +25271,9 @@ def _incident_reset(events):
     if not INCIDENT_COLLAPSE:
         return
     for e in events:
-        if e.pop('incident_of', None) is not None and not e.get('context_only') and not e.get('alerts_only'):
+        _was_inc = e.pop('incident_of', None) is not None
+        _was_hyg = e.pop('hygiene', None) is not None
+        if (_was_inc or _was_hyg) and not e.get('context_only') and not e.get('alerts_only'):
             e['feed_visible'] = True
         if e.pop('incident_count', None) is not None:
             e.pop('dup_count', None); e.pop('dup_sources', None)
@@ -26014,9 +26144,11 @@ def save_enriched(events, previous_snapshot=None):
                 # предупреждений уже не попадает как предупреждение.
                 _incident_reset(enriched["events"])
                 _decency_filter(enriched["events"])
+                _official_event_class(enriched["events"])
                 _cap_feed_gate(enriched["events"])
                 _context_feed_gate(enriched["events"])
                 _incident_collapse(enriched["events"])
+                _feed_hygiene(enriched["events"])
                 _sic_shadow_report(enriched["events"], OUTPUT_PATH.parent)
                 _adr039a_shadow_report(enriched["events"], OUTPUT_PATH.parent)
             except Exception as _se:
