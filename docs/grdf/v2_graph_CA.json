@@ -2,9 +2,9 @@
   "country": "CA",
   "date": "2026-10-12",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-12T16:31:25.021381+00:00",
+  "generated_at": "2026-10-12T16:50:22.413795+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-CA",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-CA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 56,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -33,7 +33,7 @@
       "id": "DOMAIN-CA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 32,
+      "score": 57,
       "trend": "stable"
     },
     {
@@ -94,11 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-CA-Санкционно",
+      "id": "SIGNAL-CA-Шторм_—_Се",
       "type": "Signal",
-      "label": "Санкционное давление — Северная Америка",
-      "severity": 75,
-      "domain": "geopolitical"
+      "label": "Шторм — Северная Америка",
+      "severity": 76,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.56
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CA",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-climate",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.57
     },
     {
       "from": "COUNTRY-CA",
@@ -163,25 +163,46 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-CA-geopolitical",
+      "from": "DOMAIN-CA-climate",
       "to": "DOMAIN-CA-infrastructure",
       "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
+      "weight": 0.82,
+      "lag_days": 7
     },
     {
       "from": "DOMAIN-CA-infrastructure",
       "to": "DOMAIN-CA-economic",
       "type": "AMPLIFIES",
-      "weight": 0.72,
+      "weight": 0.68,
       "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-CA-climate",
+      "to": "DOMAIN-CA-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-CA-economic",
       "to": "DOMAIN-CA-social",
       "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-CA-social",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "SIGNAL-CA-ФБР_аресто",
@@ -196,10 +217,10 @@
       "weight": 0.32
     },
     {
-      "from": "SIGNAL-CA-Санкционно",
-      "to": "DOMAIN-CA-geopolitical",
+      "from": "SIGNAL-CA-Шторм_—_Се",
+      "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
-      "weight": 0.75
+      "weight": 0.76
     }
   ]
 }
