@@ -2,7 +2,7 @@
   "country": "ES",
   "date": "2026-10-12",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-12T09:11:27.753347+00:00",
+  "generated_at": "2026-10-12T09:22:02.135494+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -47,7 +47,7 @@
       "id": "DOMAIN-ES-social",
       "type": "Domain",
       "label": "social",
-      "score": 46,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-ES-Импорт_при",
+      "type": "Signal",
+      "label": "Импорт природного газа в Испанию",
+      "severity": 32,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-ES-Пожарная_а",
       "type": "Signal",
       "label": "Пожарная активность — Испания",
@@ -92,13 +99,6 @@
       "label": "Киберугроза — Испания",
       "severity": 62,
       "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-ES-Социальный",
-      "type": "Signal",
-      "label": "Социальный процесс — Испания",
-      "severity": 46,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -130,7 +130,7 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-social",
       "type": "CORRELATES",
-      "weight": 0.46
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-ES",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-ES-climate",
-      "to": "DOMAIN-ES-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-ES-economic",
-      "to": "DOMAIN-ES-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-ES-social",
-      "to": "DOMAIN-ES-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-ES-climate",
       "to": "DOMAIN-ES-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -203,6 +182,27 @@
       "type": "AMPLIFIES",
       "weight": 0.55,
       "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ES-climate",
+      "to": "DOMAIN-ES-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ES-economic",
+      "to": "DOMAIN-ES-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-ES-social",
+      "to": "DOMAIN-ES-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "DOMAIN-ES-geopolitical",
@@ -226,6 +226,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-ES-Импорт_при",
+      "to": "DOMAIN-ES-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.32
+    },
+    {
       "from": "SIGNAL-ES-Пожарная_а",
       "to": "DOMAIN-ES-climate",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-ES-technology",
       "type": "AMPLIFIES",
       "weight": 0.62
-    },
-    {
-      "from": "SIGNAL-ES-Социальный",
-      "to": "DOMAIN-ES-social",
-      "type": "AMPLIFIES",
-      "weight": 0.46
     }
   ]
 }
