@@ -2,31 +2,31 @@
   "country": "VN",
   "date": "2026-10-13",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-13T09:27:08.142040+00:00",
+  "generated_at": "2026-10-13T09:48:22.440696+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-VN",
       "type": "Country",
       "label": "VN",
-      "score": 45,
+      "score": 46,
       "props": {
-        "risk_score": 45
+        "risk_score": 46
       }
     },
     {
       "id": "DOMAIN-VN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
-      "trend": "stable"
+      "score": 42,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-VN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 34,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -34,21 +34,21 @@
       "type": "Domain",
       "label": "climate",
       "score": 46,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-VN-technology",
       "type": "Domain",
       "label": "technology",
       "score": 39,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-VN-social",
       "type": "Domain",
       "label": "social",
       "score": 58,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-VN-infrastructure",
@@ -75,9 +75,16 @@
       "label": "climate"
     },
     {
-      "id": "DRIVER-VN-technology",
+      "id": "DRIVER-VN-geopolitical",
       "type": "Driver",
-      "label": "technology"
+      "label": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-VN-Вьетнам:_н",
+      "type": "Signal",
+      "label": "Вьетнам: наводнения - 10-2026 - Сильные ",
+      "severity": 46,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-VN-Эпидемиоло",
@@ -92,13 +99,6 @@
       "label": "Уязвимость ПО — Юго-Восточная Азия",
       "severity": 53,
       "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-VN-Климатичес",
-      "type": "Signal",
-      "label": "Климатический сигнал — Вьетнам",
-      "severity": 46,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-economic",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-VN",
@@ -157,7 +157,7 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-VN-technology",
+      "from": "DRIVER-VN-geopolitical",
       "to": "COUNTRY-VN",
       "type": "CAUSES",
       "weight": 0.8
@@ -184,6 +184,27 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-VN-geopolitical",
+      "to": "DOMAIN-VN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-VN-infrastructure",
+      "to": "DOMAIN-VN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-VN-economic",
+      "to": "DOMAIN-VN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "DOMAIN-VN-climate",
       "to": "DOMAIN-VN-infrastructure",
       "type": "ESCALATES",
@@ -205,6 +226,12 @@
       "lag_days": 30
     },
     {
+      "from": "SIGNAL-VN-Вьетнам:_н",
+      "to": "DOMAIN-VN-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.46
+    },
+    {
       "from": "SIGNAL-VN-Эпидемиоло",
       "to": "DOMAIN-VN-social",
       "type": "AMPLIFIES",
@@ -215,12 +242,6 @@
       "to": "DOMAIN-VN-technology",
       "type": "AMPLIFIES",
       "weight": 0.53
-    },
-    {
-      "from": "SIGNAL-VN-Климатичес",
-      "to": "DOMAIN-VN-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.46
     }
   ]
 }
