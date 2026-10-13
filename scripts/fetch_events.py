@@ -25271,6 +25271,7 @@ def _feed_hygiene(events):
             if e.get('domain') != 'social' or (e.get('severity') or 0) > cap:
                 e['domain_hygiene_from'] = e.get('domain')
                 e['domain'] = 'social'
+                e['canon_domain'] = 'social'      # W17 синхронизирует domain из canon_domain
                 e['severity'] = min(e.get('severity') or 0, cap)
                 cnt['ДТП → социум'] = cnt.get('ДТП → социум', 0) + 1
             continue
