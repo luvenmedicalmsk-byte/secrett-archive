@@ -2,72 +2,67 @@
   "country": "VN",
   "date": "2026-10-13",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-13T22:46:33.112680+00:00",
+  "generated_at": "2026-10-13T23:07:47.042371+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-VN",
       "type": "Country",
       "label": "VN",
-      "score": 48,
+      "score": 45,
       "props": {
-        "risk_score": 48
+        "risk_score": 45
       }
     },
     {
       "id": "DOMAIN-VN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 50,
-      "trend": "up"
+      "score": 28,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-VN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
-      "trend": "stable"
+      "score": 23,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-VN-climate",
       "type": "Domain",
       "label": "climate",
       "score": 46,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-VN-technology",
       "type": "Domain",
       "label": "technology",
       "score": 39,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-VN-social",
       "type": "Domain",
       "label": "social",
       "score": 48,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-VN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-VN-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
-    },
-    {
-      "id": "DRIVER-VN-geopolitical",
-      "type": "Driver",
-      "label": "geopolitical"
+      "trend": "down"
     },
     {
       "id": "DRIVER-VN-social",
@@ -80,11 +75,9 @@
       "label": "climate"
     },
     {
-      "id": "SIGNAL-VN-Российская",
-      "type": "Signal",
-      "label": "Российская туристка из Московской област",
-      "severity": 48,
-      "domain": "social"
+      "id": "DRIVER-VN-technology",
+      "type": "Driver",
+      "label": "technology"
     },
     {
       "id": "SIGNAL-VN-Уязвимость",
@@ -99,6 +92,13 @@
       "label": "Наводнение — Вьетнам",
       "severity": 46,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-VN-Эпидемиоло",
+      "type": "Signal",
+      "label": "Эпидемиологический риск — Вьетнам",
+      "severity": 48,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.5
+      "weight": 0.28
     },
     {
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.23
     },
     {
       "from": "COUNTRY-VN",
@@ -145,12 +145,6 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-VN-geopolitical",
-      "to": "COUNTRY-VN",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
       "from": "DRIVER-VN-social",
       "to": "COUNTRY-VN",
       "type": "CAUSES",
@@ -158,6 +152,12 @@
     },
     {
       "from": "DRIVER-VN-climate",
+      "to": "COUNTRY-VN",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DRIVER-VN-technology",
       "to": "COUNTRY-VN",
       "type": "CAUSES",
       "weight": 0.8
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-VN-geopolitical",
-      "to": "DOMAIN-VN-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-VN-infrastructure",
-      "to": "DOMAIN-VN-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-VN-economic",
-      "to": "DOMAIN-VN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "DOMAIN-VN-climate",
       "to": "DOMAIN-VN-infrastructure",
       "type": "ESCALATES",
@@ -226,12 +205,6 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-VN-Российская",
-      "to": "DOMAIN-VN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.48
-    },
-    {
       "from": "SIGNAL-VN-Уязвимость",
       "to": "DOMAIN-VN-technology",
       "type": "AMPLIFIES",
@@ -242,6 +215,12 @@
       "to": "DOMAIN-VN-climate",
       "type": "AMPLIFIES",
       "weight": 0.46
+    },
+    {
+      "from": "SIGNAL-VN-Эпидемиоло",
+      "to": "DOMAIN-VN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.48
     }
   ]
 }
