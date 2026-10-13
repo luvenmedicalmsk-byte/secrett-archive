@@ -2,17 +2,17 @@
   "country": "CY",
   "date": "2026-10-13",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-13T12:47:50.466215+00:00",
-  "node_count": 12,
-  "edge_count": 11,
+  "generated_at": "2026-10-13T13:12:16.142662+00:00",
+  "node_count": 14,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-CY",
       "type": "Country",
       "label": "CY",
-      "score": 45,
+      "score": 72,
       "props": {
-        "risk_score": 45
+        "risk_score": 72
       }
     },
     {
@@ -20,49 +20,54 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CY-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 34,
-      "trend": "stable"
+      "score": 32,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CY-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "stable"
+      "score": 72,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CY-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CY-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CY-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CY-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
+    },
+    {
+      "id": "DRIVER-CY-climate",
+      "type": "Driver",
+      "label": "climate"
     },
     {
       "id": "DRIVER-CY-economic",
@@ -75,9 +80,18 @@
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-CY-climate",
-      "type": "Driver",
-      "label": "climate"
+      "id": "SIGNAL-CY-Гроза:_Кип",
+      "type": "Signal",
+      "label": "Гроза: Кипр (оранжевый уровень)",
+      "severity": 72,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-CY-Шторм_—_Ки",
+      "type": "Signal",
+      "label": "Шторм — Кипр",
+      "severity": 72,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-CY-Экономичес",
@@ -98,13 +112,13 @@
       "from": "COUNTRY-CY",
       "to": "DOMAIN-CY-economic",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-CY",
       "to": "DOMAIN-CY-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.72
     },
     {
       "from": "COUNTRY-CY",
@@ -131,6 +145,12 @@
       "weight": 0.05
     },
     {
+      "from": "DRIVER-CY-climate",
+      "to": "COUNTRY-CY",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-CY-economic",
       "to": "COUNTRY-CY",
       "type": "CAUSES",
@@ -143,10 +163,58 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-CY-climate",
-      "to": "COUNTRY-CY",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-CY-climate",
+      "to": "DOMAIN-CY-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-CY-infrastructure",
+      "to": "DOMAIN-CY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CY-economic",
+      "to": "DOMAIN-CY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-CY-climate",
+      "to": "DOMAIN-CY-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-CY-economic",
+      "to": "DOMAIN-CY-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-CY-social",
+      "to": "DOMAIN-CY-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "SIGNAL-CY-Гроза:_Кип",
+      "to": "DOMAIN-CY-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.72
+    },
+    {
+      "from": "SIGNAL-CY-Шторм_—_Ки",
+      "to": "DOMAIN-CY-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.72
     },
     {
       "from": "SIGNAL-CY-Экономичес",
