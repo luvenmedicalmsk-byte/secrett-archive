@@ -16517,7 +16517,7 @@ def _notam_signals(summary):
             continue                      # одиночная помеха — не сигнал
         cc, name = r.get('код страны') or '', r.get('страна') or r.get('fir') or ''
         sev = 50 + min(14, n24 // 10) + (8 if gn >= 3 else 4 if gn >= 1 else 0) + (4 if drones >= 20 else 0)
-        trend = ''
+        trend, calm = '', False
         b = sorted(base.get(cc) or [])
         if b:
             med = b[len(b) // 2]
@@ -16526,9 +16526,18 @@ def _notam_signals(summary):
                 trend = f' Это в {n24 / med:.1f} раза больше обычного (медиана {med} в сутки).'
             else:
                 trend = f' Обычный уровень — около {med} в сутки.'
+                if med and n24 <= 1.2 * med:
+                    sev -= 8              # 13.10: на обычном уровне это фон, а не всплеск
+                    calm = True
+        if calm and n24 < 50 and gn < 2:
+            continue                      # обычный уровень небольшой страны — не сигнал
         top = sorted(typ.items(), key=lambda kv: -kv[1])[:3]
-        what = ('всплеск ограничений полётов' if n24 >= NOTAM_SIG_MIN_DAY
-                else 'помехи спутниковой навигации')
+        if n24 < NOTAM_SIG_MIN_DAY:
+            what = 'помехи спутниковой навигации'
+        elif calm:
+            what = 'высокий фон ограничений полётов'
+        else:
+            what = 'всплеск ограничений полётов'
         items.append({
             'title': f"Воздушное пространство — {name}: {what}"[:130],
             'desc': (f"По уведомлениям NOTAM (EUROCONTROL EAD) за сутки объявлено {n24} "
