@@ -2,67 +2,67 @@
   "country": "TR",
   "date": "2026-10-13",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-13T08:47:27.599847+00:00",
+  "generated_at": "2026-10-13T09:09:14.590661+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-TR",
       "type": "Country",
       "label": "TR",
-      "score": 76,
+      "score": 68,
       "props": {
-        "risk_score": 76
+        "risk_score": 68
       }
     },
     {
       "id": "DOMAIN-TR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 76,
-      "trend": "stable"
+      "score": 60,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-TR-economic",
       "type": "Domain",
       "label": "economic",
       "score": 51,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-TR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "stable"
+      "score": 50,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-TR-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-TR-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-TR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-TR-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DRIVER-TR-Geopolitical",
@@ -83,7 +83,7 @@
       "id": "SIGNAL-TR-Авария_с_а",
       "type": "Signal",
       "label": "Авария с автобусом и грузовиком на запад",
-      "severity": 76,
+      "severity": 60,
       "domain": "geopolitical"
     },
     {
@@ -94,11 +94,11 @@
       "domain": "economic"
     },
     {
-      "id": "SIGNAL-TR-Военный_ко",
+      "id": "SIGNAL-TR-Гроза:_Тур",
       "type": "Signal",
-      "label": "Военный конфликт — Ближний Восток (систе",
-      "severity": 100,
-      "domain": "geopolitical"
+      "label": "Гроза: Турция, 1 предупреждение (жёлтый ",
+      "severity": 50,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.76
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-TR",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-TR",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-TR-climate",
+      "to": "DOMAIN-TR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-TR-infrastructure",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-TR-climate",
+      "to": "DOMAIN-TR-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-TR-social",
+      "to": "DOMAIN-TR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-TR-geopolitical",
       "to": "DOMAIN-TR-infrastructure",
       "type": "ESCALATES",
@@ -187,7 +229,7 @@
       "from": "SIGNAL-TR-Авария_с_а",
       "to": "DOMAIN-TR-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.76
+      "weight": 0.6
     },
     {
       "from": "SIGNAL-TR-Турецкие_п",
@@ -196,10 +238,10 @@
       "weight": 0.51
     },
     {
-      "from": "SIGNAL-TR-Военный_ко",
-      "to": "DOMAIN-TR-geopolitical",
+      "from": "SIGNAL-TR-Гроза:_Тур",
+      "to": "DOMAIN-TR-climate",
       "type": "AMPLIFIES",
-      "weight": 1.0
+      "weight": 0.5
     }
   ]
 }
