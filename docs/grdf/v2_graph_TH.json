@@ -2,25 +2,25 @@
   "country": "TH",
   "date": "2026-10-13",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-13T11:26:38.269607+00:00",
+  "generated_at": "2026-10-13T11:48:13.918936+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-TH",
       "type": "Country",
       "label": "TH",
-      "score": 56,
+      "score": 60,
       "props": {
-        "risk_score": 56
+        "risk_score": 60
       }
     },
     {
       "id": "DOMAIN-TH-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
-      "trend": "stable"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-economic",
@@ -41,7 +41,7 @@
       "type": "Domain",
       "label": "technology",
       "score": 56,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-social",
@@ -65,14 +65,14 @@
       "trend": "stable"
     },
     {
-      "id": "DRIVER-TH-technology",
-      "type": "Driver",
-      "label": "technology"
-    },
-    {
       "id": "DRIVER-TH-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
+    },
+    {
+      "id": "DRIVER-TH-technology",
+      "type": "Driver",
+      "label": "technology"
     },
     {
       "id": "DRIVER-TH-economic",
@@ -80,24 +80,24 @@
       "label": "economic"
     },
     {
-      "id": "SIGNAL-TH-Падение_ин",
+      "id": "SIGNAL-TH-Война_—_Бл",
       "type": "Signal",
-      "label": "Падение интернет-связи: Таиланд",
-      "severity": 56,
-      "domain": "technology"
+      "label": "Война — Ближний Восток углубляет глобаль",
+      "severity": 60,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-TH-Геополитич",
+      "type": "Signal",
+      "label": "Геополитический процесс — Таиланд",
+      "severity": 60,
+      "domain": "geopolitical"
     },
     {
       "id": "SIGNAL-TH-Отключение",
       "type": "Signal",
       "label": "Отключение интернета — Таиланд",
       "severity": 56,
-      "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-TH-Уязвимость",
-      "type": "Signal",
-      "label": "Уязвимость ПО — Юго-Восточная Азия",
-      "severity": 53,
       "domain": "technology"
     }
   ],
@@ -106,7 +106,7 @@
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-TH",
@@ -145,13 +145,13 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-TH-technology",
+      "from": "DRIVER-TH-geopolitical",
       "to": "COUNTRY-TH",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-TH-geopolitical",
+      "from": "DRIVER-TH-technology",
       "to": "COUNTRY-TH",
       "type": "CAUSES",
       "weight": 0.8
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-TH-Падение_ин",
-      "to": "DOMAIN-TH-technology",
+      "from": "DOMAIN-TH-geopolitical",
+      "to": "DOMAIN-TH-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-TH-infrastructure",
+      "to": "DOMAIN-TH-economic",
       "type": "AMPLIFIES",
-      "weight": 0.56
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TH-economic",
+      "to": "DOMAIN-TH-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-TH-Война_—_Бл",
+      "to": "DOMAIN-TH-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.6
+    },
+    {
+      "from": "SIGNAL-TH-Геополитич",
+      "to": "DOMAIN-TH-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.6
     },
     {
       "from": "SIGNAL-TH-Отключение",
       "to": "DOMAIN-TH-technology",
       "type": "AMPLIFIES",
       "weight": 0.56
-    },
-    {
-      "from": "SIGNAL-TH-Уязвимость",
-      "to": "DOMAIN-TH-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.53
     }
   ]
 }
