@@ -2,7 +2,7 @@
   "country": "MX",
   "date": "2026-10-13",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-13T16:28:28.061050+00:00",
+  "generated_at": "2026-10-13T16:47:08.955269+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,17 +10,17 @@
       "id": "COUNTRY-MX",
       "type": "Country",
       "label": "MX",
-      "score": 72,
+      "score": 76,
       "props": {
-        "risk_score": 72
+        "risk_score": 76
       }
     },
     {
       "id": "DOMAIN-MX-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 60,
-      "trend": "stable"
+      "score": 76,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-economic",
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 70,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-technology",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-MX-Ураган_кат",
+      "type": "Signal",
+      "label": "Ураган категории 4 Симон приближается к ",
+      "severity": 70,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-MX-Ураган_Сим",
       "type": "Signal",
       "label": "Ураган Симон усиливается по мере приближ",
@@ -92,13 +99,6 @@
       "label": "5 человек погибли в результате ураганов ",
       "severity": 65,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-MX-В_Нью-Мекс",
-      "type": "Signal",
-      "label": "В Нью-Мексико река течет через 'середину",
-      "severity": 32,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.6
+      "weight": 0.76
     },
     {
       "from": "COUNTRY-MX",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-MX-climate",
-      "to": "DOMAIN-MX-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-MX-infrastructure",
-      "to": "DOMAIN-MX-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-MX-economic",
-      "to": "DOMAIN-MX-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-MX-geopolitical",
       "to": "DOMAIN-MX-infrastructure",
       "type": "ESCALATES",
@@ -226,6 +205,33 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-MX-climate",
+      "to": "DOMAIN-MX-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-MX-infrastructure",
+      "to": "DOMAIN-MX-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-MX-economic",
+      "to": "DOMAIN-MX-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-MX-Ураган_кат",
+      "to": "DOMAIN-MX-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.7
+    },
+    {
       "from": "SIGNAL-MX-Ураган_Сим",
       "to": "DOMAIN-MX-climate",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-MX-climate",
       "type": "AMPLIFIES",
       "weight": 0.65
-    },
-    {
-      "from": "SIGNAL-MX-В_Нью-Мекс",
-      "to": "DOMAIN-MX-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.32
     }
   ]
 }
