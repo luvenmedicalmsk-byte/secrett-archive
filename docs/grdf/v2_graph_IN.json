@@ -2,25 +2,25 @@
   "country": "IN",
   "date": "2026-10-13",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-13T07:41:09.691639+00:00",
+  "generated_at": "2026-10-13T07:51:53.765495+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-IN",
       "type": "Country",
       "label": "IN",
-      "score": 86,
+      "score": 85,
       "props": {
-        "risk_score": 86
+        "risk_score": 85
       }
     },
     {
       "id": "DOMAIN-IN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
-      "trend": "stable"
+      "score": 49,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IN-economic",
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 84,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IN-technology",
@@ -48,7 +48,7 @@
       "type": "Domain",
       "label": "social",
       "score": 58,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IN-infrastructure",
@@ -94,11 +94,11 @@
       "domain": "social"
     },
     {
-      "id": "SIGNAL-IN-Папа_прода",
+      "id": "SIGNAL-IN-Гилл_обход",
       "type": "Signal",
-      "label": "Папа продал квартиру, уволился с работы;",
-      "severity": 58,
-      "domain": "social"
+      "label": "Гилл обходит Абхишека и выигрывает рекор",
+      "severity": 49,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.49
     },
     {
       "from": "COUNTRY-IN",
@@ -184,6 +184,27 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-IN-geopolitical",
+      "to": "DOMAIN-IN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IN-infrastructure",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "DOMAIN-IN-climate",
       "to": "DOMAIN-IN-infrastructure",
       "type": "ESCALATES",
@@ -217,10 +238,10 @@
       "weight": 0.58
     },
     {
-      "from": "SIGNAL-IN-Папа_прода",
-      "to": "DOMAIN-IN-social",
+      "from": "SIGNAL-IN-Гилл_обход",
+      "to": "DOMAIN-IN-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.58
+      "weight": 0.49
     }
   ]
 }
