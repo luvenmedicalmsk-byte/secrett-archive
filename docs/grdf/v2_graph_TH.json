@@ -2,7 +2,7 @@
   "country": "TH",
   "date": "2026-10-13",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-13T02:26:52.890161+00:00",
+  "generated_at": "2026-10-13T02:47:01.413724+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-TH",
       "type": "Country",
       "label": "TH",
-      "score": 73,
+      "score": 56,
       "props": {
-        "risk_score": 73
+        "risk_score": 56
       }
     },
     {
@@ -20,54 +20,49 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-TH-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
-      "trend": "stable"
+      "score": 34,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-TH-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 70,
-      "trend": "stable"
+      "score": 50,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-TH-technology",
       "type": "Domain",
       "label": "technology",
       "score": 56,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-TH-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-TH-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-TH-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
-    },
-    {
-      "id": "DRIVER-TH-climate",
-      "type": "Driver",
-      "label": "climate"
+      "trend": "down"
     },
     {
       "id": "DRIVER-TH-technology",
@@ -75,16 +70,14 @@
       "label": "technology"
     },
     {
-      "id": "DRIVER-TH-geopolitical",
+      "id": "DRIVER-TH-climate",
       "type": "Driver",
-      "label": "geopolitical"
+      "label": "climate"
     },
     {
-      "id": "SIGNAL-TH-Таиланд_пр",
-      "type": "Signal",
-      "label": "Таиланд предупреждает о новых дождях, та",
-      "severity": 70,
-      "domain": "climate"
+      "id": "DRIVER-TH-economic",
+      "type": "Driver",
+      "label": "economic"
     },
     {
       "id": "SIGNAL-TH-Падение_ин",
@@ -99,6 +92,13 @@
       "label": "ТАИЛАНД: наводнения - 09-2026 - Сильные ",
       "severity": 50,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-TH-Турбизнес_",
+      "type": "Signal",
+      "label": "Турбизнес Таиланда выступил против введе",
+      "severity": 34,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,13 +112,13 @@
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-climate",
       "type": "CORRELATES",
-      "weight": 0.7
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-TH",
@@ -145,19 +145,19 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-TH-climate",
-      "to": "COUNTRY-TH",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
       "from": "DRIVER-TH-technology",
       "to": "COUNTRY-TH",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-TH-geopolitical",
+      "from": "DRIVER-TH-climate",
+      "to": "COUNTRY-TH",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DRIVER-TH-economic",
       "to": "COUNTRY-TH",
       "type": "CAUSES",
       "weight": 0.8
@@ -205,12 +205,6 @@
       "lag_days": 90
     },
     {
-      "from": "SIGNAL-TH-Таиланд_пр",
-      "to": "DOMAIN-TH-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.7
-    },
-    {
       "from": "SIGNAL-TH-Падение_ин",
       "to": "DOMAIN-TH-technology",
       "type": "AMPLIFIES",
@@ -221,6 +215,12 @@
       "to": "DOMAIN-TH-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
+    },
+    {
+      "from": "SIGNAL-TH-Турбизнес_",
+      "to": "DOMAIN-TH-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.34
     }
   ]
 }
