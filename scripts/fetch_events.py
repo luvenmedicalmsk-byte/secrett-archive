@@ -25127,6 +25127,62 @@ def _decency_filter(events):
 FEED_HYGIENE = True
 FEED_MAX_AGE = {'geopolitics': 4, 'economy': 7, 'climate': 7, 'social': 7, 'technology': 7}
 FEED_IODA_MAX = 5
+# Аудит 13.10 (180 записей оперативной ленты):
+#  • объяснялки и вопросы («Сколько дождя может принести ураган?», «Почему военные
+#    расходы… не могут сдержать…»), история и дальние прогнозы («…взрыв в 1908 году»,
+#    «…45% общества в 2128 г»), памятные дни — не сигнал;
+#  • ДТП в домене «Геополитика» с индексом 72–76 («Mini Cooper врезался в скутер») —
+#    в «Социум», индекс по числу погибших;
+#  • массовая гибель недооценена («судно с мигрантами, погибли более 100» — 53) —
+#    нижняя граница индекса по числу погибших (без накопительной статистики);
+#  • одна тема заполняет ленту (дата-центры «Яндекса» — 10 записей) — не больше
+#    FEED_STORY_MAX записей на сущность за 3 суток.
+_HYG_EXPLAIN = re.compile(r'^(?:как|почему|зачем|сколько|чем|что\s+(?:стало|такое|будет|известно|означает|изменится))\b|\?\s*$', re.I)
+_HYG_OBSERV = re.compile(r'(?:всемирный|международный)\s+день|день\s+(?:осведомл|борьбы|памяти)|эпичн\w*', re.I)
+_HYG_ROAD = re.compile(r'(?<![а-яё])(?:дтп|автокатастроф\w*|авари\w*\s+с\s+(?:автобус|грузовик|автомобил|машин)\w*|'
+                       r'врезал(?:ся|ась|ись)|столкнул\w*\s+(?:автобус|грузовик|автомобил|машин)\w*|сбил\w*\s+пешеход\w*)', re.I)
+_HYG_CUM = re.compile(r'(?<![а-яё])с\s+(?:начала|октября|ноября|декабря|января|февраля|марта|апреля|мая|июня|июля|августа|сентября|\d{1,2}\s+[а-яё]+|20\d\d)', re.I)
+_HYG_NUMW = {'два': 2, 'три': 3, 'пять': 5, 'десять': 10, 'двадцать': 20, 'тридцать': 30, 'сорок': 40, 'пятьдесят': 50,
+             'шестьдесят': 60, 'семьдесят': 70, 'восемьдесят': 80, 'девяносто': 90, 'сто': 100}
+FEED_STORY_MAX = 4
+_HYG_STORY_STOP = ('росси', 'украи', 'хусит', 'арави', 'саудо', 'трамп', 'путин', 'зелен', 'израи', 'иран', 'китай',
+                   'европ', 'судан', 'ливан', 'газа', 'газе', 'газу', 'бпла', 'минфи', 'минза', 'миноб', 'пвоб',
+                   'вооруж', 'москв', 'киев', 'вашин', 'кремл', 'белог', 'оон', 'нато', 'нефть', 'брент')
+
+
+def _hyg_deaths(t):
+    t = t.lower()
+    m = re.search(r'(?:погиб\w*|убит\w*|жертв\w*|унес\w*\s+жизни)\s+(?:более|свыше|не\s+менее|по\s+меньшей\s+мере|как\s+минимум|около)?\s*(\d[\d\s]*)', t)
+    n = None
+    if m:
+        try:
+            n = int(re.sub(r'\D', '', m.group(1)))
+        except ValueError:
+            n = None
+    if n is None:
+        m = re.search(r'(\d[\d\s]*)\s+(?:человек\w*\s+)?(?:погиб\w*|убит\w*|жертв)', t)
+        if m:
+            try:
+                n = int(re.sub(r'\D', '', m.group(1)))
+            except ValueError:
+                n = None
+    if n is None:
+        m = re.search(r'(сто|девяносто|восемьдесят|семьдесят|шестьдесят|пятьдесят|сорок|тридцать|двадцать)(?:\s+(один|два|три|четыре|пять|шесть|семь|восемь|девять))?\s+(?:человек\w*\s+)?(?:погиб|убит)', t)
+        if m:
+            n = _HYG_NUMW.get(m.group(1), 0)
+    return n
+
+
+def _hyg_caps(t):
+    out = set()
+    for w in re.findall(r'(?<![\w-])[А-ЯЁA-Z«][\w-]{3,}', (t or '')[1:]):
+        w = w.strip('«').lower()
+        if w.startswith('эр-'):
+            w = w[3:]
+        w = w[:5]
+        if not any(w.startswith(x[:len(w)]) or x.startswith(w) for x in _HYG_STORY_STOP):
+            out.add(w)
+    return out
 # Рубрики, награды, конкурсы — не сигнал (аудит 12.10: «Награды Spirit of Hong Kong» 76,
 # «Следующая героиня рубрики «Лица Роспотребнадзора»»). Геополитика не затрагивается:
 # там «премия» и «награда» бывают частью события (Нобелевская премия мира, лауреат…).
@@ -25197,6 +25253,33 @@ def _feed_hygiene(events):
             continue
         if age > FEED_MAX_AGE.get(e.get('domain'), 7):
             hide(e, 'устарело')
+    # объяснялки, история и дальние прогнозы, памятные дни; ДТП; массовая гибель
+    for e in vis:
+        if e.get('feed_visible') is False or (e.get('meta') or {}).get('verified'):
+            continue
+        t = e.get('title') or ''
+        yrs = [int(y) for y in re.findall(r'(?<!\d)(1[0-9]{3}|2[0-9]{3})(?!\d)', t)]
+        if _HYG_EXPLAIN.search(t):
+            hide(e, 'объяснение/вопрос'); continue
+        if yrs and (min(yrs) < 1990 or max(yrs) >= 2060):
+            hide(e, 'история/дальний прогноз'); continue
+        if _HYG_OBSERV.search(t):
+            hide(e, 'памятный день/фичер'); continue
+        d = _hyg_deaths(t) if not _HYG_CUM.search(t) else None
+        if _HYG_ROAD.search(t):
+            cap = 66 if (d or 0) >= 20 else 60 if (d or 0) >= 10 else 52
+            if e.get('domain') != 'social' or (e.get('severity') or 0) > cap:
+                e['domain_hygiene_from'] = e.get('domain')
+                e['domain'] = 'social'
+                e['severity'] = min(e.get('severity') or 0, cap)
+                cnt['ДТП → социум'] = cnt.get('ДТП → социум', 0) + 1
+            continue
+        if d:
+            floor = 78 if d >= 100 else 74 if d >= 50 else 68 if d >= 20 else 0
+            if floor and (e.get('severity') or 0) < floor:
+                e['severity_hygiene_from'] = e.get('severity')
+                e['severity'] = floor
+                cnt['массовая гибель ↑'] = cnt.get('массовая гибель ↑', 0) + 1
     # рубрики и награды
     for e in vis:
         if (e.get('domain') != 'geopolitics' and e.get('feed_visible') is not False
@@ -25230,6 +25313,27 @@ def _feed_hygiene(events):
                 e['incident_of'] = e.get('incident_of') or dup.get('id')
             else:
                 kept.append(e)
+    # одна тема не заполняет ленту
+    vis = [e for e in vis if e.get('feed_visible') is not False]
+    by_ent = {}
+    for e in vis:
+        if (e.get('meta') or {}).get('verified'):
+            continue
+        try:
+            if (today - _d.fromisoformat((e.get('date') or '')[:10])).days > 3:
+                continue
+        except Exception:
+            continue
+        for w in _hyg_caps(e.get('title')):
+            by_ent.setdefault(w, []).append(e)
+    for w, lst in sorted(by_ent.items(), key=lambda kv: -len(kv[1])):
+        lst = [e for e in lst if e.get('feed_visible') is not False]
+        if len(lst) <= FEED_STORY_MAX + 1:
+            continue
+        lst.sort(key=lambda e: (-(e.get('severity') or 0), str(e.get('id'))))
+        for e in lst[FEED_STORY_MAX:]:
+            hide(e, 'лимит темы')
+            e['story_key'] = w
     if cnt:
         print('  [HYGIENE] скрыто из ленты: %s' % ', '.join('%s %d' % kv for kv in cnt.items()), file=sys.stderr)
     return sum(cnt.values())
