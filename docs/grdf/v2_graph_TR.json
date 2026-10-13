@@ -2,7 +2,7 @@
   "country": "TR",
   "date": "2026-10-13",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-13T12:08:30.564228+00:00",
+  "generated_at": "2026-10-13T12:27:13.693704+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-TR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 51,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,16 +80,9 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-TR-Турецкие_п",
+      "id": "SIGNAL-TR-Сильный_ве",
       "type": "Signal",
-      "label": "Турецкие прокуроры расследуют утечку док",
-      "severity": 51,
-      "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-TR-Гроза:_Тур",
-      "type": "Signal",
-      "label": "Гроза: Турция, 10 предупреждений (жёлтый",
+      "label": "Сильный ветер, гроза: Турция, 11 предупр",
       "severity": 50,
       "domain": "climate"
     },
@@ -98,6 +91,13 @@
       "type": "Signal",
       "label": "Военный конфликт — Ближний Восток (систе",
       "severity": 100,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-TR-Геополитич",
+      "type": "Signal",
+      "label": "Геополитический процесс — Ближний Восток",
+      "severity": 78,
       "domain": "geopolitical"
     }
   ],
@@ -112,7 +112,7 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-economic",
       "type": "CORRELATES",
-      "weight": 0.51
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-TR",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-TR-climate",
-      "to": "DOMAIN-TR-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-TR-infrastructure",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-TR-economic",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-TR-climate",
       "to": "DOMAIN-TR-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -226,13 +205,28 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-TR-Турецкие_п",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.51
+      "from": "DOMAIN-TR-climate",
+      "to": "DOMAIN-TR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
     },
     {
-      "from": "SIGNAL-TR-Гроза:_Тур",
+      "from": "DOMAIN-TR-infrastructure",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-TR-Сильный_ве",
       "to": "DOMAIN-TR-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
@@ -242,6 +236,12 @@
       "to": "DOMAIN-TR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 1.0
+    },
+    {
+      "from": "SIGNAL-TR-Геополитич",
+      "to": "DOMAIN-TR-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.78
     }
   ]
 }
