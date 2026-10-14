@@ -2,7 +2,7 @@
   "country": "TH",
   "date": "2026-10-14",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-14T18:28:03.959685+00:00",
+  "generated_at": "2026-10-14T18:47:16.801220+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-TH-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 50,
       "trend": "stable"
     },
     {
@@ -40,7 +40,7 @@
       "id": "DOMAIN-TH-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 56,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -70,14 +70,21 @@
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-TH-technology",
+      "id": "DRIVER-TH-economic",
       "type": "Driver",
-      "label": "technology"
+      "label": "economic"
     },
     {
       "id": "DRIVER-TH-climate",
       "type": "Driver",
       "label": "climate"
+    },
+    {
+      "id": "SIGNAL-TH-Инфляционн",
+      "type": "Signal",
+      "label": "Инфляционный шок повышает ставки для око",
+      "severity": 50,
+      "domain": "economic"
     },
     {
       "id": "SIGNAL-TH-Наводнения",
@@ -92,13 +99,6 @@
       "label": "Геополитический процесс — Таиланд",
       "severity": 60,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-TH-Отключение",
-      "type": "Signal",
-      "label": "Отключение интернета — Таиланд",
-      "severity": 56,
-      "domain": "technology"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-TH",
@@ -124,7 +124,7 @@
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-technology",
       "type": "CORRELATES",
-      "weight": 0.56
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-TH",
@@ -151,7 +151,7 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-TH-technology",
+      "from": "DRIVER-TH-economic",
       "to": "COUNTRY-TH",
       "type": "CAUSES",
       "weight": 0.8
@@ -164,24 +164,24 @@
     },
     {
       "from": "DOMAIN-TH-climate",
-      "to": "DOMAIN-TH-economic",
+      "to": "DOMAIN-TH-infrastructure",
       "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-TH-infrastructure",
+      "to": "DOMAIN-TH-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
     },
     {
       "from": "DOMAIN-TH-economic",
-      "to": "DOMAIN-TH-social",
+      "to": "DOMAIN-TH-economic",
       "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-TH-social",
-      "to": "DOMAIN-TH-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-TH-geopolitical",
@@ -206,24 +206,30 @@
     },
     {
       "from": "DOMAIN-TH-climate",
-      "to": "DOMAIN-TH-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-TH-infrastructure",
       "to": "DOMAIN-TH-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-TH-economic",
+      "to": "DOMAIN-TH-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-TH-social",
+      "to": "DOMAIN-TH-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "SIGNAL-TH-Инфляционн",
       "to": "DOMAIN-TH-economic",
       "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
+      "weight": 0.5
     },
     {
       "from": "SIGNAL-TH-Наводнения",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-TH-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.6
-    },
-    {
-      "from": "SIGNAL-TH-Отключение",
-      "to": "DOMAIN-TH-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.56
     }
   ]
 }
