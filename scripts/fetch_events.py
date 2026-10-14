@@ -4278,6 +4278,27 @@ _RW_ROUTINE = re.compile(r'country brief|bulletin|market monitor|dashboard|facts
                          r'monthly|weekly|annual report|activity report|funding update|newsletter', re.I)
 
 
+# 14.10: 21 из 61 отчёта ReliefWeb терялись без домена (классификатор русский, заголовки
+# английские), среди них «Sudan IPC Alert: rapidly worsening conditions across Greater Darfur»
+# и «WFP warns escalating Yemen conflict is cutting off life-saving assistance to Taiz».
+# Домен ставится только при явных маркерах кризиса; обзоры и методички остаются без домена.
+_RW_DOMAIN = (
+    (re.compile(r'\b(?:IPC|famine|food insecurity|hunger|cholera|outbreak|epidemic|measles|mpox|dengue|displaced|displacement|refugees?)\b', re.I), 'social'),
+    (re.compile(r'\b(?:floods?|flash floods?|cyclone|earthquake|drought|landslides?|storm|typhoon|hurricane|wildfires?|heatwave)\b', re.I), 'climate'),
+    (re.compile(r'\b(?:attacks?|airstrikes?|shelling|clashes|escalat\w+|conflict|violence|killed|siege)\b', re.I), 'geopolitics'),
+)
+_RW_SIGNAL = re.compile(r'\b(?:alert|warns?|urgent|emergency|escalat\w+|worsening|killed|surge|spike|declared|flash update)\b', re.I)
+
+
+def _rw_domain(title):
+    if not _RW_SIGNAL.search(title or ''):
+        return None
+    for rx, dom in _RW_DOMAIN:
+        if rx.search(title):
+            return dom
+    return None
+
+
 def _rw_skip(fields, title):
     langs = [l.get('code') for l in (fields.get('language') or []) if l.get('code')]
     if langs and 'en' not in langs:
@@ -4383,6 +4404,7 @@ def fetch_reliefweb():
                     'title': _t,
                     'desc': (_b + ' ' + ' '.join(_cc)).strip(),
                     'source': 'ReliefWeb/UN',
+                    **({'_domain': _rw_domain(_t)} if _rw_domain(_t) else {}),
                     'url': _it.get('url') or '',
                     'date': parse_date((_f.get('date') or {}).get('created') or ''),
                     'source_bias': 5,
@@ -9852,7 +9874,8 @@ def _signal_gate(events):
     import collections as _co
     kept, rej = [], _co.Counter()
     for e in events:
-        if e.get('structural') or e.get('_force_severity') is not None:
+        if (e.get('structural') or e.get('_force_severity') is not None
+                or ((e.get('meta') or {}).get('kind') in _OFFICIAL_SIGNAL_KINDS and (e.get('meta') or {}).get('verified'))):
             kept.append(e); continue
         t = (e.get('title') or '')
         s = (e.get('summary') or '')[:300]
@@ -25145,6 +25168,17 @@ _HYG_CUM = re.compile(r'(?<![а-яё])с\s+(?:начала|октября|ноя
 _HYG_NUMW = {'два': 2, 'три': 3, 'пять': 5, 'десять': 10, 'двадцать': 20, 'тридцать': 30, 'сорок': 40, 'пятьдесят': 50,
              'шестьдесят': 60, 'семьдесят': 70, 'восемьдесят': 80, 'девяносто': 90, 'сто': 100}
 FEED_STORY_MAX = 4
+# Аудит 14.10: заявления, призывы, исследования и «может/способен» без факта
+# получали 76–82 («Россия заявляет, что Европа купила углеводородов…» 82,
+# «Зеленский призвал позаботиться о безопасности» 82, «Возможный обвал рынка ИИ» 76).
+# Потолок FEED_STMT_CAP, если в заголовке нет ни действия (удар, атака…), ни последствий.
+FEED_STMT_CAP = 66
+_HYG_STMT = re.compile(r'(?<![а-яё])(?:заявля\w*|заявил\w*|говор\w*|счита\w*|предупрежда\w*|предупредил\w*|может|могут|'
+                       r'способн\w*|возможн\w*|расследу\w*|исследовани\w*|прогноз\w*|эксперт\w*|аналитик\w*|мнени\w*|'
+                       r'призыва\w*|призвал\w*|осужда\w*|осудил\w*|критик\w*|обсужда\w*|сомнева\w*|утвержда\w*)(?![а-яё])', re.I)
+_HYG_ACT = re.compile(r'(?<![а-яё])(?:погиб\w*|убит\w*|ранен\w*|пострадал\w*|жертв\w*|взрыв\w*|сбит\w*|поврежд\w*|разрушен\w*|'
+                      r'эвакуир\w*|обесточ\w*|затоп\w*|пожар\w*|удар\w*|атак\w*|ракет\w*|перехват\w*|обстрел\w*|бомб\w*|'
+                      r'ввел\w*|ввёл|ввели|запрет\w*|санкци\w*|арест\w*|задержа\w*)(?![а-яё])', re.I)
 _HYG_STORY_STOP = ('росси', 'украи', 'хусит', 'арави', 'саудо', 'трамп', 'путин', 'зелен', 'израи', 'иран', 'китай',
                    'европ', 'судан', 'ливан', 'газа', 'газе', 'газу', 'бпла', 'минфи', 'минза', 'миноб', 'пвоб',
                    'вооруж', 'москв', 'киев', 'вашин', 'кремл', 'белог', 'оон', 'нато', 'нефть', 'брент')
@@ -25265,6 +25299,10 @@ def _feed_hygiene(events):
             hide(e, 'история/дальний прогноз'); continue
         if _HYG_OBSERV.search(t):
             hide(e, 'памятный день/фичер'); continue
+        if (e.get('severity') or 0) > FEED_STMT_CAP and _HYG_STMT.search(t) and not _HYG_ACT.search(t):
+            e['severity_hygiene_from'] = e.get('severity')
+            e['severity'] = FEED_STMT_CAP
+            cnt['заявление → потолок'] = cnt.get('заявление → потолок', 0) + 1
         d = _hyg_deaths(t) if not _HYG_CUM.search(t) else None
         if _HYG_ROAD.search(t):
             cap = 66 if (d or 0) >= 20 else 60 if (d or 0) >= 10 else 52
