@@ -21223,7 +21223,10 @@ def fetch_gpsjam():
                      f"навигации из {c['n']} смежных зон (H3, ~1 770 км² каждая), где более 10 % самолётов сообщали "
                      f"о деградации GPS; бортов с помехами — {c['bad']}. {trend.capitalize() + '.' if trend else ''} "
                      f"Центр очага: {c['lat']:.2f}°, {c['lng']:.2f}°.").strip(),
-            'date': day, 'source': 'GPSJam',
+            # 14.10: дата записи — день прогона, а не день данных GPSJam (вчера):
+            # лента «Все» сортируется по дате, и очаги уходили ниже всех сегодняшних
+            # новостей. День данных указан в описании и в meta.day.
+            'date': datetime.now(timezone.utc).strftime('%Y-%m-%d'), 'source': 'GPSJam',
             '_lat': round(c['lat'], 3), '_lng': round(c['lng'], 3), '_coord_origin': 'source', '_region': reg,
             '_domain': 'geopolitics', '_force_severity': min(sev, 72),
             '_meta': {'kind': 'gps_jamming', 'verified': True, 'hexes': c['n'], 'prev_hexes': pn, 'day': day,
