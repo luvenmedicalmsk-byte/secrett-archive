@@ -2,7 +2,7 @@
   "country": "RU",
   "date": "2026-10-14",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-14T05:16:51.296069+00:00",
+  "generated_at": "2026-10-14T05:27:43.568075+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -10,24 +10,24 @@
       "id": "COUNTRY-RU",
       "type": "Country",
       "label": "RU",
-      "score": 92,
+      "score": 86,
       "props": {
-        "risk_score": 92
+        "risk_score": 86
       }
     },
     {
       "id": "DOMAIN-RU-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 100,
-      "trend": "stable"
+      "score": 88,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-RU-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
-      "trend": "stable"
+      "score": 79,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-RU-climate",
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-RU-Один_погиб",
-      "type": "Signal",
-      "label": "Один погиб, шестеро пострадали из-за ата",
-      "severity": 95,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-RU-ПВО_России",
       "type": "Signal",
       "label": "ПВО России отражают атаку БПЛА на соседн",
@@ -99,6 +92,13 @@
       "label": "Газопровод взорвался в Пензенской област",
       "severity": 79,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-RU-Нефть_доро",
+      "type": "Signal",
+      "label": "Нефть дорожает на угрозах поставок из Ро",
+      "severity": 79,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-geopolitical",
       "type": "CORRELATES",
-      "weight": 1.0
+      "weight": 0.88
     },
     {
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.79
     },
     {
       "from": "COUNTRY-RU",
@@ -184,12 +184,6 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-RU-Один_погиб",
-      "to": "DOMAIN-RU-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.95
-    },
-    {
       "from": "SIGNAL-RU-ПВО_России",
       "to": "DOMAIN-RU-geopolitical",
       "type": "AMPLIFIES",
@@ -198,6 +192,12 @@
     {
       "from": "SIGNAL-RU-Газопровод",
       "to": "DOMAIN-RU-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.79
+    },
+    {
+      "from": "SIGNAL-RU-Нефть_доро",
+      "to": "DOMAIN-RU-economic",
       "type": "AMPLIFIES",
       "weight": 0.79
     }
