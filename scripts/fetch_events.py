@@ -8214,6 +8214,13 @@ def process_events(raw_items):
                    domain=d, severity=ev.get('severity'), source=ev.get('source'))
             balanced.append(ev)
             continue
+        # 14.10: официальные машинные ленты (NOAA, ВОЗ, санкции, NOTAM, GPS…) вне квоты
+        # домена — их единицы в сутки, а тропический шторм NOAA проигрывал новостям.
+        if ((ev.get('meta') or {}).get('kind') in _OFFICIAL_SIGNAL_KINDS and (ev.get('meta') or {}).get('verified')):
+            _trace(ev.get('_obs_tid'),'BUILT',domain=d, severity=ev.get('severity'),
+                   canon_type=ev.get('canon_type'), source=ev.get('source'))
+            balanced.append(ev)
+            continue
         quota = DOMAIN_QUOTA.get(d, MAX_EVENTS)
         if domain_counts.get(d, 0) < quota:
             _trace(ev.get('_obs_tid'),'BUILT',domain=d, severity=ev.get('severity'),
@@ -25176,6 +25183,8 @@ FEED_STMT_CAP = 66
 _HYG_STMT = re.compile(r'(?<![а-яё])(?:заявля\w*|заявил\w*|говор\w*|счита\w*|предупрежда\w*|предупредил\w*|может|могут|'
                        r'способн\w*|возможн\w*|расследу\w*|исследовани\w*|прогноз\w*|эксперт\w*|аналитик\w*|мнени\w*|'
                        r'призыва\w*|призвал\w*|осужда\w*|осудил\w*|критик\w*|обсужда\w*|сомнева\w*|утвержда\w*)(?![а-яё])', re.I)
+_HYG_STMT_STRONG = re.compile(r'(?<![а-яё])(?:расследу\w*|почему|выясня\w*|ставит\s+(?:\w+\s+)?цель|амбициозн\w*|'
+                              r'планиру\w*|намерен\w*|рассматрива\w*)(?![а-яё])', re.I)
 _HYG_ACT = re.compile(r'(?<![а-яё])(?:погиб\w*|убит\w*|ранен\w*|пострадал\w*|жертв\w*|взрыв\w*|сбит\w*|поврежд\w*|разрушен\w*|'
                       r'эвакуир\w*|обесточ\w*|затоп\w*|пожар\w*|удар\w*|атак\w*|ракет\w*|перехват\w*|обстрел\w*|бомб\w*|'
                       r'ввел\w*|ввёл|ввели|запрет\w*|санкци\w*|арест\w*|задержа\w*)(?![а-яё])', re.I)
@@ -25276,6 +25285,14 @@ def _feed_hygiene(events):
                     cont = cont[:cut] if cut > 0 else None
                 if cont is not None:          # пустое продолжение: фраза кончилась на обрезке
                     e['title'] = (stem + cont).strip().rstrip(',;:—- ')
+    # непереведённый латинский хвост («…по мере intensifi»)
+    for e in events:
+        t = e.get('title') or ''
+        cyr = len(re.findall(r'[а-яё]', t, re.I)); lat = len(re.findall(r'[a-z]', t, re.I))
+        if cyr > 3 * max(1, lat):
+            t2 = re.sub(r'(?:[\s,—-]+(?:по мере|в связи с|из-за|на фоне|после|и|в|на|по|с))?\s+[a-z][a-z-]*\s*$', '', t).rstrip(' ,;:—-')   # только строчное слово: имена и бренды (iPhone, Reuters) не трогаем
+            if t2 != t and len(t2) > 25:
+                e['title'] = t2
     vis = [e for e in events if e.get('feed_visible') is not False and not e.get('alerts_only')]
     # возраст
     for e in vis:
@@ -25299,7 +25316,8 @@ def _feed_hygiene(events):
             hide(e, 'история/дальний прогноз'); continue
         if _HYG_OBSERV.search(t):
             hide(e, 'памятный день/фичер'); continue
-        if (e.get('severity') or 0) > FEED_STMT_CAP and _HYG_STMT.search(t) and not _HYG_ACT.search(t):
+        if (e.get('severity') or 0) > FEED_STMT_CAP and (
+                _HYG_STMT_STRONG.search(t) or (_HYG_STMT.search(t) and not _HYG_ACT.search(t))):
             e['severity_hygiene_from'] = e.get('severity')
             e['severity'] = FEED_STMT_CAP
             cnt['заявление → потолок'] = cnt.get('заявление → потолок', 0) + 1
