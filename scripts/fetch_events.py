@@ -6210,6 +6210,8 @@ def _topic_cap(events, N=5):
     _RSS_DOM=('technology','economy','climate','social')
     _exempt = 0
     for e in sorted(events, key=lambda x: -(x.get('severity', 0) or 0)):
+        if e.get('alerts_only'):
+            out.append(e); continue        # предупреждение службы: своя панель, лимит темы не применяется
         toks = [t for t in _tc_toks((e.get('title','') or '') + ' ' + (e.get('summary','') or '')) if not _tc_is_stop(t) and df.get(t, 0) >= 8]
         if len(toks) < 2: out.append(e); continue
         hot = sorted(toks, key=lambda t: -df[t])[0]
@@ -8149,9 +8151,9 @@ def process_events(raw_items):
     # 4 на источник с запасом хватает каждой службе. MeteoAlarm сейчас ничего
     # не теряет (6 из 6 доходят) и включён как тот же класс: те же
     # официальные службы, тот же вид записи, те же слоты.
-    WARN_RESERVE = 12          # общий потолок резерва
+    WARN_RESERVE = 0           # 16.10.2026: предупреждения идут вне квоты, резерв не нужен (было 12)
     WARN_PER_SOURCE = 4        # потолок на одну службу
-    _WARN_KINDS = {'mgm', 'rosgidromet_cap', 'cap'}
+    _WARN_KINDS = {'mgm', 'rosgidromet_cap', 'cap', 'cap_hub'}
     _warn_reserved = set()
     _warn_added = 0
     _warn_by_src = {}
@@ -8198,6 +8200,16 @@ def process_events(raw_items):
             continue
         if ev['id'] in _flood_reserved: continue  # уже зарезервировано как наводнение
         if ev['id'] in _warn_reserved: continue   # уже зарезервировано как предупреждение
+        # 16.10.2026: предупреждения служб (CAP, MGM) вне квоты домена и капа
+        # ленты. В ленте их всё равно нет (CAP_FEED_GATE), их место - панель
+        # «Предупреждения». С жёлтым уровнем MeteoAlarm их десятки, и в квоте
+        # климата они вытесняли бы новости, а в капе ленты - друг друга.
+        if ((ev.get('meta') or {}).get('kind')) in _WARN_KINDS and (ev.get('meta') or {}).get('verified'):
+            ev['feed_visible'] = False
+            ev['alerts_only'] = True
+            _trace(ev.get('_obs_tid'),'BUILT',layer='alerts', source=ev.get('source'))
+            balanced.append(ev)
+            continue
         d = ev['domain']
         # ANALYTIC LAYER: события ниже порога ленты (feed_visible=False) не квотируются —
         # они не отображаются в FREE, но кормят аналитический контур. Квота — только для ленты.
@@ -10771,6 +10783,7 @@ _REAL_MIL_G = re.compile(r'ракет|бпла|беспилот|\bдрон|об�
 NATURAL_DETECTION_SOURCES = (
     'NASA FIRMS', 'FIRMS', 'Росгидромет CAP', 'NASA Earth Observatory',
     'EONET', 'Copernicus', 'GDACS',
+    'Казгидромет CAP', 'Белгидромет CAP', 'Узгидромет CAP', 'Кыргызгидромет CAP',
 )
 
 
@@ -15903,15 +15916,61 @@ def _rg_event_name(event, dtext):
 def fetch_rosgidromet_cap():
     """Официальные метеопредупреждения Гидрометцентра РФ (CAP) — климат России.
     Жара, осадки, грозы, шквалы, пожарная опасность, паводки, штормы и т.п."""
+    return _meteoinfo_cap(_ROSGIDROMET_FEED, 'Россия', 'Росгидромет', 'Росгидромет CAP',
+                          'rosgidromet_cap', limit=70)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ИСТОЧНИК (16.10.2026): CAP-предупреждения Казахстана, Беларуси, Узбекистана и
+# Кыргызстана. Национальные службы публикуют их через тот же хаб Гидрометцентра
+# (meteoalert.meteoinfo.ru), формат Atom -> CAP 1.2, как у Росгидромета. Ленты
+# внесены в реестр уполномоченных служб ВМО. Разбор общий с Росгидрометом.
+# Если у предупреждения нет полигона, точка ставится в столицу страны.
+# Откат: CIS_CAP = False.
+# ══════════════════════════════════════════════════════════════════════════════
+CIS_CAP = True
+_CIS_CAP = [
+    # слаг хаба, ISO, страна, служба, столица
+    ('kazakhstan', 'KZ', 'Казахстан', 'Казгидромет', 51.13, 71.43),
+    ('belarus',    'BY', 'Беларусь',  'Белгидромет', 53.90, 27.57),
+    ('uzbekistan', 'UZ', 'Узбекистан', 'Узгидромет', 41.31, 69.28),
+    ('kyrgyzstan', 'KG', 'Кыргызстан', 'Кыргызгидромет', 42.87, 74.59),
+]
+
+
+def fetch_cis_cap():
+    """Официальные метеопредупреждения служб Казахстана, Беларуси, Узбекистана, Кыргызстана."""
+    if not CIS_CAP:
+        return []
+    from concurrent.futures import ThreadPoolExecutor as _TPE
+    def _one(c):
+        slug, cc, country, svc, la, lo = c
+        url = 'https://meteoalert.meteoinfo.ru/%s/cap-feed/ru/atom.xml' % slug
+        try:
+            return _meteoinfo_cap(url, country, svc, svc + ' CAP', 'cap_hub', limit=40,
+                                  cc=cc, fallback=(la, lo))
+        except Exception as e:
+            print(f"  [WARN] {svc} CAP: {e}", file=sys.stderr)
+            return []
     items = []
-    feed = fetch_url(_ROSGIDROMET_FEED, timeout=20)
+    with _TPE(max_workers=4) as ex:
+        for got in ex.map(_one, _CIS_CAP):
+            items.extend(got)
+    print(f"  СНГ CAP: {len(items)} предупреждений", file=sys.stderr)
+    return items
+
+
+def _meteoinfo_cap(feed_url, country, svc, source, kind, limit=70, cc=None, fallback=None):
+    """Разбор Atom-ленты хаба Гидрометцентра и CAP-документов по ссылкам из неё."""
+    items = []
+    feed = fetch_url(feed_url, timeout=20)
     if not feed:
-        print("  [SKIP] Росгидромет CAP: фид недоступен", file=sys.stderr)
+        print(f"  [SKIP] {source}: фид недоступен", file=sys.stderr)
         return items
     try:
         root = ET.fromstring(feed.strip().lstrip("\ufeff"))
     except Exception as e:
-        print(f"  [WARN] Росгидромет CAP feed: {e}", file=sys.stderr)
+        print(f"  [WARN] {source} feed: {e}", file=sys.stderr)
         return items
     urls, seen = [], set()
     for entry in root.iter():
@@ -15922,7 +15981,17 @@ def fetch_rosgidromet_cap():
                 href = ln.get("href")
                 if href and href not in seen:
                     seen.add(href); urls.append(href)
-    urls = urls[:70]
+    if not urls:
+        # Запасной путь для лент хаба без MIME-типа у ссылки: берём ссылки на
+        # XML-документы CAP. У Росгидромета тип указан, и сюда он не попадает.
+        for entry in root.iter():
+            if _cap_local(entry.tag) != "entry":
+                continue
+            for ln in entry:
+                href = ln.get("href") if _cap_local(ln.tag) == "link" else None
+                if href and href.lower().endswith(".xml") and "cap" in href.lower() and href not in seen:
+                    seen.add(href); urls.append(href)
+    urls = urls[:limit]
     now = datetime.now(timezone.utc)
     for url in urls:
         doc = fetch_url(url, timeout=15)
@@ -15956,20 +16025,26 @@ def fetch_rosgidromet_cap():
         dsc = _cap_find(a, "description")
         dtext = (dsc.text or "").strip() if dsc is not None else event
         event = _rg_event_name(event, dtext)
-        title = (f"{event}: {areaDesc} (Россия)" if areaDesc else f"{event} (Россия)")
-        items.append({
+        title = (f"{event}: {areaDesc} ({country})" if areaDesc else f"{event} ({country})")
+        _origin = 'computed'
+        if (lat is None or lng is None) and fallback:
+            lat, lng = fallback; _origin = 'capital'
+        it = {
             "title": title[:130],
-            "desc": f"{dtext} · Росгидромет, {areaDesc}, Россия".strip(" ·"),
+            "desc": f"{dtext} · {svc}, {areaDesc}, {country}".strip(" ·"),
             "date": now.strftime("%Y-%m-%d"),
-            "source": "Росгидромет CAP",
-            "_lat": lat, "_lng": lng, '_coord_origin': 'computed',
-            "_region": (f"{areaDesc}, Россия" if areaDesc else "Россия"),
+            "source": source,
+            "_lat": lat, "_lng": lng, '_coord_origin': _origin,
+            "_region": (f"{areaDesc}, {country}" if areaDesc else country),
             "_domain": "climate",
             "_force_severity": score,
-            "_meta": {"kind": "rosgidromet_cap", "verified": True,
+            "_meta": {"kind": kind, "verified": True,
                       "event": event, "severity": sevkey, "area": areaDesc},
-        })
-    print(f"  Росгидромет CAP: {len(items)} активных предупреждений", file=sys.stderr)
+        }
+        if cc:
+            it["_country_code"] = cc
+        items.append(it)
+    print(f"  {source}: {len(items)} активных предупреждений", file=sys.stderr)
     return items
 
 
@@ -20426,8 +20501,9 @@ def fetch_mideast_asia():
 # Лицензия CC BY 4.0, обязательна ссылка на источник: она уходит в поле
 # source и в подпись панели предупреждений.
 #
-# Отбор. Берутся только красный и оранжевый уровни. Жёлтых предупреждений
-# большинство, они рутинные и утопили бы панель: это решение владельца.
+# Отбор. С 16.10.2026 берутся красный, оранжевый и жёлтый уровни (решение
+# владельца: жёлтые должны быть видны в панели). До этого жёлтые отсекались.
+# Записи сводятся по паре страна-явление, поэтому жёлтые не размножают карточки.
 #
 # Устойчивость. Сеть моего окружения к этим адресам доступа не имеет, поэтому
 # сетевая часть подтверждается только на боевом прогоне. Любая ошибка ловится
@@ -20463,8 +20539,8 @@ _MA_COUNTRIES = [
     ('switzerland', 'CH', 'Швейцария', 46.9, 7.4), ('ukraine', 'UA', 'Украина', 50.4, 30.5),
     ('united-kingdom', 'GB', 'Великобритания', 51.5, -0.1)
 ]
-# Уровень CAP -> вес Atlas. Жёлтый и зелёный не берутся вовсе.
-_MA_LEVEL = {'red': 88, 'orange': 72}
+# Уровень CAP -> вес Atlas. Зелёный не берётся.
+_MA_LEVEL = {'red': 88, 'orange': 72, 'yellow': 50}   # жёлтый с 16.10.2026, решение Мии
 _MA_RU = {
     'wind': 'Ветер', 'snow': 'Снег', 'snow-ice': 'Снег и гололёд',
     'thunderstorm': 'Гроза', 'fog': 'Туман', 'high-temperature': 'Аномальная жара',
@@ -20488,7 +20564,7 @@ def _ma_areas_text(g):
 
 
 def _ma_parse(xml_text, cc, country_name, lat, lng):
-    """Разбор страновой Atom-ленты MeteoAlarm. Только красный и оранжевый.
+    """Разбор страновой Atom-ленты MeteoAlarm. Красный, оранжевый и жёлтый.
 
     Записи сводятся по паре страна-явление. Причина замерена на боевом срезе:
     источник отдал 39 предупреждений, до ленты дошло 6. Лента даёт по одному
@@ -20506,7 +20582,12 @@ def _ma_parse(xml_text, cc, country_name, lat, lng):
     for entry in root.iter(ns + 'entry'):
         blob = ' '.join((t.text or '') for t in entry.iter() if t.text)
         low = blob.lower()
-        level = 'red' if 'red' in low else ('orange' if 'orange' in low else None)
+        # Уровень по целому слову: подстрока «red» встречается в названиях
+        # районов (Fredrikstad, Redcar), и жёлтое предупреждение по такому
+        # району читалось бы как красное.
+        level = ('red' if re.search(r'\bred\b', low) else
+                 'orange' if re.search(r'\borange\b', low) else
+                 'yellow' if re.search(r'\byellow\b', low) else None)
         if not level:
             continue
         kind = ''
@@ -20518,8 +20599,9 @@ def _ma_parse(xml_text, cc, country_name, lat, lng):
         upd = (entry.findtext(ns + 'updated') or '')[:10]
         g = groups.setdefault(kind, {'level': level, 'n': 0, 'date': '', 'areas': []})
         g['n'] += 1
-        if level == 'red':
-            g['level'] = 'red'            # красный перекрывает оранжевый
+        _rank = {'yellow': 1, 'orange': 2, 'red': 3}
+        if _rank[level] > _rank[g['level']]:
+            g['level'] = level            # старший уровень перекрывает младший
         if upd and (not g['date'] or upd > g['date']):
             g['date'] = upd
         # 24.09.2026. Раньше в текст шли заголовки целиком, и присказка «Выдано
@@ -20541,7 +20623,8 @@ def _ma_parse(xml_text, cc, country_name, lat, lng):
 
     today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
     for kind, g in groups.items():
-        lvl = 'красный уровень' if g['level'] == 'red' else 'оранжевый уровень'
+        lvl = {'red': 'красный уровень', 'orange': 'оранжевый уровень',
+               'yellow': 'жёлтый уровень'}[g['level']]
         n = g['n']
         cnt = ''
         if n > 1:
@@ -21359,7 +21442,7 @@ def fetch_fao_ffpi():
 
 
 def fetch_meteoalarm():
-    """Официальные предупреждения европейских метеослужб. Красный и оранжевый."""
+    """Официальные предупреждения европейских метеослужб. Красный, оранжевый, жёлтый."""
     if not METEOALARM:
         return []
     items, ok, fail = [], 0, 0
@@ -25784,6 +25867,8 @@ SIC_SOURCE_AXIS_SHADOW = True
 _SRC_TYPE = {
     # ALERT — оперативное предупреждение в реальном времени, срочность важнее формы
     'Росгидромет CAP': 'ALERT',      # CAP: Common Alerting Protocol
+    'Казгидромет CAP': 'ALERT', 'Белгидромет CAP': 'ALERT',
+    'Узгидромет CAP': 'ALERT', 'Кыргызгидромет CAP': 'ALERT',
     'Copernicus EMS': 'ALERT',       # активация экстренного картирования
     'IODA': 'ALERT',                 # детекция отключений связи в реальном времени
     'The Watchers': 'ALERT',
@@ -27046,6 +27131,7 @@ if __name__ == '__main__':
             ('gdacs_floods',       fetch_flood_observatory),
             ('usgs',               fetch_usgs_earthquakes),
             ('rosgidromet_cap',    fetch_rosgidromet_cap),
+            ('cis_cap',            fetch_cis_cap),
             ('notam',              fetch_notam),   # NOTAM_GATE=False -> пустой список
             ('mgm_turkey',         fetch_mgm_turkey),
             ('cbr_russia',         fetch_cbr_russia),
