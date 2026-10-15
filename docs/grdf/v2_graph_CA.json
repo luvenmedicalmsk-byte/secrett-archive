@@ -2,7 +2,7 @@
   "country": "CA",
   "date": "2026-10-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-15T14:48:40.406515+00:00",
+  "generated_at": "2026-10-15T15:07:45.870735+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-CA",
       "type": "Country",
       "label": "CA",
-      "score": 59,
+      "score": 58,
       "props": {
-        "risk_score": 59
+        "risk_score": 58
       }
     },
     {
@@ -26,7 +26,7 @@
       "id": "DOMAIN-CA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 47,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -34,21 +34,21 @@
       "type": "Domain",
       "label": "climate",
       "score": 61,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-technology",
       "type": "Domain",
       "label": "technology",
       "score": 58,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
-      "trend": "stable"
+      "score": 52,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-infrastructure",
@@ -87,18 +87,18 @@
       "domain": "technology"
     },
     {
-      "id": "SIGNAL-CA-Скотт_Стин",
-      "type": "Signal",
-      "label": "Скотт Стинсон: Ошибочный план Оливии Чоу",
-      "severity": 47,
-      "domain": "economic"
-    },
-    {
       "id": "SIGNAL-CA-Шторм_—_Се",
       "type": "Signal",
       "label": "Шторм — Северная Америка",
       "severity": 82,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-CA-Эпидемиоло",
+      "type": "Signal",
+      "label": "Эпидемиологический риск — Северная Амери",
+      "severity": 70,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-economic",
       "type": "CORRELATES",
-      "weight": 0.47
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CA",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.52
     },
     {
       "from": "COUNTRY-CA",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-CA-climate",
-      "to": "DOMAIN-CA-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-CA-infrastructure",
-      "to": "DOMAIN-CA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-CA-economic",
-      "to": "DOMAIN-CA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-CA-climate",
       "to": "DOMAIN-CA-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,22 +184,43 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-CA-climate",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-CA-ФБР_аресто",
       "to": "DOMAIN-CA-technology",
       "type": "AMPLIFIES",
       "weight": 0.58
     },
     {
-      "from": "SIGNAL-CA-Скотт_Стин",
-      "to": "DOMAIN-CA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.47
-    },
-    {
       "from": "SIGNAL-CA-Шторм_—_Се",
       "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
       "weight": 0.82
+    },
+    {
+      "from": "SIGNAL-CA-Эпидемиоло",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7
     }
   ]
 }
