@@ -6210,7 +6210,7 @@ def _topic_cap(events, N=5):
     _RSS_DOM=('technology','economy','climate','social')
     _exempt = 0
     for e in sorted(events, key=lambda x: -(x.get('severity', 0) or 0)):
-        if e.get('alerts_only'):
+        if e.get('alerts_only') or _CAP_SRC.search(str(e.get('source') or '')):
             out.append(e); continue        # предупреждение службы: своя панель, лимит темы не применяется
         toks = [t for t in _tc_toks((e.get('title','') or '') + ' ' + (e.get('summary','') or '')) if not _tc_is_stop(t) and df.get(t, 0) >= 8]
         if len(toks) < 2: out.append(e); continue
@@ -8110,6 +8110,8 @@ def process_events(raw_items):
     for ev in events:  # events отсортированы по severity desc
         if _flood_added >= FLOOD_RESERVE: break
         if not _is_flood(ev): continue
+        # предупреждения служб идут своим путём вне квоты (16.10.2026)
+        if ((ev.get('meta') or {}).get('kind')) in ('mgm', 'rosgidromet_cap', 'cap', 'cap_hub'): continue
         try:
             _ed = _date0.fromisoformat(ev.get('date','')[:10])
             _md = 7 if ev.get('domain') in ('economy','social') else 3
@@ -15951,7 +15953,7 @@ def fetch_cis_cap():
         url = 'https://meteoalert.meteoinfo.ru/%s/cap-feed/ru/atom.xml' % slug
         try:
             return _meteoinfo_cap(url, country, svc, svc + ' CAP', 'cap_hub', limit=40,
-                                  cc=cc, fallback=(la, lo))
+                                  cc=cc, fallback=(la, lo), aggregate=True)
         except Exception as e:
             print(f"  [WARN] {svc} CAP: {e}", file=sys.stderr)
             return []
@@ -15992,7 +15994,7 @@ def fetch_mideast_cap():
         url, cc, country, svc, la, lo = c
         try:
             return _meteoinfo_cap(url, country, svc, svc + ' CAP', 'cap_hub', limit=30,
-                                  cc=cc, fallback=(la, lo))
+                                  cc=cc, fallback=(la, lo), aggregate=True)
         except Exception as e:
             print(f"  [WARN] {svc} CAP: {e}", file=sys.stderr)
             return []
@@ -16037,7 +16039,8 @@ def fetch_global_cap():
         url, cc, country, svc, la, lo = c
         try:
             return _meteoinfo_cap(url, country, svc, svc + ' CAP', 'cap_hub', limit=25,
-                                  cc=cc, fallback=(la, lo), min_score=56, latin_only=True)
+                                  cc=cc, fallback=(la, lo), min_score=56, latin_only=True,
+                                  aggregate=True)
         except Exception as e:
             print(f"  [WARN] {svc} CAP: {e}", file=sys.stderr)
             return []
@@ -16070,7 +16073,7 @@ def _fetch_nws_cap():
     groups = {}
     for f in feats:
         pr = f.get('properties') or {}
-        ev = (pr.get('event') or '').strip()
+        ev = _cap_event_ru((pr.get('event') or '').strip())
         if not ev:
             continue
         try:
@@ -16082,7 +16085,8 @@ def _fetch_nws_cap():
         g['n'] += 1
         if (pr.get('severity') or '').lower() == 'extreme':
             g['sev'] = 'extreme'
-        for st in re.findall(r',\s*([A-Z]{2})\b', pr.get('areaDesc') or ''):
+        _ugc = ((pr.get('geocode') or {}).get('UGC') or [])
+        for st in [u[:2] for u in _ugc if isinstance(u, str) and len(u) >= 2] or re.findall(r',\s*([A-Z]{2})\b', pr.get('areaDesc') or ''):
             if st not in g['states']:
                 g['states'].append(st)
         if g['pt'] is None:
@@ -16097,7 +16101,7 @@ def _fetch_nws_cap():
         st = ', '.join(g['states'][:5]) + (' и ещё %d' % (len(g['states']) - 5) if len(g['states']) > 5 else '')
         lat, lng = g['pt'] or (39.8, -98.6)
         items.append({
-            'title': ('%s: США%s (%d предупр.)' % (ev, (' - ' + st) if st else '', g['n']))[:130],
+            'title': ('%s: США%s (%d предупр.)' % (ev, (', ' + st) if st else '', g['n']))[:130],
             'desc': 'Официальное предупреждение Национальной метеослужбы США. Штаты: %s · NWS' % (st or 'н/д'),
             'date': now.strftime('%Y-%m-%d'), 'source': 'NWS CAP',
             '_lat': lat, '_lng': lng, '_coord_origin': ('computed' if g['pt'] else 'country'),
@@ -16109,8 +16113,102 @@ def _fetch_nws_cap():
     return items
 
 
+# Явления CAP на русском (16.10.2026). Общий перевод ленты не переводит
+# заголовок, где кириллицы больше, чем латиницы («Freeze предупреждение: США»),
+# поэтому название явления переводится здесь, по словарю. Сначала точное
+# совпадение, затем ключевые слова. Не найдено - остаётся как у службы.
+_CAP_EVENT_RU = {
+    'flood warning': 'Наводнение', 'flash flood warning': 'Внезапный паводок',
+    'flood watch': 'Угроза наводнения', 'flash flood watch': 'Угроза внезапного паводка',
+    'flood advisory': 'Подтопления', 'coastal flood warning': 'Прибрежное наводнение',
+    'red flag warning': 'Высокая пожароопасность', 'fire weather watch': 'Угроза пожароопасной погоды',
+    'high wind warning': 'Сильный ветер', 'high wind watch': 'Угроза сильного ветра',
+    'freeze warning': 'Заморозки', 'hard freeze warning': 'Сильные заморозки', 'freeze watch': 'Угроза заморозков',
+    'frost advisory': 'Заморозки', 'winter storm warning': 'Зимний шторм', 'winter storm watch': 'Угроза зимнего шторма',
+    'blizzard warning': 'Метель', 'ice storm warning': 'Ледяной дождь', 'tornado warning': 'Торнадо',
+    'tornado watch': 'Угроза торнадо', 'severe thunderstorm warning': 'Сильная гроза',
+    'severe thunderstorm watch': 'Угроза сильной грозы', 'hurricane warning': 'Ураган',
+    'hurricane watch': 'Угроза урагана', 'tropical storm warning': 'Тропический шторм',
+    'tropical storm watch': 'Угроза тропического шторма', 'storm surge warning': 'Штормовой нагон',
+    'excessive heat warning': 'Аномальная жара', 'extreme heat warning': 'Аномальная жара',
+    'heat advisory': 'Жара', 'extreme cold warning': 'Сильный мороз', 'wind chill warning': 'Сильный мороз',
+    'dense fog advisory': 'Густой туман', 'gale warning': 'Штормовой ветер', 'storm warning': 'Шторм',
+    'hurricane force wind warning': 'Ураганный ветер', 'high surf warning': 'Сильный прибой',
+    'dust storm warning': 'Пыльная буря', 'avalanche warning': 'Лавины', 'tsunami warning': 'Цунами',
+    'special marine warning': 'Опасная погода на море', 'small craft advisory': 'Опасно для малых судов',
+    'tempestade': 'Шторм', 'acumulado de chuva': 'Сильные осадки', 'chuvas intensas': 'Сильный дождь',
+    'ventos costeiros': 'Прибрежный ветер', 'vendaval': 'Шквалистый ветер', 'baixa umidade': 'Низкая влажность',
+    'onda de calor': 'Жара', 'onda de frio': 'Похолодание', 'declínio de temperatura': 'Похолодание',
+    'geada': 'Заморозки', 'ressaca': 'Штормовой прибой', 'granizo': 'Град', 'nevoeiro': 'Туман',
+    'sheep graziers warning': 'Холод и ветер для скота',
+}
+_CAP_EVENT_KW = [
+    (r'tornado', 'Торнадо'), (r'hurricane|typhoon', 'Ураган'), (r'tropical (?:storm|cyclone|depression)', 'Тропический циклон'),
+    (r'flash flood', 'Внезапный паводок'), (r'flood|inunda', 'Наводнение'), (r'landslide|mudslide|deslizamento', 'Оползень'),
+    (r'blizzard', 'Метель'), (r'snow', 'Снегопад'), (r'ice|freezing rain', 'Гололёд'),
+    (r'thunder|lightning|convect|trovoad', 'Гроза'), (r'hail|granizo', 'Град'),
+    (r'heavy rain|rainstorm|torrential|chuva', 'Сильный дождь'), (r'\brain', 'Дождь'),
+    (r'fog|nevoeiro', 'Туман'), (r'dust|sand', 'Пыльная буря'),
+    (r'gale|strong wind|high wind|\bwind|vento|vendaval', 'Сильный ветер'),
+    (r'heat|calor', 'Жара'), (r'cold|frost|freeze|frio|geada', 'Холод'),
+    (r'fire|bushfire|wildfire|incêndio', 'Пожароопасность'), (r'wave|surf|swell|ressaca|storm surge', 'Высокие волны'),
+    (r'drought|seca', 'Засуха'), (r'avalanche', 'Лавины'), (r'tsunami', 'Цунами'), (r'storm|tempestade', 'Шторм'),
+]
+
+
+def _cap_event_ru(event):
+    """Название явления CAP по-русски: словарь, затем ключевые слова."""
+    ev = (event or '').strip()
+    if not ev or re.search(r'[А-Яа-яЁё]', ev):
+        return ev
+    low = ev.lower()
+    if low in _CAP_EVENT_RU:
+        return _CAP_EVENT_RU[low]
+    for rx, ru in _CAP_EVENT_KW:
+        if re.search(rx, low):
+            return ru
+    return ev
+
+
+def _cap_aggregate(items, country, svc, source):
+    """Сводка предупреждений страны по явлению: одна карточка на явление со
+    списком районов. Без неё десятки районов одной провинции давали десятки
+    одинаковых заголовков, и общая дедупликация оставляла один район без
+    указания, что охват шире (замер 16.10: NCM 24 -> 2, Казгидромет 38 -> 4)."""
+    groups = {}
+    for it in items:
+        m = it.get('_meta') or {}
+        ev = _cap_event_ru(m.get('event') or '')
+        g = groups.setdefault(ev, {'items': [], 'areas': []})
+        g['items'].append(it)
+        a = (m.get('area') or '').strip()
+        a = re.sub(r'^(?:aviso para as [áa]reas|areas?|районы?)\s*:\s*', '', a, flags=re.I)
+        for part in [x.strip() for x in re.split(r'[;,]', a) if x.strip()]:
+            if part not in g['areas']:
+                g['areas'].append(part)
+    out = []
+    for ev, g in groups.items():
+        lead = max(g['items'], key=lambda x: x.get('_force_severity') or 0)
+        n, areas = len(g['items']), g['areas']
+        if n == 1 and len(areas) == 1 and len(areas[0]) <= 60:
+            title = f"{ev}: {areas[0]} ({country})"
+        else:
+            k = max(n, len(areas))
+            _t, _h = k % 10, k % 100
+            _w = 'район' if _t == 1 and _h != 11 else ('района' if 2 <= _t <= 4 and not 12 <= _h <= 14 else 'районов')
+            title = f"{ev}: {country} ({k} {_w})"
+        shown = ', '.join(areas[:6]) + (f' и ещё {len(areas) - 6}' if len(areas) > 6 else '')
+        it = dict(lead)
+        it['title'] = title[:130]
+        it['desc'] = (f"Районы: {shown} · {svc}" if shown else f"Официальное предупреждение · {svc}")
+        it['_region'] = country
+        it['_meta'] = dict(lead.get('_meta') or {}, event=ev, warnings=n)
+        out.append(it)
+    return out
+
+
 def _meteoinfo_cap(feed_url, country, svc, source, kind, limit=70, cc=None, fallback=None,
-                   min_score=0, latin_only=False):
+                   min_score=0, latin_only=False, aggregate=False):
     """Разбор Atom-ленты хаба Гидрометцентра и CAP-документов по ссылкам из неё."""
     items = []
     feed = fetch_url(feed_url, timeout=20)
@@ -16219,6 +16317,8 @@ def _meteoinfo_cap(feed_url, country, svc, source, kind, limit=70, cc=None, fall
             it["_country_code"] = cc
         items.append(it)
     print(f"  {source}: {len(items)} активных предупреждений", file=sys.stderr)
+    if aggregate and items:
+        items = _cap_aggregate(items, country, svc, source)
     return items
 
 
