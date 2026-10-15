@@ -10785,6 +10785,8 @@ NATURAL_DETECTION_SOURCES = (
     'EONET', 'Copernicus', 'GDACS',
     'Казгидромет CAP', 'Белгидромет CAP', 'Узгидромет CAP', 'Кыргызгидромет CAP',
     'NCM CAP', 'QCAA CAP', 'KMD CAP', 'Oman Met CAP', 'Bahrain Met CAP', 'IRIMO CAP', 'EMA CAP',
+    'NWS CAP', 'CMA CAP', 'JMA CAP', 'KMA CAP', 'IMD CAP', 'BMKG CAP', 'PAGASA CAP', 'MSC CAP',
+    'BoM CAP', 'INMET CAP',
 )
 
 
@@ -16002,7 +16004,113 @@ def fetch_mideast_cap():
     return items
 
 
-def _meteoinfo_cap(feed_url, country, svc, source, kind, limit=70, cc=None, fallback=None):
+# ══════════════════════════════════════════════════════════════════════════════
+# ИСТОЧНИК (16.10.2026): CAP-предупреждения крупных стран вне Европы и СНГ:
+# США, Китай, Япония, Корея, Индия, Индонезия, Филиппины, Канада, Австралия,
+# Бразилия. Ленты из реестра ВМО. Ленты большие, поэтому берутся только
+# уровни moderate и выше и не больше 25 документов на страну. Предупреждения
+# на языках без латиницы и кириллицы пропускаются: общий перевод ленты их не
+# переводит, а иероглифы в карточке бесполезны.
+# США - отдельный фетчер по JSON API NWS: тысячи записей сводятся по явлению.
+# Откат: GLOBAL_CAP = False.
+# ══════════════════════════════════════════════════════════════════════════════
+GLOBAL_CAP = True
+_GLOBAL_CAP = [
+    ('https://severeweather.wmo.int/v2/cap-alerts/cn-cma-xx/rss.xml', 'CN', 'Китай', 'CMA', 39.90, 116.40),
+    ('https://www.data.jma.go.jp/cap-rsmctk/atom.xml', 'JP', 'Япония', 'JMA', 35.68, 139.69),
+    ('https://www.weather.go.kr/w/rss/cap/warning.do', 'KR', 'Южная Корея', 'KMA', 37.57, 126.98),
+    ('https://cap-sources.s3.amazonaws.com/in-imd-en/rss.xml', 'IN', 'Индия', 'IMD', 28.61, 77.21),
+    ('https://www.bmkg.go.id/alerts/nowcast/en', 'ID', 'Индонезия', 'BMKG', -6.21, 106.85),
+    ('https://publicalert.pagasa.dost.gov.ph/feeds', 'PH', 'Филиппины', 'PAGASA', 14.60, 120.98),
+    ('https://rss.naad-adna.pelmorex.com/', 'CA', 'Канада', 'MSC', 45.42, -75.70),
+    ('https://severeweather.wmo.int/v2/cap-alerts/au-bom-en/rss.xml', 'AU', 'Австралия', 'BoM', -35.28, 149.13),
+    ('https://apiprevmet3.inmet.gov.br/avisos/rss', 'BR', 'Бразилия', 'INMET', -15.79, -47.88),
+]
+
+
+def fetch_global_cap():
+    """Официальные метеопредупреждения крупных стран вне Европы и СНГ (CAP)."""
+    if not GLOBAL_CAP:
+        return []
+    from concurrent.futures import ThreadPoolExecutor as _TPE
+    def _one(c):
+        url, cc, country, svc, la, lo = c
+        try:
+            return _meteoinfo_cap(url, country, svc, svc + ' CAP', 'cap_hub', limit=25,
+                                  cc=cc, fallback=(la, lo), min_score=56, latin_only=True)
+        except Exception as e:
+            print(f"  [WARN] {svc} CAP: {e}", file=sys.stderr)
+            return []
+    items = []
+    with _TPE(max_workers=9) as ex:
+        for got in ex.map(_one, _GLOBAL_CAP):
+            items.extend(got)
+    try:
+        items.extend(_fetch_nws_cap())
+    except Exception as e:
+        print(f"  [WARN] NWS CAP: {e}", file=sys.stderr)
+    print(f"  Мир CAP: {len(items)} предупреждений", file=sys.stderr)
+    return items
+
+
+def _fetch_nws_cap():
+    """NWS (США): активные предупреждения уровней Extreme и Severe, сводка по явлению."""
+    url = 'https://api.weather.gov/alerts/active?status=actual&severity=Extreme,Severe'
+    raw = fetch_url(url, timeout=20, headers={'User-Agent': '(Atlas Intelligence, archive-bot)',
+                                              'Accept': 'application/geo+json'})
+    if not raw:
+        print("  [SKIP] NWS CAP: лента недоступна", file=sys.stderr)
+        return []
+    try:
+        feats = json.loads(raw).get('features') or []
+    except Exception as e:
+        print(f"  [WARN] NWS CAP: {e}", file=sys.stderr)
+        return []
+    now = datetime.now(timezone.utc)
+    groups = {}
+    for f in feats:
+        pr = f.get('properties') or {}
+        ev = (pr.get('event') or '').strip()
+        if not ev:
+            continue
+        try:
+            if pr.get('expires') and datetime.fromisoformat(pr['expires'].replace('Z', '+00:00')) < now:
+                continue
+        except Exception:
+            pass
+        g = groups.setdefault(ev, {'n': 0, 'sev': 'severe', 'states': [], 'pt': None})
+        g['n'] += 1
+        if (pr.get('severity') or '').lower() == 'extreme':
+            g['sev'] = 'extreme'
+        for st in re.findall(r',\s*([A-Z]{2})\b', pr.get('areaDesc') or ''):
+            if st not in g['states']:
+                g['states'].append(st)
+        if g['pt'] is None:
+            geom = f.get('geometry') or {}
+            try:
+                ring = geom['coordinates'][0]
+                g['pt'] = (sum(p[1] for p in ring) / len(ring), sum(p[0] for p in ring) / len(ring))
+            except Exception:
+                pass
+    items = []
+    for ev, g in groups.items():
+        st = ', '.join(g['states'][:5]) + (' и ещё %d' % (len(g['states']) - 5) if len(g['states']) > 5 else '')
+        lat, lng = g['pt'] or (39.8, -98.6)
+        items.append({
+            'title': ('%s: США%s (%d предупр.)' % (ev, (' - ' + st) if st else '', g['n']))[:130],
+            'desc': 'Официальное предупреждение Национальной метеослужбы США. Штаты: %s · NWS' % (st or 'н/д'),
+            'date': now.strftime('%Y-%m-%d'), 'source': 'NWS CAP',
+            '_lat': lat, '_lng': lng, '_coord_origin': ('computed' if g['pt'] else 'country'),
+            '_region': 'США', '_country_code': 'US', '_domain': 'climate',
+            '_force_severity': _CAP_SEV.get(g['sev'], 74),
+            '_meta': {'kind': 'cap_hub', 'verified': True, 'event': ev, 'severity': g['sev'], 'warnings': g['n']},
+        })
+    print(f"  NWS CAP: {len(items)} явлений из {len(feats)} предупреждений", file=sys.stderr)
+    return items
+
+
+def _meteoinfo_cap(feed_url, country, svc, source, kind, limit=70, cc=None, fallback=None,
+                   min_score=0, latin_only=False):
     """Разбор Atom-ленты хаба Гидрометцентра и CAP-документов по ссылкам из неё."""
     items = []
     feed = fetch_url(feed_url, timeout=20)
@@ -16080,6 +16188,10 @@ def _meteoinfo_cap(feed_url, country, svc, source, kind, limit=70, cc=None, fall
         sev = _cap_find(info, "severity")
         sevkey = (sev.text or "").strip().lower() if sev is not None else "unknown"
         score = _CAP_SEV.get(sevkey, 50)
+        if score < min_score:
+            continue
+        if latin_only and not re.search(r'[A-Za-zА-Яа-яЁё]', event):
+            continue
         area = _cap_find(info, "areaDesc")
         areaDesc = (area.text or "").strip() if area is not None else ""
         poly = _cap_find(info, "polygon")
@@ -25933,6 +26045,9 @@ _SRC_TYPE = {
     'Узгидромет CAP': 'ALERT', 'Кыргызгидромет CAP': 'ALERT',
     'NCM CAP': 'ALERT', 'QCAA CAP': 'ALERT', 'KMD CAP': 'ALERT', 'Oman Met CAP': 'ALERT',
     'Bahrain Met CAP': 'ALERT', 'IRIMO CAP': 'ALERT', 'EMA CAP': 'ALERT',
+    'NWS CAP': 'ALERT', 'CMA CAP': 'ALERT', 'JMA CAP': 'ALERT', 'KMA CAP': 'ALERT',
+    'IMD CAP': 'ALERT', 'BMKG CAP': 'ALERT', 'PAGASA CAP': 'ALERT', 'MSC CAP': 'ALERT',
+    'BoM CAP': 'ALERT', 'INMET CAP': 'ALERT',
     'Copernicus EMS': 'ALERT',       # активация экстренного картирования
     'IODA': 'ALERT',                 # детекция отключений связи в реальном времени
     'The Watchers': 'ALERT',
@@ -27197,6 +27312,7 @@ if __name__ == '__main__':
             ('rosgidromet_cap',    fetch_rosgidromet_cap),
             ('cis_cap',            fetch_cis_cap),
             ('mideast_cap',        fetch_mideast_cap),
+            ('global_cap',         fetch_global_cap),
             ('notam',              fetch_notam),   # NOTAM_GATE=False -> пустой список
             ('mgm_turkey',         fetch_mgm_turkey),
             ('cbr_russia',         fetch_cbr_russia),
