@@ -2,67 +2,72 @@
   "country": "JP",
   "date": "2026-10-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-15T04:26:44.117835+00:00",
+  "generated_at": "2026-10-15T04:47:30.253570+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-JP",
       "type": "Country",
       "label": "JP",
-      "score": 53,
+      "score": 46,
       "props": {
-        "risk_score": 53
+        "risk_score": 46
       }
     },
     {
       "id": "DOMAIN-JP-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 60,
-      "trend": "up"
+      "score": 5,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-JP-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
-      "trend": "up"
+      "score": 34,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-JP-climate",
       "type": "Domain",
       "label": "climate",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-JP-technology",
       "type": "Domain",
       "label": "technology",
       "score": 43,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-JP-social",
       "type": "Domain",
       "label": "social",
       "score": 46,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-JP-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-JP-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
+    },
+    {
+      "id": "DRIVER-JP-Economic",
+      "type": "Driver",
+      "label": "Economic"
     },
     {
       "id": "DRIVER-JP-Geopolitical",
@@ -73,18 +78,6 @@
       "id": "DRIVER-JP-Economic",
       "type": "Driver",
       "label": "Economic"
-    },
-    {
-      "id": "DRIVER-JP-Economic",
-      "type": "Driver",
-      "label": "Economic"
-    },
-    {
-      "id": "SIGNAL-JP-Предложенн",
-      "type": "Signal",
-      "label": "Предложенное Трампом энергетическое пере",
-      "severity": 52,
-      "domain": "geopolitical"
     },
     {
       "id": "SIGNAL-JP-Столько,_п",
@@ -99,6 +92,13 @@
       "label": "Жить в Японии станет дороже: пошлина за ",
       "severity": 46,
       "domain": "social"
+    },
+    {
+      "id": "SIGNAL-JP-По_подозре",
+      "type": "Signal",
+      "label": "По подозрению в шпионаже и работе на одн",
+      "severity": 34,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.6
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-JP",
@@ -145,6 +145,12 @@
       "weight": 0.05
     },
     {
+      "from": "DRIVER-JP-Economic",
+      "to": "COUNTRY-JP",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-JP-Geopolitical",
       "to": "COUNTRY-JP",
       "type": "CAUSES",
@@ -157,39 +163,6 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-JP-Economic",
-      "to": "COUNTRY-JP",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-JP-geopolitical",
-      "to": "DOMAIN-JP-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-JP-infrastructure",
-      "to": "DOMAIN-JP-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-JP-economic",
-      "to": "DOMAIN-JP-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
-      "from": "SIGNAL-JP-Предложенн",
-      "to": "DOMAIN-JP-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.52
-    },
-    {
       "from": "SIGNAL-JP-Столько,_п",
       "to": "DOMAIN-JP-technology",
       "type": "AMPLIFIES",
@@ -200,6 +173,12 @@
       "to": "DOMAIN-JP-social",
       "type": "AMPLIFIES",
       "weight": 0.46
+    },
+    {
+      "from": "SIGNAL-JP-По_подозре",
+      "to": "DOMAIN-JP-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.34
     }
   ]
 }
