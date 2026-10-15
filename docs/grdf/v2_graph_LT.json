@@ -2,9 +2,9 @@
   "country": "LT",
   "date": "2026-10-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-15T22:10:58.866803+00:00",
-  "node_count": 13,
-  "edge_count": 15,
+  "generated_at": "2026-10-15T22:28:12.006132+00:00",
+  "node_count": 14,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-LT",
@@ -33,7 +33,7 @@
       "id": "DOMAIN-LT-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 50,
       "trend": "stable"
     },
     {
@@ -70,14 +70,21 @@
       "label": "geopolitical"
     },
     {
+      "id": "DRIVER-LT-climate",
+      "type": "Driver",
+      "label": "climate"
+    },
+    {
       "id": "DRIVER-LT-economic",
       "type": "Driver",
       "label": "economic"
     },
     {
-      "id": "DRIVER-LT-climate",
-      "type": "Driver",
-      "label": "climate"
+      "id": "SIGNAL-LT-Ветер:_Лит",
+      "type": "Signal",
+      "label": "Ветер: Литва (жёлтый уровень)",
+      "severity": 50,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-LT-Геополитич",
@@ -111,7 +118,7 @@
       "from": "COUNTRY-LT",
       "to": "DOMAIN-LT-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-LT",
@@ -144,16 +151,58 @@
       "weight": 0.8
     },
     {
+      "from": "DRIVER-LT-climate",
+      "to": "COUNTRY-LT",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-LT-economic",
       "to": "COUNTRY-LT",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-LT-climate",
-      "to": "COUNTRY-LT",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-LT-climate",
+      "to": "DOMAIN-LT-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-LT-economic",
+      "to": "DOMAIN-LT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-LT-social",
+      "to": "DOMAIN-LT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-LT-climate",
+      "to": "DOMAIN-LT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-LT-infrastructure",
+      "to": "DOMAIN-LT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-LT-economic",
+      "to": "DOMAIN-LT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-LT-geopolitical",
@@ -175,6 +224,12 @@
       "type": "AMPLIFIES",
       "weight": 0.6,
       "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-LT-Ветер:_Лит",
+      "to": "DOMAIN-LT-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
     },
     {
       "from": "SIGNAL-LT-Геополитич",

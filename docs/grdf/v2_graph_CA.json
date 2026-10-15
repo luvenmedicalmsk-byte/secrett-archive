@@ -2,67 +2,67 @@
   "country": "CA",
   "date": "2026-10-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-15T22:10:58.872320+00:00",
+  "generated_at": "2026-10-15T22:28:12.012775+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-CA",
       "type": "Country",
       "label": "CA",
-      "score": 58,
+      "score": 79,
       "props": {
-        "risk_score": 58
+        "risk_score": 79
       }
     },
     {
       "id": "DOMAIN-CA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
-      "trend": "stable"
+      "score": 72,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-climate",
       "type": "Domain",
       "label": "climate",
       "score": 61,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-technology",
       "type": "Domain",
       "label": "technology",
       "score": 58,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
-      "score": 52,
-      "trend": "stable"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-CA-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-CA-RCMP_не_ра",
+      "type": "Signal",
+      "label": "RCMP не раскроет результаты токсикологии",
+      "severity": 72,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-CA-ФБР_аресто",
       "type": "Signal",
       "label": "ФБР арестовало руководителя компании по ",
@@ -92,13 +99,6 @@
       "label": "Шторм — Северная Америка",
       "severity": 82,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-CA-Эпидемиоло",
-      "type": "Signal",
-      "label": "Эпидемиологический риск — Северная Амери",
-      "severity": 70,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.72
     },
     {
       "from": "COUNTRY-CA",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-social",
       "type": "CORRELATES",
-      "weight": 0.52
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CA",
@@ -184,6 +184,27 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-CA-geopolitical",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "DOMAIN-CA-climate",
       "to": "DOMAIN-CA-infrastructure",
       "type": "ESCALATES",
@@ -205,6 +226,12 @@
       "lag_days": 30
     },
     {
+      "from": "SIGNAL-CA-RCMP_не_ра",
+      "to": "DOMAIN-CA-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.72
+    },
+    {
       "from": "SIGNAL-CA-ФБР_аресто",
       "to": "DOMAIN-CA-technology",
       "type": "AMPLIFIES",
@@ -215,12 +242,6 @@
       "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
       "weight": 0.82
-    },
-    {
-      "from": "SIGNAL-CA-Эпидемиоло",
-      "to": "DOMAIN-CA-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7
     }
   ]
 }

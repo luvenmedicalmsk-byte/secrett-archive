@@ -2,9 +2,9 @@
   "country": "ID",
   "date": "2026-10-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-15T22:10:58.873560+00:00",
+  "generated_at": "2026-10-15T22:28:12.014315+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-ID",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-ID-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 46,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -33,7 +33,7 @@
       "id": "DOMAIN-ID-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 44,
+      "score": 51,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-ID-Зловещее_о",
+      "type": "Signal",
+      "label": "Зловещее оранжевое смога окутывает индон",
+      "severity": 51,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-ID-Поскольку_",
       "type": "Signal",
       "label": "Поскольку вырубка лесов растет, Индонези",
@@ -92,13 +99,6 @@
       "label": "Эпидемиологический риск — Индонезия",
       "severity": 81,
       "domain": "social"
-    },
-    {
-      "id": "SIGNAL-ID-Геополитич",
-      "type": "Signal",
-      "label": "Геополитический процесс — Юго-Восточная ",
-      "severity": 62,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.46
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-ID",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-climate",
       "type": "CORRELATES",
-      "weight": 0.44
+      "weight": 0.51
     },
     {
       "from": "COUNTRY-ID",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-ID-geopolitical",
-      "to": "DOMAIN-ID-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-ID-infrastructure",
-      "to": "DOMAIN-ID-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-ID-economic",
-      "to": "DOMAIN-ID-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "DOMAIN-ID-climate",
       "to": "DOMAIN-ID-infrastructure",
       "type": "ESCALATES",
@@ -226,6 +205,12 @@
       "lag_days": 30
     },
     {
+      "from": "SIGNAL-ID-Зловещее_о",
+      "to": "DOMAIN-ID-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.51
+    },
+    {
       "from": "SIGNAL-ID-Поскольку_",
       "to": "DOMAIN-ID-climate",
       "type": "AMPLIFIES",
@@ -236,12 +221,6 @@
       "to": "DOMAIN-ID-social",
       "type": "AMPLIFIES",
       "weight": 0.81
-    },
-    {
-      "from": "SIGNAL-ID-Геополитич",
-      "to": "DOMAIN-ID-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.62
     }
   ]
 }
