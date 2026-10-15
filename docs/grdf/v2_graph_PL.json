@@ -2,9 +2,9 @@
   "country": "PL",
   "date": "2026-10-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-15T21:26:33.748138+00:00",
+  "generated_at": "2026-10-15T22:02:03.714119+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-PL",
@@ -26,14 +26,14 @@
       "id": "DOMAIN-PL-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 36,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-PL-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 46,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-PL-Дефлятор_В",
+      "type": "Signal",
+      "label": "Дефлятор ВВП Польши",
+      "severity": 32,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-PL-Геополитич",
       "type": "Signal",
       "label": "Геополитический процесс — Польша",
@@ -92,13 +99,6 @@
       "label": "Военные удары — Польша",
       "severity": 64,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-PL-Оползень_—",
-      "type": "Signal",
-      "label": "Оползень — Польша",
-      "severity": 46,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -112,13 +112,13 @@
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-climate",
       "type": "CORRELATES",
-      "weight": 0.46
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-PL",
@@ -163,48 +163,6 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-PL-climate",
-      "to": "DOMAIN-PL-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-PL-economic",
-      "to": "DOMAIN-PL-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-PL-social",
-      "to": "DOMAIN-PL-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-PL-climate",
-      "to": "DOMAIN-PL-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-PL-infrastructure",
-      "to": "DOMAIN-PL-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-PL-economic",
-      "to": "DOMAIN-PL-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-PL-geopolitical",
       "to": "DOMAIN-PL-infrastructure",
       "type": "ESCALATES",
@@ -226,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-PL-Дефлятор_В",
+      "to": "DOMAIN-PL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.32
+    },
+    {
       "from": "SIGNAL-PL-Геополитич",
       "to": "DOMAIN-PL-geopolitical",
       "type": "AMPLIFIES",
@@ -236,12 +200,6 @@
       "to": "DOMAIN-PL-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.64
-    },
-    {
-      "from": "SIGNAL-PL-Оползень_—",
-      "to": "DOMAIN-PL-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.46
     }
   ]
 }
