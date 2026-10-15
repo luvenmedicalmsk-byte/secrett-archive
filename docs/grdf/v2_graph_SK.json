@@ -2,9 +2,9 @@
   "country": "SK",
   "date": "2026-10-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-15T06:46:14.447757+00:00",
-  "node_count": 13,
-  "edge_count": 15,
+  "generated_at": "2026-10-15T07:07:39.245164+00:00",
+  "node_count": 14,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-SK",
@@ -19,14 +19,14 @@
       "id": "DOMAIN-SK-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 53,
+      "score": 5,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-SK-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
+      "score": 36,
       "trend": "stable"
     },
     {
@@ -65,14 +65,14 @@
       "trend": "stable"
     },
     {
-      "id": "DRIVER-SK-geopolitical",
-      "type": "Driver",
-      "label": "geopolitical"
-    },
-    {
       "id": "DRIVER-SK-economic",
       "type": "Driver",
       "label": "economic"
+    },
+    {
+      "id": "DRIVER-SK-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
     },
     {
       "id": "DRIVER-SK-climate",
@@ -80,16 +80,23 @@
       "label": "climate"
     },
     {
-      "id": "SIGNAL-SK-Военные_уд",
+      "id": "SIGNAL-SK-Основной_у",
       "type": "Signal",
-      "label": "Военные удары — Словакия",
-      "severity": 53,
-      "domain": "geopolitical"
+      "label": "Основной уровень инфляции в Словакии",
+      "severity": 32,
+      "domain": "economic"
     },
     {
-      "id": "SIGNAL-SK-Экономичес",
+      "id": "SIGNAL-SK-Уровень_ин",
       "type": "Signal",
-      "label": "Экономический сигнал — Словакия",
+      "label": "Уровень инфляции в Словакии по сравнению",
+      "severity": 32,
+      "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-SK-Уровень_ин",
+      "type": "Signal",
+      "label": "Уровень инфляции в Словакии",
       "severity": 32,
       "domain": "economic"
     }
@@ -99,13 +106,13 @@
       "from": "COUNTRY-SK",
       "to": "DOMAIN-SK-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.53
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-SK",
       "to": "DOMAIN-SK-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-SK",
@@ -138,13 +145,13 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-SK-geopolitical",
+      "from": "DRIVER-SK-economic",
       "to": "COUNTRY-SK",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-SK-economic",
+      "from": "DRIVER-SK-geopolitical",
       "to": "COUNTRY-SK",
       "type": "CAUSES",
       "weight": 0.8
@@ -156,34 +163,19 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-SK-geopolitical",
-      "to": "DOMAIN-SK-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-SK-infrastructure",
+      "from": "SIGNAL-SK-Основной_у",
       "to": "DOMAIN-SK-economic",
       "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
+      "weight": 0.32
     },
     {
-      "from": "DOMAIN-SK-economic",
-      "to": "DOMAIN-SK-social",
+      "from": "SIGNAL-SK-Уровень_ин",
+      "to": "DOMAIN-SK-economic",
       "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
+      "weight": 0.32
     },
     {
-      "from": "SIGNAL-SK-Военные_уд",
-      "to": "DOMAIN-SK-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.53
-    },
-    {
-      "from": "SIGNAL-SK-Экономичес",
+      "from": "SIGNAL-SK-Уровень_ин",
       "to": "DOMAIN-SK-economic",
       "type": "AMPLIFIES",
       "weight": 0.32
