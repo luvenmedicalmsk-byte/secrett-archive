@@ -25178,6 +25178,58 @@ _HYG_CUM = re.compile(r'(?<![а-яё])с\s+(?:начала|октября|ноя
 _HYG_NUMW = {'два': 2, 'три': 3, 'пять': 5, 'десять': 10, 'двадцать': 20, 'тридцать': 30, 'сорок': 40, 'пятьдесят': 50,
              'шестьдесят': 60, 'семьдесят': 70, 'восемьдесят': 80, 'девяносто': 90, 'сто': 100}
 FEED_STORY_MAX = 4
+# 15.10: масштаб природной ЧС. «Ливень парализовал Стамбул: 1 277 подтоплений, 15 оползней,
+# 1 погибший» получил 72 без единого правила — по общему тону текста. Тот же ливень в
+# другом городе мог получить и 55, и 80. Теперь индекс климатической ЧС держится в коридоре
+# ±4 вокруг оценки по фактам: число подтоплений/оползней, эвакуированные, обесточенные,
+# погибшие, мегаполис. Работает только когда в тексте есть хотя бы один такой факт.
+HAZARD_SCALE = True
+_HZ_KIND = re.compile(r'(?<![а-яё])(?:ливн\w*|дожд\w*|наводнен\w*|подтоплен\w*|паводк\w*|оползн\w*|сел[ьяи]\w*|шторм\w*|ураган\w*|тайфун\w*|'
+                      r'циклон\w*|снегопад\w*|метел\w*|буран\w*|град\w*|смерч\w*|торнадо|землетрясен\w*|пожар\w*|жар[аы]\w*|засух\w*)(?![а-яё])', re.I)
+_HZ_MEGA = re.compile(r'(?<![а-яё])(?:стамбул|москв|санкт-петербург|токио|шанха|пекин|гуанчжоу|шэньчжэн|дели|мумба|калькутт|каир|лагос|'
+                      r'джакарт|манил|сеул|нью-йорк|лос-андж|мехико|сан-паулу|рио-де-жанейро|буэнос-айрес|дакк|карачи|лахор|тегеран|'
+                      r'бангкок|гонконг|лондон|париж|осак|киншас|лим[аеу]|богот|хошимин|ханой)', re.I)
+
+
+def _hz_num(txt):
+    try:
+        return int(re.sub(r'\D', '', txt))
+    except ValueError:
+        return 0
+
+
+def _hz_mult(unit):
+    u = (unit or '').lower()
+    return 1_000_000 if u.startswith('млн') else 1000 if u.startswith('тыс') else 1
+
+
+def _hazard_scale(t):
+    """Оценка индекса природной ЧС по фактам из текста; None — фактов нет."""
+    low = t.lower()
+    inc = 0
+    for m in re.finditer(r'(\d[\d\s]{0,7})\s+(?:случа\w+\s+)?(?:подтоплен\w*|наводнен\w*|оползн\w*|обрушен\w*|вызов\w*)', low):
+        inc += _hz_num(m.group(1))
+    ev = 0
+    for m in re.finditer(r'эвакуир\w*\s+(?:более|около|свыше|до)?\s*(\d[\d\s,.]{0,7})\s*(тыс\w*|млн)?', low):
+        ev = max(ev, _hz_num(m.group(1).split(',')[0].split('.')[0]) * _hz_mult(m.group(2)))
+    for m in re.finditer(r'(\d[\d\s]{0,7})\s*(тыс\w*\.?|млн)?\s+(?:человек|жителей)\s+(?:были\s+)?эвакуир', low):
+        ev = max(ev, _hz_num(m.group(1)) * _hz_mult(m.group(2)))
+    pw = 0
+    for m in re.finditer(r'(\d[\d\s]{0,7})\s*(тыс\w*\.?|млн)?\s+(?:человек|домов|домохозяйств|жителей|абонентов|потребителей)\s+(?:остал\w+\s+)?без\s+(?:света|электричеств)', low):
+        pw = max(pw, _hz_num(m.group(1)) * _hz_mult(m.group(2)))
+    d = _hyg_deaths(t) or 0
+    mega = bool(_HZ_MEGA.search(low))
+    if not (inc or ev or pw or d or (mega and re.search(r'парализ|затоп|подтоп', low))):
+        return None
+    sc = 54
+    sc += 6 if inc >= 1000 else 4 if inc >= 100 else 2 if inc >= 10 else 0
+    sc += 6 if ev >= 100_000 else 4 if ev >= 10_000 else 2 if ev >= 1000 else 0
+    sc += 6 if pw >= 1_000_000 else 4 if pw >= 100_000 else 2 if pw >= 10_000 else 0
+    sc += 12 if d >= 20 else 8 if d >= 5 else 4 if d >= 1 else 0
+    sc += 6 if mega else 0
+    if re.search(r'парализ|режим\w* (?:чс|чрезвычайн)|чрезвычайн\w+ положен', low):
+        sc += 4
+    return min(sc, 84)
 # Аудит 14.10: заявления, призывы, исследования и «может/способен» без факта
 # получали 76–82 («Россия заявляет, что Европа купила углеводородов…» 82,
 # «Зеленский призвал позаботиться о безопасности» 82, «Возможный обвал рынка ИИ» 76).
@@ -25205,6 +25257,13 @@ def _hyg_deaths(t):
             n = int(re.sub(r'\D', '', m.group(1)))
         except ValueError:
             n = None
+    if n is None:
+        m = re.search(r'(?:жертв|погибш|погибл|смерт)\w*\s+(?:\w+\s+){0,2}?(?:возросл\w*|вырос\w*|увеличил\w*|достиг\w*)\s+(?:до\s+)?(\d[\d\s]*)', t)
+        if m:
+            try:
+                n = int(re.sub(r'\D', '', m.group(1)))
+            except ValueError:
+                n = None
     if n is None:
         m = re.search(r'(\d[\d\s]*)\s+(?:человек\w*\s+)?(?:погиб\w*|убит\w*|жертв)', t)
         if m:
@@ -25324,6 +25383,16 @@ def _feed_hygiene(events):
             e['severity_hygiene_from'] = e.get('severity')
             e['severity'] = FEED_STMT_CAP
             cnt['заявление → потолок'] = cnt.get('заявление → потолок', 0) + 1
+        if HAZARD_SCALE and e.get('domain') == 'climate' and _HZ_KIND.search(t):
+            _hz = _hazard_scale(t + ' ' + (e.get('summary') or '')[:600])
+            if _hz is not None:
+                _cur = e.get('severity') or 0
+                _new = max(_hz - 4, min(_cur, _hz + 4))
+                if _new != _cur:
+                    e['severity_hygiene_from'] = _cur
+                    e['severity'] = _new
+                    cnt['масштаб ЧС'] = cnt.get('масштаб ЧС', 0) + 1
+                e['hazard_scale'] = _hz
         d = _hyg_deaths(t) if not _HYG_CUM.search(t) else None
         if _HYG_ROAD.search(t):
             cap = 66 if (d or 0) >= 20 else 60 if (d or 0) >= 10 else 52
