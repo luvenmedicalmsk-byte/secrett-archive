@@ -10784,6 +10784,7 @@ NATURAL_DETECTION_SOURCES = (
     'NASA FIRMS', 'FIRMS', 'Росгидромет CAP', 'NASA Earth Observatory',
     'EONET', 'Copernicus', 'GDACS',
     'Казгидромет CAP', 'Белгидромет CAP', 'Узгидромет CAP', 'Кыргызгидромет CAP',
+    'NCM CAP', 'QCAA CAP', 'KMD CAP', 'Oman Met CAP', 'Bahrain Met CAP', 'IRIMO CAP', 'EMA CAP',
 )
 
 
@@ -15960,6 +15961,47 @@ def fetch_cis_cap():
     return items
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# ИСТОЧНИК (16.10.2026): CAP-предупреждения Ближнего Востока и Залива. Ленты из
+# реестра уполномоченных служб ВМО: часть публикуется службой напрямую, часть
+# через зеркало Alert Hub (cap-sources.s3.amazonaws.com). Берутся английские
+# версии, заголовок переводится общим переводом ленты. Разбор общий с СНГ.
+# Откат: MIDEAST_CAP = False.
+# ══════════════════════════════════════════════════════════════════════════════
+MIDEAST_CAP = True
+_MIDEAST_CAP = [
+    # лента, ISO, страна, служба, столица
+    ('https://ncm.gov.sa/en/cap-alerts', 'SA', 'Саудовская Аравия', 'NCM', 24.71, 46.68),
+    ('https://cap-sources.s3.amazonaws.com/qa-caa-en/rss.xml', 'QA', 'Катар', 'QCAA', 25.29, 51.53),
+    ('https://www.met.gov.kw/rss_eng/kuwait_cap.xml', 'KW', 'Кувейт', 'KMD', 29.37, 47.98),
+    ('https://cap-sources.s3.amazonaws.com/om-met-en/rss.xml', 'OM', 'Оман', 'Oman Met', 23.59, 58.41),
+    ('https://cap-sources.s3.amazonaws.com/bh-meteo-en/rss.xml', 'BH', 'Бахрейн', 'Bahrain Met', 26.23, 50.59),
+    ('https://cap-sources.s3.amazonaws.com/ir-irimo-en/rss.xml', 'IR', 'Иран', 'IRIMO', 35.69, 51.39),
+    ('https://cap-sources.s3.amazonaws.com/eg-ema-en/rss.xml', 'EG', 'Египет', 'EMA', 30.04, 31.24),
+]
+
+
+def fetch_mideast_cap():
+    """Официальные метеопредупреждения служб Ближнего Востока и Залива (CAP)."""
+    if not MIDEAST_CAP:
+        return []
+    from concurrent.futures import ThreadPoolExecutor as _TPE
+    def _one(c):
+        url, cc, country, svc, la, lo = c
+        try:
+            return _meteoinfo_cap(url, country, svc, svc + ' CAP', 'cap_hub', limit=30,
+                                  cc=cc, fallback=(la, lo))
+        except Exception as e:
+            print(f"  [WARN] {svc} CAP: {e}", file=sys.stderr)
+            return []
+    items = []
+    with _TPE(max_workers=7) as ex:
+        for got in ex.map(_one, _MIDEAST_CAP):
+            items.extend(got)
+    print(f"  Ближний Восток CAP: {len(items)} предупреждений", file=sys.stderr)
+    return items
+
+
 def _meteoinfo_cap(feed_url, country, svc, source, kind, limit=70, cc=None, fallback=None):
     """Разбор Atom-ленты хаба Гидрометцентра и CAP-документов по ссылкам из неё."""
     items = []
@@ -15991,6 +16033,16 @@ def _meteoinfo_cap(feed_url, country, svc, source, kind, limit=70, cc=None, fall
                 href = ln.get("href") if _cap_local(ln.tag) == "link" else None
                 if href and href.lower().endswith(".xml") and "cap" in href.lower() and href not in seen:
                     seen.add(href); urls.append(href)
+        # RSS (зеркала Alert Hub, службы Залива): ссылка на CAP-документ -
+        # текст элемента link или адрес enclosure внутри item.
+        for item in root.iter():
+            if _cap_local(item.tag) != "item":
+                continue
+            for ln in item:
+                tag = _cap_local(ln.tag)
+                href = (ln.text or "").strip() if tag == "link" else (ln.get("url") if tag == "enclosure" else None)
+                if href and href.startswith("http") and href not in seen:
+                    seen.add(href); urls.append(href)
     urls = urls[:limit]
     now = datetime.now(timezone.utc)
     for url in urls:
@@ -16004,25 +16056,35 @@ def _meteoinfo_cap(feed_url, country, svc, source, kind, limit=70, cc=None, fall
         st = _cap_find(a, "status")
         if st is not None and (st.text or "").strip().lower() not in ("", "actual"):
             continue
-        ev = _cap_find(a, "event")
+        # В документе может быть несколько блоков info на разных языках
+        # (арабский и английский у служб Залива). Берём русский, затем
+        # английский, иначе первый. У Росгидромета блок один - без изменений.
+        _infos = [x for x in a.iter() if _cap_local(x.tag) == "info"]
+        def _lang(x):
+            lg = _cap_find(x, "language")
+            return ((lg.text or "") if lg is not None else "").strip().lower()
+        info = (next((x for x in _infos if _lang(x).startswith("ru")), None)
+                or next((x for x in _infos if _lang(x).startswith("en")), None)
+                or (_infos[0] if _infos else a))
+        ev = _cap_find(info, "event")
         event = (ev.text or "").strip() if ev is not None else ""
         if not event:
             continue
-        exp = _cap_find(a, "expires")
+        exp = _cap_find(info, "expires")
         if exp is not None and exp.text:
             try:
                 if datetime.fromisoformat(exp.text.strip().replace("Z", "+00:00")) < now:
                     continue
             except Exception:
                 pass
-        sev = _cap_find(a, "severity")
+        sev = _cap_find(info, "severity")
         sevkey = (sev.text or "").strip().lower() if sev is not None else "unknown"
         score = _CAP_SEV.get(sevkey, 50)
-        area = _cap_find(a, "areaDesc")
+        area = _cap_find(info, "areaDesc")
         areaDesc = (area.text or "").strip() if area is not None else ""
-        poly = _cap_find(a, "polygon")
+        poly = _cap_find(info, "polygon")
         lat, lng = _cap_centroid(poly.text if poly is not None else "")
-        dsc = _cap_find(a, "description")
+        dsc = _cap_find(info, "description")
         dtext = (dsc.text or "").strip() if dsc is not None else event
         event = _rg_event_name(event, dtext)
         title = (f"{event}: {areaDesc} ({country})" if areaDesc else f"{event} ({country})")
@@ -25869,6 +25931,8 @@ _SRC_TYPE = {
     'Росгидромет CAP': 'ALERT',      # CAP: Common Alerting Protocol
     'Казгидромет CAP': 'ALERT', 'Белгидромет CAP': 'ALERT',
     'Узгидромет CAP': 'ALERT', 'Кыргызгидромет CAP': 'ALERT',
+    'NCM CAP': 'ALERT', 'QCAA CAP': 'ALERT', 'KMD CAP': 'ALERT', 'Oman Met CAP': 'ALERT',
+    'Bahrain Met CAP': 'ALERT', 'IRIMO CAP': 'ALERT', 'EMA CAP': 'ALERT',
     'Copernicus EMS': 'ALERT',       # активация экстренного картирования
     'IODA': 'ALERT',                 # детекция отключений связи в реальном времени
     'The Watchers': 'ALERT',
@@ -27132,6 +27196,7 @@ if __name__ == '__main__':
             ('usgs',               fetch_usgs_earthquakes),
             ('rosgidromet_cap',    fetch_rosgidromet_cap),
             ('cis_cap',            fetch_cis_cap),
+            ('mideast_cap',        fetch_mideast_cap),
             ('notam',              fetch_notam),   # NOTAM_GATE=False -> пустой список
             ('mgm_turkey',         fetch_mgm_turkey),
             ('cbr_russia',         fetch_cbr_russia),
