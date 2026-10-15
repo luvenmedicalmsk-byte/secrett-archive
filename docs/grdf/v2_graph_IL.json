@@ -2,7 +2,7 @@
   "country": "IL",
   "date": "2026-10-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-15T12:26:38.573211+00:00",
+  "generated_at": "2026-10-15T12:48:48.987629+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-IL-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 62,
       "trend": "stable"
     },
     {
@@ -94,11 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-IL-Военный_ко",
+      "id": "SIGNAL-IL-Топливный_",
       "type": "Signal",
-      "label": "Военный конфликт — Ближний Восток (систе",
+      "label": "Топливный рынок — Ближний Восток (систем",
       "severity": 83,
-      "domain": "geopolitical"
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.62
     },
     {
       "from": "COUNTRY-IL",
@@ -164,6 +164,27 @@
     },
     {
       "from": "DOMAIN-IL-climate",
+      "to": "DOMAIN-IL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-IL-infrastructure",
+      "to": "DOMAIN-IL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IL-economic",
+      "to": "DOMAIN-IL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IL-climate",
       "to": "DOMAIN-IL-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,27 +226,6 @@
       "lag_days": 45
     },
     {
-      "from": "DOMAIN-IL-climate",
-      "to": "DOMAIN-IL-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-IL-infrastructure",
-      "to": "DOMAIN-IL-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-IL-economic",
-      "to": "DOMAIN-IL-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "SIGNAL-IL-Палестинск",
       "to": "DOMAIN-IL-geopolitical",
       "type": "AMPLIFIES",
@@ -238,8 +238,8 @@
       "weight": 0.72
     },
     {
-      "from": "SIGNAL-IL-Военный_ко",
-      "to": "DOMAIN-IL-geopolitical",
+      "from": "SIGNAL-IL-Топливный_",
+      "to": "DOMAIN-IL-economic",
       "type": "AMPLIFIES",
       "weight": 0.83
     }
