@@ -1,24 +1,24 @@
 {
-  "generated_at": "2026-10-15T22:02:00.677873+00:00",
+  "generated_at": "2026-10-15T22:10:56.345019+00:00",
   "events_database_size": 93,
   "years_covered": "2010-2026",
   "signal_threshold": 60,
   "severity_threshold": 70,
   "1_forecast_accuracy": {
     "n": 72,
-    "mae": 13.61,
-    "rmse": 17.16,
-    "bias": -2.89,
-    "accuracy_pct": 81.9
+    "mae": 13.36,
+    "rmse": 17.02,
+    "bias": -3.06,
+    "accuracy_pct": 82.2
   },
   "2_scenario_accuracy": {
     "n": 76,
-    "hit_rate": 18.4
+    "hit_rate": 22.4
   },
   "3_signal_correlation": {
     "n": 72,
-    "pearson_r": -0.05,
-    "r_squared": 0.003,
+    "pearson_r": -0.027,
+    "r_squared": 0.001,
     "interpretation": "weak"
   },
   "4_5_6_classification": {
@@ -37,12 +37,12 @@
   },
   "7_brier_score": {
     "n": 93,
-    "brier_score": 0.1721,
-    "brier_skill_score": -0.346,
+    "brier_score": 0.1701,
+    "brier_skill_score": -0.33,
     "interpretation": "fair"
   },
   "8_calibration_error": {
-    "ece": 0.1666,
+    "ece": 0.1678,
     "n_bins_populated": 7,
     "calibration_curve": [
       {
@@ -75,10 +75,10 @@
       },
       {
         "bin_center": 0.75,
-        "mean_pred": 0.744,
+        "mean_pred": 0.737,
         "mean_actual": 0.778,
         "n": 18,
-        "error": 0.034
+        "error": 0.041
       },
       {
         "bin_center": 0.85,
@@ -208,7 +208,7 @@
       },
       "DE": {
         "n_events": 3,
-        "mae": 11.7,
+        "mae": 5.7,
         "classification_accuracy_pct": 33.3,
         "n_hits": 1,
         "event_ids": [
@@ -368,12 +368,18 @@
     "n_countries_covered": 18
   },
   "learning_signals": {
-    "n_signals": 4,
+    "n_signals": 5,
     "signals": [
+      {
+        "type": "bias_correction",
+        "action": "increase_base_pressure",
+        "detail": "Systematic underestimation bias -3.06pt. Increase sensitivity.",
+        "priority": "MEDIUM"
+      },
       {
         "type": "calibration",
         "action": "recalibrate_confidence",
-        "detail": "ECE=0.167 — confidence scores need Platt scaling or isotonic regression.",
+        "detail": "ECE=0.168 — confidence scores need Platt scaling or isotonic regression.",
         "priority": "HIGH"
       },
       {
@@ -385,18 +391,18 @@
       {
         "type": "correlation",
         "action": "review_signal_sources",
-        "detail": "Signal-outcome correlation r=-0.05 is weak. Review domain weighting formula.",
+        "detail": "Signal-outcome correlation r=-0.027 is weak. Review domain weighting formula.",
         "priority": "HIGH"
       },
       {
         "type": "brier",
         "action": "recalibrate_probability_model",
-        "detail": "BSS=-0.346 — model barely outperforms climatology. Reweight GRIE_W.",
+        "detail": "BSS=-0.330 — model barely outperforms climatology. Reweight GRIE_W.",
         "priority": "HIGH"
       }
     ],
     "priority_high": 3,
-    "priority_medium": 1,
+    "priority_medium": 2,
     "overall_model_health": "critical"
   }
 }
