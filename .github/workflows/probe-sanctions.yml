@@ -18,10 +18,12 @@ jobs:
           rm -rf probe; mkdir -p probe
           get(){ n=$1; u=$2; code=$(curl -sSL -m 60 --retry 1 -A "ArchiveBot/2.0" -o "probe/$n" -w "%{http_code}" "$u" || echo ERR); echo "$n $code $(stat -c %s probe/$n 2>/dev/null || echo 0) $u" >> probe/_index.txt; }
           get(){ n=$1; u=$2; code=$(curl -gsSL -m 60 --retry 1 -A "ArchiveBot/2.0" -o "probe/$n" -w "%{http_code}" "$u" || echo ERR); echo "$n $code $(stat -c %s probe/$n 2>/dev/null || echo 0) $u" >> probe/_index.txt; }
-          get fao_new.txt "https://www.fao.org/media/docs/worldfoodsituationlibraries/wfs-library/food_price_indices_data.csv"
-          get fao_old.txt "https://www.fao.org/fileadmin/templates/worldfood/Reports_and_docs/Food_price_indices_data.csv"
+          H='-H "Origin: https://www.mgm.gov.tr" -H "Referer: https://www.mgm.gov.tr/" -H "Accept: application/json"'
+          eval curl -gsSL -m 60 -A "Mozilla/5.0" $H -o probe/mgm_iller.json "https://servis.mgm.gov.tr/web/merkezler/iller"; echo "mgm_iller $(stat -c %s probe/mgm_iller.json)" >> probe/_index.txt
+          eval curl -gsSL -m 60 -A "Mozilla/5.0" $H -o probe/mgm_ist.json "https://servis.mgm.gov.tr/web/merkezler/ililcesi?il=%C4%B0stanbul"; echo "mgm_ist $(stat -c %s probe/mgm_ist.json)" >> probe/_index.txt
+          eval curl -gsSL -m 60 -A "Mozilla/5.0" $H -o probe/mgm_bal.json "https://servis.mgm.gov.tr/web/merkezler/ililcesi?il=Bal%C4%B1kesir"; echo "mgm_bal $(stat -c %s probe/mgm_bal.json)" >> probe/_index.txt
           cat probe/_index.txt
-          for f in probe/*; do echo "== $f"; head -c 300 "$f"; echo; done; find probe -size +5M -delete; rm -f probe/*.csv
+          for f in probe/*; do echo "== $f"; head -c 300 "$f"; echo; done; find probe -size +5M -delete; rm -f probe/*.csv; true
       - name: Commit
         run: |
           git config user.name "probe-bot"; git config user.email "probe-bot@users.noreply.github.com"
