@@ -2,7 +2,7 @@
   "country": "CH",
   "date": "2026-10-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-15T07:28:26.949766+00:00",
+  "generated_at": "2026-10-15T07:48:20.924379+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-CH-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 32,
       "trend": "stable"
     },
     {
@@ -40,7 +40,7 @@
       "id": "DOMAIN-CH-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 32,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-CH-Цены_на_им",
+      "type": "Signal",
+      "label": "Цены на импорт в Швейцарии",
+      "severity": 32,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-CH-Геополитич",
       "type": "Signal",
       "label": "Геополитический процесс — Швейцария",
@@ -92,13 +99,6 @@
       "label": "Социальный процесс — Швейцария",
       "severity": 48,
       "domain": "social"
-    },
-    {
-      "id": "SIGNAL-CH-Технологич",
-      "type": "Signal",
-      "label": "Технологический сигнал — Швейцария",
-      "severity": 32,
-      "domain": "technology"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-CH",
@@ -124,7 +124,7 @@
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-technology",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CH",
@@ -184,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-CH-Цены_на_им",
+      "to": "DOMAIN-CH-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.32
+    },
+    {
       "from": "SIGNAL-CH-Геополитич",
       "to": "DOMAIN-CH-geopolitical",
       "type": "AMPLIFIES",
@@ -194,12 +200,6 @@
       "to": "DOMAIN-CH-social",
       "type": "AMPLIFIES",
       "weight": 0.48
-    },
-    {
-      "from": "SIGNAL-CH-Технологич",
-      "to": "DOMAIN-CH-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.32
     }
   ]
 }
