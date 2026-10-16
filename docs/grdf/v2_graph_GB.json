@@ -2,9 +2,9 @@
   "country": "GB",
   "date": "2026-10-16",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-16T14:47:13.921537+00:00",
+  "generated_at": "2026-10-16T14:57:56.633087+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-GB",
@@ -33,7 +33,7 @@
       "id": "DOMAIN-GB-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 45,
       "trend": "stable"
     },
     {
@@ -87,18 +87,18 @@
       "domain": "geopolitical"
     },
     {
+      "id": "SIGNAL-GB-В_Великобр",
+      "type": "Signal",
+      "label": "В Великобритании предложили ограничить п",
+      "severity": 45,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-GB-Технологич",
       "type": "Signal",
       "label": "Технологический сигнал — Великобритания",
       "severity": 62,
       "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-GB-Санкционно",
-      "type": "Signal",
-      "label": "Санкционное давление — Великобритания",
-      "severity": 62,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.45
     },
     {
       "from": "COUNTRY-GB",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-GB-climate",
+      "to": "DOMAIN-GB-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-GB-economic",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-GB-social",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-GB-climate",
+      "to": "DOMAIN-GB-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-GB-infrastructure",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GB-economic",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "DOMAIN-GB-geopolitical",
       "to": "DOMAIN-GB-infrastructure",
       "type": "ESCALATES",
@@ -190,14 +232,14 @@
       "weight": 0.64
     },
     {
-      "from": "SIGNAL-GB-Технологич",
-      "to": "DOMAIN-GB-technology",
+      "from": "SIGNAL-GB-В_Великобр",
+      "to": "DOMAIN-GB-climate",
       "type": "AMPLIFIES",
-      "weight": 0.62
+      "weight": 0.45
     },
     {
-      "from": "SIGNAL-GB-Санкционно",
-      "to": "DOMAIN-GB-geopolitical",
+      "from": "SIGNAL-GB-Технологич",
+      "to": "DOMAIN-GB-technology",
       "type": "AMPLIFIES",
       "weight": 0.62
     }
