@@ -2,39 +2,39 @@
   "country": "SA",
   "date": "2026-10-16",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-16T19:47:54.375422+00:00",
+  "generated_at": "2026-10-16T20:07:07.729873+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-SA",
       "type": "Country",
       "label": "SA",
-      "score": 92,
+      "score": 89,
       "props": {
-        "risk_score": 92
+        "risk_score": 89
       }
     },
     {
       "id": "DOMAIN-SA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 74,
-      "trend": "stable"
+      "score": 70,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-SA-economic",
       "type": "Domain",
       "label": "economic",
       "score": 83,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-SA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "stable"
+      "score": 92,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-SA-technology",
@@ -87,18 +87,18 @@
       "domain": "economic"
     },
     {
-      "id": "SIGNAL-SA-Дождь:_Аш_",
-      "type": "Signal",
-      "label": "Дождь: Аш Шинан (Хаиль), Аль Хаит (Хаиль",
-      "severity": 74,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-SA-Штаб-кварт",
       "type": "Signal",
       "label": "Штаб-квартира Aramco подверглась атаке, ",
       "severity": 70,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-SA-Тепловая_в",
+      "type": "Signal",
+      "label": "Тепловая волна — Саудовская Аравия",
+      "severity": 92,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.74
+      "weight": 0.7
     },
     {
       "from": "COUNTRY-SA",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.92
     },
     {
       "from": "COUNTRY-SA",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-SA-climate",
+      "to": "DOMAIN-SA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-SA-infrastructure",
+      "to": "DOMAIN-SA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-SA-economic",
+      "to": "DOMAIN-SA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-SA-climate",
+      "to": "DOMAIN-SA-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-SA-economic",
+      "to": "DOMAIN-SA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-SA-social",
+      "to": "DOMAIN-SA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-SA-geopolitical",
       "to": "DOMAIN-SA-infrastructure",
       "type": "ESCALATES",
@@ -190,16 +232,16 @@
       "weight": 0.83
     },
     {
-      "from": "SIGNAL-SA-Дождь:_Аш_",
-      "to": "DOMAIN-SA-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.74
-    },
-    {
       "from": "SIGNAL-SA-Штаб-кварт",
       "to": "DOMAIN-SA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.7
+    },
+    {
+      "from": "SIGNAL-SA-Тепловая_в",
+      "to": "DOMAIN-SA-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.92
     }
   ]
 }
