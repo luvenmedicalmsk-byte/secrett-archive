@@ -2,7 +2,7 @@
   "country": "IT",
   "date": "2026-10-16",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-16T22:45:53.918117+00:00",
+  "generated_at": "2026-10-16T23:07:53.654548+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,16 +10,16 @@
       "id": "COUNTRY-IT",
       "type": "Country",
       "label": "IT",
-      "score": 72,
+      "score": 92,
       "props": {
-        "risk_score": 72
+        "risk_score": 92
       }
     },
     {
       "id": "DOMAIN-IT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 75,
+      "score": 76,
       "trend": "up"
     },
     {
@@ -33,7 +33,7 @@
       "id": "DOMAIN-IT-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 72,
+      "score": 88,
       "trend": "up"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IT-Ливень:_To",
+      "type": "Signal",
+      "label": "Ливень: Toscana, Liguria, Ломбардия и ещ",
+      "severity": 88,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-IT-Гроза:_Сар",
       "type": "Signal",
       "label": "Гроза: Сардиния, Sicilia, Калабрия и ещё",
@@ -92,13 +99,6 @@
       "label": "Туман: Марке, Умбрия, Тоскана и еще 4 ра",
       "severity": 50,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-IT-Ветер:_Lig",
-      "type": "Signal",
-      "label": "Ветер: Liguria, Пьемонт, Италия",
-      "severity": 50,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.75
+      "weight": 0.76
     },
     {
       "from": "COUNTRY-IT",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-climate",
       "type": "CORRELATES",
-      "weight": 0.72
+      "weight": 0.88
     },
     {
       "from": "COUNTRY-IT",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-IT-geopolitical",
-      "to": "DOMAIN-IT-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-IT-infrastructure",
-      "to": "DOMAIN-IT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-IT-economic",
-      "to": "DOMAIN-IT-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "DOMAIN-IT-climate",
       "to": "DOMAIN-IT-infrastructure",
       "type": "ESCALATES",
@@ -226,6 +205,33 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-IT-geopolitical",
+      "to": "DOMAIN-IT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IT-infrastructure",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IT-Ливень:_To",
+      "to": "DOMAIN-IT-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.88
+    },
+    {
       "from": "SIGNAL-IT-Гроза:_Сар",
       "to": "DOMAIN-IT-climate",
       "type": "AMPLIFIES",
@@ -233,12 +239,6 @@
     },
     {
       "from": "SIGNAL-IT-Туман:_Мар",
-      "to": "DOMAIN-IT-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-IT-Ветер:_Lig",
       "to": "DOMAIN-IT-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
