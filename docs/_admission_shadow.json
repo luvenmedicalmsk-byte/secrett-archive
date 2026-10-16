@@ -1,12 +1,12 @@
 {
-  "generated": "2026-10-16T03:46:41Z",
+  "generated": "2026-10-16T04:06:27Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
-    "PASS_FACT": 1034,
+    "PASS_FACT": 1035,
     "PASS_FACT_REPORT": 2,
+    "DENY_COMMENTARY": 267,
     "DENY_OTHER": 3,
-    "DENY_COMMENTARY": 268,
     "DENY_STATE_ONLY": 4,
     "DENY_BACKGROUND": 7,
     "DENY_REPORT": 1,
@@ -21,22 +21,22 @@
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
     "admission_pass_rate": 78.4,
     "admission_deny_rate": 21.6,
-    "processes_without_fact": 286,
+    "processes_without_fact": 285,
     "report_evidence_count": 2,
     "reports_boosting": 2
   },
   "shadow_reliability": {
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
-      "processes": 442,
-      "sample": 1466,
+      "processes": 444,
+      "sample": 1479,
       "agreement_pct": 87.0,
       "decision_agreement_pct": 87.2,
-      "critical_errors": 188,
+      "critical_errors": 190,
       "truth_ratio_pct": 100.0,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 167,
-        "COMMENTARY→FACT_EVENT": 20,
+        "FACT_EVENT→COMMENTARY": 168,
+        "COMMENTARY→FACT_EVENT": 21,
         "UNKNOWN→COMMENTARY": 2,
         "BACKGROUND→COMMENTARY": 1,
         "STATE_CONFIRMATION→FACT_EVENT": 1
@@ -44,13 +44,13 @@
     },
     "historical": {
       "processes": 1323,
-      "sample": 3376,
-      "agreement_pct": 89.0,
+      "sample": 3386,
+      "agreement_pct": 88.9,
       "decision_agreement_pct": 89.1,
-      "critical_errors": 368,
+      "critical_errors": 370,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 319,
-        "COMMENTARY→FACT_EVENT": 44,
+        "FACT_EVENT→COMMENTARY": 320,
+        "COMMENTARY→FACT_EVENT": 45,
         "UNKNOWN→COMMENTARY": 2,
         "BACKGROUND→COMMENTARY": 1,
         "STATE_CONFIRMATION→FACT_EVENT": 4,
@@ -59,14 +59,14 @@
       }
     },
     "events_stream": {
-      "sample": 460,
-      "agreement_pct": 86.7,
-      "decision_agreement_pct": 87.0,
-      "critical_errors": 60,
+      "sample": 471,
+      "agreement_pct": 86.4,
+      "decision_agreement_pct": 86.6,
+      "critical_errors": 63,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 55,
+        "FACT_EVENT→COMMENTARY": 57,
         "UNKNOWN→COMMENTARY": 1,
-        "COMMENTARY→FACT_EVENT": 5
+        "COMMENTARY→FACT_EVENT": 6
       }
     },
     "gate": {
@@ -77,17 +77,13 @@
     }
   },
   "class_source": {
-    "evidence_sic": 3376
+    "evidence_sic": 3386
   },
   "truth_ratio_pct": 100.0,
   "domain_statistics": {
     "geopolitics": {
       "pass": 268,
       "deny": 74
-    },
-    "economy": {
-      "pass": 230,
-      "deny": 96
     },
     "climate": {
       "pass": 334,
@@ -97,6 +93,10 @@
     "social": {
       "pass": 89,
       "deny": 40
+    },
+    "economy": {
+      "pass": 231,
+      "deny": 95
     },
     "technology": {
       "pass": 115,
@@ -616,6 +616,21 @@
       "reason": "no FACT_EVENT in evidence"
     },
     {
+      "signal_id": "geop-геополитич-сша-a91e",
+      "title": "Геополитический процесс — США",
+      "domain": "geopolitics",
+      "severity": 59,
+      "pressure": 62,
+      "first_seen": "2026-07-01",
+      "evidence_count": 3,
+      "evidence_classes": {
+        "COMMENTARY": 3
+      },
+      "status": "active",
+      "causal_links": 6,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
       "signal_id": "clim-климатичес-тихийоке-41c0",
       "title": "Климатический сигнал — Тихий океан",
       "domain": "climate",
@@ -857,21 +872,6 @@
       "reason": "no FACT_EVENT in evidence"
     },
     {
-      "signal_id": "geop-геополитич-сша-a91e",
-      "title": "Геополитический процесс — США",
-      "domain": "geopolitics",
-      "severity": 56,
-      "pressure": 54,
-      "first_seen": "2026-07-01",
-      "evidence_count": 2,
-      "evidence_classes": {
-        "COMMENTARY": 2
-      },
-      "status": "active",
-      "causal_links": 6,
-      "reason": "no FACT_EVENT in evidence"
-    },
-    {
       "signal_id": "soci-миграционн-йемен-d158",
       "title": "Миграционная политика — Йемен",
       "domain": "social",
@@ -1027,6 +1027,13 @@
   ],
   "severity_delta": [
     {
+      "signal_id": "geop-геополитич-сша-a91e",
+      "domain": "geopolitics",
+      "legacy": 59,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "econ-экономичес-иран-7b7d",
       "domain": "economy",
       "legacy": 57,
@@ -1072,13 +1079,6 @@
       "signal_id": "soci-эпидемиоло-глобальн-6b54",
       "domain": "social",
       "legacy": 58,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "geop-геополитич-сша-a91e",
-      "domain": "geopolitics",
-      "legacy": 56,
       "shadow": null,
       "delta": null
     },
@@ -1205,6 +1205,13 @@
       "signal_id": "econ-государств-сша-14f5",
       "domain": "economy",
       "legacy": 51,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "clim-таяниекрио-глобальн-edd1",
+      "domain": "climate",
+      "legacy": 32,
       "shadow": null,
       "delta": null
     },
@@ -1438,18 +1445,11 @@
       "legacy": 32,
       "shadow": null,
       "delta": null
-    },
-    {
-      "signal_id": "clim-климатичес-мексика-7553",
-      "domain": "climate",
-      "legacy": 32,
-      "shadow": null,
-      "delta": null
     }
   ],
   "deny_by_severity": {
     "0-30": 3,
-    "31-50": 202,
+    "31-50": 201,
     "51-70": 75,
     "71-90": 6,
     "91-100": 0
