@@ -2,7 +2,7 @@
   "country": "IN",
   "date": "2026-10-16",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-16T14:26:18.715807+00:00",
+  "generated_at": "2026-10-16T14:47:13.926333+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -40,14 +40,14 @@
       "id": "DOMAIN-IN-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 32,
+      "score": 54,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-IN-social",
       "type": "Domain",
       "label": "social",
-      "score": 58,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IN-ИИ-агенты_",
+      "type": "Signal",
+      "label": "ИИ-агенты самостоятельно взломали корпор",
+      "severity": 54,
+      "domain": "technology"
+    },
+    {
       "id": "SIGNAL-IN-Наводнение",
       "type": "Signal",
       "label": "Наводнение: India",
@@ -92,13 +99,6 @@
       "label": "Центры обработки данных способствуют рос",
       "severity": 32,
       "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-IN-Эпидемиоло",
-      "type": "Signal",
-      "label": "Эпидемиологический риск — Индия",
-      "severity": 58,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -124,13 +124,13 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-technology",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.54
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-social",
       "type": "CORRELATES",
-      "weight": 0.58
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-IN",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-IN-climate",
-      "to": "DOMAIN-IN-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-IN-economic",
-      "to": "DOMAIN-IN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-IN-social",
-      "to": "DOMAIN-IN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-IN-climate",
       "to": "DOMAIN-IN-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -205,6 +184,33 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-IN-climate",
+      "to": "DOMAIN-IN-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-IN-social",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "SIGNAL-IN-ИИ-агенты_",
+      "to": "DOMAIN-IN-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.54
+    },
+    {
       "from": "SIGNAL-IN-Наводнение",
       "to": "DOMAIN-IN-climate",
       "type": "AMPLIFIES",
@@ -215,12 +221,6 @@
       "to": "DOMAIN-IN-technology",
       "type": "AMPLIFIES",
       "weight": 0.32
-    },
-    {
-      "from": "SIGNAL-IN-Эпидемиоло",
-      "to": "DOMAIN-IN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.58
     }
   ]
 }
