@@ -2,9 +2,9 @@
   "country": "SG",
   "date": "2026-10-16",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-16T01:02:43.695810+00:00",
+  "generated_at": "2026-10-16T01:12:42.631176+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-SG",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-SG-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
+      "score": 46,
       "trend": "stable"
     },
     {
@@ -40,7 +40,7 @@
       "id": "DOMAIN-SG-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
+      "score": 39,
       "trend": "stable"
     },
     {
@@ -65,40 +65,40 @@
       "trend": "stable"
     },
     {
-      "id": "DRIVER-SG-economic",
-      "type": "Driver",
-      "label": "economic"
-    },
-    {
       "id": "DRIVER-SG-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-SG-climate",
+      "id": "DRIVER-SG-technology",
       "type": "Driver",
-      "label": "climate"
+      "label": "technology"
     },
     {
-      "id": "SIGNAL-SG-Импорт_Син",
+      "id": "DRIVER-SG-economic",
+      "type": "Driver",
+      "label": "economic"
+    },
+    {
+      "id": "SIGNAL-SG-Не_нефтяны",
       "type": "Signal",
-      "label": "Импорт Сингапура",
+      "label": "Не нефтяные внутренние экспортные постав",
       "severity": 32,
       "domain": "economic"
     },
     {
-      "id": "SIGNAL-SG-Экспорт_Си",
+      "id": "SIGNAL-SG-Геополитич",
       "type": "Signal",
-      "label": "Экспорт Сингапура",
-      "severity": 32,
-      "domain": "economic"
+      "label": "Геополитический процесс — Юго-Восточная ",
+      "severity": 62,
+      "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-SG-Не_нефтяно",
+      "id": "SIGNAL-SG-Уязвимость",
       "type": "Signal",
-      "label": "Не нефтяной внутренний экспорт Сингапура",
-      "severity": 32,
-      "domain": "economic"
+      "label": "Уязвимость ПО — Юго-Восточная Азия",
+      "severity": 53,
+      "domain": "technology"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-SG",
@@ -124,7 +124,7 @@
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.39
     },
     {
       "from": "COUNTRY-SG",
@@ -145,40 +145,61 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-SG-economic",
-      "to": "COUNTRY-SG",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
       "from": "DRIVER-SG-geopolitical",
       "to": "COUNTRY-SG",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-SG-climate",
+      "from": "DRIVER-SG-technology",
       "to": "COUNTRY-SG",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-SG-Импорт_Син",
+      "from": "DRIVER-SG-economic",
+      "to": "COUNTRY-SG",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-SG-geopolitical",
+      "to": "DOMAIN-SG-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-SG-infrastructure",
+      "to": "DOMAIN-SG-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-SG-economic",
+      "to": "DOMAIN-SG-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-SG-Не_нефтяны",
       "to": "DOMAIN-SG-economic",
       "type": "AMPLIFIES",
       "weight": 0.32
     },
     {
-      "from": "SIGNAL-SG-Экспорт_Си",
-      "to": "DOMAIN-SG-economic",
+      "from": "SIGNAL-SG-Геополитич",
+      "to": "DOMAIN-SG-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.62
     },
     {
-      "from": "SIGNAL-SG-Не_нефтяно",
-      "to": "DOMAIN-SG-economic",
+      "from": "SIGNAL-SG-Уязвимость",
+      "to": "DOMAIN-SG-technology",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.53
     }
   ]
 }
