@@ -16056,6 +16056,30 @@ def fetch_global_cap():
     return items
 
 
+_US_STATE_RU = {
+    'AL': 'Алабама', 'AK': 'Аляска', 'AZ': 'Аризона', 'AR': 'Арканзас', 'CA': 'Калифорния',
+    'CO': 'Колорадо', 'CT': 'Коннектикут', 'DE': 'Делавэр', 'DC': 'округ Колумбия', 'FL': 'Флорида',
+    'GA': 'Джорджия', 'HI': 'Гавайи', 'ID': 'Айдахо', 'IL': 'Иллинойс', 'IN': 'Индиана', 'IA': 'Айова',
+    'KS': 'Канзас', 'KY': 'Кентукки', 'LA': 'Луизиана', 'ME': 'Мэн', 'MD': 'Мэриленд',
+    'MA': 'Массачусетс', 'MI': 'Мичиган', 'MN': 'Миннесота', 'MS': 'Миссисипи', 'MO': 'Миссури',
+    'MT': 'Монтана', 'NE': 'Небраска', 'NV': 'Невада', 'NH': 'Нью-Гэмпшир', 'NJ': 'Нью-Джерси',
+    'NM': 'Нью-Мексико', 'NY': 'Нью-Йорк', 'NC': 'Северная Каролина', 'ND': 'Северная Дакота',
+    'OH': 'Огайо', 'OK': 'Оклахома', 'OR': 'Орегон', 'PA': 'Пенсильвания', 'RI': 'Род-Айленд',
+    'SC': 'Южная Каролина', 'SD': 'Южная Дакота', 'TN': 'Теннесси', 'TX': 'Техас', 'UT': 'Юта',
+    'VT': 'Вермонт', 'VA': 'Виргиния', 'WA': 'Вашингтон', 'WV': 'Западная Виргиния',
+    'WI': 'Висконсин', 'WY': 'Вайоминг', 'PR': 'Пуэрто-Рико', 'GU': 'Гуам', 'VI': 'Виргинские острова',
+    'AS': 'Американское Самоа', 'MP': 'Северные Марианские острова',
+}
+# Код FIPS штата из геокода SAME (6 цифр, 2-3 - штат) - запасной путь, когда нет UGC.
+_US_FIPS = {'01': 'AL', '02': 'AK', '04': 'AZ', '05': 'AR', '06': 'CA', '08': 'CO', '09': 'CT', '10': 'DE',
+    '11': 'DC', '12': 'FL', '13': 'GA', '15': 'HI', '16': 'ID', '17': 'IL', '18': 'IN', '19': 'IA', '20': 'KS',
+    '21': 'KY', '22': 'LA', '23': 'ME', '24': 'MD', '25': 'MA', '26': 'MI', '27': 'MN', '28': 'MS', '29': 'MO',
+    '30': 'MT', '31': 'NE', '32': 'NV', '33': 'NH', '34': 'NJ', '35': 'NM', '36': 'NY', '37': 'NC', '38': 'ND',
+    '39': 'OH', '40': 'OK', '41': 'OR', '42': 'PA', '44': 'RI', '45': 'SC', '46': 'SD', '47': 'TN', '48': 'TX',
+    '49': 'UT', '50': 'VT', '51': 'VA', '53': 'WA', '54': 'WV', '55': 'WI', '56': 'WY', '72': 'PR', '66': 'GU',
+    '78': 'VI', '60': 'AS', '69': 'MP'}
+
+
 def _fetch_nws_cap():
     """NWS (США): активные предупреждения уровней Extreme и Severe, сводка по явлению."""
     url = 'https://api.weather.gov/alerts/active?status=actual&severity=Extreme,Severe'
@@ -16085,10 +16109,14 @@ def _fetch_nws_cap():
         g['n'] += 1
         if (pr.get('severity') or '').lower() == 'extreme':
             g['sev'] = 'extreme'
-        _ugc = ((pr.get('geocode') or {}).get('UGC') or [])
-        for st in [u[:2] for u in _ugc if isinstance(u, str) and len(u) >= 2] or re.findall(r',\s*([A-Z]{2})\b', pr.get('areaDesc') or ''):
-            if st not in g['states']:
+        _gc = pr.get('geocode') or {}
+        _codes = [u[:2] for u in (_gc.get('UGC') or []) if isinstance(u, str) and len(u) >= 2]
+        _codes += [_US_FIPS.get(str(x)[1:3], '') for x in (_gc.get('SAME') or [])]
+        _codes += re.findall(r',\s*([A-Z]{2})\b', pr.get('areaDesc') or '')
+        for st in _codes:
+            if st in _US_STATE_RU and st not in g['states']:
                 g['states'].append(st)
+        g['zones'] = g.get('zones', 0) + len([x for x in (pr.get('areaDesc') or '').split(';') if x.strip()])
         if g['pt'] is None:
             geom = f.get('geometry') or {}
             try:
@@ -16098,16 +16126,24 @@ def _fetch_nws_cap():
                 pass
     items = []
     for ev, g in groups.items():
-        st = ', '.join(g['states'][:5]) + (' и ещё %d' % (len(g['states']) - 5) if len(g['states']) > 5 else '')
+        states = [_US_STATE_RU[x] for x in g['states']]
+        place = _place_line(states, 'США', ('штат', 'штата', 'штатов'))
         lat, lng = g['pt'] or (39.8, -98.6)
+        _nw = g['n']
+        _zn = g.get('zones', 0)
+        body = (f"Официальное предупреждение Национальной метеослужбы США. "
+                f"Действует {_nw} {_plural_ru(_nw, ('предупреждение', 'предупреждения', 'предупреждений'))}"
+                + (f" по {_zn} {_plural_ru(_zn, ('округу и зоне', 'округам и зонам', 'округам и зонам'))}" if _zn else '')
+                + (f". Штаты: {', '.join(states)}." if states else '. Штаты в сообщении не указаны.'))
         items.append({
-            'title': ('%s: США%s (%d предупр.)' % (ev, (', ' + st) if st else '', g['n']))[:130],
-            'desc': 'Официальное предупреждение Национальной метеослужбы США. Штаты: %s · NWS' % (st or 'н/д'),
+            'title': f'{ev}: {place}'[:160],
+            'desc': body,
             'date': now.strftime('%Y-%m-%d'), 'source': 'NWS CAP',
             '_lat': lat, '_lng': lng, '_coord_origin': ('computed' if g['pt'] else 'country'),
             '_region': 'США', '_country_code': 'US', '_domain': 'climate',
             '_force_severity': _CAP_SEV.get(g['sev'], 74),
-            '_meta': {'kind': 'cap_hub', 'verified': True, 'event': ev, 'severity': g['sev'], 'warnings': g['n']},
+            '_meta': {'kind': 'cap_hub', 'verified': True, 'event': ev, 'severity': g['sev'], 'warnings': g['n'],
+                      'place': place, 'service': 'Национальная метеослужба США', 'areas': states},
         })
     print(f"  NWS CAP: {len(items)} явлений из {len(feats)} предупреждений", file=sys.stderr)
     return items
@@ -16141,6 +16177,15 @@ _CAP_EVENT_RU = {
     'onda de calor': 'Жара', 'onda de frio': 'Похолодание', 'declínio de temperatura': 'Похолодание',
     'geada': 'Заморозки', 'ressaca': 'Штормовой прибой', 'granizo': 'Град', 'nevoeiro': 'Туман',
     'sheep graziers warning': 'Холод и ветер для скота',
+    'civil emergency message': 'Гражданская чрезвычайная ситуация',
+    'local area emergency': 'Местная чрезвычайная ситуация',
+    'law enforcement warning': 'Предупреждение правоохранительных органов',
+    'evacuation immediate': 'Немедленная эвакуация', 'shelter in place warning': 'Укрыться в помещении',
+    'hazardous materials warning': 'Опасные вещества', 'special weather statement': 'Особое метеосообщение',
+    'extreme wind warning': 'Экстремальный ветер', 'snow squall warning': 'Снежный шквал',
+    'lake effect snow warning': 'Озёрный снегопад', 'heavy freezing spray warning': 'Обледенение судов',
+    'earthquake warning': 'Землетрясение', 'volcano warning': 'Извержение вулкана',
+    '911 telephone outage emergency': 'Сбой телефонной линии 911',
 }
 _CAP_EVENT_KW = [
     (r'tornado', 'Торнадо'), (r'hurricane|typhoon', 'Ураган'), (r'tropical (?:storm|cyclone|depression)', 'Тропический циклон'),
@@ -16154,6 +16199,68 @@ _CAP_EVENT_KW = [
     (r'fire|bushfire|wildfire|incêndio', 'Пожароопасность'), (r'wave|surf|swell|ressaca|storm surge', 'Высокие волны'),
     (r'drought|seca', 'Засуха'), (r'avalanche', 'Лавины'), (r'tsunami', 'Цунами'), (r'storm|tempestade', 'Шторм'),
 ]
+
+
+# ══ ЕДИНЫЙ ВИД КАРТОЧКИ ПРЕДУПРЕЖДЕНИЯ (16.10.2026, требование Мии) ═════════
+# Карточка в панели «Предупреждения» читается одинаково для всех служб:
+#   явление        - по-русски, без смеси языков;
+#   место          - «район, район, район и ещё N районов, Страна», без сокращений;
+#   текст          - формулировка службы по-русски + полный перечень районов.
+# Место кладётся в meta.place, панель берёт его первым. Названия районов на
+# латинице переводятся общим переводом ленты (тот же кэш), иначе карточка
+# смешивает языки: «Makkah region - Bahrah : The entire governorate».
+_ABBR_RU = [
+    (r'\bа\.\s?о\.', 'автономный округ'), (r'\bАО\b', 'автономный округ'),
+    (r'\bобл\.', 'область'), (r'\bРесп\.', 'Республика'), (r'\bресп\.', 'республика'),
+    (r'\bр-н\b', 'район'), (r'\bокр\.', 'округ'), (r'\bг\.\s?', 'город '),
+    (r'\bп-ов\b', 'полуостров'), (r'\bм\.\s?о\.', 'муниципальный округ'),
+]
+
+
+def _expand_abbr(t):
+    """Сокращения служб в полные слова: «Новосибирская обл.» -> «Новосибирская область»."""
+    t = str(t or '')
+    for rx, full in _ABBR_RU:
+        t = re.sub(rx, full, t)
+    return re.sub(r'\s{2,}', ' ', t).strip()
+
+
+def _plural_ru(n, forms):
+    n = abs(int(n)); t, h = n % 10, n % 100
+    return forms[0] if t == 1 and h != 11 else (forms[1] if 2 <= t <= 4 and not 12 <= h <= 14 else forms[2])
+
+
+def _ru_names(names):
+    """Названия на латинице - по-русски через общий перевод ленты (с кэшем)."""
+    names = [str(x or '').strip() for x in names]
+    lat = [x for x in names if x and re.search(r'[A-Za-zÀ-ÿ]', x) and not re.search(r'[А-Яа-яЁё]', x)]
+    if not lat:
+        return names
+    try:
+        tr = dict(zip(lat, translate_batch(lat)))
+    except Exception:
+        return names
+    return [(tr.get(x) or x).strip().rstrip('.') for x in names]
+
+
+def _place_line(areas, country, forms=('район', 'района', 'районов'), show=3):
+    """«A, B, C и ещё N районов, Страна». Одно место - «A, Страна»."""
+    areas = [a for a in areas if a and a != country]
+    if not areas:
+        return country
+    head = ', '.join(areas[:show])
+    rest = len(areas) - show
+    if rest > 0:
+        head += f' и ещё {rest} {_plural_ru(rest, forms)}'
+    return f'{head}, {country}'
+
+
+def _area_list(areas, limit=20, forms=('район', 'района', 'районов')):
+    areas = [a for a in areas if a]
+    txt = ', '.join(areas[:limit])
+    if len(areas) > limit:
+        txt += f' и ещё {len(areas) - limit} {_plural_ru(len(areas) - limit, forms)}'
+    return txt
 
 
 def _cap_event_ru(event):
@@ -16184,25 +16291,31 @@ def _cap_aggregate(items, country, svc, source):
         a = (m.get('area') or '').strip()
         a = re.sub(r'^(?:aviso para as [áa]reas|areas?|районы?)\s*:\s*', '', a, flags=re.I)
         for part in [x.strip() for x in re.split(r'[;,]', a) if x.strip()]:
-            if part not in g['areas']:
+            # «Makkah region - Bahrah : The entire governorate» -> «Bahrah (Makkah)»
+            part = re.sub(r'\s*:\s*(?:the\s+)?(?:entire|whole|all)\b.*$', '', part, flags=re.I)
+            mm = re.match(r'^(.+?)\s+(?:region|province|governorate)\s*-\s*(.+)$', part, re.I)
+            if mm:
+                part = f"{mm.group(2).strip()} ({mm.group(1).strip()})"
+            part = part.strip(' -:')
+            if part and part not in g['areas']:
                 g['areas'].append(part)
     out = []
     for ev, g in groups.items():
         lead = max(g['items'], key=lambda x: x.get('_force_severity') or 0)
-        n, areas = len(g['items']), g['areas']
-        if n == 1 and len(areas) == 1 and len(areas[0]) <= 60:
-            title = f"{ev}: {areas[0]} ({country})"
-        else:
-            k = max(n, len(areas))
-            _t, _h = k % 10, k % 100
-            _w = 'район' if _t == 1 and _h != 11 else ('района' if 2 <= _t <= 4 and not 12 <= _h <= 14 else 'районов')
-            title = f"{ev}: {country} ({k} {_w})"
-        shown = ', '.join(areas[:6]) + (f' и ещё {len(areas) - 6}' if len(areas) > 6 else '')
+        n = len(g['items'])
+        areas = _ru_names([_expand_abbr(a) for a in g['areas']])
+        place = _place_line(areas, country)
+        text = _ru_names([_expand_abbr(lead.get('desc') or '')])[0].strip()
+        if text and not text.endswith('.'):
+            text += '.'
+        body = text
+        if len(areas) > 1:
+            body = (body + ' ' if body else '') + f"Затронуто {len(areas)} {_plural_ru(len(areas), ('район', 'района', 'районов'))}: {_area_list(areas)}."
         it = dict(lead)
-        it['title'] = title[:130]
-        it['desc'] = (f"Районы: {shown} · {svc}" if shown else f"Официальное предупреждение · {svc}")
+        it['title'] = f"{ev}: {place}"[:160]
+        it['desc'] = body or 'Официальное предупреждение национальной метеослужбы.'
         it['_region'] = country
-        it['_meta'] = dict(lead.get('_meta') or {}, event=ev, warnings=n)
+        it['_meta'] = dict(lead.get('_meta') or {}, event=ev, warnings=n, place=place, areas=areas[:40])
         out.append(it)
     return out
 
@@ -16297,20 +16410,22 @@ def _meteoinfo_cap(feed_url, country, svc, source, kind, limit=70, cc=None, fall
         dsc = _cap_find(info, "description")
         dtext = (dsc.text or "").strip() if dsc is not None else event
         event = _rg_event_name(event, dtext)
-        title = (f"{event}: {areaDesc} ({country})" if areaDesc else f"{event} ({country})")
+        areaDesc = _expand_abbr(areaDesc)
+        _place = f"{areaDesc}, {country}" if areaDesc else country
+        title = f"{event}: {_place}"
         _origin = 'computed'
         if (lat is None or lng is None) and fallback:
             lat, lng = fallback; _origin = 'capital'
         it = {
             "title": title[:130],
-            "desc": f"{dtext} · {svc}, {areaDesc}, {country}".strip(" ·"),
+            "desc": _expand_abbr(dtext),
             "date": now.strftime("%Y-%m-%d"),
             "source": source,
             "_lat": lat, "_lng": lng, '_coord_origin': _origin,
             "_region": (f"{areaDesc}, {country}" if areaDesc else country),
             "_domain": "climate",
             "_force_severity": score,
-            "_meta": {"kind": kind, "verified": True,
+            "_meta": {"kind": kind, "verified": True, "place": _place, "service": svc,
                       "event": event, "severity": sevkey, "area": areaDesc},
         }
         if cc:
@@ -17317,17 +17432,16 @@ def fetch_mgm_turkey():
         ru_col = _MGM_COL_RU.get(col, col)
         score = _MGM_SEV.get(col, 50)
         _pv = sorted(g.get("prov") or [], key=lambda n: (_TR_PRIO.index(n) if n in _TR_PRIO else 99, n))
-        if _pv:
-            _pl = ", ".join(_pv[:3]) + (f" и ещё {len(_pv) - 3}" if len(_pv) > 3 else "")
-            title = f"{ru_types}: Турция — {_pl} ({ru_col} уровень)"
-        else:
-            title = f"{ru_types}: Турция, {g['n']} {_ru_warn(g['n'])} ({ru_col} уровень)"
-        _txt = " · ".join(g["texts"][:3])
+        _place = _place_line(_pv, "Турция", ("провинция", "провинции", "провинций"))
+        title = f"{ru_types}: {_place}"
+        _txt = " ".join(t.rstrip(".") + "." for t in g["texts"][:3] if t)
+        _body = (f"{_txt} " if _txt else "") + (
+            f"Официальное предупреждение метеослужбы Турции: {ru_col} уровень, "
+            f"{g['n']} {_ru_warn(g['n'])}"
+            + (f". Затронуто {len(_pv)} {_plural_ru(len(_pv), ('провинция', 'провинции', 'провинций'))}: {_area_list(_pv, 40, ('провинция', 'провинции', 'провинций'))}." if _pv else "."))
         items.append({
-            "title": title[:130],
-            "desc": (f"{_txt} · MGM (Метеослужба Турции), {ru_col} уровень, "
-                     f"действующих предупреждений: {g['n']}"
-                     + (f"; провинции: {', '.join(_pv)}" if _pv else "") + ". Турция").strip(" ·"),  # здесь всегда род. мн., число стоит после двоеточия
+            "title": title[:160],
+            "desc": _body,
             "date": now.strftime("%Y-%m-%d"),
             "source": "MGM Турция",
             "_lat": (_TR_XY[_pv[0]][0] if _pv and _pv[0] in _TR_XY else 39.0),
@@ -17338,7 +17452,7 @@ def fetch_mgm_turkey():
             "_force_severity": score,
             "_meta": {"kind": "mgm", "verified": True, "color": col,
                       "types": g["types"], "count": g["n"], "alerts": g["alerts"][:20],
-                      "provinces": _pv[:30]},
+                      "provinces": _pv[:30], "place": _place, "service": "Метеослужба Турции"},
         })
     _mgm_write_probe({
             'дата': now.isoformat(),
@@ -20884,7 +20998,7 @@ def _ma_parse(xml_text, cc, country_name, lat, lng):
         # заголовке только район — он и идёт после первого тире. Обрезка была
         # ровно на семидесяти знаках и рубила слово посередине; теперь режем по
         # границе слова и только если район действительно длинный.
-        if title and len(g['areas']) < 5:
+        if title and len(g['areas']) < 40:
             _a = (title.split(' - ', 1)[1] if ' - ' in title else title).strip()
             if len(_a) > 90:
                 _a = _a[:90].rsplit(' ', 1)[0] + '…'
@@ -20919,9 +21033,14 @@ def _ma_parse(xml_text, cc, country_name, lat, lng):
         # Германия» вместо «ГРОЗА / Германия». Грамматика приведена к общей для
         # всех источников CAP: вид впереди, место следом.
         _kind_ru = kind or 'Метеопредупреждение'
+        _areas = _ru_names(g.get('areas') or [])
+        _place = _place_line(_areas, country_name)
+        _body = (f"Официальное предупреждение национальной метеослужбы: {lvl}"
+                 + (f", {n} {_plural_ru(n, ('предупреждение', 'предупреждения', 'предупреждений'))}" if n > 1 else '')
+                 + (f". Затронуто {len(_areas)} {_plural_ru(len(_areas), ('район', 'района', 'районов'))}: {_area_list(_areas)}." if len(_areas) > 1 else '.'))
         out.append({
-            'title': ('%s: %s (%s%s)' % (_kind_ru, country_name, lvl, cnt)),
-            'desc': (_ma_areas_text(g) + ' · MeteoAlarm, EUMETNET'),
+            'title': f'{_kind_ru}: {_place}'[:160],
+            'desc': _body,
             'date': g['date'] or today,
             'source': 'MeteoAlarm CAP',
             'source_bias': 9,
@@ -20931,7 +21050,8 @@ def _ma_parse(xml_text, cc, country_name, lat, lng):
             '_domain': 'climate',
             '_force_severity': _MA_LEVEL[g['level']],
             '_meta': {'kind': 'cap', 'verified': True, 'provider': 'MeteoAlarm',
-                      'level': g['level'], 'country': cc, 'warnings': n},
+                      'level': g['level'], 'country': cc, 'warnings': n,
+                      'place': _place, 'service': 'MeteoAlarm', 'areas': _areas[:40]},
         })
     return out
 
