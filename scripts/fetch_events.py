@@ -16132,8 +16132,8 @@ def _fetch_nws_cap():
         _nw = g['n']
         _zn = g.get('zones', 0)
         body = (f"Официальное предупреждение Национальной метеослужбы США. "
-                f"Действует {_nw} {_plural_ru(_nw, ('предупреждение', 'предупреждения', 'предупреждений'))}"
-                + (f" по {_zn} {_plural_ru(_zn, ('округу и зоне', 'округам и зонам', 'округам и зонам'))}" if _zn else '')
+                f"Действует {_nw} {_plural_forms(_nw, ('предупреждение', 'предупреждения', 'предупреждений'))}"
+                + (f" по {_zn} {_plural_forms(_zn, ('округу и зоне', 'округам и зонам', 'округам и зонам'))}" if _zn else '')
                 + (f". Штаты: {', '.join(states)}." if states else '. Штаты в сообщении не указаны.'))
         items.append({
             'title': f'{ev}: {place}'[:160],
@@ -16233,7 +16233,9 @@ def _expand_abbr(t):
     return re.sub(r'\s{2,}', ' ', t).strip()
 
 
-def _plural_ru(n, forms):
+def _plural_forms(n, forms):
+    """Склонение по кортежу форм. Отдельное имя: ниже в модуле есть _plural_ru(n, one, few, many),
+    и одноимённая функция перекрывала эту (16.10.2026: из-за этого падали все сборщики CAP, кроме Росгидромета)."""
     n = abs(int(n)); t, h = n % 10, n % 100
     return forms[0] if t == 1 and h != 11 else (forms[1] if 2 <= t <= 4 and not 12 <= h <= 14 else forms[2])
 
@@ -16259,7 +16261,7 @@ def _place_line(areas, country, forms=('район', 'района', 'район
     head = ', '.join(areas[:show])
     rest = len(areas) - show
     if rest > 0:
-        head += f' и ещё {rest} {_plural_ru(rest, forms)}'
+        head += f' и ещё {rest} {_plural_forms(rest, forms)}'
     return f'{head}, {country}'
 
 
@@ -16267,7 +16269,7 @@ def _area_list(areas, limit=20, forms=('район', 'района', 'район
     areas = [a for a in areas if a]
     txt = ', '.join(areas[:limit])
     if len(areas) > limit:
-        txt += f' и ещё {len(areas) - limit} {_plural_ru(len(areas) - limit, forms)}'
+        txt += f' и ещё {len(areas) - limit} {_plural_forms(len(areas) - limit, forms)}'
     return txt
 
 
@@ -16318,7 +16320,7 @@ def _cap_aggregate(items, country, svc, source):
             text += '.'
         body = text
         if len(areas) > 1:
-            body = (body + ' ' if body else '') + f"Затронуто {len(areas)} {_plural_ru(len(areas), ('район', 'района', 'районов'))}: {_area_list(areas)}."
+            body = (body + ' ' if body else '') + f"Затронуто {len(areas)} {_plural_forms(len(areas), ('район', 'района', 'районов'))}: {_area_list(areas)}."
         it = dict(lead)
         it['title'] = f"{ev}: {place}"[:160]
         it['desc'] = body or 'Официальное предупреждение национальной метеослужбы.'
@@ -17446,7 +17448,7 @@ def fetch_mgm_turkey():
         _body = (f"{_txt} " if _txt else "") + (
             f"Официальное предупреждение метеослужбы Турции: {ru_col} уровень, "
             f"{g['n']} {_ru_warn(g['n'])}"
-            + (f". Затронуто {len(_pv)} {_plural_ru(len(_pv), ('провинция', 'провинции', 'провинций'))}: {_area_list(_pv, 40, ('провинция', 'провинции', 'провинций'))}." if _pv else "."))
+            + (f". Затронуто {len(_pv)} {_plural_forms(len(_pv), ('провинция', 'провинции', 'провинций'))}: {_area_list(_pv, 40, ('провинция', 'провинции', 'провинций'))}." if _pv else "."))
         items.append({
             "title": title[:160],
             "desc": _body,
@@ -21044,8 +21046,8 @@ def _ma_parse(xml_text, cc, country_name, lat, lng):
         _areas = _ru_names(g.get('areas') or [])
         _place = _place_line(_areas, country_name)
         _body = (f"Официальное предупреждение национальной метеослужбы: {lvl}"
-                 + (f", {n} {_plural_ru(n, ('предупреждение', 'предупреждения', 'предупреждений'))}" if n > 1 else '')
-                 + (f". Затронуто {len(_areas)} {_plural_ru(len(_areas), ('район', 'района', 'районов'))}: {_area_list(_areas)}." if len(_areas) > 1 else '.'))
+                 + (f", {n} {_plural_forms(n, ('предупреждение', 'предупреждения', 'предупреждений'))}" if n > 1 else '')
+                 + (f". Затронуто {len(_areas)} {_plural_forms(len(_areas), ('район', 'района', 'районов'))}: {_area_list(_areas)}." if len(_areas) > 1 else '.'))
         out.append({
             'title': f'{_kind_ru}: {_place}'[:160],
             'desc': _body,
@@ -23189,6 +23191,12 @@ def _retain_critical(evs, prev):
         _now=_dt.now(_tz.utc); kept=[]; _dropped=0
         for e in pevs:
             if (e.get('severity') or 0) < _RETAIN_MIN_SEV: continue
+            # 16.10.2026: официальные предупреждения не удерживаются. У них свой
+            # срок действия, служба отдаёт актуальный список каждый прогон;
+            # удержание держало в панели устаревшие карточки старого формата
+            # («Штаты: н/д»), когда сборщик CAP падал.
+            if e.get('alerts_only') or (e.get('meta') or {}).get('kind') in ('cap', 'cap_hub', 'mgm', 'rosgidromet_cap'):
+                continue
             key=e.get('fingerprint') or e.get('id') or (e.get('title') or '')[:60]
             if key in have or (e.get('title') or '')[:60] in have_t: continue
             if (e.get('meta') or {}).get('don_id') in have_don: continue
