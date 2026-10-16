@@ -2,67 +2,67 @@
   "country": "PT",
   "date": "2026-10-16",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-16T08:47:31.685704+00:00",
+  "generated_at": "2026-10-16T09:07:57.221599+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-PT",
       "type": "Country",
       "label": "PT",
-      "score": 55,
+      "score": 42,
       "props": {
-        "risk_score": 55
+        "risk_score": 42
       }
     },
     {
       "id": "DOMAIN-PT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 41,
-      "trend": "stable"
+      "score": 10,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-PT-economic",
       "type": "Domain",
       "label": "economic",
       "score": 55,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-PT-climate",
       "type": "Domain",
       "label": "climate",
       "score": 32,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-PT-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-PT-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-PT-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-PT-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DRIVER-PT-economic",
@@ -70,21 +70,14 @@
       "label": "economic"
     },
     {
-      "id": "DRIVER-PT-geopolitical",
-      "type": "Driver",
-      "label": "geopolitical"
-    },
-    {
       "id": "DRIVER-PT-climate",
       "type": "Driver",
       "label": "climate"
     },
     {
-      "id": "SIGNAL-PT-Португалия",
-      "type": "Signal",
-      "label": "Португалия испытывает всплеск — компенса",
-      "severity": 55,
-      "domain": "economic"
+      "id": "DRIVER-PT-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
     },
     {
       "id": "SIGNAL-PT-Экономичес",
@@ -99,6 +92,13 @@
       "label": "Морской лёд — Португалия",
       "severity": 32,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-PT-Торговый_б",
+      "type": "Signal",
+      "label": "Торговый баланс — Португалия",
+      "severity": 32,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.41
+      "weight": 0.1
     },
     {
       "from": "COUNTRY-PT",
@@ -151,43 +151,16 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-PT-geopolitical",
-      "to": "COUNTRY-PT",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
       "from": "DRIVER-PT-climate",
       "to": "COUNTRY-PT",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-PT-geopolitical",
-      "to": "DOMAIN-PT-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-PT-infrastructure",
-      "to": "DOMAIN-PT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-PT-economic",
-      "to": "DOMAIN-PT-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
-      "from": "SIGNAL-PT-Португалия",
-      "to": "DOMAIN-PT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55
+      "from": "DRIVER-PT-geopolitical",
+      "to": "COUNTRY-PT",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "SIGNAL-PT-Экономичес",
@@ -198,6 +171,12 @@
     {
       "from": "SIGNAL-PT-Морской_лё",
       "to": "DOMAIN-PT-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.32
+    },
+    {
+      "from": "SIGNAL-PT-Торговый_б",
+      "to": "DOMAIN-PT-economic",
       "type": "AMPLIFIES",
       "weight": 0.32
     }
