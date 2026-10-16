@@ -13621,6 +13621,15 @@ CAP_FALLBACK_NO_COORDS = True
 # geo.coord_origin — откуда опубликованная точка; geo.raw_origin — откуда точка на входе контракта;
 # geo.coord_reused — 'retained', если вход взят из прошлой публикации (_retain_critical).
 COORD_ORIGIN = True
+# TASK-289 R2 (F4) · повторный вход удержанного события не повышает точность.
+# _retain_critical возвращает событие с lat/lng = выход прошлого контракта. Если
+# прошлый контракт сам вычислил точку (centroid / mentioned / single_mention), то
+# _mk / _mk_zone / _disputed видят её в рамке и ставят exact. Точка и атрибуция
+# остаются прежними (часть правил места зависит от точки, например zone_coords),
+# меняется только точность: exact на той же точке → centroid. Свежие события не
+# затрагиваются. Откат: False.
+RETAIN_NO_REENTRY = True
+_RETAIN_COMPUTED_PREC = ('centroid', 'mentioned', 'single_mention')
 
 
 def _apply_geo_contract(events):
@@ -13640,6 +13649,14 @@ def _apply_geo_contract(events):
         rc = (lat, lng) if isinstance(lat, (int, float)) and isinstance(lng, (int, float)) else None
         gc = resolve_geo(e.get('title', ''), e.get('summary', '') or e.get('description', ''),
                          raw_coords=rc, domain=e.get('domain'))
+        if (RETAIN_NO_REENTRY and rc and _pg_prev is not None
+                and (e.get('meta') or {}).get('retained')
+                and _pg_prev.get('precision') in _RETAIN_COMPUTED_PREC
+                and gc.precision == 'exact' and gc.lat is not None
+                and abs(gc.lat - rc[0]) < 1e-9 and abs(gc.lng - rc[1]) < 1e-9):
+            import dataclasses as _dc289
+            gc = _dc289.replace(gc, precision='centroid')   # TASK-289 R2: прошлый выход контракта ≠ точная исходная координата
+            st['retain_no_upgrade'] = st.get('retain_no_upgrade', 0) + 1
         ok, _errs = validate_geo(gc)
         if not ok:
             st['validate_fail'] += 1
