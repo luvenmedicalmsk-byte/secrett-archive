@@ -1,18 +1,18 @@
 {
   "country": "RU",
-  "date": "2026-10-15",
+  "date": "2026-10-16",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-15T23:47:55.893429+00:00",
+  "generated_at": "2026-10-16T00:08:26.546050+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-RU",
       "type": "Country",
       "label": "RU",
-      "score": 88,
+      "score": 87,
       "props": {
-        "risk_score": 88
+        "risk_score": 87
       }
     },
     {
@@ -20,21 +20,21 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 90,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-RU-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 79,
+      "score": 5,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-RU-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "stable"
+      "score": 54,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-RU-technology",
@@ -94,11 +94,11 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-RU-Газопровод",
+      "id": "SIGNAL-RU-В_результа",
       "type": "Signal",
-      "label": "Газопровод взорвался в Пензенской област",
-      "severity": 79,
-      "domain": "economic"
+      "label": "В результате массированного удара БПЛА п",
+      "severity": 76,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -112,13 +112,13 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-economic",
       "type": "CORRELATES",
-      "weight": 0.79
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.54
     },
     {
       "from": "COUNTRY-RU",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-RU-climate",
+      "to": "DOMAIN-RU-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-RU-economic",
+      "to": "DOMAIN-RU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-RU-social",
+      "to": "DOMAIN-RU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-RU-geopolitical",
       "to": "DOMAIN-RU-infrastructure",
       "type": "ESCALATES",
@@ -184,6 +205,27 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-RU-climate",
+      "to": "DOMAIN-RU-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-RU-infrastructure",
+      "to": "DOMAIN-RU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-RU-economic",
+      "to": "DOMAIN-RU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-RU-В_Кировогр",
       "to": "DOMAIN-RU-geopolitical",
       "type": "AMPLIFIES",
@@ -196,10 +238,10 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-RU-Газопровод",
-      "to": "DOMAIN-RU-economic",
+      "from": "SIGNAL-RU-В_результа",
+      "to": "DOMAIN-RU-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.79
+      "weight": 0.76
     }
   ]
 }
