@@ -2,7 +2,7 @@
   "country": "IT",
   "date": "2026-10-16",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-16T16:07:49.054071+00:00",
+  "generated_at": "2026-10-16T16:26:34.276330+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,17 +10,17 @@
       "id": "COUNTRY-IT",
       "type": "Country",
       "label": "IT",
-      "score": 50,
+      "score": 51,
       "props": {
-        "risk_score": 50
+        "risk_score": 51
       }
     },
     {
       "id": "DOMAIN-IT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 41,
-      "trend": "stable"
+      "score": 45,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-economic",
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 56,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-technology",
@@ -47,7 +47,7 @@
       "id": "DOMAIN-IT-social",
       "type": "Domain",
       "label": "social",
-      "score": 67,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,25 +80,25 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IT-Гроза:_Sic",
+      "type": "Signal",
+      "label": "Гроза: Sicilia, Италия",
+      "severity": 50,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-IT-Туман:_Мар",
+      "type": "Signal",
+      "label": "Туман: Марке, Умбрия, Тоскана и еще 4 ра",
+      "severity": 50,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-IT-Пожарная_а",
       "type": "Signal",
       "label": "Пожарная активность — Италия",
       "severity": 56,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-IT-Шторм_—_Ит",
-      "type": "Signal",
-      "label": "Шторм — Италия",
-      "severity": 50,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-IT-Миграционн",
-      "type": "Signal",
-      "label": "Миграционная политика — Италия",
-      "severity": 67,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.41
+      "weight": 0.45
     },
     {
       "from": "COUNTRY-IT",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-social",
       "type": "CORRELATES",
-      "weight": 0.67
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-IT",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-IT-geopolitical",
-      "to": "DOMAIN-IT-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-IT-infrastructure",
-      "to": "DOMAIN-IT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-IT-economic",
-      "to": "DOMAIN-IT-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "DOMAIN-IT-climate",
       "to": "DOMAIN-IT-infrastructure",
       "type": "ESCALATES",
@@ -226,22 +205,43 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-IT-Пожарная_а",
-      "to": "DOMAIN-IT-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.56
+      "from": "DOMAIN-IT-geopolitical",
+      "to": "DOMAIN-IT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
     },
     {
-      "from": "SIGNAL-IT-Шторм_—_Ит",
+      "from": "DOMAIN-IT-infrastructure",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IT-Гроза:_Sic",
       "to": "DOMAIN-IT-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-IT-Миграционн",
-      "to": "DOMAIN-IT-social",
+      "from": "SIGNAL-IT-Туман:_Мар",
+      "to": "DOMAIN-IT-climate",
       "type": "AMPLIFIES",
-      "weight": 0.67
+      "weight": 0.5
+    },
+    {
+      "from": "SIGNAL-IT-Пожарная_а",
+      "to": "DOMAIN-IT-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.56
     }
   ]
 }

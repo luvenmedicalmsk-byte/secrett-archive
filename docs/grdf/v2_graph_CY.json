@@ -2,67 +2,67 @@
   "country": "CY",
   "date": "2026-10-16",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-16T16:07:49.064484+00:00",
-  "node_count": 13,
-  "edge_count": 18,
+  "generated_at": "2026-10-16T16:26:34.283212+00:00",
+  "node_count": 14,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-CY",
       "type": "Country",
       "label": "CY",
-      "score": 45,
+      "score": 72,
       "props": {
-        "risk_score": 45
+        "risk_score": 72
       }
     },
     {
       "id": "DOMAIN-CY-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
-      "trend": "stable"
+      "score": 71,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CY-economic",
       "type": "Domain",
       "label": "economic",
       "score": 32,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CY-climate",
       "type": "Domain",
       "label": "climate",
       "score": 72,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CY-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CY-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CY-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CY-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-CY-climate",
@@ -78,6 +78,13 @@
       "id": "DRIVER-CY-economic",
       "type": "Driver",
       "label": "economic"
+    },
+    {
+      "id": "SIGNAL-CY-Гроза:_Cyp",
+      "type": "Signal",
+      "label": "Гроза: Cyprus, Кипр",
+      "severity": 72,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-CY-Шторм_—_Ки",
@@ -99,7 +106,7 @@
       "from": "COUNTRY-CY",
       "to": "DOMAIN-CY-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.71
     },
     {
       "from": "COUNTRY-CY",
@@ -157,6 +164,27 @@
     },
     {
       "from": "DOMAIN-CY-climate",
+      "to": "DOMAIN-CY-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-CY-economic",
+      "to": "DOMAIN-CY-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-CY-social",
+      "to": "DOMAIN-CY-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-CY-climate",
       "to": "DOMAIN-CY-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -177,25 +205,31 @@
       "lag_days": 30
     },
     {
-      "from": "DOMAIN-CY-climate",
-      "to": "DOMAIN-CY-economic",
+      "from": "DOMAIN-CY-geopolitical",
+      "to": "DOMAIN-CY-infrastructure",
       "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CY-infrastructure",
+      "to": "DOMAIN-CY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
     },
     {
       "from": "DOMAIN-CY-economic",
       "to": "DOMAIN-CY-social",
       "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
-      "from": "DOMAIN-CY-social",
-      "to": "DOMAIN-CY-social",
+      "from": "SIGNAL-CY-Гроза:_Cyp",
+      "to": "DOMAIN-CY-climate",
       "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
+      "weight": 0.72
     },
     {
       "from": "SIGNAL-CY-Шторм_—_Ки",
