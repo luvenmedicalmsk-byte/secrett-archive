@@ -2,7 +2,7 @@
   "country": "KZ",
   "date": "2026-10-17",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-17T10:28:31.201307+00:00",
+  "generated_at": "2026-10-17T10:49:05.857550+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,30 +10,30 @@
       "id": "COUNTRY-KZ",
       "type": "Country",
       "label": "KZ",
-      "score": 74,
+      "score": 58,
       "props": {
-        "risk_score": 74
+        "risk_score": 58
       }
     },
     {
       "id": "DOMAIN-KZ-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 25,
+      "score": 20,
       "trend": "down"
     },
     {
       "id": "DOMAIN-KZ-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 59,
+      "score": 5,
       "trend": "down"
     },
     {
       "id": "DOMAIN-KZ-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 74,
+      "score": 56,
       "trend": "down"
     },
     {
@@ -80,10 +80,17 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-KZ-Пожарная_о",
+      "id": "SIGNAL-KZ-Ветер:_Кар",
       "type": "Signal",
-      "label": "Пожарная опасность: Жанибекский район (З",
-      "severity": 74,
+      "label": "Ветер: Кармакшинский район (Кызылординск",
+      "severity": 56,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-KZ-Гроза:_Жан",
+      "type": "Signal",
+      "label": "Гроза: Жанибекский район (Западно-Казахс",
+      "severity": 56,
       "domain": "climate"
     },
     {
@@ -92,13 +99,6 @@
       "label": "Разорвите молчание: Казахстанская сеть U",
       "severity": 32,
       "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-KZ-Экономичес",
-      "type": "Signal",
-      "label": "Экономический сигнал — Центральная Азия",
-      "severity": 79,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,19 +106,19 @@
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.25
+      "weight": 0.2
     },
     {
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-economic",
       "type": "CORRELATES",
-      "weight": 0.59
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-climate",
       "type": "CORRELATES",
-      "weight": 0.74
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-KZ",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-KZ-climate",
-      "to": "DOMAIN-KZ-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-KZ-infrastructure",
-      "to": "DOMAIN-KZ-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-KZ-economic",
-      "to": "DOMAIN-KZ-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-KZ-climate",
       "to": "DOMAIN-KZ-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,22 +184,43 @@
       "lag_days": 90
     },
     {
-      "from": "SIGNAL-KZ-Пожарная_о",
+      "from": "DOMAIN-KZ-climate",
+      "to": "DOMAIN-KZ-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-KZ-infrastructure",
+      "to": "DOMAIN-KZ-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-KZ-economic",
+      "to": "DOMAIN-KZ-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-KZ-Ветер:_Кар",
       "to": "DOMAIN-KZ-climate",
       "type": "AMPLIFIES",
-      "weight": 0.74
+      "weight": 0.56
+    },
+    {
+      "from": "SIGNAL-KZ-Гроза:_Жан",
+      "to": "DOMAIN-KZ-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.56
     },
     {
       "from": "SIGNAL-KZ-Разорвите_",
       "to": "DOMAIN-KZ-technology",
       "type": "AMPLIFIES",
       "weight": 0.32
-    },
-    {
-      "from": "SIGNAL-KZ-Экономичес",
-      "to": "DOMAIN-KZ-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.79
     }
   ]
 }
