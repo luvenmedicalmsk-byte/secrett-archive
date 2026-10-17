@@ -2,17 +2,17 @@
   "country": "SA",
   "date": "2026-10-17",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-17T08:26:16.959522+00:00",
+  "generated_at": "2026-10-17T08:46:42.125792+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-SA",
       "type": "Country",
       "label": "SA",
-      "score": 58,
+      "score": 75,
       "props": {
-        "risk_score": 58
+        "risk_score": 75
       }
     },
     {
@@ -20,49 +20,49 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 92,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 92,
-      "trend": "stable"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-SA-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-SA-Иран_помог",
+      "type": "Signal",
+      "label": "Иран помогает хуситам наносить удары по ",
+      "severity": 75,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-SA-Геополитич",
       "type": "Signal",
       "label": "Геополитический процесс — Ближний Восток",
@@ -92,13 +99,6 @@
       "label": "Геополитический процесс — Саудовская Ара",
       "severity": 92,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-SA-Тепловая_в",
-      "type": "Signal",
-      "label": "Тепловая волна — Саудовская Аравия",
-      "severity": 92,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-climate",
       "type": "CORRELATES",
-      "weight": 0.92
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-SA",
@@ -163,48 +163,6 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-SA-climate",
-      "to": "DOMAIN-SA-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-SA-economic",
-      "to": "DOMAIN-SA-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-SA-social",
-      "to": "DOMAIN-SA-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-SA-climate",
-      "to": "DOMAIN-SA-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-SA-infrastructure",
-      "to": "DOMAIN-SA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-SA-economic",
-      "to": "DOMAIN-SA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-SA-geopolitical",
       "to": "DOMAIN-SA-infrastructure",
       "type": "ESCALATES",
@@ -226,10 +184,10 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-SA-Геополитич",
+      "from": "SIGNAL-SA-Иран_помог",
       "to": "DOMAIN-SA-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.92
+      "weight": 0.75
     },
     {
       "from": "SIGNAL-SA-Геополитич",
@@ -238,8 +196,8 @@
       "weight": 0.92
     },
     {
-      "from": "SIGNAL-SA-Тепловая_в",
-      "to": "DOMAIN-SA-climate",
+      "from": "SIGNAL-SA-Геополитич",
+      "to": "DOMAIN-SA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.92
     }
