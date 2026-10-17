@@ -4925,6 +4925,19 @@ def _synth_u(lo, hi, *key):
     _h = hashlib.sha256('\x1f'.join(str(k) for k in key).encode('utf-8')).digest()
     return lo + (hi - lo) * (int.from_bytes(_h[:8], 'big') / 18446744073709551616.0)
 
+# TASK R4 (F2) · выбор глобального кибер-узла без hash() Python.
+# hash(str) солится на каждый запуск (PYTHONHASHSEED), поэтому одно и то же
+# кибер-событие при каждом прогоне попадало в другой узел GLOBAL_TECH_COORDS
+# (Сиэтл, Лондон, Токио…). Теперь индекс - sha256 от заголовка, тот же вход
+# даёт тот же узел. Список узлов, их порядок и разброс (_synth_u, R3) прежние.
+# Откат: CYBER_NODE_DETERMINISTIC = False - снова hash(title).
+CYBER_NODE_DETERMINISTIC = True
+def _stable_index(n, *key):
+    if not CYBER_NODE_DETERMINISTIC:
+        return hash(key[-1]) % n
+    _h = hashlib.sha256('\x1f'.join(str(k) for k in key).encode('utf-8')).digest()
+    return int.from_bytes(_h[:8], 'big') % n
+
 def _source_home(src, seed=''):
     base = SOURCE_HOME.get(src)
     if not base: return None
@@ -18873,7 +18886,7 @@ def fetch_copernicus_cyber():
             
             # Геолокация по тексту
             text_lower = (title + ' ' + desc).lower()
-            _gtc = GLOBAL_TECH_COORDS[hash(title) % len(GLOBAL_TECH_COORDS)]
+            _gtc = GLOBAL_TECH_COORDS[_stable_index(len(GLOBAL_TECH_COORDS), 'cyber.node', title)]
             lat, lng = (_gtc[0] + _synth_u(-1, 1, 'cyber.global', 'lat', title, desc),
                         _gtc[1] + _synth_u(-2, 2, 'cyber.global', 'lng', title, desc))
             region = 'Глобально'
