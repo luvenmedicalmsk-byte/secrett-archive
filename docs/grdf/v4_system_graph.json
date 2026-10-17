@@ -1,9 +1,9 @@
 {
   "grdf_version": "4.0",
   "date": "2026-10-17",
-  "generated_at": "2026-10-17T23:32:12.060198+00:00",
+  "generated_at": "2026-10-17T23:46:30.243105+00:00",
   "node_count": 64,
-  "edge_count": 73,
+  "edge_count": 74,
   "node_types": [
     "Country",
     "Domain",
@@ -74,9 +74,9 @@
       "id": "CC:CN",
       "type": "Country",
       "label": "Китай",
-      "gri": 73,
-      "vulnerability": 20,
-      "resilience": 61
+      "gri": 72,
+      "vulnerability": 42,
+      "resilience": 50
     },
     {
       "id": "CC:TW",
@@ -170,9 +170,9 @@
       "id": "CC:SA",
       "type": "Country",
       "label": "Саудовская Аравия",
-      "gri": 75,
-      "vulnerability": 13,
-      "resilience": 62
+      "gri": 83,
+      "vulnerability": 26,
+      "resilience": 53
     },
     {
       "id": "CC:EG",
@@ -275,7 +275,7 @@
       "type": "Country",
       "label": "Иран",
       "gri": 77,
-      "vulnerability": 16,
+      "vulnerability": 12,
       "resilience": 61
     },
     {
@@ -431,6 +431,18 @@
       "resilience": 64
     },
     {
+      "id": "RISK:CN:CHAIN-DR",
+      "type": "Risk",
+      "label": "CN: Drought → Agriculture → Food P",
+      "score": 24
+    },
+    {
+      "id": "RISK:CN:CHAIN-GE",
+      "type": "Risk",
+      "label": "CN: Geopolitical Conflict → Energy",
+      "score": 10
+    },
+    {
       "id": "RISK:TR:CHAIN-DR",
       "type": "Risk",
       "label": "TR: Drought → Agriculture → Food P",
@@ -441,18 +453,6 @@
       "type": "Risk",
       "label": "TR: Geopolitical Conflict → Energy",
       "score": 8
-    },
-    {
-      "id": "RISK:CN:CHAIN-DR",
-      "type": "Risk",
-      "label": "CN: Drought → Agriculture → Food P",
-      "score": 18
-    },
-    {
-      "id": "RISK:CN:CHAIN-CL",
-      "type": "Risk",
-      "label": "CN: Wildfire → Energy → Supply Cha",
-      "score": 3
     },
     {
       "id": "RISK:FR:CHAIN-DR",
@@ -700,7 +700,13 @@
       "from": "CC:SA",
       "to": "DOM:geopolitical",
       "type": "ESCALATES",
-      "weight": 0.75
+      "weight": 0.83
+    },
+    {
+      "from": "CC:EG",
+      "to": "DOM:social",
+      "type": "CORRELATES",
+      "weight": 0.57
     },
     {
       "from": "CC:PL",
@@ -871,6 +877,18 @@
       "weight": 0.73
     },
     {
+      "from": "CC:CN",
+      "to": "RISK:CN:CHAIN-DR",
+      "type": "CAUSES",
+      "weight": 0.85
+    },
+    {
+      "from": "CC:CN",
+      "to": "RISK:CN:CHAIN-GE",
+      "type": "CAUSES",
+      "weight": 0.85
+    },
+    {
       "from": "CC:TR",
       "to": "RISK:TR:CHAIN-DR",
       "type": "CAUSES",
@@ -879,18 +897,6 @@
     {
       "from": "CC:TR",
       "to": "RISK:TR:CHAIN-GE",
-      "type": "CAUSES",
-      "weight": 0.85
-    },
-    {
-      "from": "CC:CN",
-      "to": "RISK:CN:CHAIN-DR",
-      "type": "CAUSES",
-      "weight": 0.85
-    },
-    {
-      "from": "CC:CN",
-      "to": "RISK:CN:CHAIN-CL",
       "type": "CAUSES",
       "weight": 0.85
     },
