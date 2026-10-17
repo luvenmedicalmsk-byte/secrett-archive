@@ -2,95 +2,196 @@
   "country": "SA",
   "country_name": "Саудовская Аравия",
   "date": "2026-10-17",
-  "generated_at": "2026-10-17T21:31:28.785592+00:00",
-  "evolution_score": 70,
-  "grade": "B",
-  "grade_ru": "Стабильная эволюция",
+  "generated_at": "2026-10-17T21:39:35.903691+00:00",
+  "evolution_score": 76,
+  "grade": "A",
+  "grade_ru": "Высокая эволюция",
   "active_scenarios": [
     {
-      "id": "ASE-ESC-DETE",
-      "type": "escalation_branch",
-      "name": "Ветвь эскалации: deteriorating",
-      "trigger": "Тренд: нарастание давления",
-      "score": 85,
+      "id": "ASE-ACC-5",
+      "type": "acceleration",
+      "name": "Сценарий ускорения (acceleration)",
+      "trigger": "signal_acceleration Δ=+5",
+      "score": 95,
       "probability": 18,
-      "confidence": 50,
-      "trend_strength": 65,
+      "confidence": 55,
+      "trend_strength": 50,
       "status": "emerging",
-      "source": "recommendation_shift",
+      "source": "signal_acceleration",
       "domain": "geopolitics"
-    }
-  ],
-  "active_count": 1,
-  "emerging_scenarios": [
+    },
     {
       "id": "ASE-ESC-DETE",
       "type": "escalation_branch",
       "name": "Ветвь эскалации: deteriorating",
       "trigger": "Тренд: нарастание давления",
-      "score": 85,
+      "score": 90,
       "probability": 18,
       "confidence": 50,
       "trend_strength": 65,
       "status": "emerging",
       "source": "recommendation_shift",
       "domain": "geopolitics"
+    },
+    {
+      "id": "ASE-CRIT-WORST",
+      "type": "critical_branch",
+      "name": "Критический каскад (ветвь КРИТИЧЕСКИХ рисков)",
+      "trigger": "Критический уровень риска: 80",
+      "score": 95,
+      "probability": 12,
+      "confidence": 60,
+      "trend_strength": 80,
+      "status": "emerging",
+      "source": "critical_risk",
+      "domain": "geopolitics"
     }
   ],
-  "convergences": [],
+  "active_count": 3,
+  "emerging_scenarios": [
+    {
+      "id": "ASE-ACC-5",
+      "type": "acceleration",
+      "name": "Сценарий ускорения (acceleration)",
+      "trigger": "signal_acceleration Δ=+5",
+      "score": 95,
+      "probability": 18,
+      "confidence": 55,
+      "trend_strength": 50,
+      "status": "emerging",
+      "source": "signal_acceleration",
+      "domain": "geopolitics"
+    },
+    {
+      "id": "ASE-ESC-DETE",
+      "type": "escalation_branch",
+      "name": "Ветвь эскалации: deteriorating",
+      "trigger": "Тренд: нарастание давления",
+      "score": 90,
+      "probability": 18,
+      "confidence": 50,
+      "trend_strength": 65,
+      "status": "emerging",
+      "source": "recommendation_shift",
+      "domain": "geopolitics"
+    },
+    {
+      "id": "ASE-CRIT-WORST",
+      "type": "critical_branch",
+      "name": "Критический каскад (ветвь КРИТИЧЕСКИХ рисков)",
+      "trigger": "Критический уровень риска: 80",
+      "score": 95,
+      "probability": 12,
+      "confidence": 60,
+      "trend_strength": 80,
+      "status": "emerging",
+      "source": "critical_risk",
+      "domain": "geopolitics"
+    }
+  ],
+  "convergences": [
+    {
+      "scenario_a": "acceleration",
+      "scenario_b": "escalation_branch",
+      "score_gap": 5,
+      "prob_gap": 0,
+      "label": "Сближение: Сценарий ускорения (acceleration) ↔ Ветвь эскалации: deteriorating"
+    },
+    {
+      "scenario_a": "acceleration",
+      "scenario_b": "critical_branch",
+      "score_gap": 0,
+      "prob_gap": 6,
+      "label": "Сближение: Сценарий ускорения (acceleration) ↔ Критический каскад (ветвь КРИТИЧЕСКИХ рисков)"
+    },
+    {
+      "scenario_a": "escalation_branch",
+      "scenario_b": "critical_branch",
+      "score_gap": 5,
+      "prob_gap": 6,
+      "label": "Сближение: Ветвь эскалации: deteriorating ↔ Критический каскад (ветвь КРИТИЧЕСКИХ рисков)"
+    }
+  ],
   "divergences": [],
   "ranked_pathways": [
     {
+      "id": "ASE-CRIT-WORST",
+      "name": "Критический каскад (ветвь КРИТИЧЕСКИХ рисков)",
+      "type": "critical_branch",
+      "status": "emerging",
+      "probability": 25.0,
+      "score": 95,
+      "confidence": 60,
+      "trend_strength": 80,
+      "scenario_score": 60
+    },
+    {
+      "id": "ASE-ACC-5",
+      "name": "Сценарий ускорения (acceleration)",
+      "type": "acceleration",
+      "status": "emerging",
+      "probability": 37.5,
+      "score": 95,
+      "confidence": 55,
+      "trend_strength": 50,
+      "scenario_score": 58
+    },
+    {
       "id": "ASE-ESC-DETE",
       "name": "Ветвь эскалации: deteriorating",
       "type": "escalation_branch",
       "status": "emerging",
-      "probability": 100.0,
-      "score": 85,
+      "probability": 37.5,
+      "score": 90,
       "confidence": 50,
       "trend_strength": 65,
-      "scenario_score": 73
+      "scenario_score": 57
     }
   ],
-  "pathway_count": 1,
+  "pathway_count": 3,
   "future_landscape": {
-    "dominant_pathway": "Ветвь эскалации: deteriorating",
-    "dominant_prob": 100.0,
-    "dominant_score": 85,
-    "outlook": "stable",
-    "narrative": "Базовый сценарий 'Ветвь эскалации: deteriorating' (100%) — ситуация стабильна. Скор 85.",
-    "n_convergences": 0,
+    "dominant_pathway": "Критический каскад (ветвь КРИТИЧЕСКИХ рисков)",
+    "dominant_prob": 25.0,
+    "dominant_score": 95,
+    "outlook": "deteriorating",
+    "narrative": "Доминирующий сценарий 'Критический каскад (ветвь КРИТИЧЕСКИХ рисков)' (25%) указывает на ухудшение — скор 95. Риск системной эскалации.",
+    "n_convergences": 3,
     "n_divergences": 0,
-    "landscape_complexity": 10
+    "landscape_complexity": 30
   },
   "diagnostics": [
+    {
+      "type": "narrative_collapse",
+      "label": "Распад нарратива",
+      "detail": "Доминирующий сценарий набирает лишь 25% — нарратив раздроблен"
+    },
     {
       "type": "future_blind_spot",
       "label": "Слепое пятно будущего",
       "detail": "Нет положительных сценариев в активном наборе — потенциал улучшения не отражён"
     }
   ],
-  "diagnostic_count": 1,
-  "scenario_diversity_index": 0,
-  "future_stability_index": 100,
+  "diagnostic_count": 2,
+  "scenario_diversity_index": 10,
+  "future_stability_index": 48,
   "retired_scenarios": [
     {
       "type": "best",
       "name": "Best Case",
       "name_ru": "Лучший сценарий",
-      "probability": 30,
-      "score": 81,
-      "delta_from_current": 6,
+      "probability": 27,
+      "score": 75,
+      "delta_from_current": -5,
       "state": "critical",
       "state_ru": "Критическая эскалация",
-      "impact": "catastrophic",
-      "impact_ru": "Катастрофический",
+      "impact": "severe",
+      "impact_ru": "Тяжёлый",
       "velocity": "fast",
       "velocity_ru": "Быстрый",
-      "recovery_days": 439,
-      "future_pressure": 62,
-      "future_resilience": 47,
-      "future_probability": 30,
+      "recovery_days": 412,
+      "future_pressure": 57,
+      "future_resilience": 45,
+      "future_probability": 27,
       "drivers": [
         {
           "driver": "Деэскалация",
@@ -102,37 +203,37 @@
         {
           "horizon": "30d",
           "label": "30 дней",
-          "score": 81,
+          "score": 75,
           "state": "critical",
           "state_ru": "Критическая эскалация",
-          "delta_from_current": 6
+          "delta_from_current": -5
         },
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 72,
+          "score": 66,
           "state": "escalating",
           "state_ru": "Эскалация",
-          "delta_from_current": -3
+          "delta_from_current": -14
         },
         {
           "horizon": "180d",
           "label": "180 дней",
-          "score": 64,
+          "score": 58,
           "state": "escalating",
           "state_ru": "Эскалация",
-          "delta_from_current": -11
+          "delta_from_current": -22
         },
         {
           "horizon": "365d",
           "label": "365 дней",
-          "score": 57,
-          "state": "contained",
-          "state_ru": "Контролируемо",
-          "delta_from_current": -18
+          "score": 51,
+          "state": "escalating",
+          "state_ru": "Эскалация",
+          "delta_from_current": -29
         }
       ],
-      "evolved_probability": 29.7,
+      "evolved_probability": 26.7,
       "evolved_confidence": 25,
       "evolution_delta": -0.3,
       "status": "retiring"
@@ -141,27 +242,27 @@
       "type": "base",
       "name": "Base Case",
       "name_ru": "Базовый сценарий",
-      "probability": 21,
-      "score": 89,
-      "delta_from_current": 14,
+      "probability": 14,
+      "score": 95,
+      "delta_from_current": 15,
       "state": "cascade",
       "state_ru": "Каскадный кризис",
       "impact": "catastrophic",
       "impact_ru": "Катастрофический",
       "velocity": "explosive",
       "velocity_ru": "Взрывной",
-      "recovery_days": 483,
-      "future_pressure": 71,
-      "future_resilience": 44,
-      "future_probability": 21,
+      "recovery_days": 522,
+      "future_pressure": 78,
+      "future_resilience": 42,
+      "future_probability": 14,
       "drivers": [
         {
           "driver": "Иран помогает хуситам наносить удары по Саудо",
-          "impact": 13
+          "impact": 12
         },
         {
-          "driver": "Геополитический процесс — Ближний Восток (сис",
-          "impact": 13
+          "driver": "Масштабная атака на территорию Саудовской Ара",
+          "impact": 12
         }
       ],
       "description": "Текущие тренды сохраняются, без значимых изменений",
@@ -169,37 +270,37 @@
         {
           "horizon": "30d",
           "label": "30 дней",
-          "score": 89,
+          "score": 95,
           "state": "cascade",
           "state_ru": "Каскадный кризис",
-          "delta_from_current": 14
+          "delta_from_current": 15
         },
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 89,
+          "score": 95,
           "state": "cascade",
           "state_ru": "Каскадный кризис",
-          "delta_from_current": 14
+          "delta_from_current": 15
         },
         {
           "horizon": "180d",
           "label": "180 дней",
-          "score": 89,
+          "score": 95,
           "state": "cascade",
           "state_ru": "Каскадный кризис",
-          "delta_from_current": 14
+          "delta_from_current": 15
         },
         {
           "horizon": "365d",
           "label": "365 дней",
-          "score": 89,
+          "score": 95,
           "state": "cascade",
           "state_ru": "Каскадный кризис",
-          "delta_from_current": 14
+          "delta_from_current": 15
         }
       ],
-      "evolved_probability": 20.8,
+      "evolved_probability": 13.8,
       "evolved_confidence": 25,
       "evolution_delta": -0.2,
       "status": "retiring"
@@ -208,27 +309,27 @@
       "type": "stress",
       "name": "Stress Case",
       "name_ru": "Стресс-сценарий",
-      "probability": 24,
-      "score": 92,
-      "delta_from_current": 17,
+      "probability": 27,
+      "score": 95,
+      "delta_from_current": 15,
       "state": "cascade",
       "state_ru": "Каскадный кризис",
       "impact": "catastrophic",
       "impact_ru": "Катастрофический",
       "velocity": "explosive",
       "velocity_ru": "Взрывной",
-      "recovery_days": 499,
-      "future_pressure": 76,
-      "future_resilience": 40,
-      "future_probability": 24,
+      "recovery_days": 522,
+      "future_pressure": 80,
+      "future_resilience": 39,
+      "future_probability": 27,
       "drivers": [
         {
           "driver": "Иран помогает хуситам наносить удары по Саудо",
-          "impact": 17
+          "impact": 16
         },
         {
-          "driver": "Геополитический процесс — Ближний Восток (сис",
-          "impact": 17
+          "driver": "Масштабная атака на территорию Саудовской Ара",
+          "impact": 16
         },
         {
           "driver": "Негативный сдвиг",
@@ -240,10 +341,10 @@
         {
           "horizon": "30d",
           "label": "30 дней",
-          "score": 92,
+          "score": 95,
           "state": "cascade",
           "state_ru": "Каскадный кризис",
-          "delta_from_current": 17
+          "delta_from_current": 15
         },
         {
           "horizon": "90d",
@@ -251,7 +352,7 @@
           "score": 95,
           "state": "cascade",
           "state_ru": "Каскадный кризис",
-          "delta_from_current": 20
+          "delta_from_current": 15
         },
         {
           "horizon": "180d",
@@ -259,7 +360,7 @@
           "score": 95,
           "state": "cascade",
           "state_ru": "Каскадный кризис",
-          "delta_from_current": 20
+          "delta_from_current": 15
         },
         {
           "horizon": "365d",
@@ -267,10 +368,10 @@
           "score": 95,
           "state": "cascade",
           "state_ru": "Каскадный кризис",
-          "delta_from_current": 20
+          "delta_from_current": 15
         }
       ],
-      "evolved_probability": 23.7,
+      "evolved_probability": 26.7,
       "evolved_confidence": 25,
       "evolution_delta": -0.3,
       "status": "retiring"
@@ -279,31 +380,31 @@
       "type": "worst",
       "name": "Worst Case",
       "name_ru": "Худший сценарий",
-      "probability": 25,
+      "probability": 32,
       "score": 95,
-      "delta_from_current": 20,
+      "delta_from_current": 15,
       "state": "cascade",
       "state_ru": "Каскадный кризис",
       "impact": "catastrophic",
       "impact_ru": "Катастрофический",
       "velocity": "explosive",
       "velocity_ru": "Взрывной",
-      "recovery_days": 515,
+      "recovery_days": 522,
       "future_pressure": 82,
-      "future_resilience": 34,
-      "future_probability": 25,
+      "future_resilience": 32,
+      "future_probability": 32,
       "drivers": [
         {
           "driver": "Иран помогает хуситам наносить удары по Саудо",
-          "impact": 24
+          "impact": 22
+        },
+        {
+          "driver": "Масштабная атака на территорию Саудовской Ара",
+          "impact": 22
         },
         {
           "driver": "Геополитический процесс — Ближний Восток (сис",
-          "impact": 24
-        },
-        {
-          "driver": "Геополитический процесс — Саудовская Аравия",
-          "impact": 24
+          "impact": 22
         },
         {
           "driver": "Каскадный эффект",
@@ -318,7 +419,7 @@
           "score": 95,
           "state": "cascade",
           "state_ru": "Каскадный кризис",
-          "delta_from_current": 20
+          "delta_from_current": 15
         },
         {
           "horizon": "90d",
@@ -326,7 +427,7 @@
           "score": 95,
           "state": "cascade",
           "state_ru": "Каскадный кризис",
-          "delta_from_current": 20
+          "delta_from_current": 15
         },
         {
           "horizon": "180d",
@@ -334,7 +435,7 @@
           "score": 95,
           "state": "cascade",
           "state_ru": "Каскадный кризис",
-          "delta_from_current": 20
+          "delta_from_current": 15
         },
         {
           "horizon": "365d",
@@ -342,25 +443,25 @@
           "score": 95,
           "state": "cascade",
           "state_ru": "Каскадный кризис",
-          "delta_from_current": 20
+          "delta_from_current": 15
         }
       ],
-      "evolved_probability": 24.7,
-      "evolved_confidence": 25,
-      "evolution_delta": -0.3,
+      "evolved_probability": 33.1,
+      "evolved_confidence": 28.0,
+      "evolution_delta": 1.1,
       "status": "retiring"
     }
   ],
   "retired_count": 4,
   "sub_scores": {
-    "fc_acc": 70,
+    "fc_acc": 69,
     "sc_val": 100,
-    "prob_cal": 50,
-    "adapt": 65,
+    "prob_cal": 60,
+    "adapt": 95,
     "stability": 52
   },
   "history_depth": 4,
-  "risk_score": 75,
-  "delta": 0,
+  "risk_score": 80,
+  "delta": 5,
   "domain": "geopolitics"
 }
