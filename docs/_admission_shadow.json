@@ -1,12 +1,12 @@
 {
-  "generated": "2026-10-17T05:24:40Z",
+  "generated": "2026-10-17T05:45:46Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
-    "PASS_FACT": 1024,
+    "PASS_FACT": 1023,
     "DENY_OTHER": 3,
+    "DENY_COMMENTARY": 287,
     "PASS_FACT_REPORT": 1,
-    "DENY_COMMENTARY": 286,
     "DENY_STATE_ONLY": 4,
     "DENY_BACKGROUND": 8,
     "UNMATCHED": 1,
@@ -21,22 +21,22 @@
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
     "admission_pass_rate": 77.1,
     "admission_deny_rate": 22.9,
-    "processes_without_fact": 304,
+    "processes_without_fact": 305,
     "report_evidence_count": 1,
     "reports_boosting": 1
   },
   "shadow_reliability": {
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
-      "processes": 454,
-      "sample": 1460,
+      "processes": 455,
+      "sample": 1483,
       "agreement_pct": 87.9,
       "decision_agreement_pct": 88.0,
-      "critical_errors": 175,
+      "critical_errors": 178,
       "truth_ratio_pct": 100.0,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 150,
-        "COMMENTARY→FACT_EVENT": 24,
+        "FACT_EVENT→COMMENTARY": 154,
+        "COMMENTARY→FACT_EVENT": 23,
         "STATE_CONFIRMATION→FACT_EVENT": 1,
         "UNKNOWN→COMMENTARY": 1,
         "BACKGROUND→COMMENTARY": 1
@@ -44,13 +44,13 @@
     },
     "historical": {
       "processes": 1330,
-      "sample": 3387,
+      "sample": 3409,
       "agreement_pct": 89.1,
-      "decision_agreement_pct": 89.3,
-      "critical_errors": 364,
+      "decision_agreement_pct": 89.2,
+      "critical_errors": 367,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 312,
-        "COMMENTARY→FACT_EVENT": 47,
+        "FACT_EVENT→COMMENTARY": 316,
+        "COMMENTARY→FACT_EVENT": 46,
         "STATE_CONFIRMATION→FACT_EVENT": 4,
         "UNKNOWN→COMMENTARY": 1,
         "BACKGROUND→COMMENTARY": 1,
@@ -59,12 +59,12 @@
       }
     },
     "events_stream": {
-      "sample": 466,
-      "agreement_pct": 86.7,
-      "decision_agreement_pct": 86.9,
-      "critical_errors": 61,
+      "sample": 476,
+      "agreement_pct": 86.1,
+      "decision_agreement_pct": 86.3,
+      "critical_errors": 65,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 54,
+        "FACT_EVENT→COMMENTARY": 58,
         "COMMENTARY→FACT_EVENT": 6,
         "STATE_CONFIRMATION→FACT_EVENT": 1,
         "BACKGROUND→COMMENTARY": 1
@@ -78,17 +78,17 @@
     }
   },
   "class_source": {
-    "evidence_sic": 3387
+    "evidence_sic": 3409
   },
   "truth_ratio_pct": 100.0,
   "domain_statistics": {
     "geopolitics": {
-      "pass": 267,
-      "deny": 72
+      "pass": 265,
+      "deny": 74
     },
     "climate": {
-      "pass": 329,
-      "deny": 53,
+      "pass": 330,
+      "deny": 52,
       "unmatched": 1
     },
     "social": {
@@ -831,7 +831,7 @@
       "title": "Экономический сигнал — Иран",
       "domain": "economy",
       "severity": 57,
-      "pressure": 66,
+      "pressure": 65,
       "first_seen": "2026-07-02",
       "evidence_count": 1,
       "evidence_classes": {
@@ -918,6 +918,21 @@
       "reason": "no FACT_EVENT in evidence"
     },
     {
+      "signal_id": "geop-геополитич-иран-31f9",
+      "title": "Геополитический процесс — Иран",
+      "domain": "geopolitics",
+      "severity": 56,
+      "pressure": 55,
+      "first_seen": "2026-06-29",
+      "evidence_count": 2,
+      "evidence_classes": {
+        "COMMENTARY": 2
+      },
+      "status": "active",
+      "causal_links": 6,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
       "signal_id": "clim-климатичес-архангел-f823",
       "title": "Климатический сигнал — Архангельская область",
       "domain": "climate",
@@ -991,21 +1006,6 @@
       "status": "active",
       "causal_links": 3,
       "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "clim-климатичес-тихийоке-41c0",
-      "title": "Климатический сигнал — Тихий океан",
-      "domain": "climate",
-      "severity": 56,
-      "pressure": 46,
-      "first_seen": "2026-07-02",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "COMMENTARY": 1
-      },
-      "status": "active",
-      "causal_links": 0,
-      "reason": "no FACT_EVENT in evidence"
     }
   ],
   "report_log": [
@@ -1069,6 +1069,13 @@
       "delta": null
     },
     {
+      "signal_id": "geop-геополитич-иран-31f9",
+      "domain": "geopolitics",
+      "legacy": 56,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "clim-климатичес-архангел-f823",
       "domain": "climate",
       "legacy": 56,
@@ -1107,20 +1114,6 @@
       "signal_id": "econ-экономичес-сша-7b87",
       "domain": "economy",
       "legacy": 32,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "econ-возобновля-китай-5372",
-      "domain": "economy",
-      "legacy": 44,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "clim-климатичес-китай-6396",
-      "domain": "climate",
-      "legacy": 46,
       "shadow": null,
       "delta": null
     },
@@ -1167,13 +1160,6 @@
       "delta": null
     },
     {
-      "signal_id": "clim-климатичес-тихийоке-41c0",
-      "domain": "climate",
-      "legacy": 56,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "econ-топливныйр-ормузски-d6b9",
       "domain": "economy",
       "legacy": 57,
@@ -1184,6 +1170,20 @@
       "signal_id": "clim-климатичес-германия-4516",
       "domain": "climate",
       "legacy": 72,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "clim-климатичес-тихийоке-41c0",
+      "domain": "climate",
+      "legacy": 56,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "econ-возобновля-китай-5372",
+      "domain": "economy",
+      "legacy": 44,
       "shadow": null,
       "delta": null
     },
@@ -1443,7 +1443,7 @@
   "deny_by_severity": {
     "0-30": 3,
     "31-50": 200,
-    "51-70": 96,
+    "51-70": 97,
     "71-90": 5,
     "91-100": 0
   }
