@@ -1,12 +1,12 @@
 {
-  "generated": "2026-10-17T13:46:50Z",
+  "generated": "2026-10-17T14:19:14Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
-    "PASS_FACT": 1028,
+    "PASS_FACT": 1027,
+    "DENY_COMMENTARY": 283,
     "PASS_FACT_REPORT": 1,
     "DENY_OTHER": 3,
-    "DENY_COMMENTARY": 281,
     "DENY_STATE_ONLY": 4,
     "DENY_BACKGROUND": 8,
     "UNMATCHED": 1,
@@ -14,42 +14,42 @@
     "DENY_FEATURE": 2
   },
   "kpi": {
-    "processes_total": 1329,
-    "matched": 1328,
+    "processes_total": 1330,
+    "matched": 1329,
     "unmatched": 1,
     "coverage_pct": 99.9,
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
-    "admission_pass_rate": 77.5,
-    "admission_deny_rate": 22.5,
-    "processes_without_fact": 299,
+    "admission_pass_rate": 77.4,
+    "admission_deny_rate": 22.6,
+    "processes_without_fact": 301,
     "report_evidence_count": 1,
     "reports_boosting": 1
   },
   "shadow_reliability": {
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
-      "processes": 433,
-      "sample": 1414,
+      "processes": 434,
+      "sample": 1416,
       "agreement_pct": 87.6,
-      "decision_agreement_pct": 87.6,
-      "critical_errors": 175,
+      "decision_agreement_pct": 87.7,
+      "critical_errors": 174,
       "truth_ratio_pct": 100.0,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 148,
-        "COMMENTARY→FACT_EVENT": 26,
+        "FACT_EVENT→COMMENTARY": 149,
+        "COMMENTARY→FACT_EVENT": 24,
         "STATE_CONFIRMATION→FACT_EVENT": 1,
         "BACKGROUND→COMMENTARY": 1
       }
     },
     "historical": {
-      "processes": 1329,
-      "sample": 3431,
+      "processes": 1330,
+      "sample": 3434,
       "agreement_pct": 89.1,
-      "decision_agreement_pct": 89.2,
-      "critical_errors": 370,
+      "decision_agreement_pct": 89.3,
+      "critical_errors": 369,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 314,
-        "COMMENTARY→FACT_EVENT": 51,
+        "FACT_EVENT→COMMENTARY": 315,
+        "COMMENTARY→FACT_EVENT": 49,
         "STATE_CONFIRMATION→FACT_EVENT": 4,
         "BACKGROUND→COMMENTARY": 1,
         "UNKNOWN→COMMENTARY": 1,
@@ -58,14 +58,13 @@
       }
     },
     "events_stream": {
-      "sample": 475,
-      "agreement_pct": 85.5,
-      "decision_agreement_pct": 85.7,
-      "critical_errors": 68,
+      "sample": 460,
+      "agreement_pct": 85.9,
+      "decision_agreement_pct": 86.1,
+      "critical_errors": 64,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 60,
-        "COMMENTARY→FACT_EVENT": 7,
-        "STATE_CONFIRMATION→FACT_EVENT": 1,
+        "FACT_EVENT→COMMENTARY": 58,
+        "COMMENTARY→FACT_EVENT": 6,
         "BACKGROUND→COMMENTARY": 1
       }
     },
@@ -77,7 +76,7 @@
     }
   },
   "class_source": {
-    "evidence_sic": 3431
+    "evidence_sic": 3434
   },
   "truth_ratio_pct": 100.0,
   "domain_statistics": {
@@ -85,22 +84,22 @@
       "pass": 265,
       "deny": 74
     },
+    "social": {
+      "pass": 92,
+      "deny": 39
+    },
+    "climate": {
+      "pass": 332,
+      "deny": 50,
+      "unmatched": 1
+    },
     "technology": {
       "pass": 116,
       "deny": 32
     },
-    "climate": {
-      "pass": 334,
-      "deny": 49,
-      "unmatched": 1
-    },
     "economy": {
-      "pass": 222,
-      "deny": 105
-    },
-    "social": {
-      "pass": 92,
-      "deny": 39
+      "pass": 223,
+      "deny": 106
     }
   },
   "deny_impact": [
@@ -161,7 +160,7 @@
         "COMMENTARY": 1
       },
       "status": "active",
-      "causal_links": 1,
+      "causal_links": 2,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -267,6 +266,21 @@
       },
       "status": "dormant",
       "causal_links": 0,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
+      "signal_id": "econ-экономичес-бразилия-0fa1",
+      "title": "Инфляция — Бразилия",
+      "domain": "economy",
+      "severity": 62,
+      "pressure": 64,
+      "first_seen": "2026-07-24",
+      "evidence_count": 1,
+      "evidence_classes": {
+        "COMMENTARY": 1
+      },
+      "status": "active",
+      "causal_links": 1,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -560,7 +574,7 @@
       "title": "Финансовый рынок — Украина",
       "domain": "economy",
       "severity": 60,
-      "pressure": 33,
+      "pressure": 27,
       "first_seen": "2026-08-31",
       "evidence_count": 1,
       "evidence_classes": {
@@ -898,7 +912,7 @@
         "COMMENTARY": 1
       },
       "status": "active",
-      "causal_links": 4,
+      "causal_links": 5,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -990,21 +1004,6 @@
       "status": "active",
       "causal_links": 0,
       "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "clim-климатичес-калмыкия-dbcd",
-      "title": "Климатический сигнал — Калмыкия",
-      "domain": "climate",
-      "severity": 56,
-      "pressure": 39,
-      "first_seen": "2026-10-12",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "COMMENTARY": 1
-      },
-      "status": "active",
-      "causal_links": 3,
-      "reason": "no FACT_EVENT in evidence"
     }
   ],
   "report_log": [
@@ -1018,6 +1017,13 @@
     }
   ],
   "severity_delta": [
+    {
+      "signal_id": "econ-экономичес-бразилия-0fa1",
+      "domain": "economy",
+      "legacy": 62,
+      "shadow": null,
+      "delta": null
+    },
     {
       "signal_id": "econ-экономичес-иран-7b7d",
       "domain": "economy",
@@ -1061,16 +1067,16 @@
       "delta": null
     },
     {
-      "signal_id": "geop-геополитич-европа-00ed",
-      "domain": "geopolitics",
-      "legacy": 47,
+      "signal_id": "clim-климатичес-беларусь-41a2",
+      "domain": "climate",
+      "legacy": 56,
       "shadow": null,
       "delta": null
     },
     {
-      "signal_id": "clim-климатичес-беларусь-41a2",
-      "domain": "climate",
-      "legacy": 56,
+      "signal_id": "geop-геополитич-европа-00ed",
+      "domain": "geopolitics",
+      "legacy": 47,
       "shadow": null,
       "delta": null
     },
@@ -1222,6 +1228,13 @@
       "delta": null
     },
     {
+      "signal_id": "econ-экономичес-германия-c00c",
+      "domain": "economy",
+      "legacy": 50,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "geop-геополитич-москва-58ca",
       "domain": "geopolitics",
       "legacy": 54,
@@ -1267,13 +1280,6 @@
       "signal_id": "tech-технологич-индия-a870",
       "domain": "technology",
       "legacy": 32,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "econ-экономичес-москва-126a",
-      "domain": "economy",
-      "legacy": 45,
       "shadow": null,
       "delta": null
     },
@@ -1369,6 +1375,13 @@
       "delta": null
     },
     {
+      "signal_id": "econ-экономичес-москва-126a",
+      "domain": "economy",
+      "legacy": 45,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "econ-экономичес-индия-ba12",
       "domain": "economy",
       "legacy": 32,
@@ -1397,13 +1410,6 @@
       "delta": null
     },
     {
-      "signal_id": "econ-экономичес-бразилия-0fa1",
-      "domain": "economy",
-      "legacy": 32,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "econ-экономичес-гонконг-faaa",
       "domain": "economy",
       "legacy": 46,
@@ -1414,13 +1420,6 @@
       "signal_id": "econ-инфляция-африка-498b",
       "domain": "economy",
       "legacy": 46,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "econ-macroфинан-европа-f936",
-      "domain": "economy",
-      "legacy": 48,
       "shadow": null,
       "delta": null
     },
@@ -1441,8 +1440,8 @@
   ],
   "deny_by_severity": {
     "0-30": 3,
-    "31-50": 198,
-    "51-70": 94,
+    "31-50": 199,
+    "51-70": 95,
     "71-90": 4,
     "91-100": 0
   }
