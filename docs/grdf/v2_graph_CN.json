@@ -2,39 +2,39 @@
   "country": "CN",
   "date": "2026-10-17",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-17T10:49:05.853105+00:00",
+  "generated_at": "2026-10-17T11:07:06.070133+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 75,
+      "score": 79,
       "props": {
-        "risk_score": 75
+        "risk_score": 79
       }
     },
     {
       "id": "DOMAIN-CN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 62,
+      "score": 5,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
-      "trend": "stable"
+      "score": 74,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-climate",
       "type": "Domain",
       "label": "climate",
       "score": 74,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-technology",
@@ -48,7 +48,7 @@
       "type": "Domain",
       "label": "social",
       "score": 68,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-infrastructure",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-CN-Сильный_до",
+      "type": "Signal",
+      "label": "Сильный дождь: Juxian, Уезд Ишуй, Уезд Ч",
+      "severity": 74,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-CN-Сильный_ве",
       "type": "Signal",
       "label": "Сильный ветер: Уезд Руйчэн, Китай",
@@ -92,13 +99,6 @@
       "label": "Демографическая катастрофа Китая: лица в",
       "severity": 68,
       "domain": "social"
-    },
-    {
-      "id": "SIGNAL-CN-ЕС_умоляет",
-      "type": "Signal",
-      "label": "ЕС умоляет Китай снять санкции с немецко",
-      "severity": 62,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.62
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.74
     },
     {
       "from": "COUNTRY-CN",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-CN-geopolitical",
-      "to": "DOMAIN-CN-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-CN-infrastructure",
-      "to": "DOMAIN-CN-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-CN-economic",
-      "to": "DOMAIN-CN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "DOMAIN-CN-climate",
       "to": "DOMAIN-CN-infrastructure",
       "type": "ESCALATES",
@@ -226,6 +205,12 @@
       "lag_days": 30
     },
     {
+      "from": "SIGNAL-CN-Сильный_до",
+      "to": "DOMAIN-CN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.74
+    },
+    {
       "from": "SIGNAL-CN-Сильный_ве",
       "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
@@ -236,12 +221,6 @@
       "to": "DOMAIN-CN-social",
       "type": "AMPLIFIES",
       "weight": 0.68
-    },
-    {
-      "from": "SIGNAL-CN-ЕС_умоляет",
-      "to": "DOMAIN-CN-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.62
     }
   ]
 }
