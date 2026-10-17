@@ -2,7 +2,7 @@
   "country": "TR",
   "date": "2026-10-17",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-17T03:27:03.849851+00:00",
+  "generated_at": "2026-10-17T03:45:28.557082+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,17 +10,17 @@
       "id": "COUNTRY-TR",
       "type": "Country",
       "label": "TR",
-      "score": 70,
+      "score": 71,
       "props": {
-        "risk_score": 70
+        "risk_score": 71
       }
     },
     {
       "id": "DOMAIN-TR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 62,
-      "trend": "stable"
+      "score": 63,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-economic",
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 70,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-technology",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-TR-Сильный_ве",
+      "type": "Signal",
+      "label": "Сильный ветер, гроза: Стамбул, Бурса, Ко",
+      "severity": 70,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-TR-Наводнения",
       "type": "Signal",
       "label": "Наводнения унесли как минимум 3 жизни, б",
@@ -92,13 +99,6 @@
       "label": "Сильный дождь парализовал Стамбул, вызва",
       "severity": 66,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-TR-Стамбул_уш",
-      "type": "Signal",
-      "label": "Стамбул ушёл под воду из-за мощнейших ли",
-      "severity": 62,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.62
+      "weight": 0.63
     },
     {
       "from": "COUNTRY-TR",
@@ -226,6 +226,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-TR-Сильный_ве",
+      "to": "DOMAIN-TR-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.7
+    },
+    {
       "from": "SIGNAL-TR-Наводнения",
       "to": "DOMAIN-TR-climate",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-TR-climate",
       "type": "AMPLIFIES",
       "weight": 0.66
-    },
-    {
-      "from": "SIGNAL-TR-Стамбул_уш",
-      "to": "DOMAIN-TR-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.62
     }
   ]
 }
