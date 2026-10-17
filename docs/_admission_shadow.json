@@ -1,68 +1,70 @@
 {
-  "generated": "2026-10-16T23:45:29Z",
+  "generated": "2026-10-17T00:04:49Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
-    "PASS_FACT": 1021,
-    "DENY_COMMENTARY": 287,
-    "DENY_OTHER": 3,
+    "PASS_FACT": 1018,
+    "DENY_COMMENTARY": 288,
     "PASS_FACT_REPORT": 1,
+    "DENY_OTHER": 3,
     "DENY_STATE_ONLY": 4,
+    "DENY_BACKGROUND": 8,
     "DENY_REPORT": 1,
-    "DENY_BACKGROUND": 7,
     "DENY_FEATURE": 3
   },
   "kpi": {
-    "processes_total": 1327,
-    "matched": 1327,
+    "processes_total": 1326,
+    "matched": 1326,
     "unmatched": 0,
     "coverage_pct": 100.0,
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
-    "admission_pass_rate": 77.0,
-    "admission_deny_rate": 23.0,
-    "processes_without_fact": 305,
+    "admission_pass_rate": 76.8,
+    "admission_deny_rate": 23.2,
+    "processes_without_fact": 307,
     "report_evidence_count": 1,
     "reports_boosting": 1
   },
   "shadow_reliability": {
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
-      "processes": 454,
-      "sample": 1498,
-      "agreement_pct": 88.1,
-      "decision_agreement_pct": 88.1,
-      "critical_errors": 178,
+      "processes": 451,
+      "sample": 1447,
+      "agreement_pct": 87.8,
+      "decision_agreement_pct": 87.9,
+      "critical_errors": 175,
       "truth_ratio_pct": 100.0,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 154,
-        "COMMENTARY→FACT_EVENT": 23,
+        "FACT_EVENT→COMMENTARY": 150,
+        "COMMENTARY→FACT_EVENT": 24,
         "STATE_CONFIRMATION→FACT_EVENT": 1,
-        "UNKNOWN→COMMENTARY": 1
+        "UNKNOWN→COMMENTARY": 1,
+        "BACKGROUND→COMMENTARY": 1
       }
     },
     "historical": {
-      "processes": 1327,
-      "sample": 3427,
-      "agreement_pct": 89.2,
-      "decision_agreement_pct": 89.3,
-      "critical_errors": 367,
+      "processes": 1326,
+      "sample": 3376,
+      "agreement_pct": 89.1,
+      "decision_agreement_pct": 89.2,
+      "critical_errors": 365,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 316,
-        "COMMENTARY→FACT_EVENT": 46,
+        "FACT_EVENT→COMMENTARY": 313,
+        "COMMENTARY→FACT_EVENT": 47,
         "STATE_CONFIRMATION→FACT_EVENT": 4,
         "UNKNOWN→COMMENTARY": 1,
+        "BACKGROUND→COMMENTARY": 1,
         "FEATURE→COMMENTARY": 2,
         "FACT_EVENT→FEATURE": 1
       }
     },
     "events_stream": {
-      "sample": 500,
-      "agreement_pct": 87.2,
-      "decision_agreement_pct": 87.4,
-      "critical_errors": 63,
+      "sample": 455,
+      "agreement_pct": 87.0,
+      "decision_agreement_pct": 87.3,
+      "critical_errors": 58,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 56,
-        "COMMENTARY→FACT_EVENT": 6,
+        "FACT_EVENT→COMMENTARY": 50,
+        "COMMENTARY→FACT_EVENT": 7,
         "STATE_CONFIRMATION→FACT_EVENT": 1,
         "BACKGROUND→COMMENTARY": 1
       }
@@ -75,29 +77,29 @@
     }
   },
   "class_source": {
-    "evidence_sic": 3427
+    "evidence_sic": 3376
   },
   "truth_ratio_pct": 100.0,
   "domain_statistics": {
     "geopolitics": {
-      "pass": 263,
-      "deny": 76
-    },
-    "economy": {
-      "pass": 225,
-      "deny": 104
+      "pass": 261,
+      "deny": 78
     },
     "climate": {
       "pass": 328,
-      "deny": 52
+      "deny": 51
     },
-    "social": {
-      "pass": 91,
-      "deny": 40
+    "economy": {
+      "pass": 224,
+      "deny": 105
     },
     "technology": {
       "pass": 115,
       "deny": 33
+    },
+    "social": {
+      "pass": 91,
+      "deny": 40
     }
   },
   "deny_impact": [
@@ -114,21 +116,6 @@
       },
       "status": "archived",
       "causal_links": 0,
-      "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "clim-климатичес-китай-6396",
-      "title": "Климатический сигнал — Китай",
-      "domain": "climate",
-      "severity": 74,
-      "pressure": 62,
-      "first_seen": "2026-07-19",
-      "evidence_count": 2,
-      "evidence_classes": {
-        "COMMENTARY": 2
-      },
-      "status": "active",
-      "causal_links": 1,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -153,6 +140,21 @@
       "severity": 73,
       "pressure": 60,
       "first_seen": "2026-09-17",
+      "evidence_count": 3,
+      "evidence_classes": {
+        "COMMENTARY": 3
+      },
+      "status": "active",
+      "causal_links": 6,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
+      "signal_id": "econ-инфляция-сша-8a37",
+      "title": "Инфляция — США",
+      "domain": "economy",
+      "severity": 73,
+      "pressure": 55,
+      "first_seen": "2026-09-29",
       "evidence_count": 3,
       "evidence_classes": {
         "COMMENTARY": 3
@@ -188,7 +190,7 @@
         "COMMENTARY": 1
       },
       "status": "fading",
-      "causal_links": 1,
+      "causal_links": 2,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -529,9 +531,9 @@
       "severity": 61,
       "pressure": 53,
       "first_seen": "2026-09-13",
-      "evidence_count": 1,
+      "evidence_count": 2,
       "evidence_classes": {
-        "COMMENTARY": 1
+        "COMMENTARY": 2
       },
       "status": "active",
       "causal_links": 6,
@@ -853,6 +855,21 @@
       "reason": "no FACT_EVENT in evidence"
     },
     {
+      "signal_id": "geop-покушение-сша-e2fc",
+      "title": "Санкционное давление — США",
+      "domain": "geopolitics",
+      "severity": 57,
+      "pressure": 65,
+      "first_seen": "2026-09-17",
+      "evidence_count": 2,
+      "evidence_classes": {
+        "COMMENTARY": 2
+      },
+      "status": "active",
+      "causal_links": 5,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
       "signal_id": "econ-экономичес-иран-7b7d",
       "title": "Экономический сигнал — Иран",
       "domain": "economy",
@@ -974,21 +991,6 @@
       "reason": "no FACT_EVENT in evidence"
     },
     {
-      "signal_id": "clim-климатичес-беларусь-41a2",
-      "title": "Климатический сигнал — Беларусь",
-      "domain": "climate",
-      "severity": 56,
-      "pressure": 51,
-      "first_seen": "2026-07-16",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "COMMENTARY": 1
-      },
-      "status": "active",
-      "causal_links": 1,
-      "reason": "no FACT_EVENT in evidence"
-    },
-    {
       "signal_id": "clim-климатичес-россия-b947",
       "title": "Климатический сигнал — Россия",
       "domain": "climate",
@@ -1023,9 +1025,9 @@
       "delta": null
     },
     {
-      "signal_id": "clim-климатичес-китай-6396",
-      "domain": "climate",
-      "legacy": 74,
+      "signal_id": "geop-покушение-сша-e2fc",
+      "domain": "geopolitics",
+      "legacy": 57,
       "shadow": null,
       "delta": null
     },
@@ -1058,15 +1060,22 @@
       "delta": null
     },
     {
-      "signal_id": "clim-климатичес-архангел-f823",
-      "domain": "climate",
-      "legacy": 56,
+      "signal_id": "geop-геополитич-европа-00ed",
+      "domain": "geopolitics",
+      "legacy": 47,
       "shadow": null,
       "delta": null
     },
     {
-      "signal_id": "soci-миграционн-йемен-d158",
-      "domain": "social",
+      "signal_id": "econ-инфляция-сша-8a37",
+      "domain": "economy",
+      "legacy": 73,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "clim-климатичес-архангел-f823",
+      "domain": "climate",
       "legacy": 56,
       "shadow": null,
       "delta": null
@@ -1079,16 +1088,23 @@
       "delta": null
     },
     {
-      "signal_id": "clim-климатичес-беларусь-41a2",
-      "domain": "climate",
+      "signal_id": "soci-миграционн-йемен-d158",
+      "domain": "social",
       "legacy": 56,
       "shadow": null,
       "delta": null
     },
     {
-      "signal_id": "geop-геополитич-иран-31f9",
-      "domain": "geopolitics",
-      "legacy": 45,
+      "signal_id": "econ-возобновля-китай-5372",
+      "domain": "economy",
+      "legacy": 44,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "clim-климатичес-китай-6396",
+      "domain": "climate",
+      "legacy": 46,
       "shadow": null,
       "delta": null
     },
@@ -1135,13 +1151,6 @@
       "delta": null
     },
     {
-      "signal_id": "geop-покушение-сша-e2fc",
-      "domain": "geopolitics",
-      "legacy": 35,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "clim-климатичес-дальнийв-326f",
       "domain": "climate",
       "legacy": 59,
@@ -1170,16 +1179,16 @@
       "delta": null
     },
     {
-      "signal_id": "econ-возобновля-китай-5372",
+      "signal_id": "econ-рыноктруда-глобальн-58dd",
       "domain": "economy",
-      "legacy": 44,
+      "legacy": 35,
       "shadow": null,
       "delta": null
     },
     {
-      "signal_id": "econ-рыноктруда-глобальн-58dd",
+      "signal_id": "econ-экономичес-бразилия-0fa1",
       "domain": "economy",
-      "legacy": 35,
+      "legacy": 62,
       "shadow": null,
       "delta": null
     },
@@ -1198,13 +1207,6 @@
       "delta": null
     },
     {
-      "signal_id": "econ-экономичес-бразилия-0fa1",
-      "domain": "economy",
-      "legacy": 62,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "clim-климатичес-иран-45a1",
       "domain": "climate",
       "legacy": 56,
@@ -1219,6 +1221,13 @@
       "delta": null
     },
     {
+      "signal_id": "geop-военныеуда-ближнийв-иран-7d3c",
+      "domain": "geopolitics",
+      "legacy": 56,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "econ-топливныйр-украина-0e49",
       "domain": "economy",
       "legacy": 59,
@@ -1229,6 +1238,13 @@
       "signal_id": "geop-геополитич-япония-edd5",
       "domain": "geopolitics",
       "legacy": 47,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "econ-валютныйры-газа-929e",
+      "domain": "economy",
+      "legacy": 32,
       "shadow": null,
       "delta": null
     },
@@ -1278,6 +1294,13 @@
       "signal_id": "econ-экономичес-ирак-3e40",
       "domain": "economy",
       "legacy": 59,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "econ-экономичес-сша-7b87",
+      "domain": "economy",
+      "legacy": 32,
       "shadow": null,
       "delta": null
     },
@@ -1387,16 +1410,16 @@
       "delta": null
     },
     {
-      "signal_id": "soci-миграционн-россия-1c9f",
-      "domain": "social",
-      "legacy": 45,
+      "signal_id": "clim-климатичес-мексика-7553",
+      "domain": "climate",
+      "legacy": 32,
       "shadow": null,
       "delta": null
     },
     {
-      "signal_id": "clim-климатичес-мексика-7553",
-      "domain": "climate",
-      "legacy": 32,
+      "signal_id": "soci-миграционн-россия-1c9f",
+      "domain": "social",
+      "legacy": 45,
       "shadow": null,
       "delta": null
     },
@@ -1413,33 +1436,12 @@
       "legacy": 62,
       "shadow": null,
       "delta": null
-    },
-    {
-      "signal_id": "geop-геополитич-венесуэл-d9c5",
-      "domain": "geopolitics",
-      "legacy": 50,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "econ-инфляция-аргентин-7c02",
-      "domain": "economy",
-      "legacy": 47,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "econ-экономичес-гонконг-faaa",
-      "domain": "economy",
-      "legacy": 46,
-      "shadow": null,
-      "delta": null
     }
   ],
   "deny_by_severity": {
     "0-30": 3,
-    "31-50": 203,
-    "51-70": 93,
+    "31-50": 204,
+    "51-70": 94,
     "71-90": 6,
     "91-100": 0
   }

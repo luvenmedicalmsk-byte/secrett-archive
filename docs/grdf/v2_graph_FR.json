@@ -1,8 +1,8 @@
 {
   "country": "FR",
-  "date": "2026-10-16",
+  "date": "2026-10-17",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-16T23:47:38.259514+00:00",
+  "generated_at": "2026-10-17T00:06:32.995233+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-FR",
       "type": "Country",
       "label": "FR",
-      "score": 60,
+      "score": 50,
       "props": {
-        "risk_score": 60
+        "risk_score": 50
       }
     },
     {
@@ -20,49 +20,49 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-FR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
-      "trend": "stable"
+      "score": 60,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-FR-climate",
       "type": "Domain",
       "label": "climate",
       "score": 50,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-FR-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 60,
-      "trend": "stable"
+      "score": 5,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-FR-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
-      "trend": "stable"
+      "score": 57,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-FR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-FR-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DRIVER-FR-Geopolitical",
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-FR-Эксперты:_",
-      "type": "Signal",
-      "label": "Эксперты: кибератака на французский прод",
-      "severity": 60,
-      "domain": "technology"
-    },
-    {
       "id": "SIGNAL-FR-Гроза:_Nor",
       "type": "Signal",
       "label": "Гроза: Nord, Пас-де-Кале, Франция",
@@ -94,11 +87,18 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-FR-По_мере_ус",
+      "id": "SIGNAL-FR-Социальный",
       "type": "Signal",
-      "label": "По мере усиления лесных пожаров сообщест",
-      "severity": 44,
-      "domain": "climate"
+      "label": "Социальный процесс — Франция",
+      "severity": 57,
+      "domain": "social"
+    },
+    {
+      "id": "SIGNAL-FR-Экономичес",
+      "type": "Signal",
+      "label": "Экономический сигнал — Франция",
+      "severity": 60,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-FR",
       "to": "DOMAIN-FR-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-FR",
@@ -124,13 +124,13 @@
       "from": "COUNTRY-FR",
       "to": "DOMAIN-FR-technology",
       "type": "CORRELATES",
-      "weight": 0.6
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-FR",
       "to": "DOMAIN-FR-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.57
     },
     {
       "from": "COUNTRY-FR",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-FR-climate",
-      "to": "DOMAIN-FR-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-FR-infrastructure",
-      "to": "DOMAIN-FR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-FR-economic",
-      "to": "DOMAIN-FR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-FR-climate",
       "to": "DOMAIN-FR-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,10 +184,25 @@
       "lag_days": 90
     },
     {
-      "from": "SIGNAL-FR-Эксперты:_",
-      "to": "DOMAIN-FR-technology",
+      "from": "DOMAIN-FR-climate",
+      "to": "DOMAIN-FR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-FR-infrastructure",
+      "to": "DOMAIN-FR-economic",
       "type": "AMPLIFIES",
-      "weight": 0.6
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-FR-economic",
+      "to": "DOMAIN-FR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "SIGNAL-FR-Гроза:_Nor",
@@ -217,10 +211,16 @@
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-FR-По_мере_ус",
-      "to": "DOMAIN-FR-climate",
+      "from": "SIGNAL-FR-Социальный",
+      "to": "DOMAIN-FR-social",
       "type": "AMPLIFIES",
-      "weight": 0.44
+      "weight": 0.57
+    },
+    {
+      "from": "SIGNAL-FR-Экономичес",
+      "to": "DOMAIN-FR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.6
     }
   ]
 }

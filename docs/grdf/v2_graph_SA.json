@@ -1,8 +1,8 @@
 {
   "country": "SA",
-  "date": "2026-10-16",
+  "date": "2026-10-17",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-16T23:47:38.265551+00:00",
+  "generated_at": "2026-10-17T00:06:33.000376+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,23 +10,23 @@
       "id": "COUNTRY-SA",
       "type": "Country",
       "label": "SA",
-      "score": 89,
+      "score": 92,
       "props": {
-        "risk_score": 89
+        "risk_score": 92
       }
     },
     {
       "id": "DOMAIN-SA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 70,
-      "trend": "stable"
+      "score": 92,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 83,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 92,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-technology",
@@ -80,17 +80,10 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-SA-Нефть_доро",
+      "id": "SIGNAL-SA-Сильный_до",
       "type": "Signal",
-      "label": "Нефть дорожает на фоне враждебности на Б",
-      "severity": 83,
-      "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-SA-Штаб-кварт",
-      "type": "Signal",
-      "label": "Штаб-квартира Aramco подверглась атаке, ",
-      "severity": 70,
+      "label": "Сильный дождь: Рафха (Северные границы),",
+      "severity": 92,
       "domain": "geopolitical"
     },
     {
@@ -99,6 +92,13 @@
       "label": "Тепловая волна — Саудовская Аравия",
       "severity": 92,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-SA-Геополитич",
+      "type": "Signal",
+      "label": "Геополитический процесс — Ближний Восток",
+      "severity": 92,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.7
+      "weight": 0.92
     },
     {
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-economic",
       "type": "CORRELATES",
-      "weight": 0.83
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-SA",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-SA-climate",
-      "to": "DOMAIN-SA-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-SA-infrastructure",
-      "to": "DOMAIN-SA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-SA-economic",
-      "to": "DOMAIN-SA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-SA-climate",
       "to": "DOMAIN-SA-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -203,6 +182,27 @@
       "type": "AMPLIFIES",
       "weight": 0.65,
       "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-SA-climate",
+      "to": "DOMAIN-SA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-SA-infrastructure",
+      "to": "DOMAIN-SA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-SA-economic",
+      "to": "DOMAIN-SA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-SA-geopolitical",
@@ -226,20 +226,20 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-SA-Нефть_доро",
-      "to": "DOMAIN-SA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.83
-    },
-    {
-      "from": "SIGNAL-SA-Штаб-кварт",
+      "from": "SIGNAL-SA-Сильный_до",
       "to": "DOMAIN-SA-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.7
+      "weight": 0.92
     },
     {
       "from": "SIGNAL-SA-Тепловая_в",
       "to": "DOMAIN-SA-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.92
+    },
+    {
+      "from": "SIGNAL-SA-Геополитич",
+      "to": "DOMAIN-SA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.92
     }
