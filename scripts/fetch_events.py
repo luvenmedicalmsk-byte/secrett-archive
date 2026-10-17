@@ -2131,7 +2131,8 @@ def detect_coords(title, desc):
 
     if best_title:
         lat, lng = best_title_coords
-        return round(lat + random.uniform(-1.5, 1.5), 2), round(lng + random.uniform(-1.5, 1.5), 2), best_title.title()
+        return (round(lat + _synth_u(-1.5, 1.5, 'detect_coords.title', 'lat', best_title, title, desc), 2),
+                round(lng + _synth_u(-1.5, 1.5, 'detect_coords.title', 'lng', best_title, title, desc), 2), best_title.title())
 
     # Шаг 2: ищем в описании -- только если в заголовке ничего нет
     # Исключаем контекстные упоминания стран (after, since, amid, despite, vs)
@@ -2149,7 +2150,8 @@ def detect_coords(title, desc):
 
     if best_desc:
         lat, lng = best_desc_coords
-        return round(lat + random.uniform(-1.5, 1.5), 2), round(lng + random.uniform(-1.5, 1.5), 2), best_desc.title()
+        return (round(lat + _synth_u(-1.5, 1.5, 'detect_coords.desc', 'lat', best_desc, title, desc), 2),
+                round(lng + _synth_u(-1.5, 1.5, 'detect_coords.desc', 'lng', best_desc, title, desc), 2), best_desc.title())
 
     return None
 
@@ -4906,6 +4908,22 @@ def _jitter(la, lo, seed, span=0.6):
     la += ((h % 100) - 50) / 100.0 * span * 2
     lo += (((h // 100) % 100) - 50) / 100.0 * span * 2
     return round(la, 3), round(lo, 3)
+
+# TASK R3 (F1) · детерминированные синтетические координаты.
+# Раньше разброс синтетической точки давал random.uniform: одно и то же событие
+# при каждом прогоне получало новую точку (а через неё иногда другой регион и
+# точность контракта). Теперь значение - функция стабильных входов события:
+# sha256 от имени места генерации, оси и текста, который этот генератор и так
+# использует (заголовок, описание, найденный топоним/страна). hash() Python не
+# используется (он солится на каждый запуск). Диапазон и округление прежние,
+# происхождение остаётся 'random' (это синтетическая точка, не исходная).
+# Откат: SYNTH_COORD_DETERMINISTIC = False - снова random.uniform.
+SYNTH_COORD_DETERMINISTIC = True
+def _synth_u(lo, hi, *key):
+    if not SYNTH_COORD_DETERMINISTIC:
+        return random.uniform(lo, hi)
+    _h = hashlib.sha256('\x1f'.join(str(k) for k in key).encode('utf-8')).digest()
+    return lo + (hi - lo) * (int.from_bytes(_h[:8], 'big') / 18446744073709551616.0)
 
 def _source_home(src, seed=''):
     base = SOURCE_HOME.get(src)
@@ -14326,7 +14344,8 @@ def save(events):
                 if _tt.startswith(_act): _e['region'] = _reg; break
         except Exception: pass
     _save_tr_disk()
-    events = _llm_extract_countries(events)
+    # G2 16.10: LLM-география (_llm_extract_countries) убрана из резервного save(): падала NameError CC
+    # при заданном OPENAI_API_KEY и роняла запись events.json. Географию присваивает только Geo Contract ниже.
     # GEO CONTRACT Phase 3: _foreign_geo_fallback удалён из потока — географию присваивает только контракт
     try:
         events = _softcap_firm_bankruptcy(events)
@@ -18712,9 +18731,9 @@ def fetch_copernicus_floods():
                     text_lower = title.lower()
                     for country, coords in COUNTRY_COORDS.items():
                         if country in text_lower:
-                            lat = coords[0] + random.uniform(-1, 1)
+                            lat = coords[0] + _synth_u(-1, 1, 'gdacs.country', 'lat', country, title)
                             _co_gf = 'random'   # TASK-287 R1
-                            lng = coords[1] + random.uniform(-2, 2)
+                            lng = coords[1] + _synth_u(-2, 2, 'gdacs.country', 'lng', country, title)
                             break
                 
                 if not lat or not lng:
@@ -18742,8 +18761,8 @@ def fetch_copernicus_floods():
                 lat, lng = None, None
                 for country, coords in COUNTRY_COORDS.items():
                     if country in text_lower:
-                        lat = coords[0] + random.uniform(-1, 1)
-                        lng = coords[1] + random.uniform(-2, 2)
+                        lat = coords[0] + _synth_u(-1, 1, 'floodlist', 'lat', country, title, desc)
+                        lng = coords[1] + _synth_u(-2, 2, 'floodlist', 'lng', country, title, desc)
                         break
                 if not lat:
                     continue
@@ -18767,8 +18786,8 @@ def fetch_copernicus_floods():
                 lat, lng = None, None
                 for c, coords in COUNTRY_COORDS.items():
                     if c in text_lower:
-                        lat = coords[0] + random.uniform(-1, 1)
-                        lng = coords[1] + random.uniform(-2, 2)
+                        lat = coords[0] + _synth_u(-1, 1, 'reliefweb_flood', 'lat', c, title, country)
+                        lng = coords[1] + _synth_u(-2, 2, 'reliefweb_flood', 'lng', c, title, country)
                         break
                 if not lat:
                     continue
@@ -18855,13 +18874,14 @@ def fetch_copernicus_cyber():
             # Геолокация по тексту
             text_lower = (title + ' ' + desc).lower()
             _gtc = GLOBAL_TECH_COORDS[hash(title) % len(GLOBAL_TECH_COORDS)]
-            lat, lng = _gtc[0] + random.uniform(-1,1), _gtc[1] + random.uniform(-2,2)
+            lat, lng = (_gtc[0] + _synth_u(-1, 1, 'cyber.global', 'lat', title, desc),
+                        _gtc[1] + _synth_u(-2, 2, 'cyber.global', 'lng', title, desc))
             region = 'Глобально'
             
             for country, coords in CYBER_COORDS.items():
                 if country in text_lower:
-                    lat = coords[0] + random.uniform(-2, 2)
-                    lng = coords[1] + random.uniform(-3, 3)
+                    lat = coords[0] + _synth_u(-2, 2, 'cyber.country', 'lat', country, title, desc)
+                    lng = coords[1] + _synth_u(-3, 3, 'cyber.country', 'lng', country, title, desc)
                     region = country.title()
                     break
             
@@ -18884,7 +18904,8 @@ def fetch_copernicus_cyber():
                 if country_name:
                     for c, coords in CYBER_COORDS.items():
                         if c in country_name.lower():
-                            lat, lng = coords[0] + random.uniform(-1,1), coords[1] + random.uniform(-2,2)
+                            lat, lng = (coords[0] + _synth_u(-1, 1, 'cyber.cloudflare', 'lat', c, title, country_name),
+                                        coords[1] + _synth_u(-2, 2, 'cyber.cloudflare', 'lng', c, title, country_name))
                             region = country_name
                             break
             elif etype == 'netblocks':
@@ -20623,8 +20644,8 @@ def fetch_russia_climate_v2():
                 if any(kw in text for kw in permafrost_keywords):
                     # Пермафрост -- Сибирь/Арктика
                     is_russia = any(r in text for r in ['russia','siberia','arctic','якути','сибир','арктик'])
-                    lat = round(67.0 + __import__('random').uniform(-5,5), 2)
-                    lng = round(100.0 + __import__('random').uniform(-20,20), 2)
+                    lat = round(67.0 + _synth_u(-5, 5, 'permafrost', 'lat', title, desc), 2)
+                    lng = round(100.0 + _synth_u(-20, 20, 'permafrost', 'lng', title, desc), 2)
                     items.append({
                         'title': title, 'desc': desc,
                         'date': parse_date(pub_date),
@@ -20714,10 +20735,12 @@ def detect_russia_coords(title, desc):
         lat, lng = coords
         # GEO-fix: джиттер урезан ±0.08° (~6-9км) — маркеры не слипаются, но точка
         # остаётся в своём регионе (было ±1/±2° → снос до 250км, СПб уезжал в др. область).
-        return round(lat + random.uniform(-0.08,0.08), 4), round(lng + random.uniform(-0.08,0.08), 4), region.title()
+        return (round(lat + _synth_u(-0.08, 0.08, 'detect_russia_coords.region', 'lat', region, title, desc), 4),
+                round(lng + _synth_u(-0.08, 0.08, 'detect_russia_coords.region', 'lng', region, title, desc), 4), region.title())
     # Если упоминается Россия -- центральная точка
     if 'россия' in text or 'russia' in text or 'russian' in text:
-        return round(61.0 + random.uniform(-5,5), 2), round(60.0 + random.uniform(-10,10), 2), 'Россия'
+        return (round(61.0 + _synth_u(-5, 5, 'detect_russia_coords.ru', 'lat', title, desc), 2),
+                round(60.0 + _synth_u(-10, 10, 'detect_russia_coords.ru', 'lng', title, desc), 2), 'Россия')
     return None
 
 
@@ -22069,361 +22092,6 @@ def _normalize_caps(title):
     return ''.join(res)
 
 
-def _llm_extract_impact(events):
-    """Изолированный fail-safe проход: event_country (где ФИЗИЧЕСКИ произошло) +
-    impact_countries[{cc,type}] (на кого ВЛИЯЕТ). НЕ трогает country_code/region.
-    Пишет docs/_impact_debug.json для диагностики."""
-    import os as _os, sys as _sys, json as _json, urllib.request as _u, urllib.error as _ue, re as _re, time as _time
-    key = _os.environ.get('OPENAI_API_KEY', '')
-    dbg = {'key': bool(key), 'events_total': len(events), 'todo': 0, 'batches': [], 'res_size': 0, 'tagged': 0, 'sample': {}}
-    def _dump():
-        try:
-            _p = _os.path.join(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))), 'docs', '_impact_debug.json')
-            with open(_p, 'w', encoding='utf-8') as _f:
-                _json.dump(dbg, _f, ensure_ascii=False, indent=2)
-        except Exception:
-            pass
-    if not key or not events:
-        _dump(); return events
-    def _is_kev(e):
-        return e.get('source') == 'CISA KEV' or str(e.get('title', '')).startswith('Активно эксплуатируемая')
-    def _ok(x):
-        return bool(_re.match(r'^[A-Z]{2}$', x or ''))
-    sys_p = (
-        'Ты гео-аналитик рисков. Для каждого объекта (по ключу i) верни СТРОГО:\n'
-        '- "event": ISO-3166 alpha-2 страны, где событие ФИЗИЧЕСКИ произошло (место, НЕ упоминание). '
-        'Если место не ясно или глобальное -- "GLOBAL".\n'
-        '- "impact": массив до 3 стран (ISO alpha-2), на которые событие реально ВЛИЯЕТ, КРОМЕ страны события. '
-        'Нет влияния -- [].\n'
-        '- "type": один из: infra, internet, economy, supply, energy, geo, cyber, climate, social, none.\n'
-        'РАЗЛИЧАЙ место и влияние. Японский УЦ отзывает сертификаты российских сайтов -> '
-        '{"event":"JP","impact":["RU"],"type":"internet"}. Санкции США против Ирана -> '
-        '{"event":"US","impact":["IR"],"type":"economy"}.\n'
-        'Верни JSON-объект ВЕРХНЕГО УРОВНЯ, где КАЖДЫЙ ключ -- это i (строкой), а значение -- '
-        '{"event":..,"impact":[..],"type":..}. Без обёрток, без markdown, без пояснений.')
-    todo = [(i, e) for i, e in enumerate(events) if not _is_kev(e)]
-    dbg['todo'] = len(todo)
-    dbg['reached'] = 'before_loop'; _dump()
-    res = {}
-    B = 20
-    for s in range(0, len(todo), B):
-        chunk = todo[s:s + B]
-        payload = [{'i': i, 't': (e.get('title', '') or '')[:200]} for i, e in chunk]
-        binfo = {'n': len(chunk), 'ok': False, 'keys': 0, 'err': ''}
-        for attempt in range(2):
-            try:
-                body = _json.dumps({'model': 'gpt-4o-mini', 'max_tokens': 2500, 'temperature': 0,
-                                    'response_format': {'type': 'json_object'},
-                                    'messages': [{'role': 'system', 'content': sys_p},
-                                                 {'role': 'user', 'content': _json.dumps(payload, ensure_ascii=False)}]}).encode()
-                r = _u.Request('https://api.openai.com/v1/chat/completions', data=body,
-                               headers={'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key}, method='POST')
-                with _u.urlopen(r, timeout=60) as resp:
-                    content = _json.loads(resp.read().decode())['choices'][0]['message']['content']
-                parsed = _json.loads(content)
-                # развернуть обёртки: {"results":{...}} или {"data":[...]}
-                if isinstance(parsed, dict) and len(parsed) == 1:
-                    only = list(parsed.values())[0]
-                    if isinstance(only, dict):
-                        parsed = only
-                    elif isinstance(only, list):
-                        tmp = {}
-                        for ob in only:
-                            if isinstance(ob, dict) and 'i' in ob:
-                                tmp[str(ob['i'])] = ob
-                        if tmp:
-                            parsed = tmp
-                if isinstance(parsed, list):
-                    tmp = {}
-                    for ob in parsed:
-                        if isinstance(ob, dict) and 'i' in ob:
-                            tmp[str(ob['i'])] = ob
-                    parsed = tmp
-                cnt = 0
-                for k, v in parsed.items():
-                    try:
-                        if isinstance(v, dict):
-                            res[int(k)] = v; cnt += 1
-                    except Exception:
-                        pass
-                binfo['ok'] = True; binfo['keys'] = cnt
-                break
-            except Exception as _e:
-                binfo['err'] = str(_e)[:120]
-                if attempt == 0:
-                    _time.sleep(2); continue
-                print('  impact-LLM batch fail: %s' % _e, file=_sys.stderr)
-        dbg['batches'].append(binfo)
-    dbg['reached'] = 'after_loop'
-    dbg['res_size'] = len(res); _dump()
-    dbg['sample'] = {str(k): res[k] for k in list(res)[:5]}
-    _VALID = {'infra', 'internet', 'economy', 'supply', 'energy', 'geo', 'cyber', 'climate', 'social', 'none'}
-    tagged = 0
-    for i, e in enumerate(events):
-        v = res.get(i)
-        if not isinstance(v, dict):
-            continue
-        ev_cc = str(v.get('event', '') or '').upper().strip()
-        typ = str(v.get('type', '') or '').lower().strip()
-        if typ not in _VALID:
-            typ = 'none'
-        if ev_cc == 'GLOBAL' or _ok(ev_cc):
-            e['event_country'] = ev_cc
-        impact_list = []
-        imp = v.get('impact') or []
-        if isinstance(imp, list):
-            for cc2 in imp[:3]:
-                cc2 = str(cc2).upper().strip()
-                if _ok(cc2) and cc2 != e.get('event_country'):
-                    impact_list.append({'cc': cc2, 'type': typ})
-        if impact_list:
-            e['impact_countries'] = impact_list
-        if e.get('event_country') or impact_list:
-            tagged += 1
-    _RU_MARK = ('росси','москв','подмосков','петербург','тюмен','камчатк','южурал','южноурал','челябинск',
-                'краснодар','крым','курск','белгород','воронеж','казан','новосибирск','екатеринбург','владивосток',
-                'ростов','самар','уфа','перм','волгоград','саратов','нижегород','нижнем новгород','сочи','омск',
-                'красноярск','тула','рязан','ярославл','ставропол','дагестан','татарстан','башкор','кубан','поволж')
-    for _e in events:
-        if _e.get('is_global') or _e.get('event_country'):
-            continue
-        _t = ((_e.get('title') or '') + ' ' + (_e.get('region') or '')).lower()
-        if any(_mk in _t for _mk in _RU_MARK):
-            _e['event_country'] = 'RU'
-            if (_e.get('region') or '') in ('', 'Глобально'):
-                _e['region'] = 'Россия'
-    dbg['tagged'] = tagged
-    _dump()
-    print('  LLM-impact: размечено %d из %d' % (tagged, len(events)), file=_sys.stderr)
-    return events
-
-
-def _llm_extract_countries(events):
-    """LLM-\u0430\u0442\u0440\u0438\u0431\u0443\u0446\u0438\u044f \u0441\u0442\u0440\u0430\u043d\u044b (ISO-3166 alpha-2) \u043f\u043e \u0441\u043c\u044b\u0441\u043b\u0443 \u0437\u0430\u0433\u043e\u043b\u043e\u0432\u043a\u0430.
-    \u0427\u0438\u043d\u0438\u0442 \u0441\u043b\u043e\u0432\u0430\u0440\u044c-\u043c\u0430\u0442\u0447\u0435\u0440 (\u043f\u0443\u0442\u0430\u0435\u0442 \u0432\u0435\u043d\u0434\u043e\u0440\u043e\u0432/\u0433\u043e\u0440\u043e\u0434\u0430). country_code/region/coords \u0438\u0437 CC; CISA KEV -> GLOBAL."""
-    import os as _os, sys as _sys, json as _json, urllib.request as _u, random as _rnd
-    key = _os.environ.get('OPENAI_API_KEY', '')
-    if not key or not events:
-        return events
-    def _is_kev(e):
-        return e.get('source') == 'CISA KEV' or str(e.get('title', '')).startswith('\u0410\u043a\u0442\u0438\u0432\u043d\u043e \u044d\u043a\u0441\u043f\u043b\u0443\u0430\u0442\u0438\u0440\u0443\u0435\u043c\u0430\u044f')
-    sys_p = ('Ты гео-аналитик. Для каждого заголовка (ключ i) верни объект с полями:\n'
-             '"c": ISO-3166 alpha-2 код страны, которой заголовок СОДЕРЖАТЕЛЬНО касается, заглавными (RU, US, CN, IR...). '
-             'Если событие глобальное/наднациональное (цепочки поставок, уязвимость софта/вендора, мировые ИИ-риски) '
-             'либо страна не определяется -- "GLOBAL". НЕ путай названия компаний (Cisco, Microsoft, Oracle, Google) с географией.\n'
-             '"e": ISO alpha-2 страны, где событие ФИЗИЧЕСКИ ПРОИЗОШЛО (место события, не упоминание). Если не ясно/глобально -- "GLOBAL".\n'
-             '"imp": массив до 3 стран (ISO alpha-2), на которые событие реально ВЛИЯЕТ, КРОМЕ страны места. Нет влияния -- [].\n'
-             '"ty": тип влияния -- один из: infra, internet, economy, supply, energy, geo, cyber, climate, social, none.\n'
-             'Различай место и влияние: японский УЦ отзывает сертификаты российских сайтов -> c=RU, e=JP, imp=["RU"], ty=internet.\n'
-             'Верни объект {"items":[...]}, по одному элементу на каждый i: {"i":номер, "c":.., "e":.., "imp":[..], "ty":..}.')
-    todo = [(i, e) for i, e in enumerate(events) if not _is_kev(e)]
-    dbg['todo'] = len(todo)
-    dbg['reached'] = 'before_loop'; _dump()
-    res = {}
-    B = 20
-    for s in range(0, len(todo), B):
-        chunk = todo[s:s + B]
-        payload = [{'i': i, 't': (e.get('title', '') or '')[:200]} for i, e in chunk]
-        binfo = {'n': len(chunk), 'ok': False, 'keys': 0, 'err': ''}
-        for attempt in range(2):
-            try:
-                body = _json.dumps({'model': 'gpt-4o-mini', 'max_tokens': 2500, 'temperature': 0,
-                                    'response_format': {'type': 'json_object'},
-                                    'messages': [{'role': 'system', 'content': sys_p},
-                                                 {'role': 'user', 'content': _json.dumps(payload, ensure_ascii=False)}]}).encode()
-                r = _u.Request('https://api.openai.com/v1/chat/completions', data=body,
-                               headers={'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key}, method='POST')
-                with _u.urlopen(r, timeout=60) as resp:
-                    content = _json.loads(resp.read().decode())['choices'][0]['message']['content']
-                parsed = _json.loads(content)
-                # развернуть обёртки: {"results":{...}} или {"data":[...]}
-                if isinstance(parsed, dict) and len(parsed) == 1:
-                    only = list(parsed.values())[0]
-                    if isinstance(only, dict):
-                        parsed = only
-                    elif isinstance(only, list):
-                        tmp = {}
-                        for ob in only:
-                            if isinstance(ob, dict) and 'i' in ob:
-                                tmp[str(ob['i'])] = ob
-                        if tmp:
-                            parsed = tmp
-                if isinstance(parsed, list):
-                    tmp = {}
-                    for ob in parsed:
-                        if isinstance(ob, dict) and 'i' in ob:
-                            tmp[str(ob['i'])] = ob
-                    parsed = tmp
-                cnt = 0
-                for k, v in parsed.items():
-                    try:
-                        if isinstance(v, dict):
-                            res[int(k)] = v; cnt += 1
-                    except Exception:
-                        pass
-                binfo['ok'] = True; binfo['keys'] = cnt
-                break
-            except Exception as _e:
-                binfo['err'] = str(_e)[:120]
-                if attempt == 0:
-                    _time.sleep(2); continue
-                print('  impact-LLM batch fail: %s' % _e, file=_sys.stderr)
-        dbg['batches'].append(binfo)
-    dbg['reached'] = 'after_loop'
-    dbg['res_size'] = len(res); _dump()
-    dbg['sample'] = {str(k): res[k] for k in list(res)[:5]}
-    _VALID = {'infra', 'internet', 'economy', 'supply', 'energy', 'geo', 'cyber', 'climate', 'social', 'none'}
-    tagged = 0
-    for i, e in enumerate(events):
-        v = res.get(i)
-        if not isinstance(v, dict):
-            continue
-        ev_cc = str(v.get('event', '') or '').upper().strip()
-        typ = str(v.get('type', '') or '').lower().strip()
-        if typ not in _VALID:
-            typ = 'none'
-        if ev_cc == 'GLOBAL' or _ok(ev_cc):
-            e['event_country'] = ev_cc
-        impact_list = []
-        imp = v.get('impact') or []
-        if isinstance(imp, list):
-            for cc2 in imp[:3]:
-                cc2 = str(cc2).upper().strip()
-                if _ok(cc2) and cc2 != e.get('event_country'):
-                    impact_list.append({'cc': cc2, 'type': typ})
-        if impact_list:
-            e['impact_countries'] = impact_list
-        if e.get('event_country') or impact_list:
-            tagged += 1
-    dbg['tagged'] = tagged
-    _dump()
-    print('  LLM-impact: размечено %d из %d' % (tagged, len(events)), file=_sys.stderr)
-    return events
-
-
-def _llm_extract_countries(events):
-    """LLM-\u0430\u0442\u0440\u0438\u0431\u0443\u0446\u0438\u044f \u0441\u0442\u0440\u0430\u043d\u044b (ISO-3166 alpha-2) \u043f\u043e \u0441\u043c\u044b\u0441\u043b\u0443 \u0437\u0430\u0433\u043e\u043b\u043e\u0432\u043a\u0430.
-    \u0427\u0438\u043d\u0438\u0442 \u0441\u043b\u043e\u0432\u0430\u0440\u044c-\u043c\u0430\u0442\u0447\u0435\u0440 (\u043f\u0443\u0442\u0430\u0435\u0442 \u0432\u0435\u043d\u0434\u043e\u0440\u043e\u0432/\u0433\u043e\u0440\u043e\u0434\u0430). country_code/region/coords \u0438\u0437 CC; CISA KEV -> GLOBAL."""
-    import os as _os, sys as _sys, json as _json, urllib.request as _u, random as _rnd
-    key = _os.environ.get('OPENAI_API_KEY', '')
-    if not key or not events:
-        return events
-    def _is_kev(e):
-        return e.get('source') == 'CISA KEV' or str(e.get('title', '')).startswith('\u0410\u043a\u0442\u0438\u0432\u043d\u043e \u044d\u043a\u0441\u043f\u043b\u0443\u0430\u0442\u0438\u0440\u0443\u0435\u043c\u0430\u044f')
-    sys_p = ('\u0422\u044b \u0433\u0435\u043e-\u0430\u043d\u0430\u043b\u0438\u0442\u0438\u043a. \u0414\u043b\u044f \u043a\u0430\u0436\u0434\u043e\u0433\u043e \u0437\u0430\u0433\u043e\u043b\u043e\u0432\u043a\u0430 \u043e\u043f\u0440\u0435\u0434\u0435\u043b\u0438 \u041e\u0414\u041d\u0423 \u0441\u0442\u0440\u0430\u043d\u0443, \u043a\u043e\u0442\u043e\u0440\u043e\u0439 \u043e\u043d '
-             '\u0421\u041e\u0414\u0415\u0420\u0416\u0410\u0422\u0415\u041b\u042c\u041d\u041e \u043a\u0430\u0441\u0430\u0435\u0442\u0441\u044f, \u0438 \u0432\u0435\u0440\u043d\u0438 \u0435\u0451 ISO-3166 alpha-2 \u043a\u043e\u0434 \u0437\u0430\u0433\u043b\u0430\u0432\u043d\u044b\u043c\u0438 (RU, US, CN, IR...). '
-             '\u0415\u0441\u043b\u0438 \u0441\u043e\u0431\u044b\u0442\u0438\u0435 \u0433\u043b\u043e\u0431\u0430\u043b\u044c\u043d\u043e\u0435/\u043d\u0430\u0434\u043d\u0430\u0446\u0438\u043e\u043d\u0430\u043b\u044c\u043d\u043e\u0435 (\u0446\u0435\u043f\u043e\u0447\u043a\u0438 \u043f\u043e\u0441\u0442\u0430\u0432\u043e\u043a, \u0443\u044f\u0437\u0432\u0438\u043c\u043e\u0441\u0442\u044c \u0441\u043e\u0444\u0442\u0430/\u0432\u0435\u043d\u0434\u043e\u0440\u0430, '
-             '\u043c\u0438\u0440\u043e\u0432\u044b\u0435 \u0418\u0418-\u0440\u0438\u0441\u043a\u0438) \u043b\u0438\u0431\u043e \u0441\u0442\u0440\u0430\u043d\u0430 \u043d\u0435 \u043e\u043f\u0440\u0435\u0434\u0435\u043b\u044f\u0435\u0442\u0441\u044f -- \u0432\u0435\u0440\u043d\u0438 "GLOBAL". '
-             '\u041d\u0415 \u043f\u0443\u0442\u0430\u0439 \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u044f \u043a\u043e\u043c\u043f\u0430\u043d\u0438\u0439 (Cisco, Microsoft, Oracle, Google) \u0441 \u0433\u0435\u043e\u0433\u0440\u0430\u0444\u0438\u0435\u0439. '
-             '\u041e\u0442\u0432\u0435\u0442 -- \u0421\u0422\u0420\u041e\u0413\u041e JSON-\u043e\u0431\u044a\u0435\u043a\u0442: \u043a\u043b\u044e\u0447 = i \u043a\u0430\u043a \u0441\u0442\u0440\u043e\u043a\u0430, \u0437\u043d\u0430\u0447\u0435\u043d\u0438\u0435 = ISO-\u043a\u043e\u0434 \u0438\u043b\u0438 "GLOBAL".')
-    todo = [(i, e) for i, e in enumerate(events) if not _is_kev(e)]
-    res = {}
-    _imp_res = {}
-    B = 25
-    _cdbg = {'schema_ok': 0, 'fallback': 0, 'err': '', 'model': 'gpt-4o-mini'}
-    for s in range(0, len(todo), B):
-        chunk = todo[s:s + B]
-        payload = [{'i': i, 't': (e.get('title', '') or '')[:200]} for i, e in chunk]
-        _schema = {'type': 'object', 'additionalProperties': False, 'required': ['items'],
-                   'properties': {'items': {'type': 'array', 'items': {
-                       'type': 'object', 'additionalProperties': False, 'required': ['i', 'c', 'e', 'imp', 'ty'],
-                       'properties': {'i': {'type': 'integer'}, 'c': {'type': 'string'}, 'e': {'type': 'string'},
-                                      'imp': {'type': 'array', 'items': {'type': 'string'}},
-                                      'ty': {'type': 'string', 'enum': ['infra', 'internet', 'economy', 'supply', 'energy', 'geo', 'cyber', 'climate', 'social', 'none']}}}}}}
-        def _call(rf):
-            body = _json.dumps({'model': 'gpt-4o-mini', 'max_tokens': 3000, 'temperature': 0,
-                                'response_format': rf,
-                                'messages': [{'role': 'system', 'content': sys_p},
-                                             {'role': 'user', 'content': _json.dumps(payload, ensure_ascii=False)}]}).encode()
-            r = _u.Request('https://api.openai.com/v1/chat/completions', data=body,
-                           headers={'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key}, method='POST')
-            with _u.urlopen(r, timeout=60) as resp:
-                return _json.loads(resp.read().decode())['choices'][0]['message']['content']
-        try:
-            try:
-                content = _call({'type': 'json_schema', 'json_schema': {'name': 'geo', 'strict': True, 'schema': _schema}})
-                items = (_json.loads(content) or {}).get('items') or []
-                for it in items:
-                    try:
-                        _ki = int(it['i'])
-                        res[_ki] = str(it.get('c', '') or '').upper().strip()
-                        _imp_res[_ki] = (str(it.get('e', '') or '').upper().strip(), it.get('imp') or [], str(it.get('ty', '') or '').lower().strip())
-                    except Exception:
-                        pass
-                _cdbg['schema_ok'] += 1
-                _cdbg['last_items'] = len(items)
-            except Exception as _es:
-                _cdbg['fallback'] += 1
-                if not _cdbg['err']:
-                    _cdbg['err'] = str(_es)[:400]
-                    try:
-                        _cdbg['body'] = _es.read().decode()[:400]
-                    except Exception:
-                        pass
-                content = _call({'type': 'json_object'})
-                parsed = _json.loads(content)
-                if isinstance(parsed, dict) and len(parsed) == 1 and isinstance(list(parsed.values())[0], dict):
-                    parsed = list(parsed.values())[0]
-                for k, v in parsed.items():
-                    try:
-                        res[int(k)] = (str(v.get('c', '') or '') if isinstance(v, dict) else str(v)).upper().strip()
-                    except Exception:
-                        pass
-        except Exception as _e:
-            print('  country-LLM batch fail: %s' % _e, file=_sys.stderr)
-    try:
-        import os as __o
-        __p = __o.path.join(__o.path.dirname(__o.path.dirname(__o.path.abspath(__file__))), 'docs', '_impact_debug.json')
-        open(__p, 'w', encoding='utf-8').write(_json.dumps(_cdbg, ensure_ascii=False))
-    except Exception:
-        pass
-    fixed = glob = 0
-    for i, e in enumerate(events):
-        cc = 'GLOBAL' if _is_kev(e) else res.get(i)
-        _ir = _imp_res.get(i)
-        if _ir:
-            _ec, _imp, _ty = _ir
-            if _ec == 'GLOBAL' or (len(_ec) == 2 and _ec.isalpha()):
-                e['event_country'] = _ec
-            if _ty not in ('infra','internet','economy','supply','energy','geo','cyber','climate','social','none'):
-                _ty = 'none'
-            _il = []
-            if isinstance(_imp, list):
-                for _c2 in _imp[:3]:
-                    _c2 = str(_c2).upper().strip()
-                    if len(_c2) == 2 and _c2.isalpha() and _c2 != e.get('event_country'):
-                        _il.append({'cc': _c2, 'type': _ty})
-            if _il:
-                e['impact_countries'] = _il
-        if (not _is_kev(e)) and ((not cc) or cc == 'GLOBAL'):
-            _subj = ru_subject_in((e.get('title','') or '') + ' ' + (e.get('summary','') or '') + ' ' + (e.get('region','') or ''))
-            if _subj:
-                _la, _ln, _ = CC.get('RU', (61.5, 105.0, 'Россия'))
-                e['country_code'] = 'RU'; e['country_codes'] = ['RU']; e['event_country'] = 'RU'
-                e['region'] = 'Россия, ' + _subj
-                e['geo_fix'] = {'subject': _subj, 'from': 'Глобально', 'to': 'Россия, ' + _subj}
-                e['lat'] = round(_la + _rnd.uniform(-4, 4), 2); e['lng'] = round(_ln + _rnd.uniform(-12, 12), 2)
-                e['_coord_origin'] = 'random'   # TASK-287 R1
-                fixed += 1
-                continue
-        if not cc:
-            continue
-        if cc == 'GLOBAL':
-            e['country_code'] = ''; e['country_codes'] = []; e['region'] = '\u0413\u043b\u043e\u0431\u0430\u043b\u044c\u043d\u043e'; glob += 1
-        elif cc in CC:
-            lat, lng, name = CC[cc]
-            e['country_code'] = cc; e['country_codes'] = [cc]
-            _cur = str(e.get('region','') or '')
-            if name.lower() not in _cur.lower():   # регион не указывает на страну -> исправляем; иначе храним суб-регион
-                e['region'] = name
-                e['lat'] = round(lat + _rnd.uniform(-1.2, 1.2), 2)
-                e['lng'] = round(lng + _rnd.uniform(-1.2, 1.2), 2)
-                e['_coord_origin'] = 'random'   # TASK-287 R1
-            fixed += 1
-    print('  LLM-\u0441\u0442\u0440\u0430\u043d\u0430: \u0443\u0442\u043e\u0447\u043d\u0435\u043d\u043e %d, \u0433\u043b\u043e\u0431\u0430\u043b\u044c\u043d\u044b\u0445 %d (\u0438\u0437 %d)' % (fixed, glob, len(events)), file=_sys.stderr)
-    return events
-
-
 # ═══ KEV_SCOPE 23.09.2026 ════════════════════════════════════════════════
 # _is_kev была определена ЧЕТЫРЕ раза, каждый раз внутри своей функции, и ни
 # разу на уровне модуля. При этом _foreign_geo_fallback её вызывает, своей
@@ -22445,43 +22113,6 @@ def _llm_extract_countries(events):
 def _is_kev(e):
     return (e.get('source') == 'CISA KEV'
             or str(e.get('title', '')).startswith('\u0410\u043a\u0442\u0438\u0432\u043d\u043e \u044d\u043a\u0441\u043f\u043b\u0443\u0430\u0442\u0438\u0440\u0443\u0435\u043c\u0430\u044f'))
-
-
-def _foreign_geo_fallback(events):
-    """V6.5 Блок2: детерминированный резолвер иностранных стран. Работает БЕЗУСЛОВНО
-    (не зависит от OPENAI_API_KEY). РФ -- ru_subject_in; заграница -- foreign_country.
-    Чинит данные ДО публикации events.json."""
-    fixed = 0
-    GLOB = '\u0413\u043b\u043e\u0431\u0430\u043b\u044c\u043d\u043e'
-    for e in events:
-        try:
-            if _is_kev(e):
-                continue
-            cc = str(e.get('country_code') or '').strip()
-            reg = str(e.get('region') or '')
-            if cc and reg and reg != GLOB:
-                continue
-            txt = (e.get('title', '') or '') + ' ' + (e.get('summary', '') or '')
-            if ru_subject_in(txt):
-                continue
-            _fcc, _fname = _foreign_country(txt)
-            if _fcc:
-                e['country_code'] = _fcc
-                e['country_codes'] = [_fcc]
-                e['event_country'] = _fcc
-                _curr = str(e.get('region', '') or '')
-                if (_fname.lower() not in _curr.lower()) or _curr == GLOB or not _curr:
-                    e['region'] = _fname
-                    if _fcc in CC:
-                        _fla, _fln, _ = CC[_fcc]
-                        e['lat'] = round(_fla + _rnd.uniform(-1.2, 1.2), 2)
-                        e['lng'] = round(_fln + _rnd.uniform(-1.2, 1.2), 2)
-                e['geo_fix'] = {'foreign': _fname, 'cc': _fcc, 'from': 'Глобально/пусто', 'to': _fname}
-                fixed += 1
-        except Exception:
-            continue
-    print('  [V6.5] foreign-резолвер: проставлено стран %d' % fixed, file=sys.stderr)
-    return events
 
 
 def _llm_dedup(events, keep=3):
