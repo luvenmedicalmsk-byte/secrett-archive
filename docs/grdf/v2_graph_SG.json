@@ -2,7 +2,7 @@
   "country": "SG",
   "date": "2026-10-17",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-17T10:08:51.491156+00:00",
+  "generated_at": "2026-10-17T10:28:31.224600+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-SG-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -40,7 +40,7 @@
       "id": "DOMAIN-SG-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
+      "score": 39,
       "trend": "stable"
     },
     {
@@ -75,9 +75,9 @@
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-SG-economic",
+      "id": "DRIVER-SG-technology",
       "type": "Driver",
-      "label": "economic"
+      "label": "technology"
     },
     {
       "id": "SIGNAL-SG-Сингапур_н",
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-SG-Средняя_но",
-      "type": "Signal",
-      "label": "Средняя ночная ставка в Сингапуре (SORA)",
-      "severity": 32,
-      "domain": "economic"
-    },
-    {
       "id": "SIGNAL-SG-Геополитич",
       "type": "Signal",
       "label": "Геополитический процесс — Юго-Восточная ",
       "severity": 62,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-SG-Уязвимость",
+      "type": "Signal",
+      "label": "Уязвимость ПО — Юго-Восточная Азия",
+      "severity": 53,
+      "domain": "technology"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-SG",
@@ -124,7 +124,7 @@
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.39
     },
     {
       "from": "COUNTRY-SG",
@@ -157,31 +157,10 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-SG-economic",
+      "from": "DRIVER-SG-technology",
       "to": "COUNTRY-SG",
       "type": "CAUSES",
       "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-SG-climate",
-      "to": "DOMAIN-SG-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-SG-infrastructure",
-      "to": "DOMAIN-SG-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-SG-economic",
-      "to": "DOMAIN-SG-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
     },
     {
       "from": "DOMAIN-SG-climate",
@@ -203,6 +182,27 @@
       "type": "AMPLIFIES",
       "weight": 0.65,
       "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-SG-climate",
+      "to": "DOMAIN-SG-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-SG-infrastructure",
+      "to": "DOMAIN-SG-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-SG-economic",
+      "to": "DOMAIN-SG-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-SG-geopolitical",
@@ -232,16 +232,16 @@
       "weight": 0.54
     },
     {
-      "from": "SIGNAL-SG-Средняя_но",
-      "to": "DOMAIN-SG-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.32
-    },
-    {
       "from": "SIGNAL-SG-Геополитич",
       "to": "DOMAIN-SG-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.62
+    },
+    {
+      "from": "SIGNAL-SG-Уязвимость",
+      "to": "DOMAIN-SG-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.53
     }
   ]
 }
