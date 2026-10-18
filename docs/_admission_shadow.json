@@ -1,11 +1,11 @@
 {
-  "generated": "2026-10-18T20:21:45Z",
+  "generated": "2026-10-18T20:30:48Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
-    "PASS_FACT": 1051,
+    "PASS_FACT": 1049,
+    "DENY_COMMENTARY": 286,
     "DENY_OTHER": 3,
-    "DENY_COMMENTARY": 284,
     "DENY_STATE_ONLY": 5,
     "UNMATCHED": 1,
     "DENY_BACKGROUND": 8,
@@ -18,9 +18,9 @@
     "unmatched": 1,
     "coverage_pct": 99.9,
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
-    "admission_pass_rate": 77.6,
-    "admission_deny_rate": 22.4,
-    "processes_without_fact": 303,
+    "admission_pass_rate": 77.5,
+    "admission_deny_rate": 22.5,
+    "processes_without_fact": 305,
     "report_evidence_count": 0,
     "reports_boosting": 0
   },
@@ -28,13 +28,13 @@
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
       "processes": 406,
-      "sample": 1393,
+      "sample": 1376,
       "agreement_pct": 87.9,
       "decision_agreement_pct": 88.0,
-      "critical_errors": 167,
+      "critical_errors": 165,
       "truth_ratio_pct": 100.0,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 151,
+        "FACT_EVENT→COMMENTARY": 149,
         "COMMENTARY→FACT_EVENT": 15,
         "STATE_CONFIRMATION→FACT_EVENT": 1,
         "BACKGROUND→COMMENTARY": 1
@@ -42,12 +42,12 @@
     },
     "historical": {
       "processes": 1355,
-      "sample": 3444,
+      "sample": 3427,
       "agreement_pct": 89.3,
       "decision_agreement_pct": 89.4,
-      "critical_errors": 366,
+      "critical_errors": 364,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 320,
+        "FACT_EVENT→COMMENTARY": 318,
         "COMMENTARY→FACT_EVENT": 41,
         "STATE_CONFIRMATION→FACT_EVENT": 4,
         "BACKGROUND→COMMENTARY": 1,
@@ -57,12 +57,12 @@
       }
     },
     "events_stream": {
-      "sample": 474,
-      "agreement_pct": 86.7,
-      "decision_agreement_pct": 86.7,
-      "critical_errors": 63,
+      "sample": 476,
+      "agreement_pct": 87.0,
+      "decision_agreement_pct": 87.0,
+      "critical_errors": 62,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 59,
+        "FACT_EVENT→COMMENTARY": 58,
         "COMMENTARY→FACT_EVENT": 3,
         "STATE_CONFIRMATION→FACT_EVENT": 1
       }
@@ -75,30 +75,30 @@
     }
   },
   "class_source": {
-    "evidence_sic": 3444
+    "evidence_sic": 3427
   },
   "truth_ratio_pct": 100.0,
   "domain_statistics": {
     "geopolitics": {
-      "pass": 267,
-      "deny": 73
+      "pass": 266,
+      "deny": 74
+    },
+    "technology": {
+      "pass": 126,
+      "deny": 30
     },
     "climate": {
       "pass": 331,
       "deny": 61,
       "unmatched": 1
     },
-    "technology": {
-      "pass": 126,
-      "deny": 30
-    },
     "economy": {
       "pass": 236,
       "deny": 100
     },
     "social": {
-      "pass": 91,
-      "deny": 39
+      "pass": 90,
+      "deny": 40
     }
   },
   "deny_impact": [
@@ -190,6 +190,21 @@
       },
       "status": "dormant",
       "causal_links": 6,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
+      "signal_id": "geop-геополитич-европа-00ed",
+      "title": "Геополитический процесс — Европа",
+      "domain": "geopolitics",
+      "severity": 66,
+      "pressure": 68,
+      "first_seen": "2026-08-02",
+      "evidence_count": 3,
+      "evidence_classes": {
+        "COMMENTARY": 3
+      },
+      "status": "active",
+      "causal_links": 0,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -988,25 +1003,17 @@
       "status": "active",
       "causal_links": 0,
       "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "clim-климатичес-якутия-36c8",
-      "title": "Климатический сигнал — Якутия",
-      "domain": "climate",
-      "severity": 56,
-      "pressure": 39,
-      "first_seen": "2026-10-09",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "COMMENTARY": 1
-      },
-      "status": "active",
-      "causal_links": 0,
-      "reason": "no FACT_EVENT in evidence"
     }
   ],
   "report_log": [],
   "severity_delta": [
+    {
+      "signal_id": "geop-геополитич-европа-00ed",
+      "domain": "geopolitics",
+      "legacy": 66,
+      "shadow": null,
+      "delta": null
+    },
     {
       "signal_id": "econ-экономичес-иран-7b7d",
       "domain": "economy",
@@ -1419,19 +1426,12 @@
       "legacy": 54,
       "shadow": null,
       "delta": null
-    },
-    {
-      "signal_id": "econ-валютныйры-ирландия-efec",
-      "domain": "economy",
-      "legacy": 34,
-      "shadow": null,
-      "delta": null
     }
   ],
   "deny_by_severity": {
     "0-30": 3,
     "31-50": 196,
-    "51-70": 100,
+    "51-70": 102,
     "71-90": 3,
     "91-100": 1
   }
