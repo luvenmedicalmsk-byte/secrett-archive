@@ -2,7 +2,7 @@
   "country": "DE",
   "date": "2026-10-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-18T05:26:41.666050+00:00",
+  "generated_at": "2026-10-18T05:46:41.434560+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-DE",
       "type": "Country",
       "label": "DE",
-      "score": 73,
+      "score": 84,
       "props": {
-        "risk_score": 73
+        "risk_score": 84
       }
     },
     {
@@ -20,49 +20,49 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-economic",
       "type": "Domain",
       "label": "economic",
       "score": 50,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-climate",
       "type": "Domain",
       "label": "climate",
       "score": 72,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-DE-Geopolitical",
@@ -80,9 +80,16 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-DE-Ливень:_Кр",
+      "type": "Signal",
+      "label": "Ливень: Край Сигмаринген, Цоллернальб kr",
+      "severity": 72,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-DE-Ветер:_Кра",
       "type": "Signal",
-      "label": "Ветер: Край Северо-Западная Мекленбургия",
+      "label": "Ветер: Край Остхольстайн - Побережье, Га",
       "severity": 72,
       "domain": "climate"
     },
@@ -92,13 +99,6 @@
       "label": "Количество банкротств в Германии только ",
       "severity": 50,
       "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-DE-Туман:_Кра",
-      "type": "Signal",
-      "label": "Туман: Край и город Аугсбург, Край Амбер",
-      "severity": 50,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -205,6 +205,12 @@
       "lag_days": 90
     },
     {
+      "from": "SIGNAL-DE-Ливень:_Кр",
+      "to": "DOMAIN-DE-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.72
+    },
+    {
       "from": "SIGNAL-DE-Ветер:_Кра",
       "to": "DOMAIN-DE-climate",
       "type": "AMPLIFIES",
@@ -213,12 +219,6 @@
     {
       "from": "SIGNAL-DE-Количество",
       "to": "DOMAIN-DE-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-DE-Туман:_Кра",
-      "to": "DOMAIN-DE-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
     }
