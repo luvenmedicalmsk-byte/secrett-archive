@@ -2,7 +2,7 @@
   "country": "IT",
   "date": "2026-10-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-18T19:07:21.848390+00:00",
+  "generated_at": "2026-10-18T19:27:06.827508+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,59 +10,59 @@
       "id": "COUNTRY-IT",
       "type": "Country",
       "label": "IT",
-      "score": 84,
+      "score": 92,
       "props": {
-        "risk_score": 84
+        "risk_score": 92
       }
     },
     {
       "id": "DOMAIN-IT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 42,
-      "trend": "down"
+      "score": 77,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 72,
-      "trend": "down"
+      "score": 88,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-social",
       "type": "Domain",
       "label": "social",
       "score": 68,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DRIVER-IT-Geopolitical",
@@ -75,9 +75,16 @@
       "label": "Economic"
     },
     {
-      "id": "DRIVER-IT-Social",
+      "id": "DRIVER-IT-Economic",
       "type": "Driver",
-      "label": "Social"
+      "label": "Economic"
+    },
+    {
+      "id": "SIGNAL-IT-Ливень:_To",
+      "type": "Signal",
+      "label": "Ливень: Toscana, Liguria, Эмилия-Романья",
+      "severity": 88,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-IT-Гроза:_Сар",
@@ -92,13 +99,6 @@
       "label": "Италию накрыли массовые протесты против ",
       "severity": 68,
       "domain": "social"
-    },
-    {
-      "id": "SIGNAL-IT-Хаос_пришё",
-      "type": "Signal",
-      "label": "Хаос пришёл и в Италию — на улицах Милан",
-      "severity": 63,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.42
+      "weight": 0.77
     },
     {
       "from": "COUNTRY-IT",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-climate",
       "type": "CORRELATES",
-      "weight": 0.72
+      "weight": 0.88
     },
     {
       "from": "COUNTRY-IT",
@@ -157,7 +157,7 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-IT-Social",
+      "from": "DRIVER-IT-Economic",
       "to": "COUNTRY-IT",
       "type": "CAUSES",
       "weight": 0.8
@@ -226,6 +226,12 @@
       "lag_days": 30
     },
     {
+      "from": "SIGNAL-IT-Ливень:_To",
+      "to": "DOMAIN-IT-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.88
+    },
+    {
       "from": "SIGNAL-IT-Гроза:_Сар",
       "to": "DOMAIN-IT-climate",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-IT-social",
       "type": "AMPLIFIES",
       "weight": 0.68
-    },
-    {
-      "from": "SIGNAL-IT-Хаос_пришё",
-      "to": "DOMAIN-IT-social",
-      "type": "AMPLIFIES",
-      "weight": 0.63
     }
   ]
 }
