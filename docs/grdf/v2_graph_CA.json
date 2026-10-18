@@ -2,24 +2,24 @@
   "country": "CA",
   "date": "2026-10-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-18T05:46:41.452985+00:00",
+  "generated_at": "2026-10-18T06:07:13.691253+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-CA",
       "type": "Country",
       "label": "CA",
-      "score": 87,
+      "score": 92,
       "props": {
-        "risk_score": 87
+        "risk_score": 92
       }
     },
     {
       "id": "DOMAIN-CA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 70,
+      "score": 75,
       "trend": "up"
     },
     {
@@ -27,42 +27,42 @@
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 56,
-      "trend": "up"
+      "score": 5,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CA-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CA-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-CA-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-CA-Минимум_се",
+      "type": "Signal",
+      "label": "Минимум семь человек погибли, десятки по",
+      "severity": 75,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-CA-7_погибших",
       "type": "Signal",
       "label": "7 погибших, десятки раненых — взрыв и по",
@@ -92,13 +99,6 @@
       "label": "Взрыв и пожар на канадской военной базе ",
       "severity": 67,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-CA-Холод:_рай",
-      "type": "Signal",
-      "label": "Холод: район Лонгёй - Варенн, район Кот-",
-      "severity": 56,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.7
+      "weight": 0.75
     },
     {
       "from": "COUNTRY-CA",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-climate",
       "type": "CORRELATES",
-      "weight": 0.56
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CA",
@@ -163,48 +163,6 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-CA-climate",
-      "to": "DOMAIN-CA-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-CA-economic",
-      "to": "DOMAIN-CA-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-CA-social",
-      "to": "DOMAIN-CA-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-CA-climate",
-      "to": "DOMAIN-CA-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-CA-infrastructure",
-      "to": "DOMAIN-CA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-CA-economic",
-      "to": "DOMAIN-CA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-CA-geopolitical",
       "to": "DOMAIN-CA-infrastructure",
       "type": "ESCALATES",
@@ -226,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-CA-Минимум_се",
+      "to": "DOMAIN-CA-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.75
+    },
+    {
       "from": "SIGNAL-CA-7_погибших",
       "to": "DOMAIN-CA-geopolitical",
       "type": "AMPLIFIES",
@@ -236,12 +200,6 @@
       "to": "DOMAIN-CA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.67
-    },
-    {
-      "from": "SIGNAL-CA-Холод:_рай",
-      "to": "DOMAIN-CA-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.56
     }
   ]
 }
