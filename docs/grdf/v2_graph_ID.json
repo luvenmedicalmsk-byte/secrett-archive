@@ -2,7 +2,7 @@
   "country": "ID",
   "date": "2026-10-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-18T04:46:20.352537+00:00",
+  "generated_at": "2026-10-18T05:07:06.083308+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 65,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-ID-technology",
@@ -47,8 +47,8 @@
       "id": "DOMAIN-ID-social",
       "type": "Domain",
       "label": "social",
-      "score": 81,
-      "trend": "down"
+      "score": 5,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-ID-infrastructure",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-ID-Индонезия_",
+      "type": "Signal",
+      "label": "Индонезия изменит курс по 'самому крупно",
+      "severity": 44,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-ID-Поскольку_",
       "type": "Signal",
       "label": "Поскольку вырубка лесов растет, Индонези",
@@ -92,13 +99,6 @@
       "label": "Пожарная активность — Индонезия",
       "severity": 65,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-ID-Эпидемиоло",
-      "type": "Signal",
-      "label": "Эпидемиологический риск — Индонезия",
-      "severity": 81,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -130,7 +130,7 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-social",
       "type": "CORRELATES",
-      "weight": 0.81
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-ID",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-ID-climate",
-      "to": "DOMAIN-ID-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-ID-economic",
-      "to": "DOMAIN-ID-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-ID-social",
-      "to": "DOMAIN-ID-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-ID-climate",
       "to": "DOMAIN-ID-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -205,6 +184,33 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-ID-climate",
+      "to": "DOMAIN-ID-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ID-economic",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-ID-social",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "SIGNAL-ID-Индонезия_",
+      "to": "DOMAIN-ID-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.44
+    },
+    {
       "from": "SIGNAL-ID-Поскольку_",
       "to": "DOMAIN-ID-climate",
       "type": "AMPLIFIES",
@@ -215,12 +221,6 @@
       "to": "DOMAIN-ID-climate",
       "type": "AMPLIFIES",
       "weight": 0.65
-    },
-    {
-      "from": "SIGNAL-ID-Эпидемиоло",
-      "to": "DOMAIN-ID-social",
-      "type": "AMPLIFIES",
-      "weight": 0.81
     }
   ]
 }
