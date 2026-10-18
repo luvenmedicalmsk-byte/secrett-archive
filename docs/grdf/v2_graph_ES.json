@@ -2,9 +2,9 @@
   "country": "ES",
   "date": "2026-10-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-18T07:46:24.334396+00:00",
+  "generated_at": "2026-10-18T08:05:35.600943+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-ES",
@@ -19,8 +19,8 @@
       "id": "DOMAIN-ES-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 39,
-      "trend": "down"
+      "score": 53,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-ES-economic",
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 88,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-ES-technology",
@@ -80,24 +80,24 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-ES-Ливень:_Me",
+      "id": "SIGNAL-ES-Ливень:_Юж",
       "type": "Signal",
-      "label": "Ливень: Menorca, Левант Майорки, Внутрен",
+      "label": "Ливень: Южное побережье Валенсии, Южная ",
       "severity": 88,
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-ES-Явления_на",
+      "id": "SIGNAL-ES-Испанские_",
       "type": "Signal",
-      "label": "Явления на побережье: Коста - Север и се",
-      "severity": 50,
+      "label": "Испанские исследователи тестируют агриво",
+      "severity": 32,
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-ES-Ветер:_Южн",
+      "id": "SIGNAL-ES-Шторм_—_Ис",
       "type": "Signal",
-      "label": "Ветер: Южное побережье Валенсии, Северно",
-      "severity": 50,
+      "label": "Шторм — Испания",
+      "severity": 72,
       "domain": "climate"
     }
   ],
@@ -106,7 +106,7 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.53
     },
     {
       "from": "COUNTRY-ES",
@@ -205,22 +205,43 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-ES-Ливень:_Me",
+      "from": "DOMAIN-ES-geopolitical",
+      "to": "DOMAIN-ES-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-ES-infrastructure",
+      "to": "DOMAIN-ES-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ES-economic",
+      "to": "DOMAIN-ES-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-ES-Ливень:_Юж",
       "to": "DOMAIN-ES-climate",
       "type": "AMPLIFIES",
       "weight": 0.88
     },
     {
-      "from": "SIGNAL-ES-Явления_на",
+      "from": "SIGNAL-ES-Испанские_",
       "to": "DOMAIN-ES-climate",
       "type": "AMPLIFIES",
-      "weight": 0.5
+      "weight": 0.32
     },
     {
-      "from": "SIGNAL-ES-Ветер:_Южн",
+      "from": "SIGNAL-ES-Шторм_—_Ис",
       "to": "DOMAIN-ES-climate",
       "type": "AMPLIFIES",
-      "weight": 0.5
+      "weight": 0.72
     }
   ]
 }
