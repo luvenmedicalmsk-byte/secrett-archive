@@ -2,9 +2,9 @@
   "country": "CA",
   "date": "2026-10-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-18T06:46:22.118850+00:00",
+  "generated_at": "2026-10-18T07:21:28.910130+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-CA",
@@ -33,7 +33,7 @@
       "id": "DOMAIN-CA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 56,
       "trend": "stable"
     },
     {
@@ -94,11 +94,11 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-CA-Взрыв_и_по",
+      "id": "SIGNAL-CA-Холод:_рай",
       "type": "Signal",
-      "label": "Взрыв и пожар на канадской военной базе ",
-      "severity": 67,
-      "domain": "geopolitical"
+      "label": "Холод: район Лонгёй - Варенн, район Кот-",
+      "severity": 56,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-CA",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-CA-climate",
+      "to": "DOMAIN-CA-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-CA-social",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-CA-geopolitical",
       "to": "DOMAIN-CA-infrastructure",
       "type": "ESCALATES",
@@ -184,6 +205,27 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-CA-climate",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-CA-Минимум_се",
       "to": "DOMAIN-CA-geopolitical",
       "type": "AMPLIFIES",
@@ -196,10 +238,10 @@
       "weight": 0.7
     },
     {
-      "from": "SIGNAL-CA-Взрыв_и_по",
-      "to": "DOMAIN-CA-geopolitical",
+      "from": "SIGNAL-CA-Холод:_рай",
+      "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
-      "weight": 0.67
+      "weight": 0.56
     }
   ]
 }
