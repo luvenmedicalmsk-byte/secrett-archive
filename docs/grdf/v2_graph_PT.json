@@ -2,7 +2,7 @@
   "country": "PT",
   "date": "2026-10-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-18T18:10:07.604881+00:00",
+  "generated_at": "2026-10-18T18:27:47.028018+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,64 +10,64 @@
       "id": "COUNTRY-PT",
       "type": "Country",
       "label": "PT",
-      "score": 50,
+      "score": 60,
       "props": {
-        "risk_score": 50
+        "risk_score": 60
       }
     },
     {
       "id": "DOMAIN-PT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 41,
-      "trend": "stable"
+      "score": 65,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 57,
-      "trend": "stable"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 50,
-      "trend": "stable"
+      "score": 62,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
-      "id": "DRIVER-PT-economic",
+      "id": "DRIVER-PT-geopolitical",
       "type": "Driver",
-      "label": "economic"
+      "label": "geopolitical"
     },
     {
       "id": "DRIVER-PT-climate",
@@ -75,9 +75,16 @@
       "label": "climate"
     },
     {
-      "id": "DRIVER-PT-geopolitical",
+      "id": "DRIVER-PT-economic",
       "type": "Driver",
-      "label": "geopolitical"
+      "label": "economic"
+    },
+    {
+      "id": "SIGNAL-PT-Гроза_пере",
+      "type": "Signal",
+      "label": "Гроза перемещается по Алгарве с северо-в",
+      "severity": 56,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-PT-Гроза:_Пор",
@@ -90,15 +97,8 @@
       "id": "SIGNAL-PT-Шторм_—_По",
       "type": "Signal",
       "label": "Шторм — Португалия",
-      "severity": 50,
+      "severity": 56,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-PT-Экономичес",
-      "type": "Signal",
-      "label": "Экономический сигнал — Португалия",
-      "severity": 57,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,19 +106,19 @@
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.41
+      "weight": 0.65
     },
     {
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-economic",
       "type": "CORRELATES",
-      "weight": 0.57
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-climate",
       "type": "CORRELATES",
-      "weight": 0.5
+      "weight": 0.62
     },
     {
       "from": "COUNTRY-PT",
@@ -145,7 +145,7 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-PT-economic",
+      "from": "DRIVER-PT-geopolitical",
       "to": "COUNTRY-PT",
       "type": "CAUSES",
       "weight": 0.8
@@ -157,31 +157,10 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-PT-geopolitical",
+      "from": "DRIVER-PT-economic",
       "to": "COUNTRY-PT",
       "type": "CAUSES",
       "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-PT-climate",
-      "to": "DOMAIN-PT-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-PT-infrastructure",
-      "to": "DOMAIN-PT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-PT-economic",
-      "to": "DOMAIN-PT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
     },
     {
       "from": "DOMAIN-PT-climate",
@@ -205,6 +184,27 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-PT-climate",
+      "to": "DOMAIN-PT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-PT-infrastructure",
+      "to": "DOMAIN-PT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-PT-economic",
+      "to": "DOMAIN-PT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "DOMAIN-PT-geopolitical",
       "to": "DOMAIN-PT-infrastructure",
       "type": "ESCALATES",
@@ -226,6 +226,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-PT-Гроза_пере",
+      "to": "DOMAIN-PT-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.56
+    },
+    {
       "from": "SIGNAL-PT-Гроза:_Пор",
       "to": "DOMAIN-PT-climate",
       "type": "AMPLIFIES",
@@ -235,13 +241,7 @@
       "from": "SIGNAL-PT-Шторм_—_По",
       "to": "DOMAIN-PT-climate",
       "type": "AMPLIFIES",
-      "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-PT-Экономичес",
-      "to": "DOMAIN-PT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.57
+      "weight": 0.56
     }
   ]
 }

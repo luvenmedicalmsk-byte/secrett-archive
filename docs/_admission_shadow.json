@@ -1,11 +1,11 @@
 {
-  "generated": "2026-10-18T18:08:00Z",
+  "generated": "2026-10-18T18:26:03Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
-    "PASS_FACT": 1047,
+    "PASS_FACT": 1048,
+    "DENY_COMMENTARY": 284,
     "DENY_OTHER": 3,
-    "DENY_COMMENTARY": 285,
     "DENY_STATE_ONLY": 5,
     "UNMATCHED": 1,
     "DENY_BACKGROUND": 8,
@@ -18,23 +18,23 @@
     "unmatched": 1,
     "coverage_pct": 99.9,
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
-    "admission_pass_rate": 77.5,
-    "admission_deny_rate": 22.5,
-    "processes_without_fact": 304,
+    "admission_pass_rate": 77.6,
+    "admission_deny_rate": 22.4,
+    "processes_without_fact": 303,
     "report_evidence_count": 0,
     "reports_boosting": 0
   },
   "shadow_reliability": {
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
-      "processes": 408,
-      "sample": 1367,
-      "agreement_pct": 87.6,
-      "decision_agreement_pct": 87.6,
-      "critical_errors": 169,
+      "processes": 406,
+      "sample": 1364,
+      "agreement_pct": 87.8,
+      "decision_agreement_pct": 87.8,
+      "critical_errors": 166,
       "truth_ratio_pct": 100.0,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 153,
+        "FACT_EVENT→COMMENTARY": 150,
         "COMMENTARY→FACT_EVENT": 15,
         "STATE_CONFIRMATION→FACT_EVENT": 1,
         "BACKGROUND→COMMENTARY": 1
@@ -42,12 +42,12 @@
     },
     "historical": {
       "processes": 1352,
-      "sample": 3413,
-      "agreement_pct": 89.1,
-      "decision_agreement_pct": 89.2,
-      "critical_errors": 368,
+      "sample": 3412,
+      "agreement_pct": 89.2,
+      "decision_agreement_pct": 89.3,
+      "critical_errors": 365,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 322,
+        "FACT_EVENT→COMMENTARY": 319,
         "COMMENTARY→FACT_EVENT": 41,
         "STATE_CONFIRMATION→FACT_EVENT": 4,
         "BACKGROUND→COMMENTARY": 1,
@@ -58,12 +58,13 @@
     },
     "events_stream": {
       "sample": 470,
-      "agreement_pct": 86.6,
-      "decision_agreement_pct": 86.6,
-      "critical_errors": 63,
+      "agreement_pct": 86.8,
+      "decision_agreement_pct": 86.8,
+      "critical_errors": 62,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 60,
-        "COMMENTARY→FACT_EVENT": 3
+        "FACT_EVENT→COMMENTARY": 58,
+        "COMMENTARY→FACT_EVENT": 3,
+        "STATE_CONFIRMATION→FACT_EVENT": 1
       }
     },
     "gate": {
@@ -74,21 +75,21 @@
     }
   },
   "class_source": {
-    "evidence_sic": 3413
+    "evidence_sic": 3412
   },
   "truth_ratio_pct": 100.0,
   "domain_statistics": {
     "geopolitics": {
-      "pass": 266,
-      "deny": 74
+      "pass": 265,
+      "deny": 75
     },
     "technology": {
       "pass": 126,
       "deny": 30
     },
     "climate": {
-      "pass": 329,
-      "deny": 61,
+      "pass": 330,
+      "deny": 60,
       "unmatched": 1
     },
     "economy": {
@@ -96,8 +97,8 @@
       "deny": 99
     },
     "social": {
-      "pass": 90,
-      "deny": 40
+      "pass": 91,
+      "deny": 39
     }
   },
   "deny_impact": [
@@ -106,7 +107,7 @@
       "title": "Климатический сигнал — Япония",
       "domain": "climate",
       "severity": 92,
-      "pressure": 50,
+      "pressure": 52,
       "first_seen": "2026-08-13",
       "evidence_count": 1,
       "evidence_classes": {
@@ -136,7 +137,7 @@
       "title": "Климатический сигнал — Китай",
       "domain": "climate",
       "severity": 74,
-      "pressure": 48,
+      "pressure": 49,
       "first_seen": "2026-07-19",
       "evidence_count": 1,
       "evidence_classes": {
@@ -189,6 +190,21 @@
       },
       "status": "dormant",
       "causal_links": 6,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
+      "signal_id": "geop-геополитич-европа-00ed",
+      "title": "Геополитический процесс — Европа",
+      "domain": "geopolitics",
+      "severity": 66,
+      "pressure": 68,
+      "first_seen": "2026-08-02",
+      "evidence_count": 3,
+      "evidence_classes": {
+        "COMMENTARY": 3
+      },
+      "status": "active",
+      "causal_links": 0,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -813,11 +829,11 @@
       "title": "Климатический сигнал — Сахалинская область",
       "domain": "climate",
       "severity": 56,
-      "pressure": 54,
+      "pressure": 56,
       "first_seen": "2026-09-18",
-      "evidence_count": 1,
+      "evidence_count": 2,
       "evidence_classes": {
-        "COMMENTARY": 1
+        "COMMENTARY": 2
       },
       "status": "active",
       "causal_links": 0,
@@ -899,21 +915,6 @@
       "reason": "no FACT_EVENT in evidence"
     },
     {
-      "signal_id": "clim-шторм-бурятия-97d2",
-      "title": "Климатический сигнал — Бурятия",
-      "domain": "climate",
-      "severity": 56,
-      "pressure": 42,
-      "first_seen": "2026-08-10",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "COMMENTARY": 1
-      },
-      "status": "active",
-      "causal_links": 3,
-      "reason": "no FACT_EVENT in evidence"
-    },
-    {
       "signal_id": "clim-шторм-запорожс-fa2b",
       "title": "Климатический сигнал — Запорожская область",
       "domain": "climate",
@@ -959,12 +960,12 @@
       "reason": "no FACT_EVENT in evidence"
     },
     {
-      "signal_id": "clim-климатичес-якутия-36c8",
-      "title": "Климатический сигнал — Якутия",
+      "signal_id": "clim-наводнение-камчатск-e34c",
+      "title": "Климатический сигнал — Камчатский край",
       "domain": "climate",
       "severity": 56,
       "pressure": 39,
-      "first_seen": "2026-10-09",
+      "first_seen": "2026-07-02",
       "evidence_count": 1,
       "evidence_classes": {
         "COMMENTARY": 1
@@ -974,12 +975,12 @@
       "reason": "no FACT_EVENT in evidence"
     },
     {
-      "signal_id": "clim-наводнение-камчатск-e34c",
-      "title": "Климатический сигнал — Камчатский край",
+      "signal_id": "clim-климатичес-якутия-36c8",
+      "title": "Климатический сигнал — Якутия",
       "domain": "climate",
       "severity": 56,
       "pressure": 39,
-      "first_seen": "2026-07-02",
+      "first_seen": "2026-10-09",
       "evidence_count": 1,
       "evidence_classes": {
         "COMMENTARY": 1
@@ -1006,6 +1007,13 @@
   ],
   "report_log": [],
   "severity_delta": [
+    {
+      "signal_id": "geop-геополитич-европа-00ed",
+      "domain": "geopolitics",
+      "legacy": 66,
+      "shadow": null,
+      "delta": null
+    },
     {
       "signal_id": "econ-экономичес-иран-7b7d",
       "domain": "economy",
@@ -1133,13 +1141,6 @@
       "delta": null
     },
     {
-      "signal_id": "clim-шторм-бурятия-97d2",
-      "domain": "climate",
-      "legacy": 56,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "econ-топливныйр-италия-b8ec",
       "domain": "economy",
       "legacy": 49,
@@ -1224,13 +1225,6 @@
       "delta": null
     },
     {
-      "signal_id": "tech-технологич-индия-a870",
-      "domain": "technology",
-      "legacy": 32,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "clim-климатичес-мурманск-ebe0",
       "domain": "climate",
       "legacy": 56,
@@ -1238,14 +1232,14 @@
       "delta": null
     },
     {
-      "signal_id": "clim-климатичес-якутия-36c8",
+      "signal_id": "clim-наводнение-камчатск-e34c",
       "domain": "climate",
       "legacy": 56,
       "shadow": null,
       "delta": null
     },
     {
-      "signal_id": "clim-наводнение-камчатск-e34c",
+      "signal_id": "clim-климатичес-якутия-36c8",
       "domain": "climate",
       "legacy": 56,
       "shadow": null,
@@ -1322,6 +1316,13 @@
       "delta": null
     },
     {
+      "signal_id": "clim-климатичес-хмао-5343",
+      "domain": "climate",
+      "legacy": 56,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "econ-экономичес-гонконг-faaa",
       "domain": "economy",
       "legacy": 46,
@@ -1336,16 +1337,16 @@
       "delta": null
     },
     {
-      "signal_id": "soci-социальный-армения-6353",
-      "domain": "social",
-      "legacy": 55,
+      "signal_id": "geop-геополитич-канада-19e3",
+      "domain": "geopolitics",
+      "legacy": 35,
       "shadow": null,
       "delta": null
     },
     {
-      "signal_id": "geop-геополитич-канада-19e3",
-      "domain": "geopolitics",
-      "legacy": 35,
+      "signal_id": "soci-социальный-армения-6353",
+      "domain": "social",
+      "legacy": 55,
       "shadow": null,
       "delta": null
     },
@@ -1378,13 +1379,6 @@
       "delta": null
     },
     {
-      "signal_id": "clim-климатичес-хмао-5343",
-      "domain": "climate",
-      "legacy": 56,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "tech-технологич-франция-780e",
       "domain": "technology",
       "legacy": 46,
@@ -1399,13 +1393,6 @@
       "delta": null
     },
     {
-      "signal_id": "econ-экономичес-испания-d064",
-      "domain": "economy",
-      "legacy": 32,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "geop-санкционно-иран-f266",
       "domain": "geopolitics",
       "legacy": 40,
@@ -1413,9 +1400,23 @@
       "delta": null
     },
     {
+      "signal_id": "clim-климатичес-иран-45a1",
+      "domain": "climate",
+      "legacy": 55,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "clim-климатичес-великобр-a217",
       "domain": "climate",
       "legacy": 32,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "clim-климатичес-красноем-aaee",
+      "domain": "climate",
+      "legacy": 56,
       "shadow": null,
       "delta": null
     },
@@ -1430,7 +1431,7 @@
   "deny_by_severity": {
     "0-30": 3,
     "31-50": 198,
-    "51-70": 99,
+    "51-70": 98,
     "71-90": 3,
     "91-100": 1
   }
