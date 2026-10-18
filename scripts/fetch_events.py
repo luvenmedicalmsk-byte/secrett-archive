@@ -13676,6 +13676,17 @@ _RETAIN_COMPUTED_PREC = ('centroid', 'mentioned', 'single_mention')
 # Откат: SEMANTIC_EXACT_GUARD = False.
 SEMANTIC_EXACT_GUARD = True
 _SEMANTIC_EXACT_DOWN = ('random', 'country', 'dictionary', 'override')
+# G3 A2 · capital - страновая опорная точка, а не место события.
+# Генераторы ставят capital, когда места внутри страны нет: сбой связи по
+# стране (IODA, Cloudflare, NetBlocks), курс валюты (ЦБ), CAP без полигона
+# (MeteoAlarm, CMA, BoM, MGM, Росгидромет), наводнение GDACS по стране. Точка
+# - столица или центр страны из таблицы ленты (Финляндия, Норвегия, Швеция,
+# Швейцария, Литва, Эстония, MGM-Турция - центр страны). Ни в одном случае это
+# не координаты объекта. Правило то же, что A1: exact на той же входной точке
+# при происхождении capital → centroid; подпись - страновая опорная точка.
+# Точка, страна, регион, зоны и provenance не меняются. computed не входит (A3).
+# Откат отдельно от A1: CAPITAL_EXACT_GUARD = False.
+CAPITAL_EXACT_GUARD = True
 # G3 A1.1 · подпись приблизительной точки. Для centroid подпись «центроид
 # административной единицы» верна, когда точку дал справочник по найденному
 # месту. Если опубликованная точка - синтетический разброс, центр страны или
@@ -13698,6 +13709,8 @@ def _approx_point_how(g, ppt):
     _o = g.get('coord_origin')
     if _o in _APPROX_POINT_HOW:
         return _APPROX_POINT_HOW[_o]
+    if _o == 'capital' and CAPITAL_EXACT_GUARD:   # G3 A2
+        return 'страновая опорная точка (столица или центр страны), а не место события'
     if _o == 'dictionary' and ppt == 'zone':
         return 'опорная точка зоны из справочника'
     return None
@@ -13732,7 +13745,7 @@ def _apply_geo_contract(events):
                 and abs(gc.lat - rc[0]) < 1e-9 and abs(gc.lng - rc[1]) < 1e-9):
             _og = ((_pg_prev or {}).get('coord_origin') if (e.get('meta') or {}).get('retained')
                    else e.get('_coord_origin'))
-            if _og in _SEMANTIC_EXACT_DOWN:
+            if _og in _SEMANTIC_EXACT_DOWN or (CAPITAL_EXACT_GUARD and _og == 'capital'):   # G3 A2: + capital
                 import dataclasses as _dcA1
                 gc = _dcA1.replace(gc, precision='centroid')   # G3 A1: точка не претендует на точность
                 st['exact_guard'] = st.get('exact_guard', 0) + 1
