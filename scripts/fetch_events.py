@@ -11041,7 +11041,8 @@ def _geo_decision(e, gc):
 
     if _ppt == 'country':
         _how = ('координаты объекта из текста' if _prec == 'exact'
-                else 'центроид административной единицы')
+                else (_approx_point_how(e.get('geo'), _ppt) if _prec == 'centroid' else None)
+                or 'центроид административной единицы')
         _src = 'resolve_geo_v2'
     elif _ppt == 'global':
         _how = 'событие глобального охвата, страна не определяется'; _src = 'resolve_geo_v2'
@@ -13377,7 +13378,8 @@ def _basis_geo(e):
     if _prec == 'exact':
         _how = 'координаты объекта из текста'
     elif _prec == 'centroid':
-        _how = 'центроид административной единицы'
+        _how = (_approx_point_how(_g, _g.get('process_place_type'))
+                or 'центроид административной единицы')
     elif e.get('primary_country'):
         _how = 'страновой уровень, точка не определена'
     elif e.get('mentioned_countries'):
@@ -13661,6 +13663,44 @@ COORD_ORIGIN = True
 # затрагиваются. Откат: False.
 RETAIN_NO_REENTRY = True
 _RETAIN_COMPUTED_PREC = ('centroid', 'mentioned', 'single_mention')
+# G3 A1 · exact только для точки, которая сама претендует на точность.
+# _mk / _mk_zone ставят exact, если входная точка попала в рамку страны или зоны,
+# не глядя на её происхождение. Синтетический разброс (random), центр страны
+# (country), словарная точка (dictionary) и точка правила (override) при этом
+# публиковались как «координаты объекта из текста». Если контракт вернул exact
+# на той же входной точке, а происхождение входа из этого множества, точность
+# становится centroid. Точка, страна, регион, зона и поля происхождения не
+# меняются. Происхождение: у свежих - _coord_origin, у удержанных - сохранённый
+# geo.coord_origin прошлой публикации; неизвестное не угадывается и не трогается.
+# capital и computed в это правило не входят (отдельное решение).
+# Откат: SEMANTIC_EXACT_GUARD = False.
+SEMANTIC_EXACT_GUARD = True
+_SEMANTIC_EXACT_DOWN = ('random', 'country', 'dictionary', 'override')
+# G3 A1.1 · подпись приблизительной точки. Для centroid подпись «центроид
+# административной единицы» верна, когда точку дал справочник по найденному
+# месту. Если опубликованная точка - синтетический разброс, центр страны или
+# точка правила, подпись говорит, что это за точка. Справочная точка зоны
+# (море, океан, макрорегион) не административная единица, для неё своя подпись.
+# Решает только geo.coord_origin опубликованной точки и тип места, поэтому
+# подпись одинакова у свежего и удержанного события. exact, capital и
+# computed не затрагиваются. Откат вместе с A1: SEMANTIC_EXACT_GUARD = False.
+_APPROX_POINT_HOW = {
+    'random': 'приблизительная точка: условное смещение от центра упомянутого места',
+    'country': 'центр страны: место внутри страны не установлено',
+    'override': 'точка задана правилом, не координаты объекта',
+}
+
+
+def _approx_point_how(g, ppt):
+    """Подпись для centroid по происхождению опубликованной точки; None - прежняя подпись."""
+    if not SEMANTIC_EXACT_GUARD or not isinstance(g, dict) or g.get('precision') != 'centroid':
+        return None
+    _o = g.get('coord_origin')
+    if _o in _APPROX_POINT_HOW:
+        return _APPROX_POINT_HOW[_o]
+    if _o == 'dictionary' and ppt == 'zone':
+        return 'опорная точка зоны из справочника'
+    return None
 
 
 def _apply_geo_contract(events):
@@ -13688,6 +13728,16 @@ def _apply_geo_contract(events):
             import dataclasses as _dc289
             gc = _dc289.replace(gc, precision='centroid')   # TASK-289 R2: прошлый выход контракта ≠ точная исходная координата
             st['retain_no_upgrade'] = st.get('retain_no_upgrade', 0) + 1
+        if (SEMANTIC_EXACT_GUARD and rc and gc.precision == 'exact' and gc.lat is not None
+                and abs(gc.lat - rc[0]) < 1e-9 and abs(gc.lng - rc[1]) < 1e-9):
+            _og = ((_pg_prev or {}).get('coord_origin') if (e.get('meta') or {}).get('retained')
+                   else e.get('_coord_origin'))
+            if _og in _SEMANTIC_EXACT_DOWN:
+                import dataclasses as _dcA1
+                gc = _dcA1.replace(gc, precision='centroid')   # G3 A1: точка не претендует на точность
+                st['exact_guard'] = st.get('exact_guard', 0) + 1
+            elif _og is None or _og == 'unknown':
+                st['exact_guard_unknown'] = st.get('exact_guard_unknown', 0) + 1
         ok, _errs = validate_geo(gc)
         if not ok:
             st['validate_fail'] += 1
