@@ -2,9 +2,9 @@
   "country": "CA",
   "date": "2026-10-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-18T22:29:11.421459+00:00",
+  "generated_at": "2026-10-18T22:47:22.714283+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-CA",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-CA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 75,
+      "score": 78,
       "trend": "stable"
     },
     {
@@ -33,7 +33,7 @@
       "id": "DOMAIN-CA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 65,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-CA-'Как_в_вое",
+      "type": "Signal",
+      "label": "'Как в военном фильме': 4 погибших, 19 в",
+      "severity": 78,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-CA-Минимум_се",
       "type": "Signal",
       "label": "Минимум семь человек погибли, десятки по",
@@ -92,13 +99,6 @@
       "label": "7 погибших, десятки раненых — взрыв и по",
       "severity": 70,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-CA-Крупный_по",
-      "type": "Signal",
-      "label": "Крупный пожар на военной базе в Канаде: ",
-      "severity": 65,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.75
+      "weight": 0.78
     },
     {
       "from": "COUNTRY-CA",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-climate",
       "type": "CORRELATES",
-      "weight": 0.65
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CA",
@@ -163,27 +163,6 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-CA-climate",
-      "to": "DOMAIN-CA-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-CA-economic",
-      "to": "DOMAIN-CA-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-CA-social",
-      "to": "DOMAIN-CA-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
       "from": "DOMAIN-CA-geopolitical",
       "to": "DOMAIN-CA-infrastructure",
       "type": "ESCALATES",
@@ -205,25 +184,10 @@
       "lag_days": 45
     },
     {
-      "from": "DOMAIN-CA-climate",
-      "to": "DOMAIN-CA-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-CA-infrastructure",
-      "to": "DOMAIN-CA-economic",
+      "from": "SIGNAL-CA-'Как_в_вое",
+      "to": "DOMAIN-CA-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-CA-economic",
-      "to": "DOMAIN-CA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
+      "weight": 0.78
     },
     {
       "from": "SIGNAL-CA-Минимум_се",
@@ -236,12 +200,6 @@
       "to": "DOMAIN-CA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.7
-    },
-    {
-      "from": "SIGNAL-CA-Крупный_по",
-      "to": "DOMAIN-CA-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.65
     }
   ]
 }
