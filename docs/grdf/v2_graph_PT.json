@@ -2,7 +2,7 @@
   "country": "PT",
   "date": "2026-10-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-18T21:46:22.022353+00:00",
+  "generated_at": "2026-10-18T22:20:19.255274+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,64 +10,64 @@
       "id": "COUNTRY-PT",
       "type": "Country",
       "label": "PT",
-      "score": 55,
+      "score": 62,
       "props": {
-        "risk_score": 55
+        "risk_score": 62
       }
     },
     {
       "id": "DOMAIN-PT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 41,
-      "trend": "stable"
+      "score": 66,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-economic",
       "type": "Domain",
       "label": "economic",
       "score": 51,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 51,
-      "trend": "stable"
+      "score": 63,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
-      "id": "DRIVER-PT-economic",
+      "id": "DRIVER-PT-geopolitical",
       "type": "Driver",
-      "label": "economic"
+      "label": "geopolitical"
     },
     {
       "id": "DRIVER-PT-climate",
@@ -75,9 +75,16 @@
       "label": "climate"
     },
     {
-      "id": "DRIVER-PT-geopolitical",
+      "id": "DRIVER-PT-economic",
       "type": "Driver",
-      "label": "geopolitical"
+      "label": "economic"
+    },
+    {
+      "id": "SIGNAL-PT-Гроза_пере",
+      "type": "Signal",
+      "label": "Гроза перемещается по Алгарве с северо-в",
+      "severity": 56,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-PT-Лидер_CHEG",
@@ -92,13 +99,6 @@
       "label": "Гроза: Порталегре, Faro, Beja и ещё 5 ра",
       "severity": 50,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-PT-Климатичес",
-      "type": "Signal",
-      "label": "Климатическая политика — Португалия",
-      "severity": 51,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.41
+      "weight": 0.66
     },
     {
       "from": "COUNTRY-PT",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-climate",
       "type": "CORRELATES",
-      "weight": 0.51
+      "weight": 0.63
     },
     {
       "from": "COUNTRY-PT",
@@ -145,7 +145,7 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-PT-economic",
+      "from": "DRIVER-PT-geopolitical",
       "to": "COUNTRY-PT",
       "type": "CAUSES",
       "weight": 0.8
@@ -157,7 +157,7 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-PT-geopolitical",
+      "from": "DRIVER-PT-economic",
       "to": "COUNTRY-PT",
       "type": "CAUSES",
       "weight": 0.8
@@ -226,6 +226,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-PT-Гроза_пере",
+      "to": "DOMAIN-PT-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.56
+    },
+    {
       "from": "SIGNAL-PT-Лидер_CHEG",
       "to": "DOMAIN-PT-economic",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-PT-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-PT-Климатичес",
-      "to": "DOMAIN-PT-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.51
     }
   ]
 }
