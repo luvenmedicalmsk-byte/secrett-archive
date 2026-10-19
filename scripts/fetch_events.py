@@ -16315,15 +16315,16 @@ _CAP_EVENT_RU = {
     'lake effect snow warning': 'Озёрный снегопад', 'heavy freezing spray warning': 'Обледенение судов',
     'earthquake warning': 'Землетрясение', 'volcano warning': 'Извержение вулкана',
     '911 telephone outage emergency': 'Сбой телефонной линии 911',
+    'icy road': 'Гололедица на дорогах',   # CMA, 19.10.2026
 }
 _CAP_EVENT_KW = [
     (r'tornado', 'Торнадо'), (r'hurricane|typhoon', 'Ураган'), (r'tropical (?:storm|cyclone|depression)', 'Тропический циклон'),
     (r'flash flood', 'Внезапный паводок'), (r'flood|inunda', 'Наводнение'), (r'landslide|mudslide|deslizamento', 'Оползень'),
-    (r'blizzard', 'Метель'), (r'snow', 'Снегопад'), (r'ice|freezing rain', 'Гололёд'),
+    (r'blizzard', 'Метель'), (r'snow', 'Снегопад'), (r'\bicy\b|ice|freezing rain', 'Гололёд'),
     (r'thunder|lightning|convect|trovoad', 'Гроза'), (r'hail|granizo', 'Град'),
-    (r'heavy rain|rainstorm|torrential|chuva', 'Сильный дождь'), (r'\brain', 'Дождь'),
+    (r'heavy\s?rain|rainstorm|torrential|chuva', 'Сильный дождь'), (r'\brain', 'Дождь'),
     (r'fog|nevoeiro', 'Туман'), (r'dust|sand', 'Пыльная буря'),
-    (r'gale|strong wind|high wind|\bwind|vento|vendaval', 'Сильный ветер'),
+    (r'gale|strong\s?wind|high\s?wind|\bwind|vento|vendaval', 'Сильный ветер'),
     (r'heat|calor', 'Жара'), (r'cold|frost|freeze|frio|geada', 'Холод'),
     (r'fire|bushfire|wildfire|incêndio', 'Пожароопасность'), (r'wave|surf|swell|ressaca|storm surge', 'Высокие волны'),
     (r'drought|seca', 'Засуха'), (r'avalanche', 'Лавины'), (r'tsunami', 'Цунами'), (r'storm|tempestade', 'Шторм'),
@@ -16369,17 +16370,120 @@ def _plural_forms(n, forms):
     return forms[0] if t == 1 and h != 11 else (forms[1] if 2 <= t <= 4 and not 12 <= h <= 14 else forms[2])
 
 
+# 19.10.2026. Названия районов в предупреждениях (MeteoAlarm, CAP-хабы).
+# Прежний путь шёл через общий перевод заголовков, а он пропускает короткие
+# строки: is_english требует не меньше 8 латинских букв ASCII, поэтому
+# «Menorca», «Sicilia», «Faro», «Drôme», «Poprad» оставались латиницей, а
+# соседние длинные названия переводились - в одном заголовке «Майорка» и
+# «Menorca». Машинный перевод имён собственных к тому же иногда отдаёт смесь
+# алфавитов («Ортенауkreis», «Вęgorzewski повят», «Сертão»). Теперь:
+# 1) постоянный словарь частых названий; 2) остальное - принудительный
+# перевод как названия места; 3) результат с латиницей не принимается -
+# остаётся оригинал (латиница лучше смеси); 4) знак ударения убирается.
+_PLACE_RU = {
+    # Испания
+    'menorca': 'Менорка', 'mallorca': 'Майорка', 'ibiza y formentera': 'Ибица и Форментера', 'melilla': 'Мелилья',
+    'ceuta': 'Сеута', 'ronda': 'Ронда', 'axarquía': 'Ашаркия', 'ampurdán': 'Ампурдан', 'el hierro': 'Эль-Йерро',
+    # Италия
+    'sicilia': 'Сицилия', 'sardegna': 'Сардиния', 'calabria': 'Калабрия', 'veneto': 'Венето', 'lazio': 'Лацио',
+    'toscana': 'Тоскана', 'liguria': 'Лигурия', 'lombardia': 'Ломбардия', 'piemonte': 'Пьемонт', 'campania': 'Кампания',
+    'puglia': 'Апулия', 'umbria': 'Умбрия', 'marche': 'Марке', 'abruzzo': 'Абруццо', 'molise': 'Молизе',
+    'basilicata': 'Базиликата', 'emilia-romagna': 'Эмилия-Романья', 'friuli venezia giulia': 'Фриули-Венеция-Джулия',
+    # Франция
+    'drôme': 'Дром', 'hérault': 'Эро', 'gard': 'Гар', 'ardèche': 'Ардеш', 'aude': 'Од', 'aveyron': 'Аверон',
+    'lozère': 'Лозер', 'manche': 'Манш', 'nord': 'Нор', 'var': 'Вар', 'vaucluse': 'Воклюз',
+    'ille-et-vilaine': 'Иль и Вилен', 'haute-corse': 'Верхняя Корсика', 'corse-du-sud': 'Южная Корсика',
+    # Португалия
+    'faro': 'Фару', 'beja': 'Бежа', 'évora': 'Эвора', 'guarda': 'Гуарда', 'bragança': 'Браганса', 'portalegre': 'Порталегре',
+    # Нидерланды
+    'texel': 'Тексел', 'rottum': 'Роттюм', 'marken': 'Маркен', 'ijsselmeer': 'Эйсселмер',
+    # Молдова
+    'comrat': 'Комрат', 'cahul': 'Кагул', 'edinet': 'Единец', 'falesti': 'Фалешты', 'drochia': 'Дрокия',
+    'leova': 'Леова', 'ocnita': 'Окница', 'orhei': 'Орхей', 'rabnita': 'Рыбница', 'rascani': 'Рышканы',
+    'rezina': 'Резина', 'soroca': 'Сорока', 'ungheni': 'Унгены', 'glodeni': 'Глодяны', 'briceni': 'Бричаны',
+    'camenca': 'Каменка', 'causeni': 'Каушаны', 'ialoveni': 'Яловены', 'cantemir': 'Кантемир',
+    # Румыния
+    'bacău': 'Бакэу', 'botoșani': 'Ботошани', 'galați': 'Галац', 'iași': 'Яссы', 'neamț': 'Нямц',
+    'suceava': 'Сучава', 'tulcea': 'Тулча', 'vaslui': 'Васлуй', 'vrancea': 'Вранча',
+    # Словакия
+    'poprad': 'Попрад', 'brezno': 'Брезно', 'tvrdošín': 'Тврдошин', 'žilina': 'Жилина', 'martin': 'Мартин',
+    # Польша
+    'węgorzewski': 'Венгожевский', 'gołdapski': 'Голдапский', 'ełcki': 'Элкский', 'giżycki': 'Гижицкий',
+    'mrągowski': 'Мронговский', 'olecki': 'Олецкий', 'piski': 'Пиский', 'szczycieński': 'Щитненский',
+    'kielecki': 'Келецкий', 'kielce': 'Кельце', 'konecki': 'Конецкий', 'pińczowski': 'Пиньчувский',
+    'skarżyski': 'Скаржиский', 'starachowicki': 'Стараховицкий', 'włoszczowski': 'Влощовский',
+    'świętokrzyskie': 'Свентокшиское',
+    'warmińsko-mazurskie': 'Варминьско-Мазурское', 'podkarpackie': 'Подкарпатское', 'lubelskie': 'Люблинское',
+    'podlaskie': 'Подляское', 'mazowieckie': 'Мазовецкое', 'małopolskie': 'Малопольское', 'pomorskie': 'Поморское',
+    # Германия, Латвия, Исландия, Греция
+    'ortenaukreis': 'район Ортенау', 'zollernalbkreis': 'район Цоллернальб', 'schwarzwald-baar-kreis': 'район Шварцвальд-Бар',
+    'kreis bad kissingen': 'район Бад-Киссинген', 'bad kissingen': 'Бад-Киссинген',
+    'riga': 'Рига', 'jurmala': 'Юрмала', 'alūksne': 'Алуксне', 'mārupe': 'Марупе', 'faxaflói': 'Фахсафлоуи', 'attiki': 'Аттика',
+    # Индонезия
+    'aceh': 'Ачех', 'riau': 'Риау', 'kep. riau': 'Острова Риау', 'papua': 'Папуа', 'lampung': 'Лампунг',
+    'jawa barat': 'Западная Ява', 'jawa tengah': 'Центральная Ява', 'jawa timur': 'Восточная Ява',
+    'sumatera utara': 'Северная Суматра', 'sumatera barat': 'Западная Суматра',
+    'kalimantan tengah': 'Центральный Калимантан', 'kalimantan utara': 'Северный Калимантан',
+    # Филиппины, Канада, Корея
+    'palawan': 'Палаван', 'northern samar': 'Северный Самар', 'york': 'Йорк', 'inuvik region': 'регион Инувик',
+    'goseong': 'Косон', 'namhae': 'Намхэ', 'sacheon': 'Сачхон', 'jindo': 'Чиндо', 'hwasun': 'Хвасун',
+    'west ulsan': 'Западный Ульсан', 'incheon-yeongjong': 'Инчхон-Ёнджон',
+}
+_LAT_RX = re.compile(r'[A-Za-zÀ-ɏ]')
+_CYR_RX = re.compile(r'[А-Яа-яЁё]')
+
+
+def _place_ru_dict(name):
+    """Название из словаря; для «Xxx powiat / Xxx повят» - прилагательное из словаря + «повят».
+    «Воеводство, повят» (MeteoAlarm, Польша) - только повят: воеводство у каждого
+    пункта перечня повторялось и забивало заголовок."""
+    if ', ' in name:
+        parts = [x.strip() for x in name.split(', ') if x.strip()]
+        if len(parts) == 2 and re.search(r'(?:województwo|воеводство)$', parts[0], re.I):
+            return _place_ru_dict(parts[1])
+    key = name.strip().rstrip('.').lower()
+    if key in _PLACE_RU:
+        return _PLACE_RU[key]
+    m = re.match(r'^(.+?)\s+(?:powiat|повят)$', key)
+    if m and m.group(1) in _PLACE_RU:
+        return _PLACE_RU[m.group(1)] + ' повят'
+    m = re.match(r'^(.+?)\s+(?:województwo|воеводство)$', key)
+    if m and m.group(1) in _PLACE_RU:
+        return _PLACE_RU[m.group(1)] + ' воеводство'
+    return None
+
+
 def _ru_names(names):
-    """Названия на латинице - по-русски через общий перевод ленты (с кэшем)."""
-    names = [str(x or '').strip() for x in names]
-    lat = [x for x in names if x and re.search(r'[A-Za-zÀ-ÿ]', x) and not re.search(r'[А-Яа-яЁё]', x)]
-    if not lat:
-        return names
+    """Названия районов по-русски: словарь, затем перевод как названия места.
+
+    Результат с латиницей не принимается (ни полностью латинский, ни смесь
+    алфавитов): остаётся исходное название."""
+    names = [str(x or '').replace('\u0301', '').strip() for x in names]
+    out = list(names)
+    todo = []
+    for i, x in enumerate(names):
+        if not x or not _LAT_RX.search(x):
+            continue
+        d = _place_ru_dict(x)
+        if d:
+            out[i] = d
+        elif not _CYR_RX.search(x):
+            todo.append(i)
+        else:
+            # смесь уже на входе («Вęgorzewski повят»): только словарь
+            continue
+    if not todo:
+        return out
+    lat = list(dict.fromkeys(names[i] for i in todo))
     try:
-        tr = dict(zip(lat, translate_batch(lat)))
+        tr = dict(zip(lat, translate_batch(lat, force=True)))
     except Exception:
-        return names
-    return [(tr.get(x) or x).strip().rstrip('.') for x in names]
+        return out
+    for i in todo:
+        t = (tr.get(names[i]) or '').strip().rstrip('.').replace('\u0301', '')
+        if t and _CYR_RX.search(t) and not _LAT_RX.search(t):
+            out[i] = t
+    return out
 
 
 def _place_line(areas, country, forms=('район', 'района', 'районов'), show=3):
@@ -22427,8 +22531,12 @@ def rewrite_obscene(text):
         return None
 
 
-def translate_batch(texts):
-    """Переводит список текстов на русский (OpenAI JSON-контракт) с дисковым кэшем по хэшу."""
+def translate_batch(texts, force=False):
+    """Переводит список текстов на русский (OpenAI JSON-контракт) с дисковым кэшем по хэшу.
+
+    force=True (19.10.2026) - для названий мест: перевод без порога is_english
+    (короткие названия вроде «Menorca» иначе не переводились), кэшированный
+    результат с латиницей не берётся и запрашивается заново."""
     if not texts:
         return texts
     # предзаполнение in-memory кэша из дискового (по хэшу)
@@ -22438,6 +22546,11 @@ def translate_batch(texts):
             if _dk in _TR_DISK:
                 _translate_cache[_t] = _TR_DISK[_dk]
 
+    if force:   # кэш с латиницей (смесь алфавитов) для названий не годится
+        for _t in texts:
+            _c = _translate_cache.get(_t)
+            if _c is not None and re.search(r'[A-Za-zÀ-ɏ]', _c):
+                _translate_cache.pop(_t, None)
     results = list(texts)
     for i, t in enumerate(texts):
         if t in _translate_cache:
@@ -22446,7 +22559,7 @@ def translate_batch(texts):
     # уникальные английские строки без перевода
     to_translate, seen = [], set()
     for t in texts:
-        if not t or not is_english(t) or t in _translate_cache or t in seen:
+        if not t or (not force and not is_english(t)) or t in _translate_cache or t in seen:
             continue
         seen.add(t)
         to_translate.append(t)
