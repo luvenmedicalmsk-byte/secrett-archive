@@ -11041,7 +11041,7 @@ def _geo_decision(e, gc):
 
     if _ppt == 'country':
         _how = ('координаты объекта из текста' if _prec == 'exact'
-                else (_approx_point_how(e.get('geo'), _ppt) if _prec == 'centroid' else None)
+                else (_approx_point_how(e.get('geo'), _ppt, e.get('meta')) if _prec == 'centroid' else None)
                 or 'центроид административной единицы')
         _src = 'resolve_geo_v2'
     elif _ppt == 'global':
@@ -13378,7 +13378,7 @@ def _basis_geo(e):
     if _prec == 'exact':
         _how = 'координаты объекта из текста'
     elif _prec == 'centroid':
-        _how = (_approx_point_how(_g, _g.get('process_place_type'))
+        _how = (_approx_point_how(_g, _g.get('process_place_type'), e.get('meta'))
                 or 'центроид административной единицы')
     elif e.get('primary_country'):
         _how = 'страновой уровень, точка не определена'
@@ -13687,6 +13687,17 @@ _SEMANTIC_EXACT_DOWN = ('random', 'country', 'dictionary', 'override')
 # Точка, страна, регион, зоны и provenance не меняются. computed не входит (A3).
 # Откат отдельно от A1: CAPITAL_EXACT_GUARD = False.
 CAPITAL_EXACT_GUARD = True
+# G3 A3 · computed из полигона CAP - опорная точка зоны предупреждения, а не
+# место события. Точку считает генератор CAP: среднее вершин полигона
+# (_cap_centroid; NWS - внешнее кольцо первого предупреждения группы). Место
+# события - район или зона предупреждения целиком; в сводке нескольких
+# предупреждений (cap_hub, warnings > 1) точка - центр полигона лишь одного из
+# них. Признак - meta.kind генератора CAP, а не название ленты. GloFAS (точка
+# ячейки сетки, meta нет) и прочие computed не затрагиваются. Правило то же,
+# что A1: exact на той же входной точке → centroid; точка, страна, регион, зоны
+# и provenance не меняются. Откат отдельно: COMPUTED_EXACT_GUARD = False.
+COMPUTED_EXACT_GUARD = True
+_CAP_POLY_KINDS = ('cap_hub', 'rosgidromet_cap')
 # G3 A1.1 · подпись приблизительной точки. Для centroid подпись «центроид
 # административной единицы» верна, когда точку дал справочник по найденному
 # месту. Если опубликованная точка - синтетический разброс, центр страны или
@@ -13702,11 +13713,15 @@ _APPROX_POINT_HOW = {
 }
 
 
-def _approx_point_how(g, ppt):
+def _approx_point_how(g, ppt, meta=None):
     """Подпись для centroid по происхождению опубликованной точки; None - прежняя подпись."""
     if not SEMANTIC_EXACT_GUARD or not isinstance(g, dict) or g.get('precision') != 'centroid':
         return None
     _o = g.get('coord_origin')
+    if _o == 'computed' and COMPUTED_EXACT_GUARD and (meta or {}).get('kind') in _CAP_POLY_KINDS:   # G3 A3
+        if ((meta or {}).get('warnings') or 1) > 1:
+            return 'опорная точка: центр полигона одного из предупреждений сводки, а не место события'
+        return 'центр полигона зоны предупреждения, а не точка события'
     if _o in _APPROX_POINT_HOW:
         return _APPROX_POINT_HOW[_o]
     if _o == 'capital' and CAPITAL_EXACT_GUARD:   # G3 A2
@@ -13745,7 +13760,9 @@ def _apply_geo_contract(events):
                 and abs(gc.lat - rc[0]) < 1e-9 and abs(gc.lng - rc[1]) < 1e-9):
             _og = ((_pg_prev or {}).get('coord_origin') if (e.get('meta') or {}).get('retained')
                    else e.get('_coord_origin'))
-            if _og in _SEMANTIC_EXACT_DOWN or (CAPITAL_EXACT_GUARD and _og == 'capital'):   # G3 A2: + capital
+            if (_og in _SEMANTIC_EXACT_DOWN or (CAPITAL_EXACT_GUARD and _og == 'capital')   # G3 A2: + capital
+                    or (COMPUTED_EXACT_GUARD and _og == 'computed'   # G3 A3: computed из полигона CAP
+                        and (e.get('meta') or {}).get('kind') in _CAP_POLY_KINDS)):
                 import dataclasses as _dcA1
                 gc = _dcA1.replace(gc, precision='centroid')   # G3 A1: точка не претендует на точность
                 st['exact_guard'] = st.get('exact_guard', 0) + 1
