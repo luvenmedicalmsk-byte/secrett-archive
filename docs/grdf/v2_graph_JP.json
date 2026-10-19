@@ -2,7 +2,7 @@
   "country": "JP",
   "date": "2026-10-19",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-19T14:46:09.798776+00:00",
+  "generated_at": "2026-10-19T15:08:44.638814+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-JP",
       "type": "Country",
       "label": "JP",
-      "score": 44,
+      "score": 50,
       "props": {
-        "risk_score": 44
+        "risk_score": 50
       }
     },
     {
@@ -20,49 +20,49 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 66,
-      "trend": "stable"
+      "score": 58,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-climate",
       "type": "Domain",
       "label": "climate",
       "score": 92,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-technology",
       "type": "Domain",
       "label": "technology",
       "score": 43,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-JP-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-JP-Цены_на_эл",
+      "type": "Signal",
+      "label": "Цены на электроэнергию в Японии выросли ",
+      "severity": 50,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-JP-Столько,_п",
       "type": "Signal",
       "label": "Столько, по словам вымогателей, ушло на ",
@@ -92,13 +99,6 @@
       "label": "Климатический сигнал — Япония",
       "severity": 92,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-JP-Розничная_",
-      "type": "Signal",
-      "label": "Розничная торговля — Япония",
-      "severity": 66,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-economic",
       "type": "CORRELATES",
-      "weight": 0.66
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-JP",
@@ -205,6 +205,12 @@
       "lag_days": 90
     },
     {
+      "from": "SIGNAL-JP-Цены_на_эл",
+      "to": "DOMAIN-JP-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
       "from": "SIGNAL-JP-Столько,_п",
       "to": "DOMAIN-JP-technology",
       "type": "AMPLIFIES",
@@ -215,12 +221,6 @@
       "to": "DOMAIN-JP-climate",
       "type": "AMPLIFIES",
       "weight": 0.92
-    },
-    {
-      "from": "SIGNAL-JP-Розничная_",
-      "to": "DOMAIN-JP-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.66
     }
   ]
 }
