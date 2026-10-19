@@ -2,7 +2,7 @@
   "country": "SG",
   "date": "2026-10-19",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-19T17:44:35.972475+00:00",
+  "generated_at": "2026-10-19T17:54:18.409251+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-SG",
       "type": "Country",
       "label": "SG",
-      "score": 38,
+      "score": 62,
       "props": {
-        "risk_score": 38
+        "risk_score": 62
       }
     },
     {
@@ -20,49 +20,49 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 46,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SG-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 31,
-      "trend": "stable"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SG-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 54,
-      "trend": "stable"
+      "score": 63,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SG-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 39,
-      "trend": "stable"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SG-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SG-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SG-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-SG-climate",
@@ -75,15 +75,22 @@
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-SG-technology",
+      "id": "DRIVER-SG-economic",
       "type": "Driver",
-      "label": "technology"
+      "label": "economic"
     },
     {
-      "id": "SIGNAL-SG-Климатичес",
+      "id": "SIGNAL-SG-Почему_кан",
       "type": "Signal",
-      "label": "Климатический сигнал — Сингапур",
-      "severity": 54,
+      "label": "Почему канадская нефть отстает, даже ког",
+      "severity": 62,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-SG-Наводнение",
+      "type": "Signal",
+      "label": "Наводнение — Сингапур",
+      "severity": 62,
       "domain": "climate"
     },
     {
@@ -92,13 +99,6 @@
       "label": "Геополитический процесс — Юго-Восточная ",
       "severity": 62,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-SG-Уязвимость",
-      "type": "Signal",
-      "label": "Уязвимость ПО — Юго-Восточная Азия",
-      "severity": 53,
-      "domain": "technology"
     }
   ],
   "edges": [
@@ -112,19 +112,19 @@
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-economic",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-climate",
       "type": "CORRELATES",
-      "weight": 0.54
+      "weight": 0.63
     },
     {
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-technology",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-SG",
@@ -157,31 +157,10 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-SG-technology",
+      "from": "DRIVER-SG-economic",
       "to": "COUNTRY-SG",
       "type": "CAUSES",
       "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-SG-climate",
-      "to": "DOMAIN-SG-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-SG-infrastructure",
-      "to": "DOMAIN-SG-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-SG-economic",
-      "to": "DOMAIN-SG-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
     },
     {
       "from": "DOMAIN-SG-climate",
@@ -205,6 +184,27 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-SG-climate",
+      "to": "DOMAIN-SG-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-SG-infrastructure",
+      "to": "DOMAIN-SG-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-SG-economic",
+      "to": "DOMAIN-SG-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "DOMAIN-SG-geopolitical",
       "to": "DOMAIN-SG-infrastructure",
       "type": "ESCALATES",
@@ -226,22 +226,22 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-SG-Климатичес",
+      "from": "SIGNAL-SG-Почему_кан",
       "to": "DOMAIN-SG-climate",
       "type": "AMPLIFIES",
-      "weight": 0.54
+      "weight": 0.62
+    },
+    {
+      "from": "SIGNAL-SG-Наводнение",
+      "to": "DOMAIN-SG-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.62
     },
     {
       "from": "SIGNAL-SG-Геополитич",
       "to": "DOMAIN-SG-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.62
-    },
-    {
-      "from": "SIGNAL-SG-Уязвимость",
-      "to": "DOMAIN-SG-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.53
     }
   ]
 }
