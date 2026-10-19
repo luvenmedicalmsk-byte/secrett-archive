@@ -1,10 +1,10 @@
 {
   "country": "RO",
-  "date": "2026-10-18",
+  "date": "2026-10-19",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-18T23:47:31.340177+00:00",
-  "node_count": 13,
-  "edge_count": 15,
+  "generated_at": "2026-10-19T00:08:05.361679+00:00",
+  "node_count": 14,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-RO",
@@ -19,21 +19,21 @@
       "id": "DOMAIN-RO-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 51,
+      "score": 56,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-RO-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
+      "score": 5,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-RO-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 50,
       "trend": "stable"
     },
     {
@@ -70,14 +70,28 @@
       "label": "geopolitical"
     },
     {
+      "id": "DRIVER-RO-climate",
+      "type": "Driver",
+      "label": "climate"
+    },
+    {
       "id": "DRIVER-RO-economic",
       "type": "Driver",
       "label": "economic"
     },
     {
-      "id": "DRIVER-RO-climate",
-      "type": "Driver",
-      "label": "climate"
+      "id": "SIGNAL-RO-Воздушное_",
+      "type": "Signal",
+      "label": "Воздушное пространство — Румыния: высоки",
+      "severity": 56,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-RO-Ветер:_Вра",
+      "type": "Signal",
+      "label": "Ветер: Вранча, Васлуй, Тулча и ещё 7 рай",
+      "severity": 50,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-RO-Военные_уд",
@@ -85,13 +99,6 @@
       "label": "Военные удары — Румыния",
       "severity": 44,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-RO-Экономичес",
-      "type": "Signal",
-      "label": "Экономический сигнал — Румыния",
-      "severity": 32,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -99,19 +106,19 @@
       "from": "COUNTRY-RO",
       "to": "DOMAIN-RO-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.51
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-RO",
       "to": "DOMAIN-RO-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-RO",
       "to": "DOMAIN-RO-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-RO",
@@ -144,16 +151,58 @@
       "weight": 0.8
     },
     {
+      "from": "DRIVER-RO-climate",
+      "to": "COUNTRY-RO",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-RO-economic",
       "to": "COUNTRY-RO",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-RO-climate",
-      "to": "COUNTRY-RO",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-RO-climate",
+      "to": "DOMAIN-RO-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-RO-economic",
+      "to": "DOMAIN-RO-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-RO-social",
+      "to": "DOMAIN-RO-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-RO-climate",
+      "to": "DOMAIN-RO-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-RO-infrastructure",
+      "to": "DOMAIN-RO-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-RO-economic",
+      "to": "DOMAIN-RO-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-RO-geopolitical",
@@ -177,16 +226,22 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-RO-Воздушное_",
+      "to": "DOMAIN-RO-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.56
+    },
+    {
+      "from": "SIGNAL-RO-Ветер:_Вра",
+      "to": "DOMAIN-RO-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
       "from": "SIGNAL-RO-Военные_уд",
       "to": "DOMAIN-RO-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.44
-    },
-    {
-      "from": "SIGNAL-RO-Экономичес",
-      "to": "DOMAIN-RO-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.32
     }
   ]
 }
