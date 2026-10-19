@@ -1,9 +1,9 @@
 {
   "grdf_version": "4.0",
   "date": "2026-10-19",
-  "generated_at": "2026-10-19T01:45:33.007518+00:00",
+  "generated_at": "2026-10-19T02:06:28.908244+00:00",
   "node_count": 64,
-  "edge_count": 72,
+  "edge_count": 71,
   "node_types": [
     "Country",
     "Domain",
@@ -74,9 +74,9 @@
       "id": "CC:CN",
       "type": "Country",
       "label": "Китай",
-      "gri": 66,
-      "vulnerability": 16,
-      "resilience": 65
+      "gri": 73,
+      "vulnerability": 62,
+      "resilience": 43
     },
     {
       "id": "CC:TW",
@@ -122,9 +122,9 @@
       "id": "CC:KZ",
       "type": "Country",
       "label": "Казахстан",
-      "gri": 66,
+      "gri": 69,
       "vulnerability": 21,
-      "resilience": 66
+      "resilience": 64
     },
     {
       "id": "CC:AE",
@@ -171,7 +171,7 @@
       "type": "Country",
       "label": "Саудовская Аравия",
       "gri": 75,
-      "vulnerability": 10,
+      "vulnerability": 18,
       "resilience": 60
     },
     {
@@ -290,9 +290,9 @@
       "id": "CC:AR",
       "type": "Country",
       "label": "Аргентина",
-      "gri": 54,
-      "vulnerability": 17,
-      "resilience": 72
+      "gri": 55,
+      "vulnerability": 13,
+      "resilience": 71
     },
     {
       "id": "CC:CA",
@@ -402,9 +402,9 @@
       "id": "CC:SG",
       "type": "Country",
       "label": "Сингапур",
-      "gri": 52,
-      "vulnerability": 11,
-      "resilience": 73
+      "gri": 51,
+      "vulnerability": 44,
+      "resilience": 34
     },
     {
       "id": "CC:PT",
@@ -455,6 +455,18 @@
       "score": 7
     },
     {
+      "id": "RISK:CN:CHAIN-DR",
+      "type": "Risk",
+      "label": "CN: Drought → Agriculture → Food P",
+      "score": 18
+    },
+    {
+      "id": "RISK:CN:CHAIN-CL",
+      "type": "Risk",
+      "label": "CN: Wildfire → Energy → Supply Cha",
+      "score": 3
+    },
+    {
       "id": "RISK:DE:CHAIN-CL",
       "type": "Risk",
       "label": "DE: Wildfire → Energy → Supply Cha",
@@ -477,18 +489,6 @@
       "type": "Risk",
       "label": "TR: Geopolitical Conflict → Energy",
       "score": 9
-    },
-    {
-      "id": "RISK:CN:CHAIN-DR",
-      "type": "Risk",
-      "label": "CN: Drought → Agriculture → Food P",
-      "score": 14
-    },
-    {
-      "id": "RISK:CN:CHAIN-CL",
-      "type": "Risk",
-      "label": "CN: Wildfire → Energy → Supply Cha",
-      "score": 2
     }
   ],
   "edges": [
@@ -627,8 +627,8 @@
     {
       "from": "CC:CN",
       "to": "DOM:climate",
-      "type": "CORRELATES",
-      "weight": 0.56
+      "type": "ESCALATES",
+      "weight": 0.74
     },
     {
       "from": "CC:TW",
@@ -659,12 +659,6 @@
       "to": "DOM:social",
       "type": "CORRELATES",
       "weight": 0.58
-    },
-    {
-      "from": "CC:KZ",
-      "to": "DOM:climate",
-      "type": "ESCALATES",
-      "weight": 0.74
     },
     {
       "from": "CC:AE",
@@ -776,9 +770,9 @@
     },
     {
       "from": "CC:AR",
-      "to": "DOM:economic",
+      "to": "DOM:geopolitical",
       "type": "CORRELATES",
-      "weight": 0.49
+      "weight": 0.57
     },
     {
       "from": "CC:CA",
@@ -842,9 +836,9 @@
     },
     {
       "from": "CC:SG",
-      "to": "DOM:climate",
+      "to": "DOM:economic",
       "type": "CORRELATES",
-      "weight": 0.54
+      "weight": -0.01
     },
     {
       "from": "CC:PT",
@@ -889,6 +883,18 @@
       "weight": 0.85
     },
     {
+      "from": "CC:CN",
+      "to": "RISK:CN:CHAIN-DR",
+      "type": "CAUSES",
+      "weight": 0.85
+    },
+    {
+      "from": "CC:CN",
+      "to": "RISK:CN:CHAIN-CL",
+      "type": "CAUSES",
+      "weight": 0.85
+    },
+    {
       "from": "CC:DE",
       "to": "RISK:DE:CHAIN-CL",
       "type": "CAUSES",
@@ -909,18 +915,6 @@
     {
       "from": "CC:TR",
       "to": "RISK:TR:CHAIN-GE",
-      "type": "CAUSES",
-      "weight": 0.85
-    },
-    {
-      "from": "CC:CN",
-      "to": "RISK:CN:CHAIN-DR",
-      "type": "CAUSES",
-      "weight": 0.85
-    },
-    {
-      "from": "CC:CN",
-      "to": "RISK:CN:CHAIN-CL",
       "type": "CAUSES",
       "weight": 0.85
     }
