@@ -2,7 +2,7 @@
   "country": "LT",
   "date": "2026-10-19",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-19T18:26:35.993249+00:00",
+  "generated_at": "2026-10-19T18:48:27.221205+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,23 +10,23 @@
       "id": "COUNTRY-LT",
       "type": "Country",
       "label": "LT",
-      "score": 64,
+      "score": 65,
       "props": {
-        "risk_score": 64
+        "risk_score": 65
       }
     },
     {
       "id": "DOMAIN-LT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 62,
-      "trend": "stable"
+      "score": 73,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-LT-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 34,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 50,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-LT-technology",
@@ -80,6 +80,13 @@
       "label": "economic"
     },
     {
+      "id": "SIGNAL-LT-Литва_хоче",
+      "type": "Signal",
+      "label": "Литва хочет разрешить сбивать беспилотни",
+      "severity": 65,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-LT-Туман:_Вил",
       "type": "Signal",
       "label": "Туман: Вильнюсский уезд, Утенский уезд, ",
@@ -92,13 +99,6 @@
       "label": "Геополитический процесс — Литва",
       "severity": 62,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-LT-Экономичес",
-      "type": "Signal",
-      "label": "Экономический сигнал — Литва",
-      "severity": 34,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-LT",
       "to": "DOMAIN-LT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.62
+      "weight": 0.73
     },
     {
       "from": "COUNTRY-LT",
       "to": "DOMAIN-LT-economic",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-LT",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-LT-climate",
-      "to": "DOMAIN-LT-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-LT-infrastructure",
-      "to": "DOMAIN-LT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-LT-economic",
-      "to": "DOMAIN-LT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-LT-geopolitical",
       "to": "DOMAIN-LT-infrastructure",
       "type": "ESCALATES",
@@ -226,6 +205,33 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-LT-climate",
+      "to": "DOMAIN-LT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-LT-infrastructure",
+      "to": "DOMAIN-LT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-LT-economic",
+      "to": "DOMAIN-LT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-LT-Литва_хоче",
+      "to": "DOMAIN-LT-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.65
+    },
+    {
       "from": "SIGNAL-LT-Туман:_Вил",
       "to": "DOMAIN-LT-climate",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-LT-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.62
-    },
-    {
-      "from": "SIGNAL-LT-Экономичес",
-      "to": "DOMAIN-LT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.34
     }
   ]
 }
