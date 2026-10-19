@@ -16433,20 +16433,60 @@ _LAT_RX = re.compile(r'[A-Za-zÀ-ɏ]')
 _CYR_RX = re.compile(r'[А-Яа-яЁё]')
 
 
+_PL_TR = [('szcz', 'щ'), ('sz', 'ш'), ('cz', 'ч'), ('rz', 'ж'), ('ch', 'х'), ('dz', 'дз'),
+          ('ią', 'ён'), ('ię', 'ен'), ('ia', 'я'), ('ie', 'е'), ('io', 'ё'), ('iu', 'ю'),
+          ('ą', 'он'), ('ę', 'ен'), ('ó', 'у'), ('ł', 'л'), ('ś', 'сь'), ('ć', 'ць'), ('ń', 'нь'),
+          ('ż', 'ж'), ('ź', 'зь'), ('la', 'ля'), ('lo', 'ло'), ('lu', 'лю'), ('le', 'ле'), ('li', 'ли'), ('a', 'а'), ('b', 'б'), ('c', 'ц'), ('d', 'д'), ('e', 'е'), ('f', 'ф'),
+          ('g', 'г'), ('h', 'х'), ('i', 'и'), ('j', 'й'), ('k', 'к'), ('l', 'ль'), ('m', 'м'), ('n', 'н'),
+          ('o', 'о'), ('p', 'п'), ('r', 'р'), ('s', 'с'), ('t', 'т'), ('u', 'у'), ('w', 'в'), ('y', 'ы'), ('z', 'з')]
+
+
+def _pl_county_ru(adj):
+    """Польский повят без словаря: «mrągowski» -> «Мронговский». Окончания -ski / -cki
+    по-русски -ский / -цкий; остальное - транслитерация по польским правилам."""
+    w = adj.lower()
+    end = ''
+    for pl, ru in (('cki', 'цкий'), ('ski', 'ский'), ('ński', 'ньский')):
+        if w.endswith(pl):
+            w, end = w[:-len(pl)], ru
+            break
+    out, i = '', 0
+    while i < len(w):
+        for pl, ru in _PL_TR:
+            if w.startswith(pl, i):
+                out += ru; i += len(pl); break
+        else:
+            out += w[i]; i += 1
+    out = re.sub(r'([жшчщ])ы', r'\1и', out)
+    if out.startswith('е'):
+        out = 'э' + out[1:]
+    res = (out + end)
+    return res[:1].upper() + res[1:] if res and not _LAT_RX.search(res) else None
+
+
 def _place_ru_dict(name):
     """Название из словаря; для «Xxx powiat / Xxx повят» - прилагательное из словаря + «повят».
     «Воеводство, повят» (MeteoAlarm, Польша) - только повят: воеводство у каждого
     пункта перечня повторялось и забивало заголовок."""
     if ', ' in name:
         parts = [x.strip() for x in name.split(', ') if x.strip()]
-        if len(parts) == 2 and re.search(r'(?:województwo|воеводство)$', parts[0], re.I):
+        if len(parts) == 2 and re.search(r'województwo|воеводство', parts[0], re.I):
             return _place_ru_dict(parts[1])
     key = name.strip().rstrip('.').lower()
     if key in _PLACE_RU:
         return _PLACE_RU[key]
-    m = re.match(r'^(.+?)\s+(?:powiat|повят)$', key)
+    m = (re.match(r'^(.+?)\s+(?:powiat|повят)$', key)
+         or re.match(r'^(?:powiat|повят)\s+(.+)$', key))   # «powiat węgorzewski» - порядок MeteoAlarm
     if m and m.group(1) in _PLACE_RU:
         return _PLACE_RU[m.group(1)] + ' повят'
+    m = re.match(r'^.+?\s+province\s+(.+?)\s+county$', key)   # MeteoAlarm EN: «Warmińsko-mazurskie Province Węgorzewski County»
+    if m:
+        _c = _PLACE_RU.get(m.group(1)) or _pl_county_ru(m.group(1))
+        if _c:
+            return _c + ' повят'
+    m = re.match(r'^(.+?)\s+province$', key)
+    if m and m.group(1) in _PLACE_RU:
+        return _PLACE_RU[m.group(1)] + ' воеводство'
     m = re.match(r'^(.+?)\s+(?:województwo|воеводство)$', key)
     if m and m.group(1) in _PLACE_RU:
         return _PLACE_RU[m.group(1)] + ' воеводство'
