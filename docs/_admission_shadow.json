@@ -1,14 +1,14 @@
 {
-  "generated": "2026-10-19T06:07:26Z",
+  "generated": "2026-10-19T06:25:38Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
-    "PASS_FACT": 1059,
-    "DENY_COMMENTARY": 286,
+    "PASS_FACT": 1054,
+    "DENY_COMMENTARY": 290,
     "DENY_OTHER": 3,
     "DENY_STATE_ONLY": 5,
     "UNMATCHED": 1,
-    "DENY_BACKGROUND": 7,
+    "DENY_BACKGROUND": 8,
     "DENY_REPORT": 1,
     "DENY_FEATURE": 2
   },
@@ -18,37 +18,37 @@
     "unmatched": 1,
     "coverage_pct": 99.9,
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
-    "admission_pass_rate": 77.7,
-    "admission_deny_rate": 22.3,
-    "processes_without_fact": 304,
+    "admission_pass_rate": 77.3,
+    "admission_deny_rate": 22.7,
+    "processes_without_fact": 309,
     "report_evidence_count": 0,
     "reports_boosting": 0
   },
   "shadow_reliability": {
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
-      "processes": 425,
-      "sample": 1512,
+      "processes": 429,
+      "sample": 1520,
       "agreement_pct": 88.9,
       "decision_agreement_pct": 89.0,
       "critical_errors": 167,
       "truth_ratio_pct": 100.0,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 149,
-        "COMMENTARY→FACT_EVENT": 17,
+        "FACT_EVENT→COMMENTARY": 148,
+        "COMMENTARY→FACT_EVENT": 18,
         "STATE_CONFIRMATION→FACT_EVENT": 1,
         "BACKGROUND→COMMENTARY": 1
       }
     },
     "historical": {
       "processes": 1364,
-      "sample": 3524,
+      "sample": 3527,
       "agreement_pct": 89.6,
       "decision_agreement_pct": 89.7,
       "critical_errors": 363,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 317,
-        "COMMENTARY→FACT_EVENT": 42,
+        "FACT_EVENT→COMMENTARY": 316,
+        "COMMENTARY→FACT_EVENT": 43,
         "STATE_CONFIRMATION→FACT_EVENT": 3,
         "BACKGROUND→COMMENTARY": 1,
         "UNKNOWN→COMMENTARY": 1,
@@ -57,13 +57,13 @@
       }
     },
     "events_stream": {
-      "sample": 451,
-      "agreement_pct": 87.6,
-      "decision_agreement_pct": 87.6,
-      "critical_errors": 56,
+      "sample": 448,
+      "agreement_pct": 87.1,
+      "decision_agreement_pct": 87.1,
+      "critical_errors": 58,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 54,
-        "COMMENTARY→FACT_EVENT": 2
+        "FACT_EVENT→COMMENTARY": 55,
+        "COMMENTARY→FACT_EVENT": 3
       }
     },
     "gate": {
@@ -74,7 +74,7 @@
     }
   },
   "class_source": {
-    "evidence_sic": 3524
+    "evidence_sic": 3527
   },
   "truth_ratio_pct": 100.0,
   "domain_statistics": {
@@ -82,22 +82,22 @@
       "pass": 266,
       "deny": 75
     },
-    "climate": {
-      "pass": 340,
-      "deny": 59,
-      "unmatched": 1
-    },
-    "economy": {
-      "pass": 238,
-      "deny": 99
-    },
     "technology": {
       "pass": 125,
       "deny": 30
     },
+    "climate": {
+      "pass": 339,
+      "deny": 60,
+      "unmatched": 1
+    },
+    "economy": {
+      "pass": 235,
+      "deny": 102
+    },
     "social": {
-      "pass": 90,
-      "deny": 41
+      "pass": 89,
+      "deny": 42
     }
   },
   "deny_impact": [
@@ -234,6 +234,21 @@
       },
       "status": "dormant",
       "causal_links": 0,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
+      "signal_id": "econ-экономичес-бразилия-0fa1",
+      "title": "Инфляция — Бразилия",
+      "domain": "economy",
+      "severity": 62,
+      "pressure": 47,
+      "first_seen": "2026-07-24",
+      "evidence_count": 1,
+      "evidence_classes": {
+        "COMMENTARY": 1
+      },
+      "status": "active",
+      "causal_links": 1,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -535,6 +550,21 @@
       },
       "status": "active",
       "causal_links": 1,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
+      "signal_id": "econ-инфляция-россия-927a",
+      "title": "Инфляция — Россия",
+      "domain": "economy",
+      "severity": 59,
+      "pressure": 32,
+      "first_seen": "2026-08-12",
+      "evidence_count": 1,
+      "evidence_classes": {
+        "COMMENTARY": 1
+      },
+      "status": "active",
+      "causal_links": 6,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -972,36 +1002,6 @@
       "status": "active",
       "causal_links": 3,
       "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "clim-климатичес-якутия-36c8",
-      "title": "Климатический сигнал — Якутия",
-      "domain": "climate",
-      "severity": 56,
-      "pressure": 39,
-      "first_seen": "2026-10-09",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "COMMENTARY": 1
-      },
-      "status": "active",
-      "causal_links": 0,
-      "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "clim-климатичес-мурманск-ebe0",
-      "title": "Климатический сигнал — Мурманская область",
-      "domain": "climate",
-      "severity": 56,
-      "pressure": 39,
-      "first_seen": "2026-08-03",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "COMMENTARY": 1
-      },
-      "status": "active",
-      "causal_links": 6,
-      "reason": "no FACT_EVENT in evidence"
     }
   ],
   "report_log": [],
@@ -1112,9 +1112,23 @@
       "delta": null
     },
     {
+      "signal_id": "econ-экономичес-бразилия-0fa1",
+      "domain": "economy",
+      "legacy": 62,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "clim-пожарнаяак-португал-86dc",
       "domain": "climate",
       "legacy": 51,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "soci-эпидемиоло-европа-0eb3",
+      "domain": "social",
+      "legacy": 32,
       "shadow": null,
       "delta": null
     },
@@ -1371,6 +1385,13 @@
       "delta": null
     },
     {
+      "signal_id": "econ-инфляция-россия-927a",
+      "domain": "economy",
+      "legacy": 59,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "clim-климатичес-великобр-a217",
       "domain": "climate",
       "legacy": 32,
@@ -1404,33 +1425,12 @@
       "legacy": 54,
       "shadow": null,
       "delta": null
-    },
-    {
-      "signal_id": "econ-валютныйры-ирландия-efec",
-      "domain": "economy",
-      "legacy": 34,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "econ-возобновля-бразилия-df41",
-      "domain": "economy",
-      "legacy": 32,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "clim-климатичес-испания-1b90",
-      "domain": "climate",
-      "legacy": 32,
-      "shadow": null,
-      "delta": null
     }
   ],
   "deny_by_severity": {
     "0-30": 3,
-    "31-50": 196,
-    "51-70": 102,
+    "31-50": 198,
+    "51-70": 105,
     "71-90": 2,
     "91-100": 1
   }
