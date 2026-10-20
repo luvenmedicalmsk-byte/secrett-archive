@@ -2,7 +2,7 @@
   "country": "GE",
   "date": "2026-10-20",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-20T07:27:59.452539+00:00",
+  "generated_at": "2026-10-20T07:48:54.150221+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-GE-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 46,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "economic"
     },
     {
+      "id": "SIGNAL-GE-Экспортные",
+      "type": "Signal",
+      "label": "Экспортные цены Грузии",
+      "severity": 32,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-GE-Энергоблэк",
       "type": "Signal",
       "label": "Энергоблэкаут — Грузия",
@@ -92,13 +99,6 @@
       "label": "Отключение интернета — Грузия",
       "severity": 56,
       "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-GE-Геополитич",
-      "type": "Signal",
-      "label": "Геополитический процесс — Грузия",
-      "severity": 48,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-GE",
       "to": "DOMAIN-GE-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-GE",
@@ -184,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-GE-Экспортные",
+      "to": "DOMAIN-GE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.32
+    },
+    {
       "from": "SIGNAL-GE-Энергоблэк",
       "to": "DOMAIN-GE-technology",
       "type": "AMPLIFIES",
@@ -194,12 +200,6 @@
       "to": "DOMAIN-GE-technology",
       "type": "AMPLIFIES",
       "weight": 0.56
-    },
-    {
-      "from": "SIGNAL-GE-Геополитич",
-      "to": "DOMAIN-GE-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.48
     }
   ]
 }
