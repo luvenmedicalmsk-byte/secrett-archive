@@ -2,67 +2,67 @@
   "country": "MX",
   "date": "2026-10-20",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-20T19:06:21.971918+00:00",
+  "generated_at": "2026-10-20T19:26:20.415477+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-MX",
       "type": "Country",
       "label": "MX",
-      "score": 74,
+      "score": 60,
       "props": {
-        "risk_score": 74
+        "risk_score": 60
       }
     },
     {
       "id": "DOMAIN-MX-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 80,
-      "trend": "up"
+      "score": 25,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-MX-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
-      "trend": "up"
+      "score": 65,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-MX-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 74,
-      "trend": "up"
+      "score": 58,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-MX-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-MX-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-MX-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-MX-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DRIVER-MX-Geopolitical",
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-MX-Угроза_нав",
-      "type": "Signal",
-      "label": "Угроза наводнения: Нью-Мексико, Колорадо",
-      "severity": 74,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-MX-Шторм_—_Ме",
       "type": "Signal",
       "label": "Шторм — Мексика",
@@ -99,6 +92,13 @@
       "label": "Водный дефицит — Мексика",
       "severity": 51,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-MX-Топливный_",
+      "type": "Signal",
+      "label": "Топливный рынок — Мексика",
+      "severity": 65,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,19 +106,19 @@
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.8
+      "weight": 0.25
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.65
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-climate",
       "type": "CORRELATES",
-      "weight": 0.74
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-MX",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-MX-climate",
-      "to": "DOMAIN-MX-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-MX-economic",
-      "to": "DOMAIN-MX-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-MX-social",
-      "to": "DOMAIN-MX-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-MX-climate",
       "to": "DOMAIN-MX-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -205,31 +184,25 @@
       "lag_days": 30
     },
     {
-      "from": "DOMAIN-MX-geopolitical",
-      "to": "DOMAIN-MX-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-MX-infrastructure",
+      "from": "DOMAIN-MX-climate",
       "to": "DOMAIN-MX-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-MX-economic",
       "to": "DOMAIN-MX-social",
       "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
+      "weight": 0.7,
+      "lag_days": 60
     },
     {
-      "from": "SIGNAL-MX-Угроза_нав",
-      "to": "DOMAIN-MX-climate",
+      "from": "DOMAIN-MX-social",
+      "to": "DOMAIN-MX-social",
       "type": "AMPLIFIES",
-      "weight": 0.74
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "SIGNAL-MX-Шторм_—_Ме",
@@ -242,6 +215,12 @@
       "to": "DOMAIN-MX-climate",
       "type": "AMPLIFIES",
       "weight": 0.51
+    },
+    {
+      "from": "SIGNAL-MX-Топливный_",
+      "to": "DOMAIN-MX-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.65
     }
   ]
 }
