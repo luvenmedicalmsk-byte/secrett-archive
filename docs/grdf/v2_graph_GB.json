@@ -2,67 +2,72 @@
   "country": "GB",
   "date": "2026-10-20",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-20T13:48:09.817893+00:00",
+  "generated_at": "2026-10-20T14:06:25.430391+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-GB",
       "type": "Country",
       "label": "GB",
-      "score": 62,
+      "score": 50,
       "props": {
-        "risk_score": 62
+        "risk_score": 50
       }
     },
     {
       "id": "DOMAIN-GB-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 62,
-      "trend": "stable"
+      "score": 5,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GB-economic",
       "type": "Domain",
       "label": "economic",
       "score": 34,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GB-climate",
       "type": "Domain",
       "label": "climate",
       "score": 32,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GB-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
-      "trend": "stable"
+      "score": 32,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GB-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GB-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GB-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
+    },
+    {
+      "id": "DRIVER-GB-Economic",
+      "type": "Driver",
+      "label": "Economic"
     },
     {
       "id": "DRIVER-GB-Geopolitical",
@@ -73,18 +78,6 @@
       "id": "DRIVER-GB-Economic",
       "type": "Driver",
       "label": "Economic"
-    },
-    {
-      "id": "DRIVER-GB-Economic",
-      "type": "Driver",
-      "label": "Economic"
-    },
-    {
-      "id": "SIGNAL-GB-50%_санкци",
-      "type": "Signal",
-      "label": "50% санкционированного Великобританией т",
-      "severity": 62,
-      "domain": "geopolitical"
     },
     {
       "id": "SIGNAL-GB-В_работе_с",
@@ -99,6 +92,13 @@
       "label": "Поднимающийся уровень воды поднял плаваю",
       "severity": 32,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-GB-Зоны_Googl",
+      "type": "Signal",
+      "label": "Зоны Google Cloud в Лондоне временно не ",
+      "severity": 32,
+      "domain": "technology"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.62
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-GB",
@@ -124,7 +124,7 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-GB",
@@ -145,6 +145,12 @@
       "weight": 0.05
     },
     {
+      "from": "DRIVER-GB-Economic",
+      "to": "COUNTRY-GB",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-GB-Geopolitical",
       "to": "COUNTRY-GB",
       "type": "CAUSES",
@@ -157,39 +163,6 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-GB-Economic",
-      "to": "COUNTRY-GB",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-GB-geopolitical",
-      "to": "DOMAIN-GB-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-GB-infrastructure",
-      "to": "DOMAIN-GB-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-GB-economic",
-      "to": "DOMAIN-GB-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
-      "from": "SIGNAL-GB-50%_санкци",
-      "to": "DOMAIN-GB-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.62
-    },
-    {
       "from": "SIGNAL-GB-В_работе_с",
       "to": "DOMAIN-GB-economic",
       "type": "AMPLIFIES",
@@ -198,6 +171,12 @@
     {
       "from": "SIGNAL-GB-Поднимающи",
       "to": "DOMAIN-GB-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.32
+    },
+    {
+      "from": "SIGNAL-GB-Зоны_Googl",
+      "to": "DOMAIN-GB-technology",
       "type": "AMPLIFIES",
       "weight": 0.32
     }
