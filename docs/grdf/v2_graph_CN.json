@@ -2,9 +2,9 @@
   "country": "CN",
   "date": "2026-10-20",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-20T10:08:58.725015+00:00",
+  "generated_at": "2026-10-20T10:26:29.188481+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-CN",
@@ -19,14 +19,14 @@
       "id": "DOMAIN-CN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
+      "score": 50,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 54,
       "trend": "stable"
     },
     {
@@ -87,16 +87,16 @@
       "domain": "social"
     },
     {
-      "id": "SIGNAL-CN-Сильный_ве",
+      "id": "SIGNAL-CN-Китай:_Про",
       "type": "Signal",
-      "label": "Сильный ветер: Тяньцзинь, Район Кэцзяо, ",
-      "severity": 56,
-      "domain": "climate"
+      "label": "Китай: Производственная инфляция улетела",
+      "severity": 54,
+      "domain": "economic"
     },
     {
-      "id": "SIGNAL-CN-Гроза:_Уез",
+      "id": "SIGNAL-CN-ФБР_конфис",
       "type": "Signal",
-      "label": "Гроза: Уезд Лоудянь, Уезд Сювэнь, Китай",
+      "label": "ФБР конфисковало 7 доменов, связанных с ",
       "severity": 56,
       "domain": "climate"
     }
@@ -106,13 +106,13 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.54
     },
     {
       "from": "COUNTRY-CN",
@@ -184,6 +184,27 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-CN-geopolitical",
+      "to": "DOMAIN-CN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CN-infrastructure",
+      "to": "DOMAIN-CN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CN-economic",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "DOMAIN-CN-climate",
       "to": "DOMAIN-CN-infrastructure",
       "type": "ESCALATES",
@@ -211,13 +232,13 @@
       "weight": 0.68
     },
     {
-      "from": "SIGNAL-CN-Сильный_ве",
-      "to": "DOMAIN-CN-climate",
+      "from": "SIGNAL-CN-Китай:_Про",
+      "to": "DOMAIN-CN-economic",
       "type": "AMPLIFIES",
-      "weight": 0.56
+      "weight": 0.54
     },
     {
-      "from": "SIGNAL-CN-Гроза:_Уез",
+      "from": "SIGNAL-CN-ФБР_конфис",
       "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
       "weight": 0.56
