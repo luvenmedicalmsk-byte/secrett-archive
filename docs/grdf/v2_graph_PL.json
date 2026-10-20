@@ -2,7 +2,7 @@
   "country": "PL",
   "date": "2026-10-20",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-20T22:07:11.298491+00:00",
+  "generated_at": "2026-10-20T22:27:29.958043+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -33,7 +33,7 @@
       "id": "DOMAIN-PL-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 46,
+      "score": 50,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-PL-Ветер:_Вос",
+      "type": "Signal",
+      "label": "Ветер: Восточная прибрежная зона, Бельск",
+      "severity": 50,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-PL-Криминальн",
       "type": "Signal",
       "label": "Криминальный инцидент — Польша",
@@ -92,13 +99,6 @@
       "label": "Военные удары — Польша",
       "severity": 64,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-PL-Оползень_—",
-      "type": "Signal",
-      "label": "Оползень — Польша",
-      "severity": 46,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-climate",
       "type": "CORRELATES",
-      "weight": 0.46
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-PL",
@@ -226,6 +226,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-PL-Ветер:_Вос",
+      "to": "DOMAIN-PL-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
       "from": "SIGNAL-PL-Криминальн",
       "to": "DOMAIN-PL-geopolitical",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-PL-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.64
-    },
-    {
-      "from": "SIGNAL-PL-Оползень_—",
-      "to": "DOMAIN-PL-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.46
     }
   ]
 }

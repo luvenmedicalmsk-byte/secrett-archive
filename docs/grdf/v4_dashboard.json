@@ -1,7 +1,7 @@
 {
   "grdf_version": "4.0",
   "date": "2026-10-20",
-  "generated_at": "2026-10-20T22:07:11.989527+00:00",
+  "generated_at": "2026-10-20T22:27:30.845762+00:00",
   "global_stress_map": [
     {
       "country": "AE",
@@ -70,10 +70,10 @@
     {
       "country": "CN",
       "country_name": "Китай",
-      "resilience": 51,
-      "vulnerability": 49,
-      "recovery_days": 420,
-      "stress_grade": "MODERATE"
+      "resilience": 61,
+      "vulnerability": 20,
+      "recovery_days": 290,
+      "stress_grade": "LOW"
     },
     {
       "country": "CY",
@@ -126,17 +126,17 @@
     {
       "country": "ES",
       "country_name": "Испания",
-      "resilience": 58,
-      "vulnerability": 15,
-      "recovery_days": 279,
+      "resilience": 61,
+      "vulnerability": 17,
+      "recovery_days": 273,
       "stress_grade": "LOW"
     },
     {
       "country": "FR",
       "country_name": "Франция",
-      "resilience": 60,
-      "vulnerability": 20,
-      "recovery_days": 290,
+      "resilience": 57,
+      "vulnerability": 32,
+      "recovery_days": 338,
       "stress_grade": "LOW"
     },
     {
@@ -174,9 +174,9 @@
     {
       "country": "ID",
       "country_name": "Индонезия",
-      "resilience": 67,
-      "vulnerability": 6,
-      "recovery_days": 216,
+      "resilience": 62,
+      "vulnerability": 28,
+      "recovery_days": 315,
       "stress_grade": "LOW"
     },
     {
@@ -246,9 +246,9 @@
     {
       "country": "MX",
       "country_name": "Мексика",
-      "resilience": 67,
-      "vulnerability": 19,
-      "recovery_days": 268,
+      "resilience": 71,
+      "vulnerability": 11,
+      "recovery_days": 225,
       "stress_grade": "LOW"
     },
     {
@@ -264,16 +264,16 @@
       "country_name": "Польша",
       "resilience": 69,
       "vulnerability": 11,
-      "recovery_days": 230,
+      "recovery_days": 231,
       "stress_grade": "LOW"
     },
     {
       "country": "PT",
       "country_name": "Португалия",
-      "resilience": 75,
-      "vulnerability": 10,
-      "recovery_days": 208,
-      "stress_grade": "LOW"
+      "resilience": 55,
+      "vulnerability": 47,
+      "recovery_days": 370,
+      "stress_grade": "MODERATE"
     },
     {
       "country": "RO",
@@ -288,7 +288,7 @@
       "country_name": "Сербия",
       "resilience": 75,
       "vulnerability": 16,
-      "recovery_days": 232,
+      "recovery_days": 234,
       "stress_grade": "LOW"
     },
     {
@@ -382,16 +382,28 @@
   ],
   "top_vulnerable": [
     {
-      "country": "CN",
-      "vulnerability": 49,
-      "recovery_days": 420,
-      "gri": 73
+      "country": "PT",
+      "vulnerability": 47,
+      "recovery_days": 370,
+      "gri": 46
     },
     {
       "country": "JP",
       "vulnerability": 35,
       "recovery_days": 368,
       "gri": 80
+    },
+    {
+      "country": "FR",
+      "vulnerability": 32,
+      "recovery_days": 338,
+      "gri": 69
+    },
+    {
+      "country": "ID",
+      "vulnerability": 28,
+      "recovery_days": 315,
+      "gri": 66
     },
     {
       "country": "IT",
@@ -428,18 +440,6 @@
       "vulnerability": 23,
       "recovery_days": 296,
       "gri": 68
-    },
-    {
-      "country": "CA",
-      "vulnerability": 22,
-      "recovery_days": 300,
-      "gri": 74
-    },
-    {
-      "country": "TR",
-      "vulnerability": 21,
-      "recovery_days": 291,
-      "gri": 71
     }
   ],
   "top_resilient": [
@@ -476,7 +476,7 @@
     {
       "country": "RS",
       "resilience": 75,
-      "gri": 47
+      "gri": 48
     },
     {
       "country": "VN",
@@ -484,14 +484,14 @@
       "gri": 48
     },
     {
-      "country": "PT",
-      "resilience": 75,
-      "gri": 49
-    },
-    {
       "country": "AR",
       "resilience": 73,
       "gri": 53
+    },
+    {
+      "country": "EG",
+      "resilience": 71,
+      "gri": 56
     }
   ],
   "top_cascades": [
@@ -617,7 +617,7 @@
       "country": "FR",
       "country_name": "Франция",
       "max_cascade_score": 23,
-      "active_cascades_n": 2,
+      "active_cascades_n": 3,
       "cascades": [
         {
           "chain_id": "CHAIN-CLIMATE-ENERGY",
@@ -658,7 +658,7 @@
           "chain_name": "Drought → Agriculture → Food Prices → Migration → Conflict",
           "trigger_domain": "climate",
           "trigger_score": 72,
-          "cascade_score": 12,
+          "cascade_score": 16,
           "cascade_grade": "LOW",
           "steps": [
             {
@@ -691,6 +691,40 @@
               "confidence": 0.75,
               "lag_days": 180,
               "label": "Conflict escalation",
+              "current_score": 45
+            }
+          ]
+        },
+        {
+          "chain_id": "CHAIN-GEO-ENERGY",
+          "chain_name": "Geopolitical Conflict → Energy → Economy → Social",
+          "trigger_domain": "geopolitical",
+          "trigger_score": 45,
+          "cascade_score": 9,
+          "cascade_grade": "LOW",
+          "steps": [
+            {
+              "domain": "infrastructure",
+              "strength": 0.8,
+              "confidence": 0.88,
+              "lag_days": 3,
+              "label": "Energy supply shock",
+              "current_score": 5
+            },
+            {
+              "domain": "economic",
+              "strength": 0.72,
+              "confidence": 0.85,
+              "lag_days": 14,
+              "label": "Economic stress",
+              "current_score": 73
+            },
+            {
+              "domain": "social",
+              "strength": 0.6,
+              "confidence": 0.78,
+              "lag_days": 45,
+              "label": "Social pressure",
               "current_score": 5
             }
           ]
@@ -1017,9 +1051,9 @@
       "country": "CN",
       "country_name": "Китай",
       "base_now": 79,
-      "base_3yr": 97,
-      "base_10yr": 97,
-      "trajectory": "escalating",
+      "base_3yr": 79,
+      "base_10yr": 79,
+      "trajectory": "stabilising",
       "worst_10yr": 97
     },
     {
@@ -1052,11 +1086,11 @@
     {
       "country": "FR",
       "country_name": "Франция",
-      "base_now": 92,
-      "base_3yr": 92,
-      "base_10yr": 92,
-      "trajectory": "stabilising",
-      "worst_10yr": 97
+      "base_now": 90,
+      "base_3yr": 30,
+      "base_10yr": 5,
+      "trajectory": "improving",
+      "worst_10yr": 5
     },
     {
       "country": "TR",
@@ -1086,8 +1120,8 @@
       "worst_10yr": 76
     }
   ],
-  "system_stability_index": 67,
+  "system_stability_index": 66,
   "ssi_grade": "stressed",
-  "avg_vulnerability": 16.5,
-  "avg_resilience": 66.4
+  "avg_vulnerability": 17.3,
+  "avg_resilience": 66.2
 }
