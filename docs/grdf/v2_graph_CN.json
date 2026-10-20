@@ -2,9 +2,9 @@
   "country": "CN",
   "date": "2026-10-20",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-20T15:48:50.044436+00:00",
+  "generated_at": "2026-10-20T16:07:43.681718+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-CN",
@@ -19,21 +19,21 @@
       "id": "DOMAIN-CN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 50,
+      "score": 5,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 54,
+      "score": 5,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 56,
       "trend": "stable"
     },
     {
@@ -87,18 +87,18 @@
       "domain": "social"
     },
     {
-      "id": "SIGNAL-CN-Бразилия_п",
+      "id": "SIGNAL-CN-Гроза:_Уез",
       "type": "Signal",
-      "label": "Бразилия приостанавливает поставки птицы",
-      "severity": 58,
-      "domain": "social"
+      "label": "Гроза: Уезд Пуан, Шесть специальных зон,",
+      "severity": 56,
+      "domain": "climate"
     },
     {
-      "id": "SIGNAL-CN-Китай:_Про",
+      "id": "SIGNAL-CN-Сильный_ве",
       "type": "Signal",
-      "label": "Китай: Производственная инфляция улетела",
-      "severity": 54,
-      "domain": "economic"
+      "label": "Сильный ветер: Район Кэнли, Район Чжанцю",
+      "severity": 56,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,19 +106,19 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.5
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-economic",
       "type": "CORRELATES",
-      "weight": 0.54
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-CN",
@@ -163,25 +163,46 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-CN-geopolitical",
-      "to": "DOMAIN-CN-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-CN-infrastructure",
+      "from": "DOMAIN-CN-climate",
       "to": "DOMAIN-CN-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-CN-economic",
       "to": "DOMAIN-CN-social",
       "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-CN-social",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-CN-climate",
+      "to": "DOMAIN-CN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-CN-infrastructure",
+      "to": "DOMAIN-CN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CN-economic",
+      "to": "DOMAIN-CN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "SIGNAL-CN-Демографич",
@@ -190,16 +211,16 @@
       "weight": 0.68
     },
     {
-      "from": "SIGNAL-CN-Бразилия_п",
-      "to": "DOMAIN-CN-social",
+      "from": "SIGNAL-CN-Гроза:_Уез",
+      "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
-      "weight": 0.58
+      "weight": 0.56
     },
     {
-      "from": "SIGNAL-CN-Китай:_Про",
-      "to": "DOMAIN-CN-economic",
+      "from": "SIGNAL-CN-Сильный_ве",
+      "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
-      "weight": 0.54
+      "weight": 0.56
     }
   ]
 }
