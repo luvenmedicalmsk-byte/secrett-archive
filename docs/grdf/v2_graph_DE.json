@@ -2,7 +2,7 @@
   "country": "DE",
   "date": "2026-10-20",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-20T11:08:33.844447+00:00",
+  "generated_at": "2026-10-20T11:27:11.286283+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-DE-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 50,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-DE-Количество",
-      "type": "Signal",
-      "label": "Количество банкротств в Германии только ",
-      "severity": 50,
-      "domain": "economic"
-    },
-    {
       "id": "SIGNAL-DE-Явления_на",
       "type": "Signal",
       "label": "Явления на побережье: Восточнее Фемарна ",
@@ -97,6 +90,13 @@
       "id": "SIGNAL-DE-Туман:_Кра",
       "type": "Signal",
       "label": "Туман: Край Ротвайль, район Ортенау, Кра",
+      "severity": 50,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-DE-Аномальный",
+      "type": "Signal",
+      "label": "Аномальный холод: Район Нортхайм, Район ",
       "severity": 50,
       "domain": "climate"
     }
@@ -112,7 +112,7 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-economic",
       "type": "CORRELATES",
-      "weight": 0.5
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-DE",
@@ -205,12 +205,6 @@
       "lag_days": 90
     },
     {
-      "from": "SIGNAL-DE-Количество",
-      "to": "DOMAIN-DE-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.5
-    },
-    {
       "from": "SIGNAL-DE-Явления_на",
       "to": "DOMAIN-DE-climate",
       "type": "AMPLIFIES",
@@ -218,6 +212,12 @@
     },
     {
       "from": "SIGNAL-DE-Туман:_Кра",
+      "to": "DOMAIN-DE-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
+      "from": "SIGNAL-DE-Аномальный",
       "to": "DOMAIN-DE-climate",
       "type": "AMPLIFIES",
       "weight": 0.5

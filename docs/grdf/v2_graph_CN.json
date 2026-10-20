@@ -2,7 +2,7 @@
   "country": "CN",
   "date": "2026-10-20",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-20T11:08:33.843590+00:00",
+  "generated_at": "2026-10-20T11:27:11.285021+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 74,
+      "score": 75,
       "props": {
-        "risk_score": 74
+        "risk_score": 75
       }
     },
     {
@@ -20,14 +20,14 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 5,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 54,
-      "trend": "up"
+      "score": 5,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-climate",
@@ -41,13 +41,13 @@
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
+      "score": 68,
       "trend": "up"
     },
     {
@@ -55,14 +55,14 @@
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-CN-Geopolitical",
@@ -82,9 +82,16 @@
     {
       "id": "SIGNAL-CN-Сильный_ве",
       "type": "Signal",
-      "label": "Сильный ветер: Синьхай уезд, Уезд Фупин,",
+      "label": "Сильный ветер: Юэцин, Синьхай уезд, Уезд",
       "severity": 74,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-CN-Демографич",
+      "type": "Signal",
+      "label": "Демографическая катастрофа Китая: лица в",
+      "severity": 68,
+      "domain": "social"
     },
     {
       "id": "SIGNAL-CN-Гроза:_Уез",
@@ -92,13 +99,6 @@
       "label": "Гроза: Уезд Гуаннан, Жэньфэн, Цзингу и е",
       "severity": 56,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-CN-Китай:_Про",
-      "type": "Signal",
-      "label": "Китай: Производственная инфляция улетела",
-      "severity": 54,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-economic",
       "type": "CORRELATES",
-      "weight": 0.54
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CN",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.68
     },
     {
       "from": "COUNTRY-CN",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-CN-climate",
-      "to": "DOMAIN-CN-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-CN-infrastructure",
-      "to": "DOMAIN-CN-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-CN-economic",
-      "to": "DOMAIN-CN-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-CN-climate",
       "to": "DOMAIN-CN-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,22 +184,43 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-CN-climate",
+      "to": "DOMAIN-CN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-CN-infrastructure",
+      "to": "DOMAIN-CN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CN-economic",
+      "to": "DOMAIN-CN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-CN-Сильный_ве",
       "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
       "weight": 0.74
     },
     {
+      "from": "SIGNAL-CN-Демографич",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.68
+    },
+    {
       "from": "SIGNAL-CN-Гроза:_Уез",
       "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
       "weight": 0.56
-    },
-    {
-      "from": "SIGNAL-CN-Китай:_Про",
-      "to": "DOMAIN-CN-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.54
     }
   ]
 }
