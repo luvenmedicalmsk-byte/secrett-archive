@@ -8480,6 +8480,8 @@ def process_events(raw_items):
     titles = [e['title'] for e in top_events]
     translated_titles = translate_batch(titles)
     for i, ev in enumerate(top_events):
+        if CLOUD_RESOLVED_FIX and (ev.get('meta') or {}).get('ru_ready'):
+            continue   # текст собран по-русски; названия продуктов (Zero Trust) не переводятся
         # _title_polish ПОСЛЕ перевода: чистит гомоглифы и остаточные англ-фрагменты,
         # которые приходят из перевода (translate_batch иначе перезаписал бы полировку _clean_title)
         ev['title'] = _title_polish(translated_titles[i])
@@ -8489,6 +8491,8 @@ def process_events(raw_items):
     summaries = [(e.get('summary') or '') for e in top_events]
     translated_summaries = translate_batch(summaries)
     for i, ev in enumerate(top_events):
+        if CLOUD_RESOLVED_FIX and (ev.get('meta') or {}).get('ru_ready'):
+            continue
         if ev.get('summary'):
             ev['summary'] = translated_summaries[i]
 
@@ -13346,6 +13350,8 @@ def _delatinize_titles(events):
     resolve_geo (гео зафиксировано на исходном тексте -> без гео-регрессии).
     Post-make_id (id из сырого title) -> churn 0. Легитимные бренды/имена не трогает."""
     for e in events:
+        if CLOUD_RESOLVED_FIX and (e.get('meta') or {}).get('ru_ready'):
+            continue
         _tt = e.get('title') or ''; _ss = e.get('summary') or ''
         _lat_t = len(re.findall(r'[A-Za-z]', _tt)); _cyr_t = len(re.findall(r'[а-яёА-ЯЁ]', _tt))
         if not (_lat_t > 5 and _lat_t >= _cyr_t):
@@ -21590,6 +21596,16 @@ def fetch_who_don():
 #   TSUNAMI_FEED       — предупреждения NOAA PTWC/NTWC (информационные — нет)
 # ══════════════════════════════════════════════════════════════════════════════
 CLOUD_STATUS_FEED = True
+# CLOUD_RESOLVED_FIX (20.10.2026): карточки сбоев облаков. Заголовок и описание Cloudflare
+# собираются по-русски (компоненты — названия продуктов, не переводятся), помечаются
+# meta.ru_ready и не проходят ни перевод, ни _delatinize_titles (раньше заголовок
+# «Сбой Cloudflare: <англ. название>» заменялся первым предложением описания
+# «Статус: решено.»). Устранённый сбой получает пониженную оценку. Откат — False.
+CLOUD_RESOLVED_FIX = True
+_CF_STATUS_RU = {'investigating': 'расследуется', 'identified': 'причина установлена',
+                 'monitoring': 'восстановлен, под наблюдением', 'resolved': 'устранён',
+                 'postmortem': 'устранён'}
+_CF_IMPACT_RU = {'critical': 'критический', 'major': 'значительный'}
 TROPICAL_FEED = True
 SPACE_WX_FEED = True
 TSUNAMI_FEED = True
@@ -21640,9 +21656,12 @@ def fetch_cloud_status():
                 continue
             prods = [p.get('title') for p in (x.get('affected_products') or []) if p.get('title')]
             st = 'устранён' if e else 'продолжается'
+            _gsev = 68 if sevw == 'high' else 58
+            if CLOUD_RESOLVED_FIX and e:
+                _gsev = 46 if sevw == 'high' else 40
             _add(f"Сбой Google Cloud: {', '.join(prods[:3]) or 'несколько сервисов'} ({st})",
                  f"{x.get('external_desc') or ''} Начало {b.strftime('%d.%m %H:%M')} UTC.",
-                 b, 'Google Cloud Status', 68 if sevw == 'high' else 58, {'id': x.get('id'), 'ongoing': not e})
+                 b, 'Google Cloud Status', _gsev, {'id': x.get('id'), 'ongoing': not e})
     except Exception as ex:
         print(f"  [WARN] Google Cloud status: {ex}", file=sys.stderr)
     # Cloudflare: только значимые (major/critical) — minor идут десятками в сутки
@@ -21655,9 +21674,27 @@ def fetch_cloud_status():
             c = _iso_dt(x.get('created_at'))
             if not c or _ago_h(c) > _INFRA_HOURS:
                 continue
-            _add(f"Сбой Cloudflare: {x.get('name') or ''}",
-                 f"Статус: {x.get('status')}. Масштаб: {imp}. {', '.join(cmp.get('name','') for cmp in (x.get('components') or [])[:5])}",
-                 c, 'Cloudflare Status', 72 if imp == 'critical' else 62, {'id': x.get('id'), 'impact': imp})
+            if not CLOUD_RESOLVED_FIX:
+                _add(f"Сбой Cloudflare: {x.get('name') or ''}",
+                     f"Статус: {x.get('status')}. Масштаб: {imp}. {', '.join(cmp.get('name','') for cmp in (x.get('components') or [])[:5])}",
+                     c, 'Cloudflare Status', 72 if imp == 'critical' else 62, {'id': x.get('id'), 'impact': imp})
+                continue
+            _cst = str(x.get('status') or '').lower()
+            _done = _cst in ('resolved', 'postmortem')
+            _cmps = [str(cmp.get('name') or '').strip() for cmp in (x.get('components') or [])]
+            _cmps = [n for n in _cmps if n]
+            _what = ', '.join(_cmps[:3]) + (f' и ещё {len(_cmps) - 3}' if len(_cmps) > 3 else '')
+            _st_ru = _CF_STATUS_RU.get(_cst, 'продолжается')
+            _desc = (f"Cloudflare сообщил о сбое, масштаб — {_CF_IMPACT_RU.get(imp, imp)}. "
+                     + (f"Затронуты сервисы: {', '.join(_cmps[:8])}. " if _cmps else '')
+                     + f"Статус: {_st_ru}. Начало {c.strftime('%d.%m %H:%M')} UTC.")
+            _rs = _iso_dt(x.get('resolved_at')) if _done else None
+            if _rs:
+                _desc += f" Устранён {_rs.strftime('%d.%m %H:%M')} UTC."
+            _sev = (72 if imp == 'critical' else 62) if not _done else (46 if imp == 'critical' else 40)
+            _add(f"Сбой Cloudflare: {_what or 'несколько сервисов'} ({_st_ru})", _desc,
+                 c, 'Cloudflare Status', _sev,
+                 {'id': x.get('id'), 'impact': imp, 'status': _cst, 'ongoing': not _done, 'ru_ready': True})
     except Exception as ex:
         print(f"  [WARN] Cloudflare status: {ex}", file=sys.stderr)
     # AWS: текущие события (ответ в UTF-16)
