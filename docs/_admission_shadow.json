@@ -1,11 +1,11 @@
 {
-  "generated": "2026-10-20T05:24:35Z",
+  "generated": "2026-10-20T05:40:20Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
-    "PASS_FACT": 1064,
+    "PASS_FACT": 1062,
+    "DENY_COMMENTARY": 298,
     "DENY_OTHER": 3,
-    "DENY_COMMENTARY": 296,
     "DENY_STATE_ONLY": 5,
     "UNMATCHED": 1,
     "DENY_BACKGROUND": 7,
@@ -18,23 +18,23 @@
     "unmatched": 1,
     "coverage_pct": 99.9,
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
-    "admission_pass_rate": 77.2,
-    "admission_deny_rate": 22.8,
-    "processes_without_fact": 314,
+    "admission_pass_rate": 77.1,
+    "admission_deny_rate": 22.9,
+    "processes_without_fact": 316,
     "report_evidence_count": 0,
     "reports_boosting": 0
   },
   "shadow_reliability": {
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
-      "processes": 450,
-      "sample": 1679,
+      "processes": 449,
+      "sample": 1670,
       "agreement_pct": 89.5,
       "decision_agreement_pct": 89.6,
-      "critical_errors": 174,
+      "critical_errors": 173,
       "truth_ratio_pct": 100.0,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 157,
+        "FACT_EVENT→COMMENTARY": 156,
         "COMMENTARY→FACT_EVENT": 16,
         "BACKGROUND→COMMENTARY": 2,
         "STATE_CONFIRMATION→FACT_EVENT": 1
@@ -42,12 +42,12 @@
     },
     "historical": {
       "processes": 1379,
-      "sample": 3658,
+      "sample": 3650,
       "agreement_pct": 89.8,
       "decision_agreement_pct": 89.9,
-      "critical_errors": 368,
+      "critical_errors": 367,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 323,
+        "FACT_EVENT→COMMENTARY": 322,
         "COMMENTARY→FACT_EVENT": 41,
         "BACKGROUND→COMMENTARY": 3,
         "STATE_CONFIRMATION→FACT_EVENT": 3,
@@ -57,13 +57,13 @@
     },
     "events_stream": {
       "sample": 470,
-      "agreement_pct": 87.2,
-      "decision_agreement_pct": 87.7,
-      "critical_errors": 58,
+      "agreement_pct": 87.0,
+      "decision_agreement_pct": 87.4,
+      "critical_errors": 59,
       "error_matrix": {
         "FACT_EVENT→COMMENTARY": 55,
         "BACKGROUND→COMMENTARY": 2,
-        "COMMENTARY→FACT_EVENT": 3
+        "COMMENTARY→FACT_EVENT": 4
       }
     },
     "gate": {
@@ -74,18 +74,22 @@
     }
   },
   "class_source": {
-    "evidence_sic": 3658
+    "evidence_sic": 3650
   },
   "truth_ratio_pct": 100.0,
   "domain_statistics": {
     "geopolitics": {
-      "pass": 263,
-      "deny": 79
+      "pass": 262,
+      "deny": 80
     },
     "climate": {
-      "pass": 350,
-      "deny": 63,
+      "pass": 349,
+      "deny": 64,
       "unmatched": 1
+    },
+    "economy": {
+      "pass": 236,
+      "deny": 100
     },
     "technology": {
       "pass": 125,
@@ -94,10 +98,6 @@
     "social": {
       "pass": 90,
       "deny": 41
-    },
-    "economy": {
-      "pass": 236,
-      "deny": 100
     }
   },
   "deny_impact": [
@@ -204,6 +204,21 @@
       },
       "status": "dormant",
       "causal_links": 6,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
+      "signal_id": "geop-геополитич-европа-00ed",
+      "title": "Геополитический процесс — Европа",
+      "domain": "geopolitics",
+      "severity": 66,
+      "pressure": 68,
+      "first_seen": "2026-08-02",
+      "evidence_count": 3,
+      "evidence_classes": {
+        "COMMENTARY": 3
+      },
+      "status": "active",
+      "causal_links": 0,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -868,6 +883,21 @@
       "reason": "no FACT_EVENT in evidence"
     },
     {
+      "signal_id": "clim-климатичес-китай-6396",
+      "title": "Климатический сигнал — Китай",
+      "domain": "climate",
+      "severity": 56,
+      "pressure": 42,
+      "first_seen": "2026-07-19",
+      "evidence_count": 2,
+      "evidence_classes": {
+        "COMMENTARY": 2
+      },
+      "status": "active",
+      "causal_links": 6,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
       "signal_id": "clim-климатичес-северный-52c4",
       "title": "Климатический сигнал — Северный Ледовитый океан",
       "domain": "climate",
@@ -971,40 +1001,17 @@
       "status": "active",
       "causal_links": 6,
       "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "clim-климатичес-мурманск-ebe0",
-      "title": "Климатический сигнал — Мурманская область",
-      "domain": "climate",
-      "severity": 56,
-      "pressure": 39,
-      "first_seen": "2026-08-03",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "COMMENTARY": 1
-      },
-      "status": "active",
-      "causal_links": 6,
-      "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "clim-климатичес-якутия-36c8",
-      "title": "Климатический сигнал — Якутия",
-      "domain": "climate",
-      "severity": 56,
-      "pressure": 39,
-      "first_seen": "2026-10-09",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "COMMENTARY": 1
-      },
-      "status": "active",
-      "causal_links": 0,
-      "reason": "no FACT_EVENT in evidence"
     }
   ],
   "report_log": [],
   "severity_delta": [
+    {
+      "signal_id": "geop-геополитич-европа-00ed",
+      "domain": "geopolitics",
+      "legacy": 66,
+      "shadow": null,
+      "delta": null
+    },
     {
       "signal_id": "econ-экономичес-иран-7b7d",
       "domain": "economy",
@@ -1142,6 +1149,13 @@
       "signal_id": "econ-инфляция-россия-927a",
       "domain": "economy",
       "legacy": 59,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "clim-климатичес-китай-6396",
+      "domain": "climate",
+      "legacy": 56,
       "shadow": null,
       "delta": null
     },
@@ -1410,26 +1424,12 @@
       "legacy": 76,
       "shadow": null,
       "delta": null
-    },
-    {
-      "signal_id": "clim-водныйдефи-янао-a919",
-      "domain": "climate",
-      "legacy": 56,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "econ-экономичес-кения-048d",
-      "domain": "economy",
-      "legacy": 32,
-      "shadow": null,
-      "delta": null
     }
   ],
   "deny_by_severity": {
     "0-30": 3,
     "31-50": 207,
-    "51-70": 99,
+    "51-70": 101,
     "71-90": 4,
     "91-100": 1
   }
