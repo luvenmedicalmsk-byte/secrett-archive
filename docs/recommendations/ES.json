@@ -1,11 +1,11 @@
 {
   "country": "ES",
   "country_name": "Испания",
-  "date": "2026-10-19",
-  "generated_at": "2026-10-19T23:46:52.545071+00:00",
-  "srs_score": 60,
-  "srs_grade": "C",
-  "srs_grade_ru": "Умеренная",
+  "date": "2026-10-20",
+  "generated_at": "2026-10-20T00:07:42.663179+00:00",
+  "srs_score": 58,
+  "srs_grade": "D",
+  "srs_grade_ru": "Требует внимания",
   "priority_risks": [
     {
       "id": "R-01",
@@ -15,9 +15,18 @@
       "metric_value": 92,
       "urgency": 95,
       "source": "risk_score"
+    },
+    {
+      "id": "R-03",
+      "category": "HIGH_PRIORITY",
+      "title": "Системное смещение прогнозов: -4.4pt",
+      "detail": "Систематическая ошибка прогнозов -4.4pt снижает достоверность сценарного анализа.",
+      "metric_value": -4.43,
+      "urgency": 62.15,
+      "source": "validation_bias"
     }
   ],
-  "risk_count": 1,
+  "risk_count": 2,
   "priority_opportunities": [
     {
       "id": "O-05",
@@ -39,8 +48,8 @@
     },
     {
       "type": "horizon_shift",
-      "title": "Горизонт d30 точнее, d90 — слабее",
-      "detail": "Система прогнозирует надёжнее на горизонте d30 и менее точно на d90. Скорректируйте горизонты планирования.",
+      "title": "Горизонт d7 точнее, d90 — слабее",
+      "detail": "Система прогнозирует надёжнее на горизонте d7 и менее точно на d90. Скорректируйте горизонты планирования.",
       "direction": "neutral"
     }
   ],
@@ -49,18 +58,13 @@
       "type": "horizon_degradation",
       "horizon": "d90",
       "detail": "Худший горизонт прогноза: d90. Увеличить частоту переобучения на этом горизонте."
-    },
-    {
-      "type": "confidence_drift",
-      "horizon": "long",
-      "detail": "Дрейф уверенности +6.0pt указывает на деградацию долгосрочных прогнозов."
     }
   ],
   "forecast_improvement": [
     {
       "type": "horizon_strength",
-      "horizon": "d30",
-      "detail": "Лучший горизонт прогноза: d30. Рассмотреть расширение использования."
+      "horizon": "d7",
+      "detail": "Лучший горизонт прогноза: d7. Рассмотреть расширение использования."
     }
   ],
   "ranked_recommendations": [
@@ -81,6 +85,15 @@
       "rec_score": 52,
       "metric_value": 5,
       "source": "high_alpha"
+    },
+    {
+      "id": "R-03",
+      "type": "risk",
+      "priority": "HIGH_PRIORITY",
+      "title": "Системное смещение прогнозов: -4.4pt",
+      "rec_score": 46,
+      "metric_value": -4.43,
+      "source": "validation_bias"
     }
   ],
   "action_plan": [
@@ -93,6 +106,14 @@
       "source": "risk_score"
     },
     {
+      "id": "ACT-R-03",
+      "priority": "STRATEGIC",
+      "action": "Реагировать: Системное смещение прогнозов: -4.4pt",
+      "rationale": "Систематическая ошибка прогнозов -4.4pt снижает достоверность сценарного анализа.",
+      "deadline": "72 часа",
+      "source": "validation_bias"
+    },
+    {
       "id": "ACT-O-05",
       "priority": "STRATEGIC",
       "action": "Использовать: Высокоэффективные действия доступны (5)",
@@ -101,11 +122,11 @@
       "source": "high_alpha"
     }
   ],
-  "action_count": 2,
+  "action_count": 3,
   "rec_diagnostics": [],
   "diagnostic_count": 0,
   "risk_score": 92,
   "delta": 0,
   "domain": "climate",
-  "history_depth": 144
+  "history_depth": 145
 }
