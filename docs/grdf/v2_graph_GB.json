@@ -2,9 +2,9 @@
   "country": "GB",
   "date": "2026-10-20",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-20T16:28:39.447165+00:00",
+  "generated_at": "2026-10-20T16:48:18.270202+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-GB",
@@ -19,35 +19,35 @@
       "id": "DOMAIN-GB-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 46,
+      "score": 5,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-GB-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 36,
+      "score": 34,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-GB-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 47,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-GB-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 32,
+      "score": 5,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-GB-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
+      "score": 34,
       "trend": "stable"
     },
     {
@@ -80,25 +80,25 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-GB-Неудачи_пр",
+      "type": "Signal",
+      "label": "Неудачи правительства Великобритании поз",
+      "severity": 47,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-GB-В_Европе_п",
+      "type": "Signal",
+      "label": "В Европе произошел масштабный сбой в раб",
+      "severity": 34,
+      "domain": "social"
+    },
+    {
       "id": "SIGNAL-GB-В_работе_с",
       "type": "Signal",
       "label": "В работе сервисов Google Cloud наблюдают",
       "severity": 34,
       "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-GB-Зоны_Googl",
-      "type": "Signal",
-      "label": "Зоны Google Cloud в Лондоне временно не ",
-      "severity": 32,
-      "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-GB-Геополитич",
-      "type": "Signal",
-      "label": "Геополитический процесс — Великобритания",
-      "severity": 46,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,31 +106,31 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.46
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-economic",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.47
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-technology",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-GB",
@@ -163,43 +163,64 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-GB-geopolitical",
-      "to": "DOMAIN-GB-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-GB-infrastructure",
+      "from": "DOMAIN-GB-climate",
       "to": "DOMAIN-GB-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-GB-economic",
       "to": "DOMAIN-GB-social",
       "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-GB-social",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-GB-climate",
+      "to": "DOMAIN-GB-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-GB-infrastructure",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GB-economic",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-GB-Неудачи_пр",
+      "to": "DOMAIN-GB-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.47
+    },
+    {
+      "from": "SIGNAL-GB-В_Европе_п",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.34
     },
     {
       "from": "SIGNAL-GB-В_работе_с",
       "to": "DOMAIN-GB-economic",
       "type": "AMPLIFIES",
       "weight": 0.34
-    },
-    {
-      "from": "SIGNAL-GB-Зоны_Googl",
-      "to": "DOMAIN-GB-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.32
-    },
-    {
-      "from": "SIGNAL-GB-Геополитич",
-      "to": "DOMAIN-GB-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.46
     }
   ]
 }
