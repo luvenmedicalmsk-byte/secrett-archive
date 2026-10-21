@@ -2,7 +2,7 @@
   "country": "AE",
   "date": "2026-10-21",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-21T01:46:10.004049+00:00",
+  "generated_at": "2026-10-21T02:08:13.662751+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-AE-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 40,
       "trend": "stable"
     },
     {
@@ -40,7 +40,7 @@
       "id": "DOMAIN-AE-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 59,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-AE-Продажи_эл",
+      "type": "Signal",
+      "label": "Продажи элитной недвижимости в Дубае сок",
+      "severity": 40,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-AE-Военный_ко",
       "type": "Signal",
       "label": "Военный конфликт — Ближний Восток (систе",
@@ -92,13 +99,6 @@
       "label": "Военные удары — Ближний Восток",
       "severity": 80,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-AE-Отключение",
-      "type": "Signal",
-      "label": "Отключение интернета — Ближний Восток (с",
-      "severity": 79,
-      "domain": "technology"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-AE",
       "to": "DOMAIN-AE-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-AE",
@@ -124,7 +124,7 @@
       "from": "COUNTRY-AE",
       "to": "DOMAIN-AE-technology",
       "type": "CORRELATES",
-      "weight": 0.59
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-AE",
@@ -184,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-AE-Продажи_эл",
+      "to": "DOMAIN-AE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.4
+    },
+    {
       "from": "SIGNAL-AE-Военный_ко",
       "to": "DOMAIN-AE-geopolitical",
       "type": "AMPLIFIES",
@@ -194,12 +200,6 @@
       "to": "DOMAIN-AE-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.8
-    },
-    {
-      "from": "SIGNAL-AE-Отключение",
-      "to": "DOMAIN-AE-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.79
     }
   ]
 }
