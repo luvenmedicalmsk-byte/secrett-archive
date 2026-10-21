@@ -2,7 +2,7 @@
   "country": "LT",
   "date": "2026-10-21",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-21T14:09:00.366611+00:00",
+  "generated_at": "2026-10-21T14:29:00.626415+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,17 +10,17 @@
       "id": "COUNTRY-LT",
       "type": "Country",
       "label": "LT",
-      "score": 65,
+      "score": 64,
       "props": {
-        "risk_score": 65
+        "risk_score": 64
       }
     },
     {
       "id": "DOMAIN-LT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 73,
-      "trend": "stable"
+      "score": 70,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-LT-economic",
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 50,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-LT-technology",
@@ -80,13 +80,6 @@
       "label": "economic"
     },
     {
-      "id": "SIGNAL-LT-Литва_хоче",
-      "type": "Signal",
-      "label": "Литва хочет разрешить сбивать беспилотни",
-      "severity": 65,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-LT-Ветер:_Юго",
       "type": "Signal",
       "label": "Ветер: Юго-восточная Балтика, Куршская к",
@@ -99,6 +92,13 @@
       "label": "Туск потребовал от Украины объяснений из",
       "severity": 47,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-LT-Геополитич",
+      "type": "Signal",
+      "label": "Геополитический процесс — Литва",
+      "severity": 62,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-LT",
       "to": "DOMAIN-LT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.73
+      "weight": 0.7
     },
     {
       "from": "COUNTRY-LT",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-LT-geopolitical",
-      "to": "DOMAIN-LT-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-LT-infrastructure",
-      "to": "DOMAIN-LT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-LT-economic",
-      "to": "DOMAIN-LT-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "DOMAIN-LT-climate",
       "to": "DOMAIN-LT-infrastructure",
       "type": "ESCALATES",
@@ -226,10 +205,25 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-LT-Литва_хоче",
-      "to": "DOMAIN-LT-geopolitical",
+      "from": "DOMAIN-LT-geopolitical",
+      "to": "DOMAIN-LT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-LT-infrastructure",
+      "to": "DOMAIN-LT-economic",
       "type": "AMPLIFIES",
-      "weight": 0.65
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-LT-economic",
+      "to": "DOMAIN-LT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-LT-Ветер:_Юго",
@@ -242,6 +236,12 @@
       "to": "DOMAIN-LT-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.47
+    },
+    {
+      "from": "SIGNAL-LT-Геополитич",
+      "to": "DOMAIN-LT-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.62
     }
   ]
 }
