@@ -2,7 +2,7 @@
   "country": "CN",
   "date": "2026-10-21",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-21T23:28:12.382570+00:00",
+  "generated_at": "2026-10-21T23:47:23.669283+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 92,
+      "score": 79,
       "props": {
-        "risk_score": 92
+        "risk_score": 79
       }
     },
     {
@@ -20,49 +20,49 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CN-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 92,
-      "trend": "stable"
+      "score": 74,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CN-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CN-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
-      "trend": "stable"
+      "score": 68,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CN-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DRIVER-CN-Geopolitical",
@@ -80,25 +80,25 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CN-Сильный_ве",
+      "id": "SIGNAL-CN-Туман:_Шиц",
       "type": "Signal",
-      "label": "Сильный ветер: Район Лукцяо, Город Ёнкан",
-      "severity": 92,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-CN-Туман:_Уез",
-      "type": "Signal",
-      "label": "Туман: Уезд Пинлуо, куанчэнг, Уезд Вэйша",
+      "label": "Туман: Шицзе Тун, Вейнин И, Автономный у",
       "severity": 74,
       "domain": "climate"
     },
     {
       "id": "SIGNAL-CN-Сильный_до",
       "type": "Signal",
-      "label": "Сильный дождь: Уезд Мэнла, Автономный ок",
+      "label": "Сильный дождь: Автономный округ Цзянчэн ",
       "severity": 74,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-CN-Демографич",
+      "type": "Signal",
+      "label": "Демографическая катастрофа Китая: лица в",
+      "severity": 68,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-climate",
       "type": "CORRELATES",
-      "weight": 0.92
+      "weight": 0.74
     },
     {
       "from": "COUNTRY-CN",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.68
     },
     {
       "from": "COUNTRY-CN",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-CN-climate",
-      "to": "DOMAIN-CN-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-CN-infrastructure",
-      "to": "DOMAIN-CN-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-CN-economic",
-      "to": "DOMAIN-CN-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-CN-climate",
       "to": "DOMAIN-CN-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,13 +184,28 @@
       "lag_days": 90
     },
     {
-      "from": "SIGNAL-CN-Сильный_ве",
-      "to": "DOMAIN-CN-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.92
+      "from": "DOMAIN-CN-climate",
+      "to": "DOMAIN-CN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
     },
     {
-      "from": "SIGNAL-CN-Туман:_Уез",
+      "from": "DOMAIN-CN-infrastructure",
+      "to": "DOMAIN-CN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CN-economic",
+      "to": "DOMAIN-CN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-CN-Туман:_Шиц",
       "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
       "weight": 0.74
@@ -221,6 +215,12 @@
       "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
       "weight": 0.74
+    },
+    {
+      "from": "SIGNAL-CN-Демографич",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.68
     }
   ]
 }
