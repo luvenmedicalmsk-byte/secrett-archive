@@ -2,7 +2,7 @@
   "country": "PT",
   "date": "2026-10-21",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-21T07:26:10.446996+00:00",
+  "generated_at": "2026-10-21T07:47:46.985433+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-PT-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 47,
+      "score": 35,
       "trend": "stable"
     },
     {
@@ -70,14 +70,21 @@
       "label": "climate"
     },
     {
+      "id": "DRIVER-PT-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
+    },
+    {
       "id": "DRIVER-PT-economic",
       "type": "Driver",
       "label": "economic"
     },
     {
-      "id": "DRIVER-PT-geopolitical",
-      "type": "Driver",
-      "label": "geopolitical"
+      "id": "SIGNAL-PT-Не_приводи",
+      "type": "Signal",
+      "label": "Не приводит ли новый дефицит строительст",
+      "severity": 35,
+      "domain": "economic"
     },
     {
       "id": "SIGNAL-PT-Климатичес",
@@ -92,13 +99,6 @@
       "label": "Шторм — Португалия",
       "severity": 50,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-PT-Экономичес",
-      "type": "Signal",
-      "label": "Экономический сигнал — Португалия",
-      "severity": 47,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-economic",
       "type": "CORRELATES",
-      "weight": 0.47
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-PT",
@@ -151,13 +151,13 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-PT-economic",
+      "from": "DRIVER-PT-geopolitical",
       "to": "COUNTRY-PT",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-PT-geopolitical",
+      "from": "DRIVER-PT-economic",
       "to": "COUNTRY-PT",
       "type": "CAUSES",
       "weight": 0.8
@@ -205,6 +205,12 @@
       "lag_days": 90
     },
     {
+      "from": "SIGNAL-PT-Не_приводи",
+      "to": "DOMAIN-PT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.35
+    },
+    {
       "from": "SIGNAL-PT-Климатичес",
       "to": "DOMAIN-PT-climate",
       "type": "AMPLIFIES",
@@ -215,12 +221,6 @@
       "to": "DOMAIN-PT-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-PT-Экономичес",
-      "to": "DOMAIN-PT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.47
     }
   ]
 }
