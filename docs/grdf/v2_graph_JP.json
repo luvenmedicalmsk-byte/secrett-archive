@@ -2,17 +2,17 @@
   "country": "JP",
   "date": "2026-10-21",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-21T21:48:04.100485+00:00",
+  "generated_at": "2026-10-21T22:07:25.198442+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-JP",
       "type": "Country",
       "label": "JP",
-      "score": 64,
+      "score": 62,
       "props": {
-        "risk_score": 64
+        "risk_score": 62
       }
     },
     {
@@ -26,22 +26,22 @@
       "id": "DOMAIN-JP-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 48,
+      "score": 5,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-JP-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "stable"
+      "score": 74,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-JP-technology",
       "type": "Domain",
       "label": "technology",
       "score": 62,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-JP-social",
@@ -87,18 +87,18 @@
       "domain": "technology"
     },
     {
-      "id": "SIGNAL-JP-Торговый_д",
-      "type": "Signal",
-      "label": "Торговый дефицит Японии удвоился на фоне",
-      "severity": 48,
-      "domain": "economic"
-    },
-    {
       "id": "SIGNAL-JP-Столько,_п",
       "type": "Signal",
       "label": "Столько, по словам вымогателей, ушло на ",
       "severity": 43,
       "domain": "technology"
+    },
+    {
+      "id": "SIGNAL-JP-Климатичес",
+      "type": "Signal",
+      "label": "Климатический сигнал — Япония",
+      "severity": 74,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -112,13 +112,13 @@
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-economic",
       "type": "CORRELATES",
-      "weight": 0.48
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.74
     },
     {
       "from": "COUNTRY-JP",
@@ -163,22 +163,64 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-JP-climate",
+      "to": "DOMAIN-JP-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-JP-infrastructure",
+      "to": "DOMAIN-JP-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-JP-economic",
+      "to": "DOMAIN-JP-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-JP-climate",
+      "to": "DOMAIN-JP-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-JP-economic",
+      "to": "DOMAIN-JP-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-JP-social",
+      "to": "DOMAIN-JP-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "SIGNAL-JP-В_Японии_п",
       "to": "DOMAIN-JP-technology",
       "type": "AMPLIFIES",
       "weight": 0.62
     },
     {
-      "from": "SIGNAL-JP-Торговый_д",
-      "to": "DOMAIN-JP-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.48
-    },
-    {
       "from": "SIGNAL-JP-Столько,_п",
       "to": "DOMAIN-JP-technology",
       "type": "AMPLIFIES",
       "weight": 0.43
+    },
+    {
+      "from": "SIGNAL-JP-Климатичес",
+      "to": "DOMAIN-JP-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.74
     }
   ]
 }
