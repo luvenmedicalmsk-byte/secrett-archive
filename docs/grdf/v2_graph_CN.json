@@ -2,7 +2,7 @@
   "country": "CN",
   "date": "2026-10-21",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-21T12:50:51.464363+00:00",
+  "generated_at": "2026-10-21T13:07:25.523808+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 79,
+      "score": 81,
       "props": {
-        "risk_score": 79
+        "risk_score": 81
       }
     },
     {
@@ -47,8 +47,8 @@
       "id": "DOMAIN-CN-social",
       "type": "Domain",
       "label": "social",
-      "score": 68,
-      "trend": "up"
+      "score": 5,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-infrastructure",
@@ -80,25 +80,25 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-CN-Сильный_ве",
+      "type": "Signal",
+      "label": "Сильный ветер: Синьцзян-Уйгурский автоно",
+      "severity": 74,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-CN-Туман:_Нац",
+      "type": "Signal",
+      "label": "Туман: Национальный город Баодзи Мяо и И",
+      "severity": 74,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-CN-Сильный_до",
       "type": "Signal",
-      "label": "Сильный дождь: Автономный уезд Шуанцзян ",
+      "label": "Сильный дождь: Автономный уезд Ва Кангюа",
       "severity": 74,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-CN-Туман:_Вей",
-      "type": "Signal",
-      "label": "Туман: Вейнин И, Автономный уезд Хуэй и ",
-      "severity": 74,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-CN-Демографич",
-      "type": "Signal",
-      "label": "Демографическая катастрофа Китая: лица в",
-      "severity": 68,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -130,7 +130,7 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-social",
       "type": "CORRELATES",
-      "weight": 0.68
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CN",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-CN-climate",
-      "to": "DOMAIN-CN-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-CN-economic",
-      "to": "DOMAIN-CN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-CN-social",
-      "to": "DOMAIN-CN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-CN-climate",
       "to": "DOMAIN-CN-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -205,22 +184,43 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-CN-climate",
+      "to": "DOMAIN-CN-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-CN-economic",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-CN-social",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "SIGNAL-CN-Сильный_ве",
+      "to": "DOMAIN-CN-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.74
+    },
+    {
+      "from": "SIGNAL-CN-Туман:_Нац",
+      "to": "DOMAIN-CN-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.74
+    },
+    {
       "from": "SIGNAL-CN-Сильный_до",
       "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
       "weight": 0.74
-    },
-    {
-      "from": "SIGNAL-CN-Туман:_Вей",
-      "to": "DOMAIN-CN-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.74
-    },
-    {
-      "from": "SIGNAL-CN-Демографич",
-      "to": "DOMAIN-CN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.68
     }
   ]
 }
