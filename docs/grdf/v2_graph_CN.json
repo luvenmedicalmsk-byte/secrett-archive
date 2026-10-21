@@ -2,7 +2,7 @@
   "country": "CN",
   "date": "2026-10-21",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-21T00:07:05.042047+00:00",
+  "generated_at": "2026-10-21T00:26:07.113709+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 81,
+      "score": 75,
       "props": {
-        "risk_score": 81
+        "risk_score": 75
       }
     },
     {
@@ -26,7 +26,7 @@
       "id": "DOMAIN-CN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 74,
+      "score": 5,
       "trend": "down"
     },
     {
@@ -47,7 +47,7 @@
       "id": "DOMAIN-CN-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
+      "score": 68,
       "trend": "down"
     },
     {
@@ -80,24 +80,24 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CN-Сильный_ве",
+      "id": "SIGNAL-CN-Туман:_Уез",
       "type": "Signal",
-      "label": "Сильный ветер: Экономическая зона развит",
+      "label": "Туман: Уезд Ниньян, Город Цюфу, Город Ли",
       "severity": 74,
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-CN-Сильный_до",
+      "id": "SIGNAL-CN-Демографич",
       "type": "Signal",
-      "label": "Сильный дождь: Уаньшаньцю, Уезд Цзянькоу",
-      "severity": 74,
-      "domain": "economic"
+      "label": "Демографическая катастрофа Китая: лица в",
+      "severity": 68,
+      "domain": "social"
     },
     {
-      "id": "SIGNAL-CN-Туман:_Цзо",
+      "id": "SIGNAL-CN-Гроза:_Рав",
       "type": "Signal",
-      "label": "Туман: Цзочэн, Уезд Цзинсян, Китай",
-      "severity": 74,
+      "label": "Гроза: Равнинная местность, Фэнганг, Кит",
+      "severity": 56,
       "domain": "climate"
     }
   ],
@@ -112,7 +112,7 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-economic",
       "type": "CORRELATES",
-      "weight": 0.74
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CN",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.68
     },
     {
       "from": "COUNTRY-CN",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-CN-climate",
-      "to": "DOMAIN-CN-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-CN-infrastructure",
-      "to": "DOMAIN-CN-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-CN-economic",
-      "to": "DOMAIN-CN-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-CN-climate",
       "to": "DOMAIN-CN-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,22 +184,43 @@
       "lag_days": 90
     },
     {
-      "from": "SIGNAL-CN-Сильный_ве",
-      "to": "DOMAIN-CN-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.74
+      "from": "DOMAIN-CN-climate",
+      "to": "DOMAIN-CN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
     },
     {
-      "from": "SIGNAL-CN-Сильный_до",
+      "from": "DOMAIN-CN-infrastructure",
       "to": "DOMAIN-CN-economic",
       "type": "AMPLIFIES",
-      "weight": 0.74
+      "weight": 0.68,
+      "lag_days": 14
     },
     {
-      "from": "SIGNAL-CN-Туман:_Цзо",
+      "from": "DOMAIN-CN-economic",
+      "to": "DOMAIN-CN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-CN-Туман:_Уез",
       "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
       "weight": 0.74
+    },
+    {
+      "from": "SIGNAL-CN-Демографич",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.68
+    },
+    {
+      "from": "SIGNAL-CN-Гроза:_Рав",
+      "to": "DOMAIN-CN-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.56
     }
   ]
 }
