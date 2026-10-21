@@ -2,25 +2,25 @@
   "country": "JP",
   "date": "2026-10-21",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-21T12:41:04.276118+00:00",
+  "generated_at": "2026-10-21T12:50:51.471795+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-JP",
       "type": "Country",
       "label": "JP",
-      "score": 63,
+      "score": 62,
       "props": {
-        "risk_score": 63
+        "risk_score": 62
       }
     },
     {
       "id": "DOMAIN-JP-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 47,
-      "trend": "up"
+      "score": 5,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-JP-economic",
@@ -33,15 +33,15 @@
       "id": "DOMAIN-JP-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "stable"
+      "score": 74,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-JP-technology",
       "type": "Domain",
       "label": "technology",
       "score": 62,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-JP-social",
@@ -87,18 +87,18 @@
       "domain": "technology"
     },
     {
-      "id": "SIGNAL-JP-Япония_зап",
-      "type": "Signal",
-      "label": "Япония запустила исследовательский зонд ",
-      "severity": 47,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-JP-Столько,_п",
       "type": "Signal",
       "label": "Столько, по словам вымогателей, ушло на ",
       "severity": 43,
       "domain": "technology"
+    },
+    {
+      "id": "SIGNAL-JP-Климатичес",
+      "type": "Signal",
+      "label": "Климатический сигнал — Япония",
+      "severity": 74,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.47
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-JP",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.74
     },
     {
       "from": "COUNTRY-JP",
@@ -163,25 +163,46 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-JP-geopolitical",
+      "from": "DOMAIN-JP-climate",
       "to": "DOMAIN-JP-infrastructure",
       "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
+      "weight": 0.82,
+      "lag_days": 7
     },
     {
       "from": "DOMAIN-JP-infrastructure",
       "to": "DOMAIN-JP-economic",
       "type": "AMPLIFIES",
-      "weight": 0.72,
+      "weight": 0.68,
       "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-JP-economic",
+      "to": "DOMAIN-JP-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-JP-climate",
+      "to": "DOMAIN-JP-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-JP-economic",
       "to": "DOMAIN-JP-social",
       "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-JP-social",
+      "to": "DOMAIN-JP-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "SIGNAL-JP-В_Японии_п",
@@ -190,16 +211,16 @@
       "weight": 0.62
     },
     {
-      "from": "SIGNAL-JP-Япония_зап",
-      "to": "DOMAIN-JP-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.47
-    },
-    {
       "from": "SIGNAL-JP-Столько,_п",
       "to": "DOMAIN-JP-technology",
       "type": "AMPLIFIES",
       "weight": 0.43
+    },
+    {
+      "from": "SIGNAL-JP-Климатичес",
+      "to": "DOMAIN-JP-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.74
     }
   ]
 }
