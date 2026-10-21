@@ -2,7 +2,7 @@
   "country": "TR",
   "date": "2026-10-21",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-21T09:05:50.144118+00:00",
+  "generated_at": "2026-10-21T09:26:11.843935+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-TR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 50,
       "trend": "stable"
     },
     {
@@ -40,7 +40,7 @@
       "id": "DOMAIN-TR-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 59,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-TR-Турция_зак",
+      "type": "Signal",
+      "label": "Турция закрывает три брокерские фирмы, с",
+      "severity": 48,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-TR-Военный_ко",
       "type": "Signal",
       "label": "Военный конфликт — Ближний Восток (систе",
@@ -92,13 +99,6 @@
       "label": "Военные удары — Ближний Восток",
       "severity": 80,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-TR-Отключение",
-      "type": "Signal",
-      "label": "Отключение интернета — Ближний Восток (с",
-      "severity": 79,
-      "domain": "technology"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-TR",
@@ -124,7 +124,7 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-technology",
       "type": "CORRELATES",
-      "weight": 0.59
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-TR",
@@ -184,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-TR-Турция_зак",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.48
+    },
+    {
       "from": "SIGNAL-TR-Военный_ко",
       "to": "DOMAIN-TR-geopolitical",
       "type": "AMPLIFIES",
@@ -194,12 +200,6 @@
       "to": "DOMAIN-TR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.8
-    },
-    {
-      "from": "SIGNAL-TR-Отключение",
-      "to": "DOMAIN-TR-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.79
     }
   ]
 }
