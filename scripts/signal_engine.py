@@ -593,6 +593,17 @@ def _lc_domain(sig):
 # Правило: большинство событий кластера в домене social и большинство — о протестах ->
 # тип «Протесты и беспорядки». Откат — False.
 PROC_PROTEST_TYPE = True
+# PROC_PROTEST_EU_MACRO (21.10.2026): зонтик «Протесты и беспорядки — Европа» поверх страновых
+# протестных процессов. Только для этого типа: (1) порог 2 страновых процесса вместо 3;
+# (2) расширенный справочник Европы (в _MACROREGION нет Балкан, Скандинавии, Балтии и др.;
+# сам _MACROREGION не меняется, чтобы не трогать другие типы). Россия, Украина, Беларусь,
+# Турция в список не входят. Откат — False.
+PROC_PROTEST_EU_MACRO = True
+_PROTEST_EU_EXTRA = {'IE':'Ирландия','DK':'Дания','FI':'Финляндия','NO':'Норвегия','LU':'Люксембург',
+    'LT':'Литва','LV':'Латвия','EE':'Эстония','MT':'Мальта','CY':'Кипр','IS':'Исландия','SI':'Словения',
+    'HR':'Хорватия','BG':'Болгария','AL':'Албания','RS':'Сербия','BA':'Босния и Герцеговина',
+    'ME':'Черногория','MK':'Северная Македония','XK':'Косово','MD':'Молдова','GE':'Грузия'}
+_PROTEST_PLACE2CC = {v: k for k, v in _PROTEST_EU_EXTRA.items()}
 _PROTEST_RX = _re.compile(r'\bпротест(?!ир)|\bмитинг|\bдемонстрац|беспорядк|\bпогром|мародер|мародёр|\bбунт|'
                           r'столкновени\w*\s+с\s+(?:полиц|силовик|жандарм)|комендантск\w*\s+час', _re.I)
 def _is_protest_cluster(evs):
@@ -1891,11 +1902,14 @@ def _reconstruct_macro(signals, now):
         # возвращал алфавитно-первую страну = ложная привязка). Если place — не страна и
         # стран несколько (нет явного большинства) — страну НЕ выбираем (country=None).
         country=_PLACE2CC.get(pp)
+        _prot_eu = PROC_PROTEST_EU_MACRO and ptype=='Протесты и беспорядки'
+        if not country and _prot_eu:
+            country=_PROTEST_PLACE2CC.get(pp)
         if not country and len(cc)==1:
             country=cc[0]
         if ptype and country:
             groups[(ptype, country)].append(s)
-            _mr=_MACROREGION.get(country)
+            _mr=_MACROREGION.get(country) or ('Европа' if _prot_eu and country in _PROTEST_EU_EXTRA else None)
             if _mr:
                 region_groups[(ptype, _mr)].append(s)
         # place — сам макрорегион (Европа/Ближний Восток): прямая региональная группировка,
@@ -1908,7 +1922,8 @@ def _reconstruct_macro(signals, now):
                 [('region',k,v) for k,v in region_groups.items()] + \
                 [('country',k,v) for k,v in groups.items()]
     for _lvl, (ptype, area), members in _all_groups:
-        if len(members) < 3: continue
+        _prot_eu_lvl = PROC_PROTEST_EU_MACRO and ptype=='Протесты и беспорядки' and _lvl=='region' and area=='Европа'
+        if len(members) < (2 if _prot_eu_lvl else 3): continue
         # не дублируем: процесс уже покрыт трансграничным макро — не строим страновой
         _mids={id(m) for m in members}
         if _lvl=='country' and _mids & _covered: continue
@@ -1936,9 +1951,9 @@ def _reconstruct_macro(signals, now):
             _spread=[]
             for m in members_sorted:
                 for c in (m.get('countries') or []):
-                    if _MACROREGION.get(c) != area:
+                    if _MACROREGION.get(c) != area and not (_prot_eu_lvl and c in _PROTEST_EU_EXTRA):
                         continue
-                    nm=_cru.get(c, c)
+                    nm=_cru.get(c) or _PROTEST_EU_EXTRA.get(c, c)
                     if nm not in _spread: _spread.append(nm)
             regions=_spread or regions
         if len(regions) < 2: continue            # нужна реальная география распространения
