@@ -2,7 +2,7 @@
   "country": "ID",
   "date": "2026-10-21",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-21T10:27:36.805872+00:00",
+  "generated_at": "2026-10-21T10:47:17.625904+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-ID",
       "type": "Country",
       "label": "ID",
-      "score": 56,
+      "score": 60,
       "props": {
-        "risk_score": 56
+        "risk_score": 60
       }
     },
     {
@@ -20,49 +20,49 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
-      "trend": "down"
+      "score": 58,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-climate",
       "type": "Domain",
       "label": "climate",
       "score": 56,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DRIVER-ID-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-ID-Никель_под",
+      "type": "Signal",
+      "label": "Никель подорожал до более чем 16 000 дол",
+      "severity": 58,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-ID-Индонезийс",
       "type": "Signal",
       "label": "Индонезийский гнев нарастает из-за лесны",
@@ -91,13 +98,6 @@
       "type": "Signal",
       "label": "Пожарный сигнал — Юго-Восточная Азия · Д",
       "severity": 52,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-ID-Засуха,_вы",
-      "type": "Signal",
-      "label": "Засуха, вызванная Эль-Ниньо, оставляет и",
-      "severity": 44,
       "domain": "climate"
     }
   ],
@@ -112,7 +112,7 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-ID",
@@ -205,6 +205,12 @@
       "lag_days": 90
     },
     {
+      "from": "SIGNAL-ID-Никель_под",
+      "to": "DOMAIN-ID-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.58
+    },
+    {
       "from": "SIGNAL-ID-Индонезийс",
       "to": "DOMAIN-ID-climate",
       "type": "AMPLIFIES",
@@ -215,12 +221,6 @@
       "to": "DOMAIN-ID-climate",
       "type": "AMPLIFIES",
       "weight": 0.52
-    },
-    {
-      "from": "SIGNAL-ID-Засуха,_вы",
-      "to": "DOMAIN-ID-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.44
     }
   ]
 }
