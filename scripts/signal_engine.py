@@ -221,7 +221,7 @@ _TYPE_DOMAIN={
  'Оборонное производство':'geopolitics','Геополитический процесс':'geopolitics',
  'Отключение интернета':'technology','Уязвимость ПО':'technology','Киберугроза':'technology','Фишинговая кампания':'technology',
  'Авиационный инцидент':'technology','Технологический сигнал':'technology',
- 'Эпидемиологический риск':'social','Миграционная политика':'social','Криминальный оборот':'social','Социальный процесс':'social',
+ 'Эпидемиологический риск':'social','Миграционная политика':'social','Протесты и беспорядки':'social','Криминальный оборот':'social','Социальный процесс':'social',
  # ТИПЫ КАНОНА, КОТОРЫХ В РЕЕСТРЕ НЕ БЫЛО (29.09.2026).
  # _process_type берёт тип из canon_type, и словарь канона шире этого
  # реестра. Тип вне реестра означает, что домен процесса решается
@@ -585,9 +585,31 @@ def _lc_content_gate(sig, now):
 def _lc_domain(sig):
     return sig.get('primary_domain') or (sig.get('domains') or [''])[0]
 
+# PROC_PROTEST_TYPE (21.10.2026). Ни канон (_CANON_TYPE), ни legacy (_PROC_TYPE) не знают
+# протестов, поэтому социальный кластер о протестах получал тип по случайному совпадению.
+# Пример: «протестующие атаковали полицейские участки» -> канон «Военные удары» (\bатак),
+# сильный канон перебивал 15 социальных событий, и на макро-слиянии кластер сливался
+# с ударами по Украине в «Военные удары — Франция» (92, 23 доказательства).
+# Правило: большинство событий кластера в домене social и большинство — о протестах ->
+# тип «Протесты и беспорядки». Откат — False.
+PROC_PROTEST_TYPE = True
+_PROTEST_RX = _re.compile(r'\bпротест(?!ир)|\bмитинг|\bдемонстрац|беспорядк|\bпогром|мародер|мародёр|\bбунт|'
+                          r'столкновени\w*\s+с\s+(?:полиц|силовик|жандарм)|комендантск\w*\s+час', _re.I)
+def _is_protest_cluster(evs):
+    if not evs:
+        return False
+    n = len(evs)
+    soc = sum(1 for e in evs if (e.get('domain') or '') == 'social')
+    if 2 * soc < n:
+        return False
+    pr = sum(1 for e in evs if _PROTEST_RX.search((e.get('title') or '') + ' ' + (e.get('summary') or '')[:300]))
+    return 2 * pr >= n
+
 def _process_type(evs, domain):
     """Тип процесса по SCORING (побеждает тип с макс. числом совпадений в ЗАГОЛОВКАХ),
     устойчив к смешанным кластерам. Заголовки весомее summary."""
+    if PROC_PROTEST_TYPE and _is_protest_cluster(evs):
+        return 'Протесты и беспорядки'
     # A2 CANARY: для включённых доменов тип берётся из canon_type (не legacy scoring).
     # Только события, чей canon_domain входит в canary-набор; остальное — legacy ниже.
     _canary_set = _ALL_DOMAINS if CANON_FULL_PRODUCTION else DOMAIN_CANARY
@@ -1170,7 +1192,7 @@ _TYPE_TEMPO={
  'Тепловая волна':'fast','Пожарная активность':'fast','Наводнение':'fast','Похолодание':'fast',
  'Уязвимость ПО':'fast','Фишинговая кампания':'fast','Киберугроза':'fast','Технологический сигнал':'fast',
  'Топливный рынок':'medium','Валютный рынок':'medium','Розничная торговля':'medium','Экономический сигнал':'medium',
- 'Эпидемиологический риск':'medium','Миграционная политика':'medium','Криминальный оборот':'medium','Социальный процесс':'medium',
+ 'Эпидемиологический риск':'medium','Миграционная политика':'medium','Протесты и беспорядки':'medium','Криминальный оборот':'medium','Социальный процесс':'medium',
  'Климатическая политика':'slow','Водный дефицит':'slow','Санкционное давление':'slow','Военные удары':'slow',
  'Инфляция':'slow','Геополитический процесс':'slow','Визовые ограничения':'slow','Оборонное производство':'slow',
 }
@@ -1374,6 +1396,15 @@ def _decay_absent(prev, now):
     if hi>=720: status='archived'
     elif hi>=168: status='dormant'; factor=0.6
     elif hi>=48: status='fading'; factor=0.82
+    # PROC_PROTEST_TYPE: «Военные удары», собранный в основном из событий о протестах
+    # (артефакт до появления типа «Протесты и беспорядки»), без продолжения не держится
+    # активным до 48 ч/7 дней, а сразу уходит в dormant. Только вниз, только без нового события.
+    _protest_artifact = False
+    if PROC_PROTEST_TYPE and status=='active' and prev.get('process_type')=='Военные удары':
+        _pev = prev.get('evidence') or []
+        _ppr = sum(1 for e in _pev if _PROTEST_RX.search((e.get('title') or '')+' '+(e.get('summary') or '')[:300]))
+        if len(_pev) >= 3 and 2*_ppr >= len(_pev):
+            status='dormant'; factor=0.6; _protest_artifact = True
     rising=False
     phase=_evolve_phase_hist(prev.get('update_count',1), False, False, 0, hi, prev.get('phase','active'))
     conf=prev.get('confidence')
@@ -1381,7 +1412,7 @@ def _decay_absent(prev, now):
     npri=int(round(prev.get('priority',0)*factor))
     audit=prev.get('audit',[])[-30:]
     if status!='active':
-        audit=_cap(audit+[{'t':now,'change':'decay→%s'%status,'reason':'нет обновлений %dч'%int(hi),
+        audit=_cap(audit+[{'t':now,'change':'decay→%s'%status,'reason':('смешанный сигнал: большинство доказательств о протестах (PROC_PROTEST_TYPE)' if _protest_artifact else 'нет обновлений %dч'%int(hi)),
                            'rule':'process_decay','fields':['priority','status','phase','confidence']}])
     prev.update({'priority':npri,'status':status,'phase':phase,'confidence':conf,
         'health':_health(prev.get('severity',0),phase,hi,rising),'audit':audit,'last_seen':prev.get('last_seen',now)})
