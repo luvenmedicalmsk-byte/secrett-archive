@@ -2,67 +2,67 @@
   "country": "KZ",
   "date": "2026-10-21",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-21T00:45:39.841288+00:00",
+  "generated_at": "2026-10-21T01:07:28.540063+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-KZ",
       "type": "Country",
       "label": "KZ",
-      "score": 74,
+      "score": 92,
       "props": {
-        "risk_score": 74
+        "risk_score": 92
       }
     },
     {
       "id": "DOMAIN-KZ-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 25,
-      "trend": "down"
+      "score": 81,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 74,
-      "trend": "down"
+      "score": 92,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-social",
       "type": "Domain",
       "label": "social",
-      "score": 52,
-      "trend": "down"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DRIVER-KZ-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-KZ-Пожарная_о",
+      "type": "Signal",
+      "label": "Пожарная опасность: Туркестан (Туркестан",
+      "severity": 92,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-KZ-Ветер:_Фёд",
       "type": "Signal",
       "label": "Ветер: Фёдоровский район (Костанайская о",
@@ -92,13 +99,6 @@
       "label": "Очень низкая температура: Балхашский рай",
       "severity": 56,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-KZ-Сотрудники",
-      "type": "Signal",
-      "label": "Сотрудники Комитета национальной безопас",
-      "severity": 52,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.25
+      "weight": 0.81
     },
     {
       "from": "COUNTRY-KZ",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-climate",
       "type": "CORRELATES",
-      "weight": 0.74
+      "weight": 0.92
     },
     {
       "from": "COUNTRY-KZ",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-social",
       "type": "CORRELATES",
-      "weight": 0.52
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-KZ",
@@ -205,6 +205,33 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-KZ-geopolitical",
+      "to": "DOMAIN-KZ-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-KZ-infrastructure",
+      "to": "DOMAIN-KZ-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-KZ-economic",
+      "to": "DOMAIN-KZ-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-KZ-Пожарная_о",
+      "to": "DOMAIN-KZ-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.92
+    },
+    {
       "from": "SIGNAL-KZ-Ветер:_Фёд",
       "to": "DOMAIN-KZ-climate",
       "type": "AMPLIFIES",
@@ -215,12 +242,6 @@
       "to": "DOMAIN-KZ-climate",
       "type": "AMPLIFIES",
       "weight": 0.56
-    },
-    {
-      "from": "SIGNAL-KZ-Сотрудники",
-      "to": "DOMAIN-KZ-social",
-      "type": "AMPLIFIES",
-      "weight": 0.52
     }
   ]
 }
