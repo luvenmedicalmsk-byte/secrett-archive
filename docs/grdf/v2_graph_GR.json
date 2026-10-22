@@ -2,7 +2,7 @@
   "country": "GR",
   "date": "2026-10-22",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-22T12:41:38.964211+00:00",
+  "generated_at": "2026-10-22T12:52:36.108621+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-GR",
       "type": "Country",
       "label": "GR",
-      "score": 48,
+      "score": 50,
       "props": {
-        "risk_score": 48
+        "risk_score": 50
       }
     },
     {
@@ -20,7 +20,7 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 66,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-economic",
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 74,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-technology",
@@ -80,6 +80,13 @@
       "label": "economic"
     },
     {
+      "id": "SIGNAL-GR-Туман:_Зап",
+      "type": "Signal",
+      "label": "Туман: Западная Стерея, Эпир, Греция",
+      "severity": 50,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-GR-Шторм_—_Гр",
       "type": "Signal",
       "label": "Шторм — Греция",
@@ -92,13 +99,6 @@
       "label": "Геополитический процесс — Греция",
       "severity": 66,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-GR-Водный_деф",
-      "type": "Signal",
-      "label": "Водный дефицит — Греция",
-      "severity": 47,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -226,6 +226,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-GR-Туман:_Зап",
+      "to": "DOMAIN-GR-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
       "from": "SIGNAL-GR-Шторм_—_Гр",
       "to": "DOMAIN-GR-climate",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-GR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.66
-    },
-    {
-      "from": "SIGNAL-GR-Водный_деф",
-      "to": "DOMAIN-GR-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.47
     }
   ]
 }
