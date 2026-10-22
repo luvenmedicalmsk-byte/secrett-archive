@@ -2,7 +2,7 @@
   "country": "BY",
   "date": "2026-10-22",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-22T12:08:21.834829+00:00",
+  "generated_at": "2026-10-22T12:41:38.943835+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-BY-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 51,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-BY-Падение_ин",
+      "type": "Signal",
+      "label": "Падение интернет-связи: Беларусь",
+      "severity": 56,
+      "domain": "technology"
+    },
+    {
       "id": "SIGNAL-BY-Климатичес",
       "type": "Signal",
       "label": "Климатический сигнал — Беларусь",
@@ -92,13 +99,6 @@
       "label": "Пожарная активность — Беларусь",
       "severity": 70,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-BY-Отключение",
-      "type": "Signal",
-      "label": "Отключение интернета — Беларусь",
-      "severity": 56,
-      "domain": "technology"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-BY",
       "to": "DOMAIN-BY-economic",
       "type": "CORRELATES",
-      "weight": 0.51
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-BY",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-BY-climate",
-      "to": "DOMAIN-BY-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-BY-infrastructure",
-      "to": "DOMAIN-BY-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-BY-economic",
-      "to": "DOMAIN-BY-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-BY-climate",
       "to": "DOMAIN-BY-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -203,6 +182,27 @@
       "type": "AMPLIFIES",
       "weight": 0.65,
       "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-BY-climate",
+      "to": "DOMAIN-BY-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-BY-infrastructure",
+      "to": "DOMAIN-BY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-BY-economic",
+      "to": "DOMAIN-BY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-BY-geopolitical",
@@ -226,6 +226,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-BY-Падение_ин",
+      "to": "DOMAIN-BY-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.56
+    },
+    {
       "from": "SIGNAL-BY-Климатичес",
       "to": "DOMAIN-BY-climate",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-BY-climate",
       "type": "AMPLIFIES",
       "weight": 0.7
-    },
-    {
-      "from": "SIGNAL-BY-Отключение",
-      "to": "DOMAIN-BY-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.56
     }
   ]
 }
