@@ -2,7 +2,7 @@
   "country": "IT",
   "date": "2026-10-22",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-22T23:09:41.801629+00:00",
+  "generated_at": "2026-10-22T23:27:12.041322+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,17 +10,17 @@
       "id": "COUNTRY-IT",
       "type": "Country",
       "label": "IT",
-      "score": 91,
+      "score": 88,
       "props": {
-        "risk_score": 91
+        "risk_score": 88
       }
     },
     {
       "id": "DOMAIN-IT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 59,
-      "trend": "stable"
+      "score": 49,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IT-economic",
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 72,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IT-technology",
@@ -47,8 +47,8 @@
       "id": "DOMAIN-IT-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
-      "trend": "stable"
+      "score": 68,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IT-infrastructure",
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-IT-Гроза:_Апу",
-      "type": "Signal",
-      "label": "Гроза: Апулия, Кампания, Молизе и ещё 10",
-      "severity": 72,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-IT-Ливень:_Фр",
       "type": "Signal",
       "label": "Ливень: Фриули-Венеция-Джулия, Базиликат",
       "severity": 72,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-IT-Италию_нак",
+      "type": "Signal",
+      "label": "Италию накрыли массовые протесты против ",
+      "severity": 68,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.59
+      "weight": 0.49
     },
     {
       "from": "COUNTRY-IT",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.68
     },
     {
       "from": "COUNTRY-IT",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-IT-climate",
-      "to": "DOMAIN-IT-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-IT-infrastructure",
-      "to": "DOMAIN-IT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-IT-economic",
-      "to": "DOMAIN-IT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-IT-geopolitical",
       "to": "DOMAIN-IT-infrastructure",
       "type": "ESCALATES",
@@ -226,13 +205,28 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-IT-Ветер:_Сиц",
-      "to": "DOMAIN-IT-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.72
+      "from": "DOMAIN-IT-climate",
+      "to": "DOMAIN-IT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
     },
     {
-      "from": "SIGNAL-IT-Гроза:_Апу",
+      "from": "DOMAIN-IT-infrastructure",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-IT-Ветер:_Сиц",
       "to": "DOMAIN-IT-climate",
       "type": "AMPLIFIES",
       "weight": 0.72
@@ -242,6 +236,12 @@
       "to": "DOMAIN-IT-climate",
       "type": "AMPLIFIES",
       "weight": 0.72
+    },
+    {
+      "from": "SIGNAL-IT-Италию_нак",
+      "to": "DOMAIN-IT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.68
     }
   ]
 }
