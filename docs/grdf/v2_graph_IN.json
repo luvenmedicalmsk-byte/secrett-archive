@@ -2,9 +2,9 @@
   "country": "IN",
   "date": "2026-10-22",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-22T22:48:17.154645+00:00",
+  "generated_at": "2026-10-22T23:09:41.791110+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-IN",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-IN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
+      "score": 60,
       "trend": "stable"
     },
     {
@@ -40,7 +40,7 @@
       "id": "DOMAIN-IN-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 49,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-IN-С_1_января",
-      "type": "Signal",
-      "label": "С 1 января WhatsApp и Telegram не будут ",
-      "severity": 49,
-      "domain": "technology"
-    },
-    {
       "id": "SIGNAL-IN-Топливный_",
       "type": "Signal",
       "label": "Топливный рынок — Индия",
       "severity": 62,
       "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-IN-Геополитич",
+      "type": "Signal",
+      "label": "Геополитический процесс — Индия",
+      "severity": 60,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-IN",
@@ -124,7 +124,7 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-technology",
       "type": "CORRELATES",
-      "weight": 0.49
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-IN",
@@ -205,22 +205,43 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-IN-geopolitical",
+      "to": "DOMAIN-IN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IN-infrastructure",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-IN-Столица_Ин",
       "to": "DOMAIN-IN-climate",
       "type": "AMPLIFIES",
       "weight": 0.52
     },
     {
-      "from": "SIGNAL-IN-С_1_января",
-      "to": "DOMAIN-IN-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.49
-    },
-    {
       "from": "SIGNAL-IN-Топливный_",
       "to": "DOMAIN-IN-economic",
       "type": "AMPLIFIES",
       "weight": 0.62
+    },
+    {
+      "from": "SIGNAL-IN-Геополитич",
+      "to": "DOMAIN-IN-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.6
     }
   ]
 }
