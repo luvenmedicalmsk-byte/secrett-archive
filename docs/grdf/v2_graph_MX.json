@@ -2,67 +2,67 @@
   "country": "MX",
   "date": "2026-10-22",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-22T07:29:05.598123+00:00",
+  "generated_at": "2026-10-22T08:02:15.214243+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-MX",
       "type": "Country",
       "label": "MX",
-      "score": 74,
+      "score": 60,
       "props": {
-        "risk_score": 74
+        "risk_score": 60
       }
     },
     {
       "id": "DOMAIN-MX-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 61,
-      "trend": "stable"
+      "score": 25,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-MX-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-MX-climate",
       "type": "Domain",
       "label": "climate",
       "score": 74,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-MX-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-MX-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
-      "trend": "stable"
+      "score": 58,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-MX-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-MX-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DRIVER-MX-Geopolitical",
@@ -80,25 +80,25 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-MX-Угроза_нав",
-      "type": "Signal",
-      "label": "Угроза наводнения: Нью-Мексико, Калифорн",
-      "severity": 74,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-MX-NASA_фикси",
-      "type": "Signal",
-      "label": "NASA фиксирует странные волны высоко над",
-      "severity": 58,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-MX-Градоначал",
       "type": "Signal",
       "label": "Градоначальники упрекнули жителей за пре",
       "severity": 54,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-MX-Шторм_—_Ме",
+      "type": "Signal",
+      "label": "Шторм — Мексика",
+      "severity": 74,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-MX-Эпидемиоло",
+      "type": "Signal",
+      "label": "Эпидемиологический риск — Мексика",
+      "severity": 58,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.61
+      "weight": 0.25
     },
     {
       "from": "COUNTRY-MX",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-MX",
@@ -205,43 +205,22 @@
       "lag_days": 30
     },
     {
-      "from": "DOMAIN-MX-geopolitical",
-      "to": "DOMAIN-MX-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-MX-infrastructure",
-      "to": "DOMAIN-MX-economic",
+      "from": "SIGNAL-MX-Градоначал",
+      "to": "DOMAIN-MX-climate",
       "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
+      "weight": 0.54
     },
     {
-      "from": "DOMAIN-MX-economic",
-      "to": "DOMAIN-MX-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
-      "from": "SIGNAL-MX-Угроза_нав",
+      "from": "SIGNAL-MX-Шторм_—_Ме",
       "to": "DOMAIN-MX-climate",
       "type": "AMPLIFIES",
       "weight": 0.74
     },
     {
-      "from": "SIGNAL-MX-NASA_фикси",
-      "to": "DOMAIN-MX-climate",
+      "from": "SIGNAL-MX-Эпидемиоло",
+      "to": "DOMAIN-MX-social",
       "type": "AMPLIFIES",
       "weight": 0.58
-    },
-    {
-      "from": "SIGNAL-MX-Градоначал",
-      "to": "DOMAIN-MX-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.54
     }
   ]
 }
