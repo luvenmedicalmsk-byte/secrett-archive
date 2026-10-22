@@ -2,7 +2,7 @@
   "country": "MX",
   "date": "2026-10-22",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-22T08:50:26.872074+00:00",
+  "generated_at": "2026-10-22T09:07:20.340025+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -47,7 +47,7 @@
       "id": "DOMAIN-MX-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
+      "score": 58,
       "trend": "stable"
     },
     {
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-MX-NASA_фикси",
-      "type": "Signal",
-      "label": "NASA фиксирует странные волны высоко над",
-      "severity": 58,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-MX-Градоначал",
       "type": "Signal",
       "label": "Градоначальники упрекнули жителей за пре",
@@ -99,6 +92,13 @@
       "label": "Шторм — Мексика",
       "severity": 58,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-MX-Эпидемиоло",
+      "type": "Signal",
+      "label": "Эпидемиологический риск — Мексика",
+      "severity": 58,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -130,7 +130,7 @@
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-MX",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-MX-climate",
-      "to": "DOMAIN-MX-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-MX-infrastructure",
-      "to": "DOMAIN-MX-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-MX-economic",
-      "to": "DOMAIN-MX-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-MX-geopolitical",
       "to": "DOMAIN-MX-infrastructure",
       "type": "ESCALATES",
@@ -226,10 +205,25 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-MX-NASA_фикси",
-      "to": "DOMAIN-MX-climate",
+      "from": "DOMAIN-MX-climate",
+      "to": "DOMAIN-MX-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-MX-infrastructure",
+      "to": "DOMAIN-MX-economic",
       "type": "AMPLIFIES",
-      "weight": 0.58
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-MX-economic",
+      "to": "DOMAIN-MX-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "SIGNAL-MX-Градоначал",
@@ -240,6 +234,12 @@
     {
       "from": "SIGNAL-MX-Шторм_—_Ме",
       "to": "DOMAIN-MX-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.58
+    },
+    {
+      "from": "SIGNAL-MX-Эпидемиоло",
+      "to": "DOMAIN-MX-social",
       "type": "AMPLIFIES",
       "weight": 0.58
     }
