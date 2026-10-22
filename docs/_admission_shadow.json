@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-22T08:23:34Z",
+  "generated": "2026-10-22T08:34:33Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
@@ -27,27 +27,27 @@
   "shadow_reliability": {
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
-      "processes": 486,
-      "sample": 1743,
-      "agreement_pct": 90.0,
-      "decision_agreement_pct": 90.1,
-      "critical_errors": 172,
+      "processes": 484,
+      "sample": 1756,
+      "agreement_pct": 89.7,
+      "decision_agreement_pct": 89.9,
+      "critical_errors": 177,
       "truth_ratio_pct": 100.0,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 158,
-        "COMMENTARY→FACT_EVENT": 14,
+        "FACT_EVENT→COMMENTARY": 162,
+        "COMMENTARY→FACT_EVENT": 15,
         "BACKGROUND→COMMENTARY": 3
       }
     },
     "historical": {
       "processes": 1396,
-      "sample": 3835,
+      "sample": 3850,
       "agreement_pct": 90.1,
-      "decision_agreement_pct": 90.3,
-      "critical_errors": 373,
+      "decision_agreement_pct": 90.2,
+      "critical_errors": 378,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 329,
-        "COMMENTARY→FACT_EVENT": 40,
+        "FACT_EVENT→COMMENTARY": 333,
+        "COMMENTARY→FACT_EVENT": 41,
         "BACKGROUND→COMMENTARY": 3,
         "STATE_CONFIRMATION→FACT_EVENT": 3,
         "FEATURE→COMMENTARY": 2,
@@ -55,9 +55,9 @@
       }
     },
     "events_stream": {
-      "sample": 529,
-      "agreement_pct": 89.0,
-      "decision_agreement_pct": 89.4,
+      "sample": 522,
+      "agreement_pct": 88.9,
+      "decision_agreement_pct": 89.3,
       "critical_errors": 56,
       "error_matrix": {
         "FACT_EVENT→COMMENTARY": 53,
@@ -73,13 +73,17 @@
     }
   },
   "class_source": {
-    "evidence_sic": 3835
+    "evidence_sic": 3850
   },
   "truth_ratio_pct": 100.0,
   "domain_statistics": {
     "geopolitics": {
       "pass": 263,
       "deny": 78
+    },
+    "social": {
+      "pass": 94,
+      "deny": 43
     },
     "economy": {
       "pass": 240,
@@ -93,10 +97,6 @@
     "technology": {
       "pass": 123,
       "deny": 31
-    },
-    "social": {
-      "pass": 94,
-      "deny": 43
     }
   },
   "deny_impact": [
@@ -276,7 +276,7 @@
       "evidence_classes": {
         "COMMENTARY": 1
       },
-      "status": "active",
+      "status": "fading",
       "causal_links": 5,
       "reason": "no FACT_EVENT in evidence"
     },
@@ -792,6 +792,21 @@
       "reason": "no FACT_EVENT in evidence"
     },
     {
+      "signal_id": "clim-климатичес-сша-ca49",
+      "title": "Климатическая политика — США",
+      "domain": "climate",
+      "severity": 56,
+      "pressure": 63,
+      "first_seen": "2026-07-22",
+      "evidence_count": 2,
+      "evidence_classes": {
+        "COMMENTARY": 2
+      },
+      "status": "active",
+      "causal_links": 7,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
       "signal_id": "clim-климатичес-архангел-f823",
       "title": "Климатический сигнал — Архангельская область",
       "domain": "climate",
@@ -985,21 +1000,6 @@
       "status": "active",
       "causal_links": 3,
       "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "clim-климатичес-курильск-9ac3",
-      "title": "Климатический сигнал — Курильские острова, юг",
-      "domain": "climate",
-      "severity": 56,
-      "pressure": 39,
-      "first_seen": "2026-10-14",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "COMMENTARY": 1
-      },
-      "status": "active",
-      "causal_links": 0,
-      "reason": "no FACT_EVENT in evidence"
     }
   ],
   "report_log": [],
@@ -1008,6 +1008,13 @@
       "signal_id": "econ-топливныйр-москва-b2e4",
       "domain": "economy",
       "legacy": 52,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "clim-климатичес-сша-ca49",
+      "domain": "climate",
+      "legacy": 56,
       "shadow": null,
       "delta": null
     },
@@ -1159,13 +1166,6 @@
       "delta": null
     },
     {
-      "signal_id": "econ-стратегиче-мьянма-ebea",
-      "domain": "economy",
-      "legacy": 63,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "geop-транспортн-россия-cee7",
       "domain": "geopolitics",
       "legacy": 61,
@@ -1190,13 +1190,6 @@
       "signal_id": "clim-наводнение-свердлов-5466",
       "domain": "climate",
       "legacy": 46,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "clim-климатичес-сша-ca49",
-      "domain": "climate",
-      "legacy": 32,
       "shadow": null,
       "delta": null
     },
@@ -1423,12 +1416,19 @@
       "legacy": 56,
       "shadow": null,
       "delta": null
+    },
+    {
+      "signal_id": "clim-водныйдефи-янао-a919",
+      "domain": "climate",
+      "legacy": 56,
+      "shadow": null,
+      "delta": null
     }
   ],
   "deny_by_severity": {
     "0-30": 2,
-    "31-50": 209,
-    "51-70": 111,
+    "31-50": 208,
+    "51-70": 112,
     "71-90": 6,
     "91-100": 0
   }
