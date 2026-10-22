@@ -2,7 +2,7 @@
   "country": "CN",
   "date": "2026-10-22",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-22T02:08:53.002840+00:00",
+  "generated_at": "2026-10-22T02:28:17.892208+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 78,
+      "score": 80,
       "props": {
-        "risk_score": 78
+        "risk_score": 80
       }
     },
     {
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 74,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-technology",
@@ -80,9 +80,16 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CN-Туман:_Уда",
+      "id": "SIGNAL-CN-Сильный_до",
       "type": "Signal",
-      "label": "Туман: Удангский район, Уезд Хэчжан, Уез",
+      "label": "Сильный дождь: Уезд Мэнла, Китай",
+      "severity": 74,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-CN-Туман:_Лес",
+      "type": "Signal",
+      "label": "Туман: Лесной район Шэньнуньцзя, Удангск",
       "severity": 74,
       "domain": "climate"
     },
@@ -91,13 +98,6 @@
       "type": "Signal",
       "label": "Пожароопасность: Город Шэньчжэнь, Китай",
       "severity": 74,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-CN-Холод:_Цин",
-      "type": "Signal",
-      "label": "Холод: Цинлунг, Китай",
-      "severity": 56,
       "domain": "climate"
     }
   ],
@@ -205,7 +205,13 @@
       "lag_days": 90
     },
     {
-      "from": "SIGNAL-CN-Туман:_Уда",
+      "from": "SIGNAL-CN-Сильный_до",
+      "to": "DOMAIN-CN-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.74
+    },
+    {
+      "from": "SIGNAL-CN-Туман:_Лес",
       "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
       "weight": 0.74
@@ -215,12 +221,6 @@
       "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
       "weight": 0.74
-    },
-    {
-      "from": "SIGNAL-CN-Холод:_Цин",
-      "to": "DOMAIN-CN-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.56
     }
   ]
 }
