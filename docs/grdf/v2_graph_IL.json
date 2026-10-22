@@ -2,7 +2,7 @@
   "country": "IL",
   "date": "2026-10-22",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-22T09:27:09.594367+00:00",
+  "generated_at": "2026-10-22T09:47:51.274517+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,17 +10,17 @@
       "id": "COUNTRY-IL",
       "type": "Country",
       "label": "IL",
-      "score": 78,
+      "score": 80,
       "props": {
-        "risk_score": 78
+        "risk_score": 80
       }
     },
     {
       "id": "DOMAIN-IL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 62,
-      "trend": "stable"
+      "score": 88,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-economic",
@@ -33,8 +33,8 @@
       "id": "DOMAIN-IL-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 54,
-      "trend": "stable"
+      "score": 50,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-technology",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IL-Израильски",
+      "type": "Signal",
+      "label": "Израильские авиаудары и артиллерийские о",
+      "severity": 80,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-IL-Азербайджа",
       "type": "Signal",
       "label": "Азербайджан закупит у израильского оборо",
@@ -92,13 +99,6 @@
       "label": "Аномальная жара: Долина Кинерет, Долина ",
       "severity": 50,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-IL-Явления_на",
-      "type": "Signal",
-      "label": "Явления на побережье: Море - Юг, Море - ",
-      "severity": 50,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.62
+      "weight": 0.88
     },
     {
       "from": "COUNTRY-IL",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-climate",
       "type": "CORRELATES",
-      "weight": 0.54
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-IL",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-IL-climate",
-      "to": "DOMAIN-IL-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-IL-infrastructure",
-      "to": "DOMAIN-IL-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-IL-economic",
-      "to": "DOMAIN-IL-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-IL-geopolitical",
       "to": "DOMAIN-IL-infrastructure",
       "type": "ESCALATES",
@@ -226,6 +205,33 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-IL-climate",
+      "to": "DOMAIN-IL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-IL-infrastructure",
+      "to": "DOMAIN-IL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IL-economic",
+      "to": "DOMAIN-IL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-IL-Израильски",
+      "to": "DOMAIN-IL-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.8
+    },
+    {
       "from": "SIGNAL-IL-Азербайджа",
       "to": "DOMAIN-IL-geopolitical",
       "type": "AMPLIFIES",
@@ -233,12 +239,6 @@
     },
     {
       "from": "SIGNAL-IL-Аномальная",
-      "to": "DOMAIN-IL-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-IL-Явления_на",
       "to": "DOMAIN-IL-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
