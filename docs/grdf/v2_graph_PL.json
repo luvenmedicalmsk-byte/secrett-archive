@@ -2,7 +2,7 @@
   "country": "PL",
   "date": "2026-10-22",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-22T18:39:04.667882+00:00",
+  "generated_at": "2026-10-22T18:50:20.480881+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,17 +10,17 @@
       "id": "COUNTRY-PL",
       "type": "Country",
       "label": "PL",
-      "score": 52,
+      "score": 53,
       "props": {
-        "risk_score": 52
+        "risk_score": 53
       }
     },
     {
       "id": "DOMAIN-PL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 64,
-      "trend": "stable"
+      "score": 46,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PL-economic",
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 50,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PL-technology",
@@ -47,8 +47,8 @@
       "id": "DOMAIN-PL-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
-      "trend": "stable"
+      "score": 53,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PL-infrastructure",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-PL-Женщины_пр",
+      "type": "Signal",
+      "label": "Женщины протестуют по всей Польше за сво",
+      "severity": 53,
+      "domain": "social"
+    },
+    {
       "id": "SIGNAL-PL-Ветер:_Вос",
       "type": "Signal",
       "label": "Ветер: Восточная прибрежная зона, Польша",
@@ -87,18 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-PL-Военные_уд",
+      "id": "SIGNAL-PL-Протесты_и",
       "type": "Signal",
-      "label": "Военные удары — Польша",
-      "severity": 64,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-PL-Криминальн",
-      "type": "Signal",
-      "label": "Криминальный инцидент — Польша",
-      "severity": 57,
-      "domain": "geopolitical"
+      "label": "Протесты и беспорядки — Польша",
+      "severity": 53,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.64
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-PL",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.53
     },
     {
       "from": "COUNTRY-PL",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-PL-climate",
-      "to": "DOMAIN-PL-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-PL-infrastructure",
-      "to": "DOMAIN-PL-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-PL-economic",
-      "to": "DOMAIN-PL-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-PL-geopolitical",
       "to": "DOMAIN-PL-infrastructure",
       "type": "ESCALATES",
@@ -226,22 +205,43 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-PL-climate",
+      "to": "DOMAIN-PL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-PL-infrastructure",
+      "to": "DOMAIN-PL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-PL-economic",
+      "to": "DOMAIN-PL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-PL-Женщины_пр",
+      "to": "DOMAIN-PL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.53
+    },
+    {
       "from": "SIGNAL-PL-Ветер:_Вос",
       "to": "DOMAIN-PL-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-PL-Военные_уд",
-      "to": "DOMAIN-PL-geopolitical",
+      "from": "SIGNAL-PL-Протесты_и",
+      "to": "DOMAIN-PL-social",
       "type": "AMPLIFIES",
-      "weight": 0.64
-    },
-    {
-      "from": "SIGNAL-PL-Криминальн",
-      "to": "DOMAIN-PL-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.57
+      "weight": 0.53
     }
   ]
 }
