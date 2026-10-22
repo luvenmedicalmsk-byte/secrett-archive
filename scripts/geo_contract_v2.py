@@ -188,7 +188,28 @@ def _disputed(gc, title):
                           zone_id=hit, zone_type=ztype)
 
 
+# GEO_LATIN_ABBR (22.10.2026): латинские аббревиатуры стран в русском тексте
+# («Инфляция в UK», «данные USA») справочник не видит: он кириллический, а
+# добавить «uk» стемом нельзя — совпадёт с «ukraine». Перед резолвом заменяем
+# ТОЛЬКО заглавные отдельные токены UK, U.K., USA, U.S.A. на русское название.
+# Кейс: «Инфляция в UK…» (ONS) уходила в «Инфляция — Глобально». Откат: False.
+GEO_LATIN_ABBR = True
+_LATIN_ABBR = (
+    (re.compile(r'(?<![A-Za-zА-Яа-яЁё.])(?:UK|U\.K\.)(?![A-Za-zА-Яа-яЁё])'), 'Великобритании'),
+    (re.compile(r'(?<![A-Za-zА-Яа-яЁё.])(?:USA|U\.S\.A\.)(?![A-Za-zА-Яа-яЁё])'), 'США'),
+)
+
+
+def _latin_abbr(text):
+    if not GEO_LATIN_ABBR or not text:
+        return text
+    for rx, ru in _LATIN_ABBR:
+        text = rx.sub(ru, text)
+    return text
+
+
 def resolve_geo_v2(title, summary='', raw_coords=None, domain=None):
+    title = _latin_abbr(title); summary = _latin_abbr(summary)
     return _disputed(_eu_bloc(_resolve_geo_v2_core(title, summary, raw_coords, domain)), title)
 
 

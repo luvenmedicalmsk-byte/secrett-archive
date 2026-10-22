@@ -10804,6 +10804,11 @@ _FG_NAT_FIRE = re.compile(r'лесн|степн|\bтрав|торф|сухост
 _FG_REAL_HEAT = re.compile(r'градус|температур|°|аномальн\w* (?:жар|тепл)|рекордн\w* (?:жар|тепл)|\bзно[йя]|засух|тепловой удар|волн\w* жары|\+\d+\s*°?[сc]', re.I)
 _BIO_ATTACK_G = re.compile(r'клещ|комар|москит|мошк|саранч|насеком|шершен|\bосы\b|вирус|бактери|инфекц|эпидеми|пандеми|заболел|болезн|грибок|паразит|аллерг|плесен', re.I)
 _REAL_MIL_G = re.compile(r'ракет|бпла|беспилот|\bдрон|обстрел|артиллер|авиауд|\bвсу\b|войск|танк|снаряд|\bпво\b|удар\w* по|нанесл|боевик|\bфронт|оккуп|диверси|террорист', re.I)
+CANON_INFL_COMPARE_GUARD = True   # 22.10.2026, откат: False
+_INFL_CMP_G = re.compile(r'(?:опережа\w*|обгоня\w*|выше|ниже|сверх|быстрее|медленнее|отста\w*\s+от)»?\s+(?:уровн\w+\s+|темп\w*\s+)?инфляц|'
+                         r'с\s+учёт\w*\s+инфляц|с\s+учет\w*\s+инфляц|индексац\w*[^.]{0,40}инфляц|на\s+уровн\w*\s+инфляц', re.I)
+_INFL_DATA_G = re.compile(r'инфляци\w*\s+(?:в|во|за|составил\w*|ускорил\w*|замедлил\w*|достиг\w*|вырос\w*|снизил\w*)\s|'
+                          r'потребительск\w+\s+цен|индекс\w*\s+(?:потребительских\s+)?цен|\bипц\b|\bcpi\b|\d+[,.]?\d*\s*%', re.I)
 
 # ═══ IDR-008 Phase 4A.1 · GUARD BYPASS ДЛЯ МАШИННОЙ ДЕТЕКЦИИ ═════════════════
 # Аудит 008C: из 18 срабатываний fire-guard / heat-guard восемь пришлись на
@@ -10929,6 +10934,14 @@ def _canon_type_of(title, summ, _ban=None, _fb=False, _scores=None, _nat_src=Fal
     if best == 'Военные удары' and _BIO_ATTACK_G.search(_txt) and not _REAL_MIL_G.search(_txt):
         if _fb: return _canon_type_of(title, summ, (_ban or set()) | {best}, True)
         return None, 'bio-attack-guard'
+    # INFL-COMPARE-GUARD (22.10.2026): инфляция как мерка сравнения («расти темпами,
+    # опережающими инфляцию», «индексация на уровень инфляции», «выше инфляции») -
+    # не событие об инфляции. Кейс: обещание Минздрава о финансировании ОМС уходило
+    # в «Инфляция - Россия». Данные об инфляции (%, ИПЦ, «инфляция в/за/составила»)
+    # правило не трогают. Откат: CANON_INFL_COMPARE_GUARD = False.
+    if CANON_INFL_COMPARE_GUARD and best == 'Инфляция' and _INFL_CMP_G.search(_txt) and not _INFL_DATA_G.search(_txt):
+        if _fb: return _canon_type_of(title, summ, (_ban or set()) | {best}, True)
+        return None, 'infl-compare-guard'
     return best, br
 
 # ═══ TD-002: временный debug-контур False Domain Routing. Только stderr-печать

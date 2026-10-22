@@ -653,6 +653,34 @@ _REGION_RX = tuple(
     for _k, _z in _REGION_KEYS)
 
 
+# GEO_REGION_CAUSE_GUARD (22.10.2026): макрорегион, названный только в описании и
+# только как ПРИЧИНА («военные действия на Ближнем Востоке привели к падению
+# фондовых рынков», «на фоне конфликта на Ближнем Востоке»), не является местом
+# события. Кейс: обзор мировых рынков Bloomberg получал зону «Ближний Восток» и
+# процесс «Финансовый рынок - Ближний Восток». Если регион есть в заголовке или
+# стоит не в причинной конструкции, правило не действует. Откат: False.
+GEO_REGION_CAUSE_GUARD = True
+_RC_AFTER = __import__('re').compile(
+    r'^[^.!?;]{0,60}?(?:привел\w*|привёл|приводит|приводят|вызвал\w*|вызывает|вызывают|'
+    r'спровоцирова\w*|обрушил\w*|толкнул\w*|подстегнул\w*|усилил\w*\s+(?:спрос|опасени|бегств))',
+    __import__('re').I)
+_RC_BEFORE = __import__('re').compile(
+    r'(?:из-за|на\s+фоне|в\s+связи\s+с|вследствие|опасени\w*)[^.!?;]{0,80}$', __import__('re').I)
+
+
+def _region_is_cause(title, blob):
+    tl = (title or '').lower()
+    bl = (blob or '').lower()
+    for rx, zid in _REGION_RX:
+        if rx.search(tl):
+            return False                  # регион в заголовке — это место
+    for rx, zid in _REGION_RX:
+        for m in rx.finditer(bl):
+            if not (_RC_AFTER.search(bl[m.end():]) or _RC_BEFORE.search(bl[max(0, m.start() - 100):m.start()])):
+                return False              # хотя бы одно упоминание не причинное
+    return True
+
+
 def _region_zone(blob):
     """Континент или макрорегион в тексте. Возвращает zone_id или None."""
     best, bp = None, 10 ** 9
@@ -1810,6 +1838,8 @@ def resolve_geo(title, summary='', raw_coords=None, domain=None):
         # страны и legacy-зон: конкретное место всегда приоритетнее.
         # «Лесные пожары в Европе» не имеет страны, но имеет континент.
         _rz = _region_zone(_v3blob)
+        if _rz and GEO_REGION_CAUSE_GUARD and _region_is_cause(title, _v3blob):
+            _rz = None
         if _rz:
             return _mk_zone(_rz, 'регион', _v3blob, None, raw_coords, conf=0.7)
         if _lg is not None and _lg.country is None:
