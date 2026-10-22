@@ -2,9 +2,9 @@
   "country": "MX",
   "date": "2026-10-22",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-22T08:02:15.214243+00:00",
+  "generated_at": "2026-10-22T08:14:11.584112+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-MX",
@@ -19,50 +19,50 @@
       "id": "DOMAIN-MX-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 25,
-      "trend": "down"
+      "score": 53,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-MX-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-MX-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 74,
-      "trend": "down"
+      "score": 58,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-MX-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-MX-social",
       "type": "Domain",
       "label": "social",
-      "score": 58,
-      "trend": "down"
+      "score": 5,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-MX-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-MX-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-MX-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-MX-NASA_фикси",
+      "type": "Signal",
+      "label": "NASA фиксирует странные волны высоко над",
+      "severity": 58,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-MX-Градоначал",
       "type": "Signal",
       "label": "Градоначальники упрекнули жителей за пре",
@@ -90,15 +97,8 @@
       "id": "SIGNAL-MX-Шторм_—_Ме",
       "type": "Signal",
       "label": "Шторм — Мексика",
-      "severity": 74,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-MX-Эпидемиоло",
-      "type": "Signal",
-      "label": "Эпидемиологический риск — Мексика",
       "severity": 58,
-      "domain": "social"
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.25
+      "weight": 0.53
     },
     {
       "from": "COUNTRY-MX",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-climate",
       "type": "CORRELATES",
-      "weight": 0.74
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-MX",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-social",
       "type": "CORRELATES",
-      "weight": 0.58
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-MX",
@@ -205,6 +205,33 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-MX-geopolitical",
+      "to": "DOMAIN-MX-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-MX-infrastructure",
+      "to": "DOMAIN-MX-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-MX-economic",
+      "to": "DOMAIN-MX-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-MX-NASA_фикси",
+      "to": "DOMAIN-MX-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.58
+    },
+    {
       "from": "SIGNAL-MX-Градоначал",
       "to": "DOMAIN-MX-climate",
       "type": "AMPLIFIES",
@@ -213,12 +240,6 @@
     {
       "from": "SIGNAL-MX-Шторм_—_Ме",
       "to": "DOMAIN-MX-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.74
-    },
-    {
-      "from": "SIGNAL-MX-Эпидемиоло",
-      "to": "DOMAIN-MX-social",
       "type": "AMPLIFIES",
       "weight": 0.58
     }
