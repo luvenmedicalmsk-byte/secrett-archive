@@ -2,7 +2,7 @@
   "country": "GB",
   "date": "2026-10-22",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-22T11:29:01.998904+00:00",
+  "generated_at": "2026-10-22T11:48:08.843645+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-GB",
       "type": "Country",
       "label": "GB",
-      "score": 61,
+      "score": 77,
       "props": {
-        "risk_score": 61
+        "risk_score": 77
       }
     },
     {
@@ -20,49 +20,49 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 60,
-      "trend": "stable"
+      "score": 64,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 47,
-      "trend": "stable"
+      "score": 72,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-GB-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-GB-Наводнение",
+      "type": "Signal",
+      "label": "Наводнение: Южное побережье Девона в Бис",
+      "severity": 72,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-GB-Госдолг_Бр",
       "type": "Signal",
       "label": "Госдолг Британии впервые превысил $4 трл",
@@ -92,13 +99,6 @@
       "label": "Алюминий отказывается от своей военной п",
       "severity": 53,
       "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-GB-Британия_п",
-      "type": "Signal",
-      "label": "Британия пересматривает свои природоохра",
-      "severity": 47,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -112,13 +112,13 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-economic",
       "type": "CORRELATES",
-      "weight": 0.6
+      "weight": 0.64
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-climate",
       "type": "CORRELATES",
-      "weight": 0.47
+      "weight": 0.72
     },
     {
       "from": "COUNTRY-GB",
@@ -205,6 +205,12 @@
       "lag_days": 90
     },
     {
+      "from": "SIGNAL-GB-Наводнение",
+      "to": "DOMAIN-GB-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.72
+    },
+    {
       "from": "SIGNAL-GB-Госдолг_Бр",
       "to": "DOMAIN-GB-economic",
       "type": "AMPLIFIES",
@@ -215,12 +221,6 @@
       "to": "DOMAIN-GB-economic",
       "type": "AMPLIFIES",
       "weight": 0.53
-    },
-    {
-      "from": "SIGNAL-GB-Британия_п",
-      "to": "DOMAIN-GB-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.47
     }
   ]
 }
