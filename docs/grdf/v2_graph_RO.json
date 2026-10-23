@@ -2,7 +2,7 @@
   "country": "RO",
   "date": "2026-10-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-23T16:29:29.006236+00:00",
+  "generated_at": "2026-10-23T17:08:28.968242+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-RO",
       "type": "Country",
       "label": "RO",
-      "score": 72,
+      "score": 75,
       "props": {
-        "risk_score": 72
+        "risk_score": 75
       }
     },
     {
@@ -20,13 +20,13 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 72,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RO-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 50,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RO-technology",
@@ -87,18 +87,18 @@
       "domain": "geopolitical"
     },
     {
+      "id": "SIGNAL-RO-Воздушное_",
+      "type": "Signal",
+      "label": "Воздушное пространство — Румыния: высоки",
+      "severity": 63,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-RO-Ветер:_Тим",
       "type": "Signal",
       "label": "Ветер: Тимиш, Караш-Северин, Румыния",
       "severity": 50,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-RO-Европейски",
-      "type": "Signal",
-      "label": "Европейский рынок солнечной энергии и си",
-      "severity": 32,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-RO",
       "to": "DOMAIN-RO-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-RO",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-RO-climate",
-      "to": "DOMAIN-RO-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-RO-infrastructure",
-      "to": "DOMAIN-RO-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-RO-economic",
-      "to": "DOMAIN-RO-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-RO-geopolitical",
       "to": "DOMAIN-RO-infrastructure",
       "type": "ESCALATES",
@@ -226,22 +205,43 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-RO-climate",
+      "to": "DOMAIN-RO-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-RO-infrastructure",
+      "to": "DOMAIN-RO-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-RO-economic",
+      "to": "DOMAIN-RO-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-RO-Воздушное_",
       "to": "DOMAIN-RO-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.72
     },
     {
+      "from": "SIGNAL-RO-Воздушное_",
+      "to": "DOMAIN-RO-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.63
+    },
+    {
       "from": "SIGNAL-RO-Ветер:_Тим",
       "to": "DOMAIN-RO-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-RO-Европейски",
-      "to": "DOMAIN-RO-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.32
     }
   ]
 }
