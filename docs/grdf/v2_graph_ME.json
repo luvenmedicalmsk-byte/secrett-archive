@@ -2,7 +2,7 @@
   "country": "ME",
   "date": "2026-10-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-23T07:54:44.607711+00:00",
+  "generated_at": "2026-10-23T08:09:07.704389+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-ME",
       "type": "Country",
       "label": "ME",
-      "score": 53,
+      "score": 52,
       "props": {
-        "risk_score": 53
+        "risk_score": 52
       }
     },
     {
@@ -26,15 +26,15 @@
       "id": "DOMAIN-ME-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
-      "trend": "stable"
+      "score": 66,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ME-climate",
       "type": "Domain",
       "label": "climate",
       "score": 50,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ME-technology",
@@ -65,6 +65,11 @@
       "trend": "stable"
     },
     {
+      "id": "DRIVER-ME-economic",
+      "type": "Driver",
+      "label": "economic"
+    },
+    {
       "id": "DRIVER-ME-climate",
       "type": "Driver",
       "label": "climate"
@@ -75,30 +80,25 @@
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-ME-economic",
-      "type": "Driver",
-      "label": "economic"
-    },
-    {
-      "id": "SIGNAL-ME-Туман:_Кон",
-      "type": "Signal",
-      "label": "Туман: Континент и горы, Черногория",
-      "severity": 50,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-ME-Ветер:_Адр",
-      "type": "Signal",
-      "label": "Ветер: Адриатическое побережье, Континен",
-      "severity": 50,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-ME-Гроза:_Цен",
       "type": "Signal",
       "label": "Гроза: Центральный, Адриатическое побере",
       "severity": 50,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-ME-Ветер:_Кон",
+      "type": "Signal",
+      "label": "Ветер: Континент и горы, Адриатическое п",
+      "severity": 50,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-ME-Инфляция_—",
+      "type": "Signal",
+      "label": "Инфляция — Черногория",
+      "severity": 66,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-ME",
       "to": "DOMAIN-ME-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.66
     },
     {
       "from": "COUNTRY-ME",
@@ -145,6 +145,12 @@
       "weight": 0.05
     },
     {
+      "from": "DRIVER-ME-economic",
+      "to": "COUNTRY-ME",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-ME-climate",
       "to": "COUNTRY-ME",
       "type": "CAUSES",
@@ -152,12 +158,6 @@
     },
     {
       "from": "DRIVER-ME-geopolitical",
-      "to": "COUNTRY-ME",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
-      "from": "DRIVER-ME-economic",
       "to": "COUNTRY-ME",
       "type": "CAUSES",
       "weight": 0.8
@@ -205,22 +205,22 @@
       "lag_days": 90
     },
     {
-      "from": "SIGNAL-ME-Туман:_Кон",
-      "to": "DOMAIN-ME-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-ME-Ветер:_Адр",
-      "to": "DOMAIN-ME-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.5
-    },
-    {
       "from": "SIGNAL-ME-Гроза:_Цен",
       "to": "DOMAIN-ME-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
+    },
+    {
+      "from": "SIGNAL-ME-Ветер:_Кон",
+      "to": "DOMAIN-ME-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
+      "from": "SIGNAL-ME-Инфляция_—",
+      "to": "DOMAIN-ME-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.66
     }
   ]
 }
