@@ -1,8 +1,8 @@
 {
   "country": "RU",
-  "date": "2026-10-22",
+  "date": "2026-10-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-22T23:47:10.165666+00:00",
+  "generated_at": "2026-10-23T00:21:42.427774+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -19,7 +19,7 @@
       "id": "DOMAIN-RU-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 100,
+      "score": 97,
       "trend": "stable"
     },
     {
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-RU-Украина_со",
-      "type": "Signal",
-      "label": "Украина сообщает о 3 погибших и 11 ранен",
-      "severity": 95,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-RU-Ветер:_Кар",
       "type": "Signal",
       "label": "Ветер: Карасайский район (Алматинская об",
@@ -99,6 +92,13 @@
       "label": "Два человека пострадали в Москве во врем",
       "severity": 89,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-RU-БПЛА_и_рак",
+      "type": "Signal",
+      "label": "БПЛА и ракеты поразили АО «75 Арсенал» (",
+      "severity": 77,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-geopolitical",
       "type": "CORRELATES",
-      "weight": 1.0
+      "weight": 0.97
     },
     {
       "from": "COUNTRY-RU",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-RU-geopolitical",
-      "to": "DOMAIN-RU-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-RU-infrastructure",
-      "to": "DOMAIN-RU-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-RU-economic",
-      "to": "DOMAIN-RU-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "DOMAIN-RU-climate",
       "to": "DOMAIN-RU-infrastructure",
       "type": "ESCALATES",
@@ -226,10 +205,25 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-RU-Украина_со",
-      "to": "DOMAIN-RU-geopolitical",
+      "from": "DOMAIN-RU-geopolitical",
+      "to": "DOMAIN-RU-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-RU-infrastructure",
+      "to": "DOMAIN-RU-economic",
       "type": "AMPLIFIES",
-      "weight": 0.95
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-RU-economic",
+      "to": "DOMAIN-RU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-RU-Ветер:_Кар",
@@ -242,6 +236,12 @@
       "to": "DOMAIN-RU-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.89
+    },
+    {
+      "from": "SIGNAL-RU-БПЛА_и_рак",
+      "to": "DOMAIN-RU-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.77
     }
   ]
 }

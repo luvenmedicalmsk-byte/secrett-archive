@@ -1,8 +1,8 @@
 {
   "country": "TW",
-  "date": "2026-10-22",
+  "date": "2026-10-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-22T23:47:10.167043+00:00",
+  "generated_at": "2026-10-23T00:21:42.430718+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -26,21 +26,21 @@
       "id": "DOMAIN-TW-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 47,
+      "score": 50,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-TW-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 50,
+      "score": 46,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-TW-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 44,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -65,19 +65,26 @@
       "trend": "stable"
     },
     {
-      "id": "DRIVER-TW-climate",
-      "type": "Driver",
-      "label": "climate"
-    },
-    {
       "id": "DRIVER-TW-economic",
       "type": "Driver",
       "label": "economic"
     },
     {
-      "id": "DRIVER-TW-technology",
+      "id": "DRIVER-TW-climate",
       "type": "Driver",
-      "label": "technology"
+      "label": "climate"
+    },
+    {
+      "id": "DRIVER-TW-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-TW-Тайфун_Чам",
+      "type": "Signal",
+      "label": "Тайфун Чампи закрыл фондовый рынок Тайва",
+      "severity": 47,
+      "domain": "economic"
     },
     {
       "id": "SIGNAL-TW-Финансовый",
@@ -92,13 +99,6 @@
       "label": "Шторм — Восточная Азия",
       "severity": 62,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-TW-Авиационны",
-      "type": "Signal",
-      "label": "Авиационный инцидент — Тайвань",
-      "severity": 44,
-      "domain": "technology"
     }
   ],
   "edges": [
@@ -112,19 +112,19 @@
       "from": "COUNTRY-TW",
       "to": "DOMAIN-TW-economic",
       "type": "CORRELATES",
-      "weight": 0.47
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-TW",
       "to": "DOMAIN-TW-climate",
       "type": "CORRELATES",
-      "weight": 0.5
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-TW",
       "to": "DOMAIN-TW-technology",
       "type": "CORRELATES",
-      "weight": 0.44
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-TW",
@@ -145,19 +145,19 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-TW-climate",
-      "to": "COUNTRY-TW",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
       "from": "DRIVER-TW-economic",
       "to": "COUNTRY-TW",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-TW-technology",
+      "from": "DRIVER-TW-climate",
+      "to": "COUNTRY-TW",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DRIVER-TW-geopolitical",
       "to": "COUNTRY-TW",
       "type": "CAUSES",
       "weight": 0.8
@@ -205,6 +205,12 @@
       "lag_days": 90
     },
     {
+      "from": "SIGNAL-TW-Тайфун_Чам",
+      "to": "DOMAIN-TW-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.47
+    },
+    {
       "from": "SIGNAL-TW-Финансовый",
       "to": "DOMAIN-TW-economic",
       "type": "AMPLIFIES",
@@ -215,12 +221,6 @@
       "to": "DOMAIN-TW-climate",
       "type": "AMPLIFIES",
       "weight": 0.62
-    },
-    {
-      "from": "SIGNAL-TW-Авиационны",
-      "to": "DOMAIN-TW-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.44
     }
   ]
 }
