@@ -2,17 +2,17 @@
   "country": "TR",
   "date": "2026-10-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-23T09:22:03.793088+00:00",
+  "generated_at": "2026-10-23T09:32:00.797777+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-TR",
       "type": "Country",
       "label": "TR",
-      "score": 81,
+      "score": 87,
       "props": {
-        "risk_score": 81
+        "risk_score": 87
       }
     },
     {
@@ -26,14 +26,14 @@
       "id": "DOMAIN-TR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 74,
+      "score": 76,
       "trend": "up"
     },
     {
       "id": "DOMAIN-TR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 81,
       "trend": "up"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-TR-Два_челове",
+      "type": "Signal",
+      "label": "Два человека погибли, пятеро пострадали ",
+      "severity": 81,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-TR-2_человека",
       "type": "Signal",
       "label": "2 человека погибли, 5 получили ранения —",
@@ -90,13 +97,6 @@
       "id": "SIGNAL-TR-Центральны",
       "type": "Signal",
       "label": "Центральный банк Турции снизил ключевую ",
-      "severity": 62,
-      "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-TR-Турецкий_Ц",
-      "type": "Signal",
-      "label": "Турецкий ЦБ: Ставка понижена после долго",
       "severity": 62,
       "domain": "economic"
     }
@@ -112,13 +112,13 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-economic",
       "type": "CORRELATES",
-      "weight": 0.74
+      "weight": 0.76
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.81
     },
     {
       "from": "COUNTRY-TR",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-TR-climate",
+      "to": "DOMAIN-TR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-TR-infrastructure",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-TR-climate",
+      "to": "DOMAIN-TR-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-TR-social",
+      "to": "DOMAIN-TR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-TR-geopolitical",
       "to": "DOMAIN-TR-infrastructure",
       "type": "ESCALATES",
@@ -184,6 +226,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-TR-Два_челове",
+      "to": "DOMAIN-TR-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.81
+    },
+    {
       "from": "SIGNAL-TR-2_человека",
       "to": "DOMAIN-TR-geopolitical",
       "type": "AMPLIFIES",
@@ -191,12 +239,6 @@
     },
     {
       "from": "SIGNAL-TR-Центральны",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.62
-    },
-    {
-      "from": "SIGNAL-TR-Турецкий_Ц",
       "to": "DOMAIN-TR-economic",
       "type": "AMPLIFIES",
       "weight": 0.62
