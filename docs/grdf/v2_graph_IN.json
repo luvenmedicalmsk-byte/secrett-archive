@@ -2,9 +2,9 @@
   "country": "IN",
   "date": "2026-10-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-23T22:08:29.523941+00:00",
+  "generated_at": "2026-10-23T22:27:19.111327+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-IN",
@@ -33,7 +33,7 @@
       "id": "DOMAIN-IN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 46,
       "trend": "stable"
     },
     {
@@ -87,17 +87,17 @@
       "domain": "technology"
     },
     {
+      "id": "SIGNAL-IN-Эль-Ниньо_",
+      "type": "Signal",
+      "label": "Эль-Ниньо тогда и сейчас",
+      "severity": 46,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-IN-Геополитич",
       "type": "Signal",
       "label": "Геополитический процесс — Индия",
       "severity": 63,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-IN-Военные_уд",
-      "type": "Signal",
-      "label": "Военные удары — Южная Азия",
-      "severity": 80,
       "domain": "geopolitical"
     }
   ],
@@ -118,7 +118,7 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-IN",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IN-climate",
+      "to": "DOMAIN-IN-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-IN-social",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-IN-climate",
+      "to": "DOMAIN-IN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-IN-infrastructure",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "DOMAIN-IN-geopolitical",
       "to": "DOMAIN-IN-infrastructure",
       "type": "ESCALATES",
@@ -190,16 +232,16 @@
       "weight": 0.5
     },
     {
+      "from": "SIGNAL-IN-Эль-Ниньо_",
+      "to": "DOMAIN-IN-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.46
+    },
+    {
       "from": "SIGNAL-IN-Геополитич",
       "to": "DOMAIN-IN-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.63
-    },
-    {
-      "from": "SIGNAL-IN-Военные_уд",
-      "to": "DOMAIN-IN-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.8
     }
   ]
 }

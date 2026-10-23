@@ -2,17 +2,17 @@
   "country": "DK",
   "date": "2026-10-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-23T22:08:29.530042+00:00",
-  "node_count": 12,
-  "edge_count": 11,
+  "generated_at": "2026-10-23T22:27:19.117551+00:00",
+  "node_count": 14,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-DK",
       "type": "Country",
       "label": "DK",
-      "score": 48,
+      "score": 73,
       "props": {
-        "risk_score": 48
+        "risk_score": 73
       }
     },
     {
@@ -20,49 +20,54 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DK-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 35,
-      "trend": "stable"
+      "score": 32,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DK-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "stable"
+      "score": 72,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DK-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DK-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DK-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DK-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
+    },
+    {
+      "id": "DRIVER-DK-climate",
+      "type": "Driver",
+      "label": "climate"
     },
     {
       "id": "DRIVER-DK-economic",
@@ -75,9 +80,18 @@
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-DK-climate",
-      "type": "Driver",
-      "label": "climate"
+      "id": "SIGNAL-DK-Явления_на",
+      "type": "Signal",
+      "label": "Явления на побережье: Вадехавет, Централ",
+      "severity": 72,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-DK-Ветер:_Южн",
+      "type": "Signal",
+      "label": "Ветер: Южная и Северная Ютландия, Центра",
+      "severity": 50,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-DK-Экономичес",
@@ -98,13 +112,13 @@
       "from": "COUNTRY-DK",
       "to": "DOMAIN-DK-economic",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-DK",
       "to": "DOMAIN-DK-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.72
     },
     {
       "from": "COUNTRY-DK",
@@ -131,6 +145,12 @@
       "weight": 0.05
     },
     {
+      "from": "DRIVER-DK-climate",
+      "to": "COUNTRY-DK",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-DK-economic",
       "to": "COUNTRY-DK",
       "type": "CAUSES",
@@ -143,10 +163,58 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-DK-climate",
-      "to": "COUNTRY-DK",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-DK-climate",
+      "to": "DOMAIN-DK-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-DK-infrastructure",
+      "to": "DOMAIN-DK-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-DK-economic",
+      "to": "DOMAIN-DK-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-DK-climate",
+      "to": "DOMAIN-DK-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-DK-economic",
+      "to": "DOMAIN-DK-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-DK-social",
+      "to": "DOMAIN-DK-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "SIGNAL-DK-Явления_на",
+      "to": "DOMAIN-DK-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.72
+    },
+    {
+      "from": "SIGNAL-DK-Ветер:_Южн",
+      "to": "DOMAIN-DK-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
     },
     {
       "from": "SIGNAL-DK-Экономичес",
