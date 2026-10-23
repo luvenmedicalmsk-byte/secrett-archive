@@ -2,9 +2,9 @@
   "country": "TH",
   "date": "2026-10-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-23T11:06:49.174074+00:00",
+  "generated_at": "2026-10-23T11:28:22.894391+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-TH",
@@ -26,21 +26,21 @@
       "id": "DOMAIN-TH-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 36,
+      "score": 5,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-TH-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 43,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-TH-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
+      "score": 36,
       "trend": "stable"
     },
     {
@@ -70,21 +70,14 @@
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-TH-economic",
-      "type": "Driver",
-      "label": "economic"
-    },
-    {
       "id": "DRIVER-TH-climate",
       "type": "Driver",
       "label": "climate"
     },
     {
-      "id": "SIGNAL-TH-Баланс_вне",
-      "type": "Signal",
-      "label": "Баланс внешней торговли Таиланда",
-      "severity": 32,
-      "domain": "economic"
+      "id": "DRIVER-TH-technology",
+      "type": "Driver",
+      "label": "technology"
     },
     {
       "id": "SIGNAL-TH-Геополитич",
@@ -99,6 +92,13 @@
       "label": "Геополитический процесс — Таиланд",
       "severity": 60,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-TH-Наводнение",
+      "type": "Signal",
+      "label": "Наводнение — Таиланд",
+      "severity": 43,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -112,19 +112,19 @@
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-economic",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.43
     },
     {
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-TH",
@@ -151,16 +151,37 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-TH-economic",
+      "from": "DRIVER-TH-climate",
       "to": "COUNTRY-TH",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-TH-climate",
+      "from": "DRIVER-TH-technology",
       "to": "COUNTRY-TH",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-TH-climate",
+      "to": "DOMAIN-TH-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-TH-economic",
+      "to": "DOMAIN-TH-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-TH-social",
+      "to": "DOMAIN-TH-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "DOMAIN-TH-geopolitical",
@@ -184,10 +205,25 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-TH-Баланс_вне",
+      "from": "DOMAIN-TH-climate",
+      "to": "DOMAIN-TH-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-TH-infrastructure",
       "to": "DOMAIN-TH-economic",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TH-economic",
+      "to": "DOMAIN-TH-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "SIGNAL-TH-Геополитич",
@@ -200,6 +236,12 @@
       "to": "DOMAIN-TH-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.6
+    },
+    {
+      "from": "SIGNAL-TH-Наводнение",
+      "to": "DOMAIN-TH-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.43
     }
   ]
 }
