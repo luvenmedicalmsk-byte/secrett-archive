@@ -2,7 +2,7 @@
   "country": "IL",
   "date": "2026-10-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-23T23:06:25.065615+00:00",
+  "generated_at": "2026-10-23T23:28:06.025578+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -19,7 +19,7 @@
       "id": "DOMAIN-IL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 62,
+      "score": 72,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IL-Израиль_за",
+      "type": "Signal",
+      "label": "Израиль запускает «ограниченную антитерр",
+      "severity": 72,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-IL-Явления_на",
       "type": "Signal",
       "label": "Явления на побережье: Море - Юг, Море - ",
@@ -92,13 +99,6 @@
       "label": "Туман: Северо-Западный Негев, Западный Н",
       "severity": 72,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-IL-Военные_ма",
-      "type": "Signal",
-      "label": "Военные машины шторма в Хевроне на Запад",
-      "severity": 50,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.62
+      "weight": 0.72
     },
     {
       "from": "COUNTRY-IL",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-IL-climate",
-      "to": "DOMAIN-IL-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-IL-infrastructure",
-      "to": "DOMAIN-IL-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-IL-economic",
-      "to": "DOMAIN-IL-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-IL-geopolitical",
       "to": "DOMAIN-IL-infrastructure",
       "type": "ESCALATES",
@@ -226,6 +205,33 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-IL-climate",
+      "to": "DOMAIN-IL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-IL-infrastructure",
+      "to": "DOMAIN-IL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IL-economic",
+      "to": "DOMAIN-IL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-IL-Израиль_за",
+      "to": "DOMAIN-IL-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.72
+    },
+    {
       "from": "SIGNAL-IL-Явления_на",
       "to": "DOMAIN-IL-climate",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-IL-climate",
       "type": "AMPLIFIES",
       "weight": 0.72
-    },
-    {
-      "from": "SIGNAL-IL-Военные_ма",
-      "to": "DOMAIN-IL-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.5
     }
   ]
 }
