@@ -2,9 +2,9 @@
   "country": "SG",
   "date": "2026-10-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-23T05:31:10.864789+00:00",
+  "generated_at": "2026-10-23T05:40:55.254627+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-SG",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-SG-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
+      "score": 46,
       "trend": "stable"
     },
     {
@@ -33,7 +33,7 @@
       "id": "DOMAIN-SG-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 62,
       "trend": "stable"
     },
     {
@@ -65,9 +65,9 @@
       "trend": "stable"
     },
     {
-      "id": "DRIVER-SG-economic",
+      "id": "DRIVER-SG-climate",
       "type": "Driver",
-      "label": "economic"
+      "label": "climate"
     },
     {
       "id": "DRIVER-SG-geopolitical",
@@ -75,23 +75,9 @@
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-SG-climate",
+      "id": "DRIVER-SG-economic",
       "type": "Driver",
-      "label": "climate"
-    },
-    {
-      "id": "SIGNAL-SG-Сингапур_И",
-      "type": "Signal",
-      "label": "Сингапур Инфляция цен на продукты питани",
-      "severity": 32,
-      "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-SG-Сингапур_У",
-      "type": "Signal",
-      "label": "Сингапур Уровень инфляции в месяц",
-      "severity": 32,
-      "domain": "economic"
+      "label": "economic"
     },
     {
       "id": "SIGNAL-SG-Экономичес",
@@ -99,6 +85,20 @@
       "label": "Экономический сигнал — Юго-Восточная Ази",
       "severity": 46,
       "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-SG-Наводнение",
+      "type": "Signal",
+      "label": "Наводнение — Сингапур",
+      "severity": 62,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-SG-Геополитич",
+      "type": "Signal",
+      "label": "Геополитический процесс — Юго-Восточная ",
+      "severity": 62,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-SG",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.62
     },
     {
       "from": "COUNTRY-SG",
@@ -145,7 +145,7 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-SG-economic",
+      "from": "DRIVER-SG-climate",
       "to": "COUNTRY-SG",
       "type": "CAUSES",
       "weight": 0.8
@@ -157,28 +157,91 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-SG-climate",
+      "from": "DRIVER-SG-economic",
       "to": "COUNTRY-SG",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-SG-Сингапур_И",
-      "to": "DOMAIN-SG-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.32
+      "from": "DOMAIN-SG-climate",
+      "to": "DOMAIN-SG-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
     },
     {
-      "from": "SIGNAL-SG-Сингапур_У",
+      "from": "DOMAIN-SG-infrastructure",
       "to": "DOMAIN-SG-economic",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-SG-economic",
+      "to": "DOMAIN-SG-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-SG-climate",
+      "to": "DOMAIN-SG-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-SG-economic",
+      "to": "DOMAIN-SG-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-SG-social",
+      "to": "DOMAIN-SG-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-SG-geopolitical",
+      "to": "DOMAIN-SG-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-SG-infrastructure",
+      "to": "DOMAIN-SG-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-SG-economic",
+      "to": "DOMAIN-SG-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-SG-Экономичес",
       "to": "DOMAIN-SG-economic",
       "type": "AMPLIFIES",
       "weight": 0.46
+    },
+    {
+      "from": "SIGNAL-SG-Наводнение",
+      "to": "DOMAIN-SG-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.62
+    },
+    {
+      "from": "SIGNAL-SG-Геополитич",
+      "to": "DOMAIN-SG-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.62
     }
   ]
 }

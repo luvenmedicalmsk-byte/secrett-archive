@@ -2,7 +2,7 @@
   "country": "EE",
   "date": "2026-10-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-23T05:31:10.856062+00:00",
+  "generated_at": "2026-10-23T05:40:55.240931+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -47,7 +47,7 @@
       "id": "DOMAIN-EE-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
+      "score": 58,
       "trend": "stable"
     },
     {
@@ -65,6 +65,11 @@
       "trend": "stable"
     },
     {
+      "id": "DRIVER-EE-social",
+      "type": "Driver",
+      "label": "social"
+    },
+    {
       "id": "DRIVER-EE-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
@@ -73,18 +78,6 @@
       "id": "DRIVER-EE-economic",
       "type": "Driver",
       "label": "economic"
-    },
-    {
-      "id": "DRIVER-EE-climate",
-      "type": "Driver",
-      "label": "climate"
-    },
-    {
-      "id": "SIGNAL-EE-Прибыли_ра",
-      "type": "Signal",
-      "label": "Прибыли ракеты HIMARS с меньшей дальност",
-      "severity": 50,
-      "domain": "geopolitical"
     },
     {
       "id": "SIGNAL-EE-Воздушное_",
@@ -99,6 +92,13 @@
       "label": "Военные удары — Эстония",
       "severity": 50,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-EE-Эпидемиоло",
+      "type": "Signal",
+      "label": "Эпидемиологический риск — Эстония",
+      "severity": 58,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -130,7 +130,7 @@
       "from": "COUNTRY-EE",
       "to": "DOMAIN-EE-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-EE",
@@ -145,6 +145,12 @@
       "weight": 0.05
     },
     {
+      "from": "DRIVER-EE-social",
+      "to": "COUNTRY-EE",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-EE-geopolitical",
       "to": "COUNTRY-EE",
       "type": "CAUSES",
@@ -152,12 +158,6 @@
     },
     {
       "from": "DRIVER-EE-economic",
-      "to": "COUNTRY-EE",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
-      "from": "DRIVER-EE-climate",
       "to": "COUNTRY-EE",
       "type": "CAUSES",
       "weight": 0.8
@@ -184,12 +184,6 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-EE-Прибыли_ра",
-      "to": "DOMAIN-EE-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.5
-    },
-    {
       "from": "SIGNAL-EE-Воздушное_",
       "to": "DOMAIN-EE-geopolitical",
       "type": "AMPLIFIES",
@@ -200,6 +194,12 @@
       "to": "DOMAIN-EE-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.5
+    },
+    {
+      "from": "SIGNAL-EE-Эпидемиоло",
+      "to": "DOMAIN-EE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.58
     }
   ]
 }
