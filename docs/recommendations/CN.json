@@ -2,11 +2,29 @@
   "country": "CN",
   "country_name": "Китай",
   "date": "2026-10-24",
-  "generated_at": "2026-10-24T12:07:34.973900+00:00",
-  "srs_score": 54,
-  "srs_grade": "D",
-  "srs_grade_ru": "Требует внимания",
+  "generated_at": "2026-10-24T12:41:35.050355+00:00",
+  "srs_score": 60,
+  "srs_grade": "C",
+  "srs_grade_ru": "Умеренная",
   "priority_risks": [
+    {
+      "id": "R-01",
+      "category": "CRITICAL",
+      "title": "Критический уровень риска: 80",
+      "detail": "Скор риска 80 превышает критический порог 80. Доминирующий домен: climate.",
+      "metric_value": 80,
+      "urgency": 95,
+      "source": "risk_score"
+    },
+    {
+      "id": "R-02",
+      "category": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+15/день",
+      "detail": "Скорость ухудшения 15 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "metric_value": 15,
+      "urgency": 90,
+      "source": "delta"
+    },
     {
       "id": "R-04",
       "category": "STRATEGIC",
@@ -28,14 +46,14 @@
     {
       "id": "R-06",
       "category": "WATCHLIST",
-      "title": "Дрейф уверенности прогнозов: +10.0pt",
-      "detail": "Уверенность прогнозной системы дрейфует на +10.0pt от краткосрочного к долгосрочному горизонту.",
-      "metric_value": 10,
-      "urgency": 50,
+      "title": "Дрейф уверенности прогнозов: +11.0pt",
+      "detail": "Уверенность прогнозной системы дрейфует на +11.0pt от краткосрочного к долгосрочному горизонту.",
+      "metric_value": 11,
+      "urgency": 52,
       "source": "confidence_drift"
     }
   ],
-  "risk_count": 3,
+  "risk_count": 5,
   "priority_opportunities": [
     {
       "id": "O-05",
@@ -71,7 +89,7 @@
     {
       "type": "confidence_drift",
       "horizon": "long",
-      "detail": "Дрейф уверенности +10.0pt указывает на деградацию долгосрочных прогнозов."
+      "detail": "Дрейф уверенности +11.0pt указывает на деградацию долгосрочных прогнозов."
     }
   ],
   "forecast_improvement": [
@@ -82,6 +100,24 @@
     }
   ],
   "ranked_recommendations": [
+    {
+      "id": "R-01",
+      "type": "risk",
+      "priority": "CRITICAL",
+      "title": "Критический уровень риска: 80",
+      "rec_score": 63,
+      "metric_value": 80,
+      "source": "risk_score"
+    },
+    {
+      "id": "R-02",
+      "type": "risk",
+      "priority": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+15/день",
+      "rec_score": 60,
+      "metric_value": 15,
+      "source": "delta"
+    },
     {
       "id": "O-05",
       "type": "opportunity",
@@ -113,13 +149,29 @@
       "id": "R-06",
       "type": "risk",
       "priority": "WATCHLIST",
-      "title": "Дрейф уверенности прогнозов: +10.0pt",
-      "rec_score": 39,
-      "metric_value": 10,
+      "title": "Дрейф уверенности прогнозов: +11.0pt",
+      "rec_score": 41,
+      "metric_value": 11,
       "source": "confidence_drift"
     }
   ],
   "action_plan": [
+    {
+      "id": "ACT-R-01",
+      "priority": "CRITICAL",
+      "action": "Реагировать: Критический уровень риска: 80",
+      "rationale": "Скор риска 80 превышает критический порог 80. Доминирующий домен: climate.",
+      "deadline": "немедленно",
+      "source": "risk_score"
+    },
+    {
+      "id": "ACT-R-02",
+      "priority": "CRITICAL",
+      "action": "Реагировать: Быстрая эскалация: Δ=+15/день",
+      "rationale": "Скорость ухудшения 15 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "deadline": "немедленно",
+      "source": "delta"
+    },
     {
       "id": "ACT-R-04",
       "priority": "STRATEGIC",
@@ -127,22 +179,6 @@
       "rationale": "Обнаружено 3 диагностических предупреждений в стратегическом слое. Возможны системные ошибки.",
       "deadline": "72 часа",
       "source": "diagnostics"
-    },
-    {
-      "id": "ACT-R-05",
-      "priority": "STRATEGIC",
-      "action": "Реагировать: Смещения в принятии решений (2)",
-      "rationale": "Выявлено 2 смещений: Гиперреакция, Недостаточная реакция. Рекомендуется рекалибровка стратегии.",
-      "deadline": "7 дней",
-      "source": "decision_bias"
-    },
-    {
-      "id": "ACT-R-06",
-      "priority": "STRATEGIC",
-      "action": "Реагировать: Дрейф уверенности прогнозов: +10.0pt",
-      "rationale": "Уверенность прогнозной системы дрейфует на +10.0pt от краткосрочного к долгосрочному горизонту.",
-      "deadline": "7 дней",
-      "source": "confidence_drift"
     },
     {
       "id": "ACT-O-05",
@@ -156,8 +192,8 @@
   "action_count": 4,
   "rec_diagnostics": [],
   "diagnostic_count": 0,
-  "risk_score": 65,
-  "delta": 0,
+  "risk_score": 80,
+  "delta": 15,
   "domain": "climate",
   "history_depth": 149
 }
