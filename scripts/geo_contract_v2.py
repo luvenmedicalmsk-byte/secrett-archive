@@ -75,7 +75,7 @@ _ROLE_EVENT = {
     # технические: зона и планетарный масштаб
     'zone', 'zone_coords', 'global',
     # прежние английские имена сохранены на случай отката перевода
-    'locative', 'natural', 'kinetic_target', 'adj_locative',
+    'locative', 'natural', 'kinetic_target', 'kinetic_subject', 'adj_locative',
     'outage', 'single',
 }
 
