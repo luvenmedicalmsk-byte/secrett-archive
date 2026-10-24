@@ -2,7 +2,7 @@
   "country": "GR",
   "date": "2026-10-24",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-24T23:08:17.570130+00:00",
+  "generated_at": "2026-10-24T23:26:25.154840+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-GR",
       "type": "Country",
       "label": "GR",
-      "score": 51,
+      "score": 50,
       "props": {
-        "risk_score": 51
+        "risk_score": 50
       }
     },
     {
@@ -20,7 +20,7 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 64,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GR-economic",
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 50,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GR-technology",
@@ -47,8 +47,8 @@
       "id": "DOMAIN-GR-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
-      "trend": "stable"
+      "score": 48,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GR-infrastructure",
@@ -75,16 +75,9 @@
       "label": "climate"
     },
     {
-      "id": "DRIVER-GR-economic",
+      "id": "DRIVER-GR-social",
       "type": "Driver",
-      "label": "economic"
-    },
-    {
-      "id": "SIGNAL-GR-Гроза:_Фес",
-      "type": "Signal",
-      "label": "Гроза: Фессалия, Аттика, Восточная Пелоп",
-      "severity": 50,
-      "domain": "climate"
+      "label": "social"
     },
     {
       "id": "SIGNAL-GR-Туман:_Сев",
@@ -92,6 +85,13 @@
       "label": "Туман: Северо-восточные Эгейские острова",
       "severity": 50,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-GR-В_Греции_в",
+      "type": "Signal",
+      "label": "В Греции вспыхнули массовые протесты всл",
+      "severity": 48,
+      "domain": "social"
     },
     {
       "id": "SIGNAL-GR-Военные_уд",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-GR",
@@ -157,7 +157,7 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-GR-economic",
+      "from": "DRIVER-GR-social",
       "to": "COUNTRY-GR",
       "type": "CAUSES",
       "weight": 0.8
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-GR-climate",
-      "to": "DOMAIN-GR-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-GR-infrastructure",
-      "to": "DOMAIN-GR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-GR-economic",
-      "to": "DOMAIN-GR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-GR-geopolitical",
       "to": "DOMAIN-GR-infrastructure",
       "type": "ESCALATES",
@@ -226,16 +205,37 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-GR-Гроза:_Фес",
-      "to": "DOMAIN-GR-climate",
+      "from": "DOMAIN-GR-climate",
+      "to": "DOMAIN-GR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-GR-infrastructure",
+      "to": "DOMAIN-GR-economic",
       "type": "AMPLIFIES",
-      "weight": 0.5
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GR-economic",
+      "to": "DOMAIN-GR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "SIGNAL-GR-Туман:_Сев",
       "to": "DOMAIN-GR-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
+    },
+    {
+      "from": "SIGNAL-GR-В_Греции_в",
+      "to": "DOMAIN-GR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.48
     },
     {
       "from": "SIGNAL-GR-Военные_уд",
