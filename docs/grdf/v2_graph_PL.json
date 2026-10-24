@@ -2,9 +2,9 @@
   "country": "PL",
   "date": "2026-10-24",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-24T08:48:15.103302+00:00",
+  "generated_at": "2026-10-24T09:09:29.496961+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-PL",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-PL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 64,
+      "score": 63,
       "trend": "stable"
     },
     {
@@ -33,7 +33,7 @@
       "id": "DOMAIN-PL-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 50,
       "trend": "stable"
     },
     {
@@ -47,7 +47,7 @@
       "id": "DOMAIN-PL-social",
       "type": "Domain",
       "label": "social",
-      "score": 53,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -87,18 +87,18 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-PL-Протесты_и",
+      "id": "SIGNAL-PL-Ветер:_Зап",
       "type": "Signal",
-      "label": "Протесты и беспорядки — Польша",
-      "severity": 53,
-      "domain": "social"
+      "label": "Ветер: Западная прибрежная зона, Польша",
+      "severity": 50,
+      "domain": "climate"
     },
     {
-      "id": "SIGNAL-PL-Военные_уд",
+      "id": "SIGNAL-PL-Восстановл",
       "type": "Signal",
-      "label": "Военные удары — Польша",
-      "severity": 64,
-      "domain": "geopolitical"
+      "label": "Восстановление 12,000-летнего леса для з",
+      "severity": 44,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.64
+      "weight": 0.63
     },
     {
       "from": "COUNTRY-PL",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-PL",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-social",
       "type": "CORRELATES",
-      "weight": 0.53
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-PL",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-PL-climate",
+      "to": "DOMAIN-PL-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-PL-economic",
+      "to": "DOMAIN-PL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-PL-social",
+      "to": "DOMAIN-PL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-PL-climate",
+      "to": "DOMAIN-PL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-PL-infrastructure",
+      "to": "DOMAIN-PL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-PL-economic",
+      "to": "DOMAIN-PL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "DOMAIN-PL-geopolitical",
       "to": "DOMAIN-PL-infrastructure",
       "type": "ESCALATES",
@@ -190,16 +232,16 @@
       "weight": 0.63
     },
     {
-      "from": "SIGNAL-PL-Протесты_и",
-      "to": "DOMAIN-PL-social",
+      "from": "SIGNAL-PL-Ветер:_Зап",
+      "to": "DOMAIN-PL-climate",
       "type": "AMPLIFIES",
-      "weight": 0.53
+      "weight": 0.5
     },
     {
-      "from": "SIGNAL-PL-Военные_уд",
-      "to": "DOMAIN-PL-geopolitical",
+      "from": "SIGNAL-PL-Восстановл",
+      "to": "DOMAIN-PL-climate",
       "type": "AMPLIFIES",
-      "weight": 0.64
+      "weight": 0.44
     }
   ]
 }
