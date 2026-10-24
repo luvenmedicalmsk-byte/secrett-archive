@@ -2,7 +2,7 @@
   "country": "GR",
   "date": "2026-10-24",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-24T11:47:40.753302+00:00",
+  "generated_at": "2026-10-24T12:07:37.795810+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-GR",
       "type": "Country",
       "label": "GR",
-      "score": 48,
+      "score": 50,
       "props": {
-        "risk_score": 48
+        "risk_score": 50
       }
     },
     {
@@ -20,7 +20,7 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 71,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-economic",
@@ -33,8 +33,8 @@
       "id": "DOMAIN-GR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 74,
-      "trend": "stable"
+      "score": 50,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-technology",
@@ -48,7 +48,7 @@
       "type": "Domain",
       "label": "social",
       "score": 48,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-infrastructure",
@@ -65,19 +65,26 @@
       "trend": "stable"
     },
     {
-      "id": "DRIVER-GR-climate",
-      "type": "Driver",
-      "label": "climate"
-    },
-    {
       "id": "DRIVER-GR-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
     },
     {
+      "id": "DRIVER-GR-climate",
+      "type": "Driver",
+      "label": "climate"
+    },
+    {
       "id": "DRIVER-GR-social",
       "type": "Driver",
       "label": "social"
+    },
+    {
+      "id": "SIGNAL-GR-Ливень:_Во",
+      "type": "Signal",
+      "label": "Ливень: Восточная Пелопоннес, Аттика, Ио",
+      "severity": 50,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-GR-В_Греции_в",
@@ -92,13 +99,6 @@
       "label": "Военные удары — Греция",
       "severity": 71,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-GR-Шторм_—_Гр",
-      "type": "Signal",
-      "label": "Шторм — Греция",
-      "severity": 74,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-climate",
       "type": "CORRELATES",
-      "weight": 0.74
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-GR",
@@ -145,13 +145,13 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-GR-climate",
+      "from": "DRIVER-GR-geopolitical",
       "to": "COUNTRY-GR",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-GR-geopolitical",
+      "from": "DRIVER-GR-climate",
       "to": "COUNTRY-GR",
       "type": "CAUSES",
       "weight": 0.8
@@ -226,6 +226,12 @@
       "lag_days": 30
     },
     {
+      "from": "SIGNAL-GR-Ливень:_Во",
+      "to": "DOMAIN-GR-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
       "from": "SIGNAL-GR-В_Греции_в",
       "to": "DOMAIN-GR-social",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-GR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.71
-    },
-    {
-      "from": "SIGNAL-GR-Шторм_—_Гр",
-      "to": "DOMAIN-GR-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.74
     }
   ]
 }
