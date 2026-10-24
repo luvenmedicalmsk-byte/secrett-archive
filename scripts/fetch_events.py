@@ -5871,6 +5871,33 @@ def _is_retro_title(title):
     return False
 
 
+# NOISE_PR_2410 (24.10.2026): реклама и PR, не сигнал риска.
+#  · раунды и гранты компаний («Peak Energy привлекает $108 млн», «Грант Минтранса
+#    на модернизацию железной дороги») без признаков риска и без оборонного контекста;
+#  · протокольные визиты («с рабочим визитом посетили НИИ»);
+#  · палеонаука («астероид врезался… миллионы лет назад»);
+#  · нападение дикого животного на человека — бытовой инцидент, как акула.
+# Откат: NOISE_PR_2410 = False.
+NOISE_PR_2410 = True
+_PR_FUND = re.compile(r'(?:привлек\w*|получа\w*|получил\w*|выделил\w*|выделя\w*)\s[^.]{0,60}?(?:финансирован\w*|инвестиц\w*|раунд\w*|грант\w*)|'
+                      r'раунд\w*\s+(?:серии\s+)?[a-d]\b|раунд\w*\s+финансир|\bгрант\w*\s+(?:министерств|на\s+модерниз)', re.I)
+_PR_RISK = re.compile(r'банкрот|дефолт|санкц|кризис|обвал|паден|сокращ|увольн|убыт|арест|штраф|расследов|взлом|утечк|атак|удар|'
+                      r'погиб|пострада|эвакуац|оборон|военн|безопасност|разведк|наблюдени\w*\s+за', re.I)
+_PR_PROTO = re.compile(r'с\s+рабочим\s+визитом|рабоч\w+\s+поездк|провел\w*\s+(?:рабочее\s+)?совещани', re.I)
+_PR_PALEO = re.compile(r'миллион\w*\s+лет\s+назад|доисторическ|астероид\w*\s+врезал', re.I)
+_PR_BEAST = re.compile(r'медвед\w*\s+(?:растерзал|задрал|напал|загрыз)|(?:растерзал|задрал|загрыз)\w*\s+медвед', re.I)
+
+
+def _is_pr_noise(title, b):
+    if _PR_FUND.search(b) and not _PR_RISK.search(b):
+        return True
+    if _PR_PROTO.search(title or ''):
+        return True
+    if _PR_PALEO.search(b) or _PR_BEAST.search(b):
+        return True
+    return False
+
+
 def _is_news_not_signal(title, summary, domain):
     """S43: «сигнал или шум» на финальном (русском) тексте. True = новость, не сигнал.
     Дубль логики S41/S42, но на переведённом тексте -- ловит мусор из англоязычных
@@ -5884,6 +5911,8 @@ def _is_news_not_signal(title, summary, domain):
     if _is_digest(b) or _is_agency_pr(b) or _is_personal_story(title):
         return True
     if RETRO_TITLE and _is_retro_title(title):
+        return True
+    if NOISE_PR_2410 and _is_pr_noise(title, b):
         return True
     _fluff = _fluff_short(b) or any(w in b for w in ('плей-офф','лига чемпионов','чемпионат мира','олимпийск иг','кубок гагарина','knicks',
         'футбол','хоккей','баскетбол','теннис','волейбол','олимпиад','чемпионат','матч ','сборная по','по футболу','турнир',
@@ -10804,6 +10833,9 @@ _FG_NAT_FIRE = re.compile(r'лесн|степн|\bтрав|торф|сухост
 _FG_REAL_HEAT = re.compile(r'градус|температур|°|аномальн\w* (?:жар|тепл)|рекордн\w* (?:жар|тепл)|\bзно[йя]|засух|тепловой удар|волн\w* жары|\+\d+\s*°?[сc]', re.I)
 _BIO_ATTACK_G = re.compile(r'клещ|комар|москит|мошк|саранч|насеком|шершен|\bосы\b|вирус|бактери|инфекц|эпидеми|пандеми|заболел|болезн|грибок|паразит|аллерг|плесен', re.I)
 _REAL_MIL_G = re.compile(r'ракет|бпла|беспилот|\bдрон|обстрел|артиллер|авиауд|\bвсу\b|войск|танк|снаряд|\bпво\b|удар\w* по|нанесл|боевик|\bфронт|оккуп|диверси|террорист', re.I)
+CANON_AWARD_GUARD = True   # 24.10.2026, откат: False
+_AWARD_G = re.compile(r'преми\w*|наград\w*|лауреат\w*|присудил\w*|вручил\w*|award|prize', re.I)
+_SANC_ACT_G = re.compile(r'(?:ввел\w*|ввёл\w*|ввод\w*|наложил\w*|расширил\w*|снял\w*|отменил\w*|продлил\w*)\s+(?:\w+\s+){0,3}санкц', re.I)
 CANON_INFL_COMPARE_GUARD = True   # 22.10.2026, откат: False
 _INFL_CMP_G = re.compile(r'(?:опережа\w*|обгоня\w*|выше|ниже|сверх|быстрее|медленнее|отста\w*\s+от)»?\s+(?:уровн\w+\s+|темп\w*\s+)?инфляц|'
                          r'с\s+учёт\w*\s+инфляц|с\s+учет\w*\s+инфляц|индексац\w*[^.]{0,40}инфляц|на\s+уровн\w*\s+инфляц', re.I)
@@ -10939,6 +10971,13 @@ def _canon_type_of(title, summ, _ban=None, _fb=False, _scores=None, _nat_src=Fal
     # не событие об инфляции. Кейс: обещание Минздрава о финансировании ОМС уходило
     # в «Инфляция - Россия». Данные об инфляции (%, ИПЦ, «инфляция в/за/составила»)
     # правило не трогают. Откат: CANON_INFL_COMPARE_GUARD = False.
+    # AWARD-GUARD (24.10.2026): премия или награда тому, кто «под санкциями», —
+    # не санкционное давление. Кейс: премия Сахарова МУС получала «Санкционное
+    # давление» и до 82/100. Санкционное действие в тексте (ввёл, наложил,
+    # расширил, снял санкции) правило не трогает. Откат: CANON_AWARD_GUARD = False.
+    if CANON_AWARD_GUARD and best == 'Санкционное давление' and _AWARD_G.search(_txt) and not _SANC_ACT_G.search(_txt):
+        if _fb: return _canon_type_of(title, summ, (_ban or set()) | {best}, True)
+        return None, 'award-guard'
     if CANON_INFL_COMPARE_GUARD and best == 'Инфляция' and _INFL_CMP_G.search(_txt) and not _INFL_DATA_G.search(_txt):
         if _fb: return _canon_type_of(title, summ, (_ban or set()) | {best}, True)
         return None, 'infl-compare-guard'
@@ -12324,6 +12363,9 @@ def _mag_classify(e):
     return min(12, bonus), det
 
 
+SCOPE_MAG_IDEMPOTENT = True
+
+
 def _scope_mag_apply(events):
     """Применяет надбавки за охват и за количественный масштаб к severity.
 
@@ -12350,12 +12392,21 @@ def _scope_mag_apply(events):
         old = e.get('severity') or 0
         cap = (92 if (e.get('casualties') or 0) else 82) if CAP_V2_GATE else (
             75 if (e.get('casualties') or 0) else 65)
-        new = max(old, min(cap, old + sb + mb))
+        # SCOPE_MAG_IDEMPOTENT (24.10.2026): событие, перенесённое из прошлого
+        # снимка, уже несёт надбавку, и каждый прогон добавлял её снова:
+        # премия Сахарова МУС 62 → 70 → 78 → 82 за три прогона. Если прошлая
+        # надбавка на месте, база — значение до неё. Откат: False.
+        _base = old
+        _pm = e.get('_scope_mag') if SCOPE_MAG_IDEMPOTENT else None
+        if isinstance(_pm, dict) and _pm.get('to') == old and isinstance(_pm.get('from'), (int, float)):
+            _base = _pm['from']
+        new = max(_base, min(cap, _base + sb + mb))
         if new == old:
             continue
         e['severity'] = _sev_log(e, 'scope_magnitude', old, new,
-                                 'охват и количественный масштаб', 'boost')
-        e['_scope_mag'] = {'from': old, 'to': new, 'parts': det}
+                                 'охват и количественный масштаб' if new > old else
+                                 'снятие повторной надбавки прошлых прогонов', 'boost' if new > old else 'cut')
+        e['_scope_mag'] = {'from': _base, 'to': new, 'parts': det}
         n += 1
     if n:
         print('  [SCOPE+MAG] поднято событий: %d' % n, file=sys.stderr)
@@ -22621,6 +22672,9 @@ def rewrite_obscene(text):
         return None
 
 
+TR_NO_WORDMAP = True   # 24.10.2026, откат: False
+
+
 def translate_batch(texts, force=False):
     """Переводит список текстов на русский (OpenAI JSON-контракт) с дисковым кэшем по хэшу.
 
@@ -22698,6 +22752,11 @@ def translate_batch(texts, force=False):
         блокировало последующий полный перевод.
         """
         if not text or not is_english(text):
+            return text
+        # TR_NO_WORDMAP (24.10.2026): пословная подстановка в английскую фразу
+        # даёт «Gunmen open пожар at a church»; лучше оставить оригинал —
+        # лента его скроет (FEED_UNTRANSLATED_GATE), следующий прогон переведёт.
+        if TR_NO_WORDMAP:
             return text
         result = text; tl = text.lower()
         for eng, rus in WORD_MAP.items():
@@ -25642,6 +25701,39 @@ def _decency_filter(events):
 #  • заголовки, обрезанные источником многоточием, дополняются из описания.
 # Скрытие: feed_visible = False + hygiene = причина. Откат: FEED_HYGIENE = False.
 FEED_HYGIENE = True
+# FEED_UNTRANSLATED_GATE (24.10.2026): заголовок не переведён или испорчен
+# словарным fallback («Gunmen open пожар at a church», «police пожар tear газ»).
+# Подстановка «пожар» в английскую фразу давала климатический домен, а «удар» —
+# военный. Такая запись остаётся в аналитическом потоке, но не в ленте, пока
+# следующий прогон её не переведёт. Чисто английский заголовок — если латиница
+# больше 80% букв и первое слово латинское (карточки «Сбой Cloudflare: …» не
+# трогаются); смесь — латиница больше 45% и есть слово словарного fallback.
+# Откат: FEED_UNTRANSLATED_GATE = False.
+FEED_UNTRANSLATED_GATE = True
+HYG_QUESTION_ANY = True
+HYG_VENDOR_BLOG = ('Cloudflare Blog',)
+HYG_STUDY_CAP = 75
+_HYG_STUDY = re.compile(r'^(?:учёные|ученые|исследовани\w*|исследователи)\b|(?:нового|новое|новому)\s+исследовани', re.I)
+_WM_RU = ('лесной пожар|лесные пожары|наводнени[ея]|затоплени[ея]|землетрясени[ея]|ураган|тайфун|циклон|засуха|'
+          'аномальная жара|вулкан|извержение|цунами|оползень|война|атака|удар|военный|войска|ракета|перемирие|'
+          'вторжение|санкции|кризис|протест|беспорядки|переворот|выборы|рецессия|инфляция|долг|дефолт|кибератака|'
+          'взлом|пандемия|вспышка болезни|беженцы|миграция|пожар|шторм|торнадо|взрыв|обрушение|погибших|мертвых|'
+          'жертвы|чрезвычайная ситуация|катастрофа|предупреждение|тревога|ядерный|химический|нефть|газ|энергетика|'
+          'климат|температура|арктика|лёд|ледник|вырубка лесов|загрязнение')
+_WM_RU_RX = re.compile(r'(?<![а-яё])(?:' + _WM_RU + r')(?![а-яё])', re.I)
+
+
+def _untranslated_title(t):
+    t = str(t or '')
+    cy = sum(1 for c in t if '\u0400' <= c <= '\u04FF')
+    la = sum(1 for c in t if c.isalpha() and c.isascii())
+    if cy + la < 8:
+        return False
+    share = la / (cy + la)
+    first = re.match(r'[^A-Za-zА-Яа-яЁё]*([A-Za-zА-Яа-яЁё]+)', t)
+    if share > 0.8 and first and first.group(1).isascii():
+        return True
+    return share > 0.45 and bool(_WM_RU_RX.search(t))
 FEED_MAX_AGE = {'geopolitics': 4, 'economy': 7, 'climate': 7, 'social': 7, 'technology': 7}
 FEED_IODA_MAX = 5
 # Аудит 13.10 (180 записей оперативной ленты):
@@ -25856,8 +25948,25 @@ def _feed_hygiene(events):
             continue
         t = e.get('title') or ''
         yrs = [int(y) for y in re.findall(r'(?<!\d)(1[0-9]{3}|2[0-9]{3})(?!\d)', t)]
+        if FEED_UNTRANSLATED_GATE and _untranslated_title(t):
+            hide(e, 'не переведено'); continue
+        # 24.10.2026: блог вендора — продукт и маркетинг, не событие; в аналитике
+        # остаётся. Откат: HYG_VENDOR_BLOG = ().
+        if str(e.get('source') or '') in HYG_VENDOR_BLOG:
+            hide(e, 'блог вендора'); continue
         if _HYG_EXPLAIN.search(t):
             hide(e, 'объяснение/вопрос'); continue
+        # 24.10.2026: вопрос в середине заголовка — колонка или мнение
+        # («Чья это война? Переосмысление роли Ирана»). Откат: HYG_QUESTION_ANY = False.
+        if HYG_QUESTION_ANY and re.search(r'\?(?=\s)', t):
+            hide(e, 'объяснение/вопрос'); continue
+        # 24.10.2026: исследование (ретроспектива) — не текущее событие: потолок
+        # индекса 75. «Учёные: аномальная жара в Европе привела к рекордному
+        # числу смертей» получала 97. Откат: HYG_STUDY_CAP = 0.
+        if HYG_STUDY_CAP and (e.get('severity') or 0) > HYG_STUDY_CAP and _HYG_STUDY.search(t):
+            e['severity_hygiene_from'] = e.get('severity')
+            e['severity'] = HYG_STUDY_CAP
+            cnt['исследование → потолок'] = cnt.get('исследование → потолок', 0) + 1
         if yrs and (min(yrs) < 1990 or max(yrs) >= 2060):
             hide(e, 'история/дальний прогноз'); continue
         if _HYG_OBSERV.search(t):
