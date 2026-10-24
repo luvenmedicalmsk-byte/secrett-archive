@@ -2,9 +2,9 @@
   "country": "IN",
   "date": "2026-10-24",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-24T22:32:19.834929+00:00",
+  "generated_at": "2026-10-24T22:42:34.980354+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IN",
@@ -19,14 +19,14 @@
       "id": "DOMAIN-IN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
+      "score": 63,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-IN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 44,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -87,18 +87,18 @@
       "domain": "technology"
     },
     {
-      "id": "SIGNAL-IN-Спотовые_с",
+      "id": "SIGNAL-IN-Геополитич",
       "type": "Signal",
-      "label": "Спотовые ставки Индия-USEC стремительно ",
-      "severity": 32,
-      "domain": "economic"
+      "label": "Геополитический процесс — Индия",
+      "severity": 63,
+      "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-IN-Выставка_в",
+      "id": "SIGNAL-IN-Военные_уд",
       "type": "Signal",
-      "label": "Выставка возобновляемой энергии в Индии ",
-      "severity": 32,
-      "domain": "economic"
+      "label": "Военные удары — Южная Азия",
+      "severity": 80,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.63
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-economic",
       "type": "CORRELATES",
-      "weight": 0.44
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-IN",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IN-geopolitical",
+      "to": "DOMAIN-IN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IN-infrastructure",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-IN-PHP_делитс",
       "to": "DOMAIN-IN-technology",
       "type": "AMPLIFIES",
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-IN-Спотовые_с",
-      "to": "DOMAIN-IN-economic",
+      "from": "SIGNAL-IN-Геополитич",
+      "to": "DOMAIN-IN-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.63
     },
     {
-      "from": "SIGNAL-IN-Выставка_в",
-      "to": "DOMAIN-IN-economic",
+      "from": "SIGNAL-IN-Военные_уд",
+      "to": "DOMAIN-IN-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.8
     }
   ]
 }
