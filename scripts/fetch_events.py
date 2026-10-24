@@ -7079,6 +7079,13 @@ def _disaster_scale_floor(text):
 
 
 
+MARITIME_ATTACK_FLOOR = 62
+_MAR_A = r'(?:атак\w*|удар\w*|поражен\w*|поразил\w*|обстрел\w*|захват\w*|захвачен\w*|подорва\w*|подрыв\w*|ракетн\w*|дрон\w*|беспилотн\w*|бпла)'
+_MAR_V = r'(?:судн\w*|суда|судов|танкер\w*|корабл\w*|сухогруз\w*|газовоз\w*|контейнеровоз\w*)\b'
+_MAR_ATK = re.compile(r'\b' + _MAR_A + r'(?:\W+\w+){0,4}?\W+' + _MAR_V + r'|\b' + _MAR_V + r'(?:\W+\w+){0,4}?\W+' + _MAR_A, re.I)
+_MAR_NEG = re.compile(r'учени|манёвр|маневр|спасл|спасен|затонул|рыболов|круизн|шторм|туристическ|модел|построен|спущен', re.I)
+
+
 def _recompute_severity(ev):
     b = ((ev.get('title') or '') + ' ' + (ev.get('summary') or '')).lower()
     dom = ev.get('domain') or ''
@@ -7130,6 +7137,13 @@ def _recompute_severity(ev):
     _risknoun = any(w in b for w in ('кризис','crisis','война','войн','war','санкц','sanction','дефицит','обвал','крах','эпидеми','дефолт','default','коллапс','collapse','рецесс','recession','блэкаут','blackout','катастроф','эвакуац'))
     if _global and _risknoun:
         sev = max(sev, 76)
+    # 24.10.2026: атака на гражданские суда — удар по морскому коридору,
+    # даже если в тексте нет слова «пролив». «КСИР заявил об атаке на 4 судна
+    # в Персидском заливе» стояло на 37, а подрывы танкеров в Ормузском
+    # проливе — на 66. Только по заголовку; учения, спасение, шторм и
+    # затопление без атаки не поднимаются. Откат: MARITIME_ATTACK_FLOOR = 0.
+    if MARITIME_ATTACK_FLOOR and _MAR_ATK.search(ev.get('title') or '') and not _MAR_NEG.search(ev.get('title') or ''):
+        sev = max(sev, MARITIME_ATTACK_FLOOR)
     # ПОВЫШЕНИЕ: стратегические ресурсы / критич. инфраструктура / каскад
     if any(w in b for w in ('газопровод','нефтепровод','санкц','sanction','ядерн','nuclear','аэс','пролив','strait','коридор','энергосист','power grid','блэкаут','blackout','цепочк поставок','supply chain','swift','дефолт','default')):
         sev = max(sev, 62)
@@ -18115,6 +18129,10 @@ def fetch_telegram():
                 'sterngang', 'Ateobreaking', 'investorbiz',
                 'Tyumen72chs', 'kraschp', 'chp_irkutsk', 'inc54', 'chp_ekb', 'chp_55',
                 'alertasdowndetector', 'dciber', 'ctinow', 'thehackernews', 'Cyber_Security_Channel']
+    # 24.10.2026: агитационные каналы отключены — пропаганда и лозунги вместо
+    # сигналов («Париж требует голову Макрона», «Эх, барин запретил нам
+    # возмущаться»). Откат: TG_AGITPROP_OFF = ().
+    channels = [c for c in channels if c not in TG_AGITPROP_OFF]
     # ПОДПИСИ РАЗВЕДЕНЫ (11.09.2026). Канал ecotopor подписывался как «T Live»,
     # хотя это разные каналы: ecotopor это экономика (t.me/ecotopor), а T Live это
     # оперативные сводки (t.me/toporlive). Настоящий toporlive в конвейере
@@ -25712,6 +25730,7 @@ FEED_HYGIENE = True
 FEED_UNTRANSLATED_GATE = True
 HYG_QUESTION_ANY = True
 HYG_VENDOR_BLOG = ('Cloudflare Blog',)
+TG_AGITPROP_OFF = ('readovkanews', 'rotfront_su', 'worldprotest')
 FEED_DEDUP_2410 = True
 _DD_STOP = {'котор', 'также', 'после', 'более', 'менее', 'этого', 'этому', 'через', 'может', 'могут',
             'будет', 'своей', 'своих', 'сообщ', 'заяви', 'данны', 'время', 'годах', 'года', 'россия', 'росси', 'проти'}
@@ -25719,7 +25738,7 @@ _DD_STOP = {'котор', 'также', 'после', 'более', 'менее'
 
 def _dd_stems(t):
     return set(w[:5] for w in re.findall(r'[а-яёa-z]{5,}', (t or '').lower()) if w[:5] not in _DD_STOP)
-HYG_STUDY_CAP = 75
+HYG_STUDY_CAP = 65
 _HYG_STUDY = re.compile(r'^(?:учёные|ученые|исследовани\w*|исследователи)\b|(?:нового|новое|новому)\s+исследовани', re.I)
 _WM_RU = ('лесной пожар|лесные пожары|наводнени[ея]|затоплени[ея]|землетрясени[ея]|ураган|тайфун|циклон|засуха|'
           'аномальная жара|вулкан|извержение|цунами|оползень|война|атака|удар|военный|войска|ракета|перемирие|'
@@ -25961,6 +25980,8 @@ def _feed_hygiene(events):
         # остаётся. Откат: HYG_VENDOR_BLOG = ().
         if str(e.get('source') or '') in HYG_VENDOR_BLOG:
             hide(e, 'блог вендора'); continue
+        if str(e.get('source') or '').replace('Telegram/', '') in TG_AGITPROP_OFF:
+            hide(e, 'агитация'); continue
         if _HYG_EXPLAIN.search(t):
             hide(e, 'объяснение/вопрос'); continue
         # 24.10.2026: вопрос в середине заголовка — колонка или мнение
@@ -25970,7 +25991,12 @@ def _feed_hygiene(events):
         # 24.10.2026: исследование (ретроспектива) — не текущее событие: потолок
         # индекса 75. «Учёные: аномальная жара в Европе привела к рекордному
         # числу смертей» получала 97. Откат: HYG_STUDY_CAP = 0.
-        if HYG_STUDY_CAP and (e.get('severity') or 0) > HYG_STUDY_CAP and _HYG_STUDY.search(t):
+        # 24.10.2026: признак исследования ищется и в начале описания —
+        # «Самое жаркое лето в Европе стало также самым смертоносным» (Grist,
+        # 97) начинается с «Исследователи оценивают…». Потолок снижен до 65:
+        # ретроспективная оценка — сигнал, но не оперативное событие.
+        if HYG_STUDY_CAP and (e.get('severity') or 0) > HYG_STUDY_CAP and (
+                _HYG_STUDY.search(t) or _HYG_STUDY.search((e.get('summary') or '').strip()[:60])):
             e['severity_hygiene_from'] = e.get('severity')
             e['severity'] = HYG_STUDY_CAP
             cnt['исследование → потолок'] = cnt.get('исследование → потолок', 0) + 1
