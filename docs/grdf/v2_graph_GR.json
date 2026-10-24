@@ -2,7 +2,7 @@
   "country": "GR",
   "date": "2026-10-24",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-24T23:26:25.154840+00:00",
+  "generated_at": "2026-10-24T23:48:11.356511+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,17 +10,17 @@
       "id": "COUNTRY-GR",
       "type": "Country",
       "label": "GR",
-      "score": 50,
+      "score": 51,
       "props": {
-        "risk_score": 50
+        "risk_score": 51
       }
     },
     {
       "id": "DOMAIN-GR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 64,
-      "trend": "down"
+      "score": 45,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-economic",
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 50,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-technology",
@@ -48,7 +48,7 @@
       "type": "Domain",
       "label": "social",
       "score": 48,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-infrastructure",
@@ -65,11 +65,6 @@
       "trend": "stable"
     },
     {
-      "id": "DRIVER-GR-geopolitical",
-      "type": "Driver",
-      "label": "geopolitical"
-    },
-    {
       "id": "DRIVER-GR-climate",
       "type": "Driver",
       "label": "climate"
@@ -78,6 +73,18 @@
       "id": "DRIVER-GR-social",
       "type": "Driver",
       "label": "social"
+    },
+    {
+      "id": "DRIVER-GR-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-GR-Гроза:_Фес",
+      "type": "Signal",
+      "label": "Гроза: Фессалия, Аттика, Восточная Пелоп",
+      "severity": 50,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-GR-Туман:_Сев",
@@ -92,13 +99,6 @@
       "label": "В Греции вспыхнули массовые протесты всл",
       "severity": 48,
       "domain": "social"
-    },
-    {
-      "id": "SIGNAL-GR-Военные_уд",
-      "type": "Signal",
-      "label": "Военные удары — Греция",
-      "severity": 64,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.64
+      "weight": 0.45
     },
     {
       "from": "COUNTRY-GR",
@@ -145,12 +145,6 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-GR-geopolitical",
-      "to": "COUNTRY-GR",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
       "from": "DRIVER-GR-climate",
       "to": "COUNTRY-GR",
       "type": "CAUSES",
@@ -158,6 +152,12 @@
     },
     {
       "from": "DRIVER-GR-social",
+      "to": "COUNTRY-GR",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DRIVER-GR-geopolitical",
       "to": "COUNTRY-GR",
       "type": "CAUSES",
       "weight": 0.8
@@ -226,6 +226,12 @@
       "lag_days": 30
     },
     {
+      "from": "SIGNAL-GR-Гроза:_Фес",
+      "to": "DOMAIN-GR-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
       "from": "SIGNAL-GR-Туман:_Сев",
       "to": "DOMAIN-GR-climate",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-GR-social",
       "type": "AMPLIFIES",
       "weight": 0.48
-    },
-    {
-      "from": "SIGNAL-GR-Военные_уд",
-      "to": "DOMAIN-GR-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.64
     }
   ]
 }
