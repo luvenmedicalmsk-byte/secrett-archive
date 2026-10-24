@@ -2,17 +2,17 @@
   "country": "CN",
   "date": "2026-10-24",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-24T03:04:56.584691+00:00",
+  "generated_at": "2026-10-24T03:27:37.328955+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 74,
+      "score": 65,
       "props": {
-        "risk_score": 74
+        "risk_score": 65
       }
     },
     {
@@ -20,49 +20,54 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
-      "trend": "up"
+      "score": 54,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 74,
-      "trend": "up"
+      "score": 5,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CN-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CN-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CN-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
+    },
+    {
+      "id": "DRIVER-CN-Economic",
+      "type": "Driver",
+      "label": "Economic"
     },
     {
       "id": "DRIVER-CN-Geopolitical",
@@ -75,30 +80,25 @@
       "label": "Economic"
     },
     {
-      "id": "DRIVER-CN-Economic",
-      "type": "Driver",
-      "label": "Economic"
+      "id": "SIGNAL-CN-Китай:_Про",
+      "type": "Signal",
+      "label": "Китай: Производственная инфляция улетела",
+      "severity": 54,
+      "domain": "economic"
     },
     {
-      "id": "SIGNAL-CN-Сильный_до",
+      "id": "SIGNAL-CN-Банк_китая",
       "type": "Signal",
-      "label": "Сильный дождь: Район Лукцяо, Город Вэньл",
-      "severity": 74,
-      "domain": "climate"
+      "label": "Банк китая: Ставка на месте на протяжени",
+      "severity": 48,
+      "domain": "economic"
     },
     {
-      "id": "SIGNAL-CN-Снегопад:_",
+      "id": "SIGNAL-CN-Краткий_об",
       "type": "Signal",
-      "label": "Снегопад: 1. Transportation, public secu",
-      "severity": 56,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-CN-Ураган:_Уе",
-      "type": "Signal",
-      "label": "Ураган: Уезд Шэнси, Китай",
-      "severity": 56,
-      "domain": "climate"
+      "label": "Краткий обзор китайской солнечной энерге",
+      "severity": 32,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,13 +112,13 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.54
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-climate",
       "type": "CORRELATES",
-      "weight": 0.74
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CN",
@@ -145,6 +145,12 @@
       "weight": 0.05
     },
     {
+      "from": "DRIVER-CN-Economic",
+      "to": "COUNTRY-CN",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-CN-Geopolitical",
       "to": "COUNTRY-CN",
       "type": "CAUSES",
@@ -157,70 +163,22 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-CN-Economic",
-      "to": "COUNTRY-CN",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-CN-climate",
-      "to": "DOMAIN-CN-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-CN-infrastructure",
+      "from": "SIGNAL-CN-Китай:_Про",
       "to": "DOMAIN-CN-economic",
       "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
+      "weight": 0.54
     },
     {
-      "from": "DOMAIN-CN-economic",
+      "from": "SIGNAL-CN-Банк_китая",
       "to": "DOMAIN-CN-economic",
       "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
+      "weight": 0.48
     },
     {
-      "from": "DOMAIN-CN-climate",
+      "from": "SIGNAL-CN-Краткий_об",
       "to": "DOMAIN-CN-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-CN-economic",
-      "to": "DOMAIN-CN-social",
       "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-CN-social",
-      "to": "DOMAIN-CN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "SIGNAL-CN-Сильный_до",
-      "to": "DOMAIN-CN-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.74
-    },
-    {
-      "from": "SIGNAL-CN-Снегопад:_",
-      "to": "DOMAIN-CN-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.56
-    },
-    {
-      "from": "SIGNAL-CN-Ураган:_Уе",
-      "to": "DOMAIN-CN-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.56
+      "weight": 0.32
     }
   ]
 }
