@@ -2,7 +2,7 @@
   "country": "ES",
   "date": "2026-10-24",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-24T11:21:22.867980+00:00",
+  "generated_at": "2026-10-24T11:32:25.726404+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,59 +10,59 @@
       "id": "COUNTRY-ES",
       "type": "Country",
       "label": "ES",
-      "score": 87,
+      "score": 80,
       "props": {
-        "risk_score": 87
+        "risk_score": 80
       }
     },
     {
       "id": "DOMAIN-ES-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 75,
-      "trend": "up"
+      "score": 41,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ES-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ES-climate",
       "type": "Domain",
       "label": "climate",
       "score": 72,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ES-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ES-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ES-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ES-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DRIVER-ES-Geopolitical",
@@ -87,17 +87,17 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-ES-Ливень:_Бе",
-      "type": "Signal",
-      "label": "Ливень: Берег Барселоны, Южный берег Жир",
-      "severity": 72,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-ES-Наводнение",
       "type": "Signal",
       "label": "Наводнение в регионах Аликанте-Валенсия,",
       "severity": 66,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-ES-Ветер:_Южн",
+      "type": "Signal",
+      "label": "Ветер: Южное побережье Таррагоны, Прелит",
+      "severity": 50,
       "domain": "climate"
     }
   ],
@@ -106,7 +106,7 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.75
+      "weight": 0.41
     },
     {
       "from": "COUNTRY-ES",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-ES-geopolitical",
-      "to": "DOMAIN-ES-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-ES-infrastructure",
-      "to": "DOMAIN-ES-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-ES-economic",
-      "to": "DOMAIN-ES-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "DOMAIN-ES-climate",
       "to": "DOMAIN-ES-infrastructure",
       "type": "ESCALATES",
@@ -226,13 +205,28 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-ES-Явления_на",
-      "to": "DOMAIN-ES-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.72
+      "from": "DOMAIN-ES-geopolitical",
+      "to": "DOMAIN-ES-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
     },
     {
-      "from": "SIGNAL-ES-Ливень:_Бе",
+      "from": "DOMAIN-ES-infrastructure",
+      "to": "DOMAIN-ES-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ES-economic",
+      "to": "DOMAIN-ES-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-ES-Явления_на",
       "to": "DOMAIN-ES-climate",
       "type": "AMPLIFIES",
       "weight": 0.72
@@ -242,6 +236,12 @@
       "to": "DOMAIN-ES-climate",
       "type": "AMPLIFIES",
       "weight": 0.66
+    },
+    {
+      "from": "SIGNAL-ES-Ветер:_Южн",
+      "to": "DOMAIN-ES-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
     }
   ]
 }
