@@ -25712,6 +25712,13 @@ FEED_HYGIENE = True
 FEED_UNTRANSLATED_GATE = True
 HYG_QUESTION_ANY = True
 HYG_VENDOR_BLOG = ('Cloudflare Blog',)
+FEED_DEDUP_2410 = True
+_DD_STOP = {'котор', 'также', 'после', 'более', 'менее', 'этого', 'этому', 'через', 'может', 'могут',
+            'будет', 'своей', 'своих', 'сообщ', 'заяви', 'данны', 'время', 'годах', 'года', 'россия', 'росси', 'проти'}
+
+
+def _dd_stems(t):
+    return set(w[:5] for w in re.findall(r'[а-яёa-z]{5,}', (t or '').lower()) if w[:5] not in _DD_STOP)
 HYG_STUDY_CAP = 75
 _HYG_STUDY = re.compile(r'^(?:учёные|ученые|исследовани\w*|исследователи)\b|(?:нового|новое|новому)\s+исследовани', re.I)
 _WM_RU = ('лесной пожар|лесные пожары|наводнени[ея]|затоплени[ея]|землетрясени[ея]|ураган|тайфун|циклон|засуха|'
@@ -26056,6 +26063,41 @@ def _feed_hygiene(events):
         for e in lst[FEED_STORY_MAX:]:
             hide(e, 'лимит темы')
             e['story_key'] = w
+    # 24.10.2026: межисточниковые дубли одного события («Рязанский НПЗ
+    # приостановил…» от двух агентств, Эбола «Бундибугьо/Бундибугио»). В ленте
+    # остаётся запись с наибольшей severity; дубль скрыт, в аналитике и
+    # процессах остаётся. Дубль = тот же домен, canon_type и регион, даты в
+    # пределах суток, ≥4 общих основы и ≥70% меньшего заголовка; если в обоих
+    # заголовках есть числа и они различаются — разные сводки, не дубль
+    # («49 беспилотников» / «87 беспилотников»). Откат: FEED_DEDUP_2410 = False.
+    if FEED_DEDUP_2410:
+        _kept = []
+        _vis2 = [e for e in events if e.get('feed_visible') is not False and not e.get('alerts_only')]
+        _vis2.sort(key=lambda e: (-(e.get('severity') or 0), str(e.get('id'))))
+        for e in _vis2:
+            t = e.get('title') or ''
+            st_ = _dd_stems(t); nu_ = set(re.findall(r'\d+(?:[.,]\d+)?', t))
+            try:
+                dd = _d.fromisoformat((e.get('date') or '')[:10])
+            except Exception:
+                dd = None
+            hit = None
+            for k, kst, knu, kd in _kept:
+                if (k.get('domain') != e.get('domain') or k.get('canon_type') != e.get('canon_type')
+                        or (k.get('region') or '') != (e.get('region') or '')):
+                    continue
+                if dd is None or kd is None or abs((dd - kd).days) > 1:
+                    continue
+                if nu_ and knu and nu_ != knu:
+                    continue
+                inter = len(st_ & kst)
+                if inter >= 4 and inter >= 0.7 * max(1, min(len(st_), len(kst))):
+                    hit = k; break
+            if hit is not None:
+                hide(e, 'дубль')
+                e['dup_of'] = hit.get('id')
+            else:
+                _kept.append((e, st_, nu_, dd))
     if cnt:
         print('  [HYGIENE] скрыто из ленты: %s' % ', '.join('%s %d' % kv for kv in cnt.items()), file=sys.stderr)
     return sum(cnt.values())
@@ -26108,6 +26150,7 @@ def _incident_reset(events):
     for e in events:
         _was_inc = e.pop('incident_of', None) is not None
         _was_hyg = e.pop('hygiene', None) is not None
+        e.pop('dup_of', None)
         if (_was_inc or _was_hyg) and not e.get('context_only') and not e.get('alerts_only'):
             e['feed_visible'] = True
         if e.pop('incident_count', None) is not None:
