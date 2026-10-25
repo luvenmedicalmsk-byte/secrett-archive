@@ -2,9 +2,9 @@
   "country": "IN",
   "date": "2026-10-25",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-25T01:27:55.183654+00:00",
+  "generated_at": "2026-10-25T01:46:59.598920+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-IN",
@@ -33,7 +33,7 @@
       "id": "DOMAIN-IN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 50,
       "trend": "stable"
     },
     {
@@ -87,16 +87,16 @@
       "domain": "technology"
     },
     {
+      "id": "SIGNAL-IN-Андхра_гот",
+      "type": "Signal",
+      "label": "Андхра готовится к очень сильному циклон",
+      "severity": 50,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-IN-Спотовые_с",
       "type": "Signal",
       "label": "Спотовые ставки Индия-USEC стремительно ",
-      "severity": 32,
-      "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-IN-Выставка_в",
-      "type": "Signal",
-      "label": "Выставка возобновляемой энергии в Индии ",
       "severity": 32,
       "domain": "economic"
     }
@@ -118,7 +118,7 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-IN",
@@ -163,19 +163,61 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IN-climate",
+      "to": "DOMAIN-IN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-IN-infrastructure",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IN-climate",
+      "to": "DOMAIN-IN-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-IN-social",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "SIGNAL-IN-PHP_делитс",
       "to": "DOMAIN-IN-technology",
       "type": "AMPLIFIES",
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-IN-Спотовые_с",
-      "to": "DOMAIN-IN-economic",
+      "from": "SIGNAL-IN-Андхра_гот",
+      "to": "DOMAIN-IN-climate",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.5
     },
     {
-      "from": "SIGNAL-IN-Выставка_в",
+      "from": "SIGNAL-IN-Спотовые_с",
       "to": "DOMAIN-IN-economic",
       "type": "AMPLIFIES",
       "weight": 0.32
