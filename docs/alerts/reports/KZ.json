@@ -2,21 +2,22 @@
   "country": "KZ",
   "country_name": "KZ",
   "date": "2026-10-25",
-  "alert_level": "WATCH",
-  "alert_score": 56,
-  "risk_score": 65,
+  "alert_level": "ALERT",
+  "alert_score": 74,
+  "risk_score": 92,
   "confidence": 38,
-  "signals": 3,
-  "trend": "decelerating",
+  "signals": 4,
+  "trend": "accelerating",
   "top_drivers": [
     "geopolitics",
     "economy",
     "finance"
   ],
-  "created_at": "2026-10-25T09:46:34.492780+00:00",
+  "created_at": "2026-10-25T10:06:21.692928+00:00",
   "triggered_rules": [
     "A",
     "B",
+    "C",
     "D"
   ],
   "rules": {
@@ -24,27 +25,29 @@
       "rule": "A",
       "name": "velocity_spike",
       "triggered": true,
-      "change_7d": -20.7,
-      "change_30d": 12.1,
-      "velocity_score": 69
+      "change_7d": 12.2,
+      "change_30d": 58.6,
+      "velocity_score": 100
     },
     "B_signal_expl": {
       "rule": "B",
       "name": "signal_explosion",
       "triggered": true,
-      "current_signals": 3,
+      "current_signals": 4,
       "avg_90d": 1.0,
       "threshold": 1.5,
-      "explosion_ratio": 3.0
+      "explosion_ratio": 4.0
     },
     "C_multi_eng": {
       "rule": "C",
       "name": "multi_engine_confirmation",
-      "triggered": false,
+      "triggered": true,
       "confirming_engines": [
-        "economy"
+        "geopolitics",
+        "economy",
+        "climate"
       ],
-      "engine_count": 1,
+      "engine_count": 3,
       "threshold": 3
     },
     "D_emerging": {
@@ -53,13 +56,19 @@
       "triggered": true,
       "threats": [
         {
-          "domain": "economy",
-          "severity": 70,
+          "domain": "?",
+          "severity": 92,
+          "frequency": 0,
+          "source": "Пожарная опасность: Казталовский район (Западно-Ка"
+        },
+        {
+          "domain": "climate",
+          "severity": 80,
           "frequency": 0,
           "source": "Тренд: нарастание давления"
         }
       ],
-      "threat_count": 1
+      "threat_count": 2
     },
     "E_confidence": {
       "rule": "E",
@@ -68,22 +77,28 @@
       "current_confidence": 38,
       "prev_confidence": 38,
       "confidence_delta": 0,
-      "score_delta": 0
+      "score_delta": 27
     }
   },
   "sub_scores": {
-    "velocity_component": 84,
-    "severity_component": 65,
-    "confidence_component": 25,
-    "signal_density": 30
+    "velocity_component": 100,
+    "severity_component": 100,
+    "confidence_component": 35,
+    "signal_density": 33
   },
-  "escalation": null,
-  "is_escalation": false,
-  "dominant_domain": "economy",
-  "escalation_level": "pressured",
-  "delta": 0,
+  "escalation": {
+    "previous": "WATCH",
+    "current": "ALERT",
+    "delta_score": 18,
+    "timestamp": "2026-10-25T10:06:21.692917+00:00",
+    "escalated": true
+  },
+  "is_escalation": true,
+  "dominant_domain": "climate",
+  "escalation_level": "critical",
+  "delta": 27,
   "engine_version": "ALERT_V1",
   "model_version": "GRIE_V1",
-  "generated_at": "2026-10-25T09:46:34.492780+00:00",
-  "hash": "287ba82ac0b61ad2"
+  "generated_at": "2026-10-25T10:06:21.692928+00:00",
+  "hash": "8d6abd4f2a17ca5b"
 }
