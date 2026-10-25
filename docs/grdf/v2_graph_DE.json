@@ -2,7 +2,7 @@
   "country": "DE",
   "date": "2026-10-25",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-25T08:21:45.842910+00:00",
+  "generated_at": "2026-10-25T08:33:13.001542+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-DE-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 61,
       "trend": "stable"
     },
     {
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-DE-Ветер:_Рег",
-      "type": "Signal",
-      "label": "Ветер: Регион Ганновер, Край Шаумбург, К",
-      "severity": 88,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-DE-Ливень:_Кр",
       "type": "Signal",
       "label": "Ливень: Край Гёттинген, Край Гослар, Кра",
@@ -99,6 +92,13 @@
       "label": "Британские и французские парашютисты уча",
       "severity": 63,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-DE-В_Германии",
+      "type": "Signal",
+      "label": "В Германии задержали возможного российск",
+      "severity": 61,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.61
     },
     {
       "from": "COUNTRY-DE",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-DE-climate",
-      "to": "DOMAIN-DE-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-DE-economic",
-      "to": "DOMAIN-DE-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-DE-social",
-      "to": "DOMAIN-DE-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-DE-climate",
       "to": "DOMAIN-DE-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -203,6 +182,27 @@
       "type": "AMPLIFIES",
       "weight": 0.55,
       "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-DE-climate",
+      "to": "DOMAIN-DE-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-DE-economic",
+      "to": "DOMAIN-DE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-DE-social",
+      "to": "DOMAIN-DE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "DOMAIN-DE-geopolitical",
@@ -226,12 +226,6 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-DE-Ветер:_Рег",
-      "to": "DOMAIN-DE-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.88
-    },
-    {
       "from": "SIGNAL-DE-Ливень:_Кр",
       "to": "DOMAIN-DE-climate",
       "type": "AMPLIFIES",
@@ -242,6 +236,12 @@
       "to": "DOMAIN-DE-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.63
+    },
+    {
+      "from": "SIGNAL-DE-В_Германии",
+      "to": "DOMAIN-DE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.61
     }
   ]
 }
