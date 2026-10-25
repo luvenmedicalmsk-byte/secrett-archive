@@ -2,9 +2,9 @@
   "country": "RS",
   "date": "2026-10-25",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-25T20:42:53.611608+00:00",
-  "node_count": 13,
-  "edge_count": 21,
+  "generated_at": "2026-10-25T20:51:53.022872+00:00",
+  "node_count": 14,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-RS",
@@ -26,7 +26,7 @@
       "id": "DOMAIN-RS-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -47,7 +47,7 @@
       "id": "DOMAIN-RS-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
+      "score": 45,
       "trend": "stable"
     },
     {
@@ -75,9 +75,23 @@
       "label": "climate"
     },
     {
-      "id": "DRIVER-RS-economic",
+      "id": "DRIVER-RS-social",
       "type": "Driver",
-      "label": "economic"
+      "label": "social"
+    },
+    {
+      "id": "SIGNAL-RS-Вучич_прои",
+      "type": "Signal",
+      "label": "Вучич проиграл на выборах в Сербии и при",
+      "severity": 45,
+      "domain": "social"
+    },
+    {
+      "id": "SIGNAL-RS-Протесты_и",
+      "type": "Signal",
+      "label": "Протесты и беспорядки — Сербия",
+      "severity": 45,
+      "domain": "social"
     },
     {
       "id": "SIGNAL-RS-Климатичес",
@@ -85,13 +99,6 @@
       "label": "Климатический сигнал — Сербия",
       "severity": 46,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-RS-Инфляция_—",
-      "type": "Signal",
-      "label": "Инфляция — Сербия",
-      "severity": 32,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -105,7 +112,7 @@
       "from": "COUNTRY-RS",
       "to": "DOMAIN-RS-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-RS",
@@ -123,7 +130,7 @@
       "from": "COUNTRY-RS",
       "to": "DOMAIN-RS-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.45
     },
     {
       "from": "COUNTRY-RS",
@@ -150,31 +157,10 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-RS-economic",
+      "from": "DRIVER-RS-social",
       "to": "COUNTRY-RS",
       "type": "CAUSES",
       "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-RS-climate",
-      "to": "DOMAIN-RS-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-RS-infrastructure",
-      "to": "DOMAIN-RS-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-RS-economic",
-      "to": "DOMAIN-RS-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
     },
     {
       "from": "DOMAIN-RS-climate",
@@ -219,16 +205,43 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-RS-climate",
+      "to": "DOMAIN-RS-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-RS-infrastructure",
+      "to": "DOMAIN-RS-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-RS-economic",
+      "to": "DOMAIN-RS-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-RS-Вучич_прои",
+      "to": "DOMAIN-RS-social",
+      "type": "AMPLIFIES",
+      "weight": 0.45
+    },
+    {
+      "from": "SIGNAL-RS-Протесты_и",
+      "to": "DOMAIN-RS-social",
+      "type": "AMPLIFIES",
+      "weight": 0.45
+    },
+    {
       "from": "SIGNAL-RS-Климатичес",
       "to": "DOMAIN-RS-climate",
       "type": "AMPLIFIES",
       "weight": 0.46
-    },
-    {
-      "from": "SIGNAL-RS-Инфляция_—",
-      "to": "DOMAIN-RS-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.32
     }
   ]
 }
