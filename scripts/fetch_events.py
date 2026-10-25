@@ -5881,7 +5881,7 @@ def _is_retro_title(title):
 NOISE_PR_2410 = True
 _PR_FUND = re.compile(r'(?:привлек\w*|получа\w*|получил\w*|выделил\w*|выделя\w*)\s[^.]{0,60}?(?:финансирован\w*|инвестиц\w*|раунд\w*|грант\w*)|'
                       r'раунд\w*\s+(?:серии\s+)?[a-d]\b|раунд\w*\s+финансир|\bгрант\w*\s+(?:министерств|на\s+модерниз)', re.I)
-_PR_RISK = re.compile(r'банкрот|дефолт|санкц|кризис|обвал|паден|сокращ|увольн|убыт|арест|штраф|расследов|взлом|утечк|атак|удар|'
+_PR_RISK = re.compile(r'банкрот|дефолт|санкц|кризис|обвал|паден|сокращ|увольн|убыт|арест|штраф|расследов|взлом|утечк|атак|(?<![а-яё])удар|'   # «госУДАРственное» — не удар (25.10)
                       r'погиб|пострада|эвакуац|оборон|военн|безопасност|разведк|наблюдени\w*\s+за', re.I)
 _PR_PROTO = re.compile(r'с\s+рабочим\s+визитом|рабоч\w+\s+поездк|провел\w*\s+(?:рабочее\s+)?совещани', re.I)
 _PR_PALEO = re.compile(r'миллион\w*\s+лет\s+назад|доисторическ|астероид\w*\s+врезал', re.I)
@@ -23023,6 +23023,10 @@ _SQ_OPINION_FACT = re.compile(
 _SQ_OPINION = {'Foreign Policy','Foreign Affairs','The Economist','The Diplomat','Project Syndicate','War on the Rocks','Carnegie','Atlantic Council','Bloomberg Opinion'}
 _SQ_NONSYS = re.compile(r'дерево упал|перформанс|арт-акци|выпал из окна|школьн\w*\s+\w*автобус|упал\w*\s+на\s+\w*автобус', re.I)
 
+PAN_EU_TITLE = True
+_PAN_EU_T = re.compile(r'(?:всю|вся|по всей|всей)\s+европ\w*|по европе\s+прокатил\w*|в\s+десятк\w+\s+стран\s+европ\w*', re.I)
+
+
 def _signal_quality_pass(events):
     """Пост-проход качества сигнала (fail-safe, консервативный):
     1) деэскалация: signal_type=escalation на тексте про завершение/перемирие/соглашение -> de-escalation (релейбл, не дроп)
@@ -23047,7 +23051,12 @@ def _signal_quality_pass(events):
                 # пан-европейское климатическое событие -> импакт на ключевые страны Европы (драйверы каждой)
                 try:
                     _et = ((e.get('title') or '') + ' ' + (e.get('summary') or '')).lower()
-                    if (e.get('domain')=='climate') and re.search(r'в европе|по европе|европейск\w* жар|жар\w* в европе|страны европы|вся европа|евросоюз|across europe', _et) and 'европейской части' not in _et and 'европейскую часть' not in _et and 'европейская часть' not in _et:
+                    # 25.10.2026: и протесты/кризисы, названные общеевропейскими в
+                    # ЗАГОЛОВКЕ («Всю Европу накрыли протесты» стояло на Франции).
+                    # Откат: PAN_EU_TITLE = False.
+                    _pan_t = (PAN_EU_TITLE and e.get('domain') in ('social', 'geopolitics', 'economy')
+                              and _PAN_EU_T.search(e.get('title') or ''))
+                    if ((e.get('domain')=='climate') and re.search(r'в европе|по европе|европейск\w* жар|жар\w* в европе|страны европы|вся европа|евросоюз|across europe', _et) or _pan_t) and 'европейской части' not in _et and 'европейскую часть' not in _et and 'европейская часть' not in _et:
                         _EU = ['DE','FR','IT','ES','PL','NL','GB','CZ','AT','BE']
                         e['impact_countries'] = sorted(set((e.get('impact_countries') or []) + _EU))
                         # убрать не-европейские (ошибочные US/RU и пр.) из кодов стран, добавить Европу
@@ -25729,11 +25738,55 @@ FEED_HYGIENE = True
 # Откат: FEED_UNTRANSLATED_GATE = False.
 FEED_UNTRANSLATED_GATE = True
 HYG_QUESTION_ANY = True
-HYG_VENDOR_BLOG = ('Cloudflare Blog',)
+HYG_VENDOR_BLOG = ('Cloudflare Blog', 'Cisco Talos')
 TG_AGITPROP_OFF = ('readovkanews', 'rotfront_su', 'worldprotest')
 FEED_DEDUP_2410 = True
+SEV_FIX_2510 = True
+NOISE_2510 = True
+HYG_AUTHOR_BLOG = ('Telegram/russianmacro',)
+_SF_CLICK = re.compile(r'^что-то\s|бьют\s+тревогу$|факап|порци\w*\s+позитив|удивительн\w*\s+на\s+этой\s+неделе|^вот\s+(?:почему|что)\b', re.I)
+_SF_NOISE = re.compile(r'продан\w*\s+на\s+аукцион|аукцион\w*\s+(?:sotheby|christie)|лошад\w*|табун\w*|'
+                       r'^восстановлени\w*\s+(?:\S+\s+){0,2}лес|климатическ\w*\s+преимуществ', re.I)
+_SF_PR_GOV = re.compile(r'(?:минздрав|минтруд|минпросвещ|правительств)\w*\s+(?:\S+\s+){0,2}пообещал\w*|'
+                        r'призыва\w*\s+граждан\s+не\s+заниматься|пообещали,\s+что', re.I)
+SF_SCIENCE_SRC = ('ScienceDaily Climate', 'ScienceDaily Cli', 'ScienceDaily')
+SF_SCIENCE_CAP = 52
+SF_OPINION_CAP = 55
+SF_FEATURE_CAP = 55
+SF_VULN_CAP = 70
+SF_INJ_CAP = 76
+SF_OIL_FLOOR = 70
+_SF_NUMW = {'один': 1, 'два': 2, 'двое': 2, 'три': 3, 'трое': 3, 'четыре': 4, 'четверо': 4, 'пять': 5, 'пятеро': 5}
+_SF_FRAGMENT = re.compile(r'^(?:перед этим|после этого|при этом|кроме того|в свою очередь|тем временем|в том числе)\b', re.I)
+_SF_STUDY = re.compile(r'могл[аио]?\s+привести\s+к\s+гибел|со\s+ссылкой\s+на\s+исследовани|согласно\s+(?:новому\s+)?исследовани|по\s+данным\s+(?:нового\s+)?исследовани', re.I)
+_SF_OPINION = re.compile(r'^если\s|рискует\s+привести|единственн\w*\s+(?:решени|выход)|не\s+сокращают\s+масштаб', re.I)
+_SF_FEATURE = re.compile(r'^«[^»]{3,80}»\s*:|—\s*оценка\s|гендерн\w*\s+влияни', re.I)
+_SF_HUM_HAZ = re.compile(r'вспышк|эбол|холер|голод|наводн|циклон|землетряс|эвакуа|ураган|тайфун|засух|эпидеми', re.I)
+_SF_VULN = re.compile(r'уязвимост|(?<![а-яё])дыр[аук]\w*\b|патч', re.I)
+_SF_EXPLOIT = re.compile(r'эксплуатир|атак|взлом|захват\w*\s+(?:тысяч|сотен)|вымогател|утечк', re.I)
+_SF_INJ = re.compile(r'(?<![а-яё\d])(\d{1,3}|один|два|двое|три|трое|четыре|четверо|пять|пятеро)\s+(?:\w+\s+)?(?:человек\w*\s+)?(?:пострадал\w*|ранен\w*|получил\w*\s+ранени)', re.I)
+_SF_DEAD = re.compile(r'погиб|убит|убил|жертв|смерт|скончал', re.I)
+_SF_OIL = re.compile(r'(?:brent|wti|нефт\w*)\D{0,40}?(?:выше|превысил\w*|поднял\w*\s+(?:выше|до)|достиг\w*)\s+\$\s?(\d{2,3})', re.I)
 _DD_STOP = {'котор', 'также', 'после', 'более', 'менее', 'этого', 'этому', 'через', 'может', 'могут',
             'будет', 'своей', 'своих', 'сообщ', 'заяви', 'данны', 'время', 'годах', 'года', 'россия', 'росси', 'проти'}
+
+
+DEDUP_V2_2510 = True
+_DD_TALLY = re.compile(r'сбит\w*|сбил\w*|уничтож\w*|перехвач\w*|за\s+(?:день|сутки|ночь|неделю)', re.I)
+_DD_CAS = re.compile(r'погиб|ранен|пострадал|жертв|убит|убил', re.I)
+_DD_DATE = re.compile(r'(?<!\d)(\d{1,2})\s+(?:январ|феврал|март|апрел|ма[яй]|июн|июл|август|сентябр|октябр|ноябр|декабр)', re.I)
+_DD_ANC_STOP = {'БПЛА', 'ВСУ', 'РФ', 'США', 'ЕС', 'ООН', 'ВОЗ', 'МЧС', 'ПВО', 'СМИ', 'ЦБ', 'ИИ', 'ВС'}
+
+
+def _dd_anchors(t):
+    """Собственные объекты в заголовке: латиница и слова в кавычках, не топонимы."""
+    out = set()
+    for w in re.findall(r'[A-Za-z][A-Za-z0-9&\-]{2,}', t or ''):
+        if w.upper() not in _DD_ANC_STOP:
+            out.add(w.lower())
+    for w in re.findall(r'«([^»]{3,40})»', t or ''):
+        out.add(w.lower())
+    return out
 
 
 def _dd_stems(t):
@@ -25775,7 +25828,25 @@ FEED_IODA_MAX = 5
 _HYG_EXPLAIN = re.compile(r'^(?:как|почему|зачем|сколько|чем|что\s+(?:стало|такое|будет|известно|означает|изменится))\b|\?\s*$', re.I)
 _HYG_OBSERV = re.compile(r'(?:всемирный|международный)\s+день|день\s+(?:осведомл|борьбы|памяти)|эпичн\w*', re.I)
 _HYG_ROAD = re.compile(r'(?<![а-яё])(?:дтп|автокатастроф\w*|авари\w*\s+с\s+(?:автобус|грузовик|автомобил|машин)\w*|'
-                       r'врезал(?:ся|ась|ись)|столкнул\w*\s+(?:автобус|грузовик|автомобил|машин)\w*|сбил\w*\s+пешеход\w*)', re.I)
+                       r'врезал(?:ся|ась|ись)|столкнул\w*\s+(?:автобус|грузовик|автомобил|машин)\w*|сбил\w*\s+пешеход\w*|'
+                       # 25.10.2026: «влетела в толпу», «автомобиль, управляемый несовершеннолетним»
+                       r'влетел\w*\s+в\s+толп\w*|автомобил\w*,?\s+(?:\w+\s+){0,2}управляем\w*)', re.I)
+# 25.10.2026 · DOMAIN_FIX_2510: домен по предмету события из аудита ленты.
+# Взрыв на шахте и пожар на заводе PepsiCo стояли в климате, сигнал бедствия
+# самолёта — в климате, задержание шпиона — в экономике, паводок на Туре —
+# в геополитике. Только по заголовку и только без кинетического удара.
+# Откат: DOMAIN_FIX_2510 = False.
+DOMAIN_FIX_2510 = True
+_DF_MKT = re.compile(r'цен[аыу]?\b|цены|рын[оке]к|экспорт|котировк|акци[ия]\b', re.I)
+_DF_KIN = re.compile(r'бпла|беспилот|дрон|ракет|удар\w*\s+по|обстрел|атак|авиауд|прил[её]т', re.I)
+_DF_RULES = [
+    (re.compile(r'(?:взрыв|пожар|обрушени|авари|выброс)\w*\s+(?:\S+\s+){0,4}?(?:на|в)\s+(?:\S+\s+){0,2}?'
+                r'(?:шахт|рудник|завод|фабрик|предприяти|нпз|комбинат|здани\w*\s+(?:\w+\s+){0,2}компани)', re.I), 'technology'),
+    (re.compile(r'(?:самол[её]т|авиалайнер|борт\w*|рейс\w*)\s+(?:\S+\s+){0,8}?(?:сигнал\w*\s+бедстви|экстренн\w*\s+посад|аварийн\w*\s+посад|вынужденн\w*\s+посад)'
+                r'|молни\w*\s+ударил\w*\s+в\s+(?:\w+\s+)?самол', re.I), 'technology'),
+    (re.compile(r'шпион|шпионаж', re.I), 'geopolitics'),
+    (re.compile(r'уровень\s+воды|паводк|наводнени|разлив\w*\s+рек|подтоплен', re.I), 'climate'),
+]
 _HYG_CUM = re.compile(r'(?<![а-яё])с\s+(?:начала|октября|ноября|декабря|января|февраля|марта|апреля|мая|июня|июля|августа|сентября|\d{1,2}\s+[а-яё]+|20\d\d)', re.I)
 _HYG_NUMW = {'два': 2, 'три': 3, 'пять': 5, 'десять': 10, 'двадцать': 20, 'тридцать': 30, 'сорок': 40, 'пятьдесят': 50,
              'шестьдесят': 60, 'семьдесят': 70, 'восемьдесят': 80, 'девяносто': 90, 'сто': 100}
@@ -26019,8 +26090,17 @@ def _feed_hygiene(events):
                     e['severity'] = _new
                     cnt['масштаб ЧС'] = cnt.get('масштаб ЧС', 0) + 1
                 e['hazard_scale'] = _hz
+        if DOMAIN_FIX_2510 and not _DF_KIN.search(t) and not _DF_MKT.search(t):
+            for _rx, _dom in _DF_RULES:
+                if _rx.search(t):
+                    if e.get('domain') != _dom:
+                        e['domain_hygiene_from'] = e.get('domain')
+                        e['domain'] = _dom
+                        e['canon_domain'] = _dom
+                        cnt['домен → ' + _dom] = cnt.get('домен → ' + _dom, 0) + 1
+                    break
         d = _hyg_deaths(t) if not _HYG_CUM.search(t) else None
-        if _HYG_ROAD.search(t):
+        if _HYG_ROAD.search(t) and not re.search(r'астероид|метеорит|комет', t, re.I):
             cap = 66 if (d or 0) >= 20 else 60 if (d or 0) >= 10 else 52
             if e.get('domain') != 'social' or (e.get('severity') or 0) > cap:
                 e['domain_hygiene_from'] = e.get('domain')
@@ -26096,6 +26176,61 @@ def _feed_hygiene(events):
     # пределах суток, ≥4 общих основы и ≥70% меньшего заголовка; если в обоих
     # заголовках есть числа и они различаются — разные сводки, не дубль
     # («49 беспилотников» / «87 беспилотников»). Откат: FEED_DEDUP_2410 = False.
+    # 25.10.2026 · SEV_FIX_2510: индексы из аудита ленты 25.10. Отдельный
+    # проход после всех правил гигиены, чтобы поздние правила (масштаб ЧС)
+    # не поднимали запись обратно. Откат: SEV_FIX_2510 = False.
+    if SEV_FIX_2510:
+        for e in events:
+            if e.get('feed_visible') is False or e.get('alerts_only') or (e.get('meta') or {}).get('verified'):
+                continue
+            t = e.get('title') or ''
+            sm = (e.get('summary') or '')[:240]
+            src = str(e.get('source') or '')
+            cur = e.get('severity') or 0
+            new, why = cur, None
+            # обрывок: заголовок начинается со ссылки на предыдущий текст
+            if _SF_FRAGMENT.search(t):
+                hide(e, 'обрывок'); continue
+            # шум и PR (25.10): удержанные записи не проходили S43 повторно
+            if NOISE_2510:
+                if _SF_CLICK.search(t) or (len(t.split()) <= 4 and not re.search(r'\d', t)
+                                           and not re.search(r'\s[A-ZА-ЯЁ]', t) and not (e.get('geo') or {}).get('place')
+                                           and not e.get('primary_country')):
+                    hide(e, 'кликбейт'); continue
+                if _SF_NOISE.search(t):
+                    hide(e, 'не сигнал'); continue
+                if _SF_PR_GOV.search(t) or (NOISE_PR_2410 and _is_pr_noise(t, (t + ' ' + sm).lower())):
+                    hide(e, 'PR'); continue
+                if src in HYG_AUTHOR_BLOG:
+                    hide(e, 'авторский блог'); continue
+            if _SF_STUDY.search(t) or _SF_STUDY.search(sm):
+                new, why = min(new, HYG_STUDY_CAP), 'исследование'
+            if src in SF_SCIENCE_SRC:
+                new, why = min(new, SF_SCIENCE_CAP), 'научная статья'
+            if _SF_OPINION.search(t):
+                new, why = min(new, SF_OPINION_CAP), 'мнение/условие'
+            if (src.startswith(('ReliefWeb', 'UN News', "UN Children", 'UN Women')) and not _HYG_ACT.search(t)
+                    and not _SF_HUM_HAZ.search(t)) or _SF_FEATURE.search(t):
+                new, why = min(new, SF_FEATURE_CAP), 'очерк/оценка'
+            if _SF_VULN.search(t) and not _SF_EXPLOIT.search(t):
+                new, why = min(new, SF_VULN_CAP), 'уязвимость без эксплуатации'
+            # только пострадавшие (без погибших), не больше пяти — не верх ленты
+            _inj = _SF_INJ.search(t)
+            if _inj and not _SF_DEAD.search(t):
+                try:
+                    _n = int(_inj.group(1)) if _inj.group(1).isdigit() else _SF_NUMW.get(_inj.group(1).lower(), 99)
+                except Exception:
+                    _n = 99
+                if _n <= 5:
+                    new, why = min(new, SF_INJ_CAP), 'только пострадавшие'
+            # ценовой шок нефти: Brent/WTI выше $100
+            _oil = _SF_OIL.search(t)
+            if _oil and int(_oil.group(1)) >= 100 and new < SF_OIL_FLOOR:
+                new, why = SF_OIL_FLOOR, 'нефть выше $100'
+            if new != cur:
+                e['severity_hygiene_from'] = cur
+                e['severity'] = new
+                cnt['индекс: ' + why] = cnt.get('индекс: ' + why, 0) + 1
     if FEED_DEDUP_2410:
         _kept = []
         _vis2 = [e for e in events if e.get('feed_visible') is not False and not e.get('alerts_only')]
@@ -26108,17 +26243,38 @@ def _feed_hygiene(events):
             except Exception:
                 dd = None
             hit = None
+            _anc = _dd_anchors(t) if DEDUP_V2_2510 else set()
+            _tally = bool(_DD_TALLY.search(t))
             for k, kst, knu, kd in _kept:
-                if (k.get('domain') != e.get('domain') or k.get('canon_type') != e.get('canon_type')
+                _ct_a, _ct_b = k.get('canon_type'), e.get('canon_type')
+                _reg_ok = (e.get('region') or '') not in ('', 'Глобально')
+                _ct_ok = (_ct_a == _ct_b) or (DEDUP_V2_2510 and _reg_ok and (_ct_a in (None, '', 'unknown') or _ct_b in (None, '', 'unknown')))
+                if (k.get('domain') != e.get('domain') or not _ct_ok
                         or (k.get('region') or '') != (e.get('region') or '')):
                     continue
                 if dd is None or kd is None or abs((dd - kd).days) > 1:
                     continue
-                if nu_ and knu and nu_ != knu:
-                    continue
                 inter = len(st_ & kst)
-                if inter >= 4 and inter >= 0.7 * max(1, min(len(st_), len(kst))):
+                _same_nums = bool(nu_) and nu_ == knu
+                _cas = DEDUP_V2_2510 and bool(_DD_CAS.search(t)) and bool(_DD_CAS.search(k.get('title') or ''))
+                if nu_ and knu and nu_ != knu:
+                    # разные числа: сводки-счётчики (сбиты 49 / 87) и разные сюжеты — разные события;
+                    # уточнённые жертвы одного инцидента в одном регионе (14 / 10 пострадавших) — нет
+                    if not (_cas and _reg_ok) or _tally or _DD_TALLY.search(k.get('title') or ''):
+                        continue
+                    if inter >= 4 and inter >= 0.6 * max(1, min(len(st_), len(kst))):
+                        hit = k; break
+                    continue
+                if inter >= 4 and inter >= (0.6 if (_cas and _reg_ok) else 0.7) * max(1, min(len(st_), len(kst))):
                     hit = k; break
+                if DEDUP_V2_2510 and _reg_ok:
+                    # одно место и одни числа («20 БПЛА над Пермским краем» / «…над Прикамьем»)
+                    # или общий собственный объект и общий сюжет («Ozon» в Омске)
+                    _dates = set(_DD_DATE.findall(t))
+                    _num_ok = _same_nums and not (nu_ <= _dates)
+                    if (_num_ok and inter >= (1 if _tally else 2)) or (
+                            inter >= 1 and _ct_a == _ct_b and (_anc & _dd_anchors(k.get('title') or ''))):
+                        hit = k; break
             if hit is not None:
                 hide(e, 'дубль')
                 e['dup_of'] = hit.get('id')
