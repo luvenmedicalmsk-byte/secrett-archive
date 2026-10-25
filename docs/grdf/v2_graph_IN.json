@@ -2,9 +2,9 @@
   "country": "IN",
   "date": "2026-10-25",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-25T00:08:26.526344+00:00",
+  "generated_at": "2026-10-25T00:26:05.570377+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IN",
@@ -19,14 +19,14 @@
       "id": "DOMAIN-IN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
+      "score": 60,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-IN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 44,
+      "score": 32,
       "trend": "stable"
     },
     {
@@ -94,11 +94,11 @@
       "domain": "economic"
     },
     {
-      "id": "SIGNAL-IN-Выставка_в",
+      "id": "SIGNAL-IN-Военные_уд",
       "type": "Signal",
-      "label": "Выставка возобновляемой энергии в Индии ",
-      "severity": 32,
-      "domain": "economic"
+      "label": "Военные удары — Южная Азия",
+      "severity": 80,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-economic",
       "type": "CORRELATES",
-      "weight": 0.44
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-IN",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IN-geopolitical",
+      "to": "DOMAIN-IN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IN-infrastructure",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-IN-PHP_делитс",
       "to": "DOMAIN-IN-technology",
       "type": "AMPLIFIES",
@@ -175,10 +196,10 @@
       "weight": 0.32
     },
     {
-      "from": "SIGNAL-IN-Выставка_в",
-      "to": "DOMAIN-IN-economic",
+      "from": "SIGNAL-IN-Военные_уд",
+      "to": "DOMAIN-IN-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.8
     }
   ]
 }
