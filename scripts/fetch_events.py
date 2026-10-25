@@ -26191,6 +26191,14 @@ def _feed_hygiene(events):
             # обрывок: заголовок начинается со ссылки на предыдущий текст
             if _SF_FRAGMENT.search(t):
                 hide(e, 'обрывок'); continue
+            # общеевропейское событие в заголовке — Европа, а не первая страна
+            # (поздняя копия PAN_EU_TITLE: геоатрибуция переписывала регион)
+            if PAN_EU_TITLE and _PAN_EU_T.search(t) and e.get('region') != 'Европа':
+                e['region_hygiene_from'] = e.get('region')
+                e['region'] = 'Европа'
+                e['primary_country'] = ''; e['event_country'] = ''; e['country_code'] = ''
+                e['lat'], e['lng'] = 50.1, 9.9
+                cnt['регион → Европа'] = cnt.get('регион → Европа', 0) + 1
             # шум и PR (25.10): удержанные записи не проходили S43 повторно
             if NOISE_2510:
                 if _SF_CLICK.search(t) or (len(t.split()) <= 4 and not re.search(r'\d', t)

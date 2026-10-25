@@ -1919,6 +1919,12 @@ def main():
     for _d in res["domain"]:
         if _d.get("recommended") and _d.get("confidence", 0) >= 0.7:
             _e = _by_id.get(_d.get("id"))
+            # 25.10.2026: домен, назначенный гигиеной ленты по предмету события
+            # (DOMAIN_FIX_2510, ДТП -> социум), аудит не перезаписывает: «Взрыв и
+            # пожар в здании компании PepsiCo» гигиена ставила в технологии, а
+            # аудит по слову «пожар» возвращал в климат.
+            if _e is not None and _e.get("domain_hygiene_from") is not None:
+                continue
             if _e is not None and _e.get("domain") != _d["recommended"]:
                 # TASK-278 · LINEAGE. Инструментация, не логика: само присвоение
                 # домена ниже не изменено. Этот писатель работает ПОСЛЕ
