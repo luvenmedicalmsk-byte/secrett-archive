@@ -221,7 +221,7 @@ _TYPE_DOMAIN={
  'Оборонное производство':'geopolitics','Геополитический процесс':'geopolitics',
  'Отключение интернета':'technology','Уязвимость ПО':'technology','Киберугроза':'technology','Фишинговая кампания':'technology',
  'Авиационный инцидент':'technology','Технологический сигнал':'technology',
- 'Эпидемиологический риск':'social','Миграционная политика':'social','Протесты и беспорядки':'social','Криминальный оборот':'social','Социальный процесс':'social',
+ 'Эпидемиологический риск':'social','Миграционная политика':'social','Протесты и беспорядки':'social','Подавление GPS':'geopolitics','Криминальный оборот':'social','Социальный процесс':'social',
  # ТИПЫ КАНОНА, КОТОРЫХ В РЕЕСТРЕ НЕ БЫЛО (29.09.2026).
  # _process_type берёт тип из canon_type, и словарь канона шире этого
  # реестра. Тип вне реестра означает, что домен процесса решается
@@ -599,6 +599,14 @@ PROC_PROTEST_TYPE = True
 # сам _MACROREGION не меняется, чтобы не трогать другие типы). Россия, Украина, Беларусь,
 # Турция в список не входят. Откат — False.
 PROC_PROTEST_EU_MACRO = True
+# PROC_GPS_TYPE (G3 A4-S3, часть A): события о подавлении GPS/GNSS получают тип «Подавление GPS»
+# (geopolitics) в legacy-классификаторе. Канон (fetch_events) для GPSJam даёт unknown (fire-guard),
+# и legacy-счёт по слову «очаг» в summary назначал «Пожарная активность» (climate): геополитическое
+# событие уходило в климатические процессы. Откат — False.
+PROC_GPS_TYPE = True
+_GPS_RX = _re.compile(r'(?:подавлени\w*\s+(?:gps|gnss|спутников\w*\s+навигац)|помех\w*\s+спутников\w*\s+навигац|'
+                      r'глушени\w*\s+(?:gps|gnss)|gps[-\s]?(?:помех|глушен|спуфинг)|gnss[-\s]?(?:помех|глушен))'
+                      r'(?!\w*\s*:\s*\d)', _re.I)   # «Помехи спутниковой навигации: 1» в сводке NOTAM — счётчик, не тема
 _PROTEST_EU_EXTRA = {'IE':'Ирландия','DK':'Дания','FI':'Финляндия','NO':'Норвегия','LU':'Люксембург',
     'LT':'Литва','LV':'Латвия','EE':'Эстония','MT':'Мальта','CY':'Кипр','IS':'Исландия','SI':'Словения',
     'HR':'Хорватия','BG':'Болгария','AL':'Албания','RS':'Сербия','BA':'Босния и Герцеговина',
@@ -644,6 +652,10 @@ def _process_type(evs, domain):
             return _win
     titles=' '.join(x.get('title','') for x in evs).lower()
     summ=' '.join((x.get('summary','') or '')[:60] for x in evs).lower()
+    if PROC_GPS_TYPE:
+        _g=sum(1 for x in evs if _GPS_RX.search((x.get('title') or '')+' '+(x.get('summary') or '')[:200]))
+        if _g and 2*_g>=len(evs):
+            return 'Подавление GPS'
     best=None; best_sc=0
     for pat,name in _PROC_TYPE:
         sc=2*len(_re.findall(pat,titles))+len(_re.findall(pat,summ))
@@ -1203,7 +1215,7 @@ _TYPE_TEMPO={
  'Тепловая волна':'fast','Пожарная активность':'fast','Наводнение':'fast','Похолодание':'fast',
  'Уязвимость ПО':'fast','Фишинговая кампания':'fast','Киберугроза':'fast','Технологический сигнал':'fast',
  'Топливный рынок':'medium','Валютный рынок':'medium','Розничная торговля':'medium','Экономический сигнал':'medium',
- 'Эпидемиологический риск':'medium','Миграционная политика':'medium','Протесты и беспорядки':'medium','Криминальный оборот':'medium','Социальный процесс':'medium',
+ 'Эпидемиологический риск':'medium','Миграционная политика':'medium','Протесты и беспорядки':'medium','Подавление GPS':'medium','Криминальный оборот':'medium','Социальный процесс':'medium',
  'Климатическая политика':'slow','Водный дефицит':'slow','Санкционное давление':'slow','Военные удары':'slow',
  'Инфляция':'slow','Геополитический процесс':'slow','Визовые ограничения':'slow','Оборонное производство':'slow',
 }
@@ -1402,11 +1414,26 @@ def _evolve_one(cur, prev, now):
 
 def _decay_absent(prev, now):
     """Process Decay: prev-сигнал без нового свидетельства в этом прогоне -> затухание, НЕ удаление."""
+    # PROC_GPS_TYPE: унаследованные климатические сигналы несут доказательства GPSJam, попавшие туда
+    # до исправления типа. Доказательства о подавлении GPS снимаются; если других не осталось — dormant.
+    # Только вниз, только без нового события.
+    _gps_cleaned = False
+    if PROC_GPS_TYPE and _TYPE_DOMAIN.get(prev.get('process_type')) == 'climate':
+        _ev = prev.get('evidence') or []
+        _keep = [e for e in _ev if not _GPS_RX.search((e.get('title') or '') + ' ' + (e.get('summary') or '')[:200])]
+        if len(_keep) < len(_ev):
+            prev['evidence'] = _keep; prev['evidence_count'] = len(_keep); _gps_cleaned = True
     hi=_hours(prev.get('last_seen',now), now)
     factor=1.0; status='active'
     if hi>=720: status='archived'
     elif hi>=168: status='dormant'; factor=0.6
     elif hi>=48: status='fading'; factor=0.82
+    # r3: метка сохраняется в состоянии; пустой очищенный сигнал не возвращается в active/fading
+    # на следующих прогонах (статус считается от last_seen, который обновляли GPS-события).
+    if _gps_cleaned:
+        prev['gps_cleaned'] = True
+    if PROC_GPS_TYPE and prev.get('gps_cleaned') and not prev.get('evidence') and status in ('active', 'fading'):
+        status='dormant'; factor=0.6
     # PROC_PROTEST_TYPE: «Военные удары», собранный в основном из событий о протестах
     # (артефакт до появления типа «Протесты и беспорядки»), без продолжения не держится
     # активным до 48 ч/7 дней, а сразу уходит в dormant. Только вниз, только без нового события.
@@ -2904,6 +2931,18 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
                 _prev_same=prev_by_identity.get(_ik)
                 if _prev_same is not None:
                     _resc_step='identity_key'
+            # PROC_GPS_TYPE (G3 A4-S4, r2): identity_key не содержит тип, поэтому кластер «Подавление GPS»
+            # забирал историю чужого геополитического процесса того же места, а при коллизии ключа
+            # процесс этого места не находил своего прошлого сигнала. Rescue между «Подавление GPS» и
+            # другим типом не выполняется; ищется прошлый сигнал с тем же ключом и той же стороной.
+            if PROC_GPS_TYPE and _prev_same is not None and _resc_step=='identity_key':
+                _cg=(cur.get('process_type')=='Подавление GPS')
+                if _cg != ((_prev_same.get('process_type') or '')=='Подавление GPS'):
+                    _alt=[x for x in (previous or []) if x.get('identity_key')==_ik
+                          and x.get('signal_id') not in seen
+                          and ((x.get('process_type') or '')=='Подавление GPS')==_cg]
+                    _prev_same=_alt[0] if _alt else None
+                    if _prev_same is None: _resc_step=''
             if _prev_same and _prev_same['signal_id'] not in seen:
                 n_matched+=1; n_identity_rescued+=1
                 # наследуем СТАРЫЙ signal_id — identity побеждает изменение классификации
