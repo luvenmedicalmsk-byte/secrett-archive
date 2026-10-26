@@ -2,67 +2,67 @@
   "country": "SA",
   "date": "2026-10-26",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-26T06:21:43.873863+00:00",
+  "generated_at": "2026-10-26T06:32:17.697575+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-SA",
       "type": "Country",
       "label": "SA",
-      "score": 58,
+      "score": 67,
       "props": {
-        "risk_score": 58
+        "risk_score": 67
       }
     },
     {
       "id": "DOMAIN-SA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 65,
-      "trend": "stable"
+      "score": 85,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 69,
-      "trend": "stable"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-SA-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-SA-Хуситы_зая",
+      "type": "Signal",
+      "label": "Хуситы заявляют о ракетных атаках на сау",
+      "severity": 67,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-SA-Военный_ко",
       "type": "Signal",
       "label": "Военный конфликт — Ближний Восток (систе",
@@ -87,18 +94,11 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-SA-Геополитич",
+      "id": "SIGNAL-SA-Военные_уд",
       "type": "Signal",
-      "label": "Геополитический процесс — Ближний Восток",
-      "severity": 81,
+      "label": "Военные удары — Ближний Восток",
+      "severity": 86,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-SA-Тепловая_в",
-      "type": "Signal",
-      "label": "Тепловая волна — Ближний Восток (системн",
-      "severity": 92,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.65
+      "weight": 0.85
     },
     {
       "from": "COUNTRY-SA",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-climate",
       "type": "CORRELATES",
-      "weight": 0.69
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-SA",
@@ -163,48 +163,6 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-SA-climate",
-      "to": "DOMAIN-SA-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-SA-economic",
-      "to": "DOMAIN-SA-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-SA-social",
-      "to": "DOMAIN-SA-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-SA-climate",
-      "to": "DOMAIN-SA-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-SA-infrastructure",
-      "to": "DOMAIN-SA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-SA-economic",
-      "to": "DOMAIN-SA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-SA-geopolitical",
       "to": "DOMAIN-SA-infrastructure",
       "type": "ESCALATES",
@@ -226,22 +184,22 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-SA-Хуситы_зая",
+      "to": "DOMAIN-SA-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.67
+    },
+    {
       "from": "SIGNAL-SA-Военный_ко",
       "to": "DOMAIN-SA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.87
     },
     {
-      "from": "SIGNAL-SA-Геополитич",
+      "from": "SIGNAL-SA-Военные_уд",
       "to": "DOMAIN-SA-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.81
-    },
-    {
-      "from": "SIGNAL-SA-Тепловая_в",
-      "to": "DOMAIN-SA-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.92
+      "weight": 0.86
     }
   ]
 }
