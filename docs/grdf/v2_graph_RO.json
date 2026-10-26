@@ -2,7 +2,7 @@
   "country": "RO",
   "date": "2026-10-26",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-26T15:30:34.033095+00:00",
+  "generated_at": "2026-10-26T15:49:36.721572+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,59 +10,59 @@
       "id": "COUNTRY-RO",
       "type": "Country",
       "label": "RO",
-      "score": 56,
+      "score": 64,
       "props": {
-        "risk_score": 56
+        "risk_score": 64
       }
     },
     {
       "id": "DOMAIN-RO-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 51,
-      "trend": "stable"
+      "score": 76,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RO-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
-      "trend": "stable"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RO-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 50,
-      "trend": "stable"
+      "score": 69,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RO-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RO-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RO-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RO-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-RO-geopolitical",
@@ -80,6 +80,13 @@
       "label": "economic"
     },
     {
+      "id": "SIGNAL-RO-Воздушное_",
+      "type": "Signal",
+      "label": "Воздушное пространство — Румыния: высоки",
+      "severity": 64,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-RO-Ветер:_Яло",
       "type": "Signal",
       "label": "Ветер: Яломица, Кэлэраши, Бузэу и ещё 1 ",
@@ -87,18 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-RO-Розничная_",
+      "id": "SIGNAL-RO-Ливень:_Ту",
       "type": "Signal",
-      "label": "Розничная торговля — Румыния",
-      "severity": 32,
-      "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-RO-Геополитич",
-      "type": "Signal",
-      "label": "Геополитический процесс — Румыния",
-      "severity": 32,
-      "domain": "geopolitical"
+      "label": "Ливень: Тулча, Яломица, Гюргево и ещё 2 ",
+      "severity": 50,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,19 +106,19 @@
       "from": "COUNTRY-RO",
       "to": "DOMAIN-RO-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.51
+      "weight": 0.76
     },
     {
       "from": "COUNTRY-RO",
       "to": "DOMAIN-RO-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-RO",
       "to": "DOMAIN-RO-climate",
       "type": "CORRELATES",
-      "weight": 0.5
+      "weight": 0.69
     },
     {
       "from": "COUNTRY-RO",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-RO-climate",
-      "to": "DOMAIN-RO-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-RO-infrastructure",
-      "to": "DOMAIN-RO-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-RO-economic",
-      "to": "DOMAIN-RO-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-RO-geopolitical",
       "to": "DOMAIN-RO-infrastructure",
       "type": "ESCALATES",
@@ -226,22 +205,43 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-RO-climate",
+      "to": "DOMAIN-RO-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-RO-infrastructure",
+      "to": "DOMAIN-RO-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-RO-economic",
+      "to": "DOMAIN-RO-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-RO-Воздушное_",
+      "to": "DOMAIN-RO-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.64
+    },
+    {
       "from": "SIGNAL-RO-Ветер:_Яло",
       "to": "DOMAIN-RO-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-RO-Розничная_",
-      "to": "DOMAIN-RO-economic",
+      "from": "SIGNAL-RO-Ливень:_Ту",
+      "to": "DOMAIN-RO-climate",
       "type": "AMPLIFIES",
-      "weight": 0.32
-    },
-    {
-      "from": "SIGNAL-RO-Геополитич",
-      "to": "DOMAIN-RO-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.5
     }
   ]
 }
