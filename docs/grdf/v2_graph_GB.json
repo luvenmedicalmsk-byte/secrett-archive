@@ -2,67 +2,67 @@
   "country": "GB",
   "date": "2026-10-26",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-26T01:48:08.168048+00:00",
+  "generated_at": "2026-10-26T02:06:04.190937+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-GB",
       "type": "Country",
       "label": "GB",
-      "score": 67,
+      "score": 75,
       "props": {
-        "risk_score": 67
+        "risk_score": 75
       }
     },
     {
       "id": "DOMAIN-GB-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
-      "trend": "stable"
+      "score": 66,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 45,
-      "trend": "stable"
+      "score": 65,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-climate",
       "type": "Domain",
       "label": "climate",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-technology",
       "type": "Domain",
       "label": "technology",
       "score": 67,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-GB-Geopolitical",
@@ -87,17 +87,17 @@
       "domain": "technology"
     },
     {
+      "id": "SIGNAL-GB-Британия_д",
+      "type": "Signal",
+      "label": "Британия должна быть готова к войне в те",
+      "severity": 66,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-GB-Инфляция_в",
       "type": "Signal",
       "label": "Инфляция в UK: Ключевым контрибьютором р",
       "severity": 45,
-      "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-GB-Цены_на_пр",
-      "type": "Signal",
-      "label": "Цены на природный газ в Хенри Хаб этим л",
-      "severity": 35,
       "domain": "economic"
     }
   ],
@@ -106,13 +106,13 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.66
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-economic",
       "type": "CORRELATES",
-      "weight": 0.45
+      "weight": 0.65
     },
     {
       "from": "COUNTRY-GB",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-GB-geopolitical",
+      "to": "DOMAIN-GB-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-GB-infrastructure",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GB-economic",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-GB-Власти_Вел",
       "to": "DOMAIN-GB-technology",
       "type": "AMPLIFIES",
       "weight": 0.67
     },
     {
+      "from": "SIGNAL-GB-Британия_д",
+      "to": "DOMAIN-GB-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.66
+    },
+    {
       "from": "SIGNAL-GB-Инфляция_в",
       "to": "DOMAIN-GB-economic",
       "type": "AMPLIFIES",
       "weight": 0.45
-    },
-    {
-      "from": "SIGNAL-GB-Цены_на_пр",
-      "to": "DOMAIN-GB-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.35
     }
   ]
 }
