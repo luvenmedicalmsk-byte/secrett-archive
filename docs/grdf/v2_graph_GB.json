@@ -2,17 +2,17 @@
   "country": "GB",
   "date": "2026-10-26",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-26T06:46:58.131585+00:00",
+  "generated_at": "2026-10-26T07:07:19.232433+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-GB",
       "type": "Country",
       "label": "GB",
-      "score": 65,
+      "score": 50,
       "props": {
-        "risk_score": 65
+        "risk_score": 50
       }
     },
     {
@@ -20,49 +20,54 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GB-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 62,
-      "trend": "up"
+      "score": 45,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GB-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 65,
-      "trend": "up"
+      "score": 5,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GB-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GB-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GB-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GB-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
+    },
+    {
+      "id": "DRIVER-GB-Economic",
+      "type": "Driver",
+      "label": "Economic"
     },
     {
       "id": "DRIVER-GB-Geopolitical",
@@ -73,18 +78,6 @@
       "id": "DRIVER-GB-Economic",
       "type": "Driver",
       "label": "Economic"
-    },
-    {
-      "id": "DRIVER-GB-Economic",
-      "type": "Driver",
-      "label": "Economic"
-    },
-    {
-      "id": "SIGNAL-GB-Аномальная",
-      "type": "Signal",
-      "label": "Аномальная жара летом 2026 года могла пр",
-      "severity": 65,
-      "domain": "climate"
     },
     {
       "id": "SIGNAL-GB-Инфляция_в",
@@ -99,6 +92,13 @@
       "label": "Цены на природный газ в Хенри Хаб этим л",
       "severity": 35,
       "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-GB-Бум_возобн",
+      "type": "Signal",
+      "label": "Бум возобновляемой энергетики в Британии",
+      "severity": 32,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,13 +112,13 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-economic",
       "type": "CORRELATES",
-      "weight": 0.62
+      "weight": 0.45
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-climate",
       "type": "CORRELATES",
-      "weight": 0.65
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-GB",
@@ -145,6 +145,12 @@
       "weight": 0.05
     },
     {
+      "from": "DRIVER-GB-Economic",
+      "to": "COUNTRY-GB",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-GB-Geopolitical",
       "to": "COUNTRY-GB",
       "type": "CAUSES",
@@ -157,60 +163,6 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-GB-Economic",
-      "to": "COUNTRY-GB",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-GB-climate",
-      "to": "DOMAIN-GB-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-GB-infrastructure",
-      "to": "DOMAIN-GB-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-GB-economic",
-      "to": "DOMAIN-GB-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-GB-climate",
-      "to": "DOMAIN-GB-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-GB-economic",
-      "to": "DOMAIN-GB-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-GB-social",
-      "to": "DOMAIN-GB-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "SIGNAL-GB-Аномальная",
-      "to": "DOMAIN-GB-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.65
-    },
-    {
       "from": "SIGNAL-GB-Инфляция_в",
       "to": "DOMAIN-GB-economic",
       "type": "AMPLIFIES",
@@ -221,6 +173,12 @@
       "to": "DOMAIN-GB-economic",
       "type": "AMPLIFIES",
       "weight": 0.35
+    },
+    {
+      "from": "SIGNAL-GB-Бум_возобн",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.32
     }
   ]
 }
