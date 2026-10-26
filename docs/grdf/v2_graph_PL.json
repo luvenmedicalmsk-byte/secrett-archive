@@ -2,7 +2,7 @@
   "country": "PL",
   "date": "2026-10-26",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-26T23:06:43.038152+00:00",
+  "generated_at": "2026-10-26T23:18:25.031733+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -33,7 +33,7 @@
       "id": "DOMAIN-PL-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 44,
+      "score": 50,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-PL-Ветер:_Цен",
+      "type": "Signal",
+      "label": "Ветер: Центральная прибрежная зона, Запа",
+      "severity": 50,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-PL-Военные_уд",
       "type": "Signal",
       "label": "Военные удары — Польша",
@@ -92,13 +99,6 @@
       "label": "Водный дефицит — Польша",
       "severity": 44,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-PL-Криминальн",
-      "type": "Signal",
-      "label": "Криминальный инцидент — Польша",
-      "severity": 57,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-climate",
       "type": "CORRELATES",
-      "weight": 0.44
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-PL",
@@ -226,6 +226,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-PL-Ветер:_Цен",
+      "to": "DOMAIN-PL-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
       "from": "SIGNAL-PL-Военные_уд",
       "to": "DOMAIN-PL-geopolitical",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-PL-climate",
       "type": "AMPLIFIES",
       "weight": 0.44
-    },
-    {
-      "from": "SIGNAL-PL-Криминальн",
-      "to": "DOMAIN-PL-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.57
     }
   ]
 }
