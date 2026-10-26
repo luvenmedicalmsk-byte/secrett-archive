@@ -1,13 +1,13 @@
 {
-  "generated": "2026-10-26T07:26:09Z",
+  "generated": "2026-10-26T07:59:37Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
     "PASS_FACT": 1070,
     "DENY_COMMENTARY": 329,
     "DENY_STATE_ONLY": 2,
-    "DENY_BACKGROUND": 7,
     "DENY_FEATURE": 3,
+    "DENY_BACKGROUND": 7,
     "DENY_REPORT": 2,
     "DENY_OTHER": 2
   },
@@ -27,50 +27,53 @@
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
       "processes": 430,
-      "sample": 1534,
-      "agreement_pct": 90.4,
-      "decision_agreement_pct": 90.9,
-      "critical_errors": 140,
+      "sample": 1531,
+      "agreement_pct": 90.3,
+      "decision_agreement_pct": 90.7,
+      "critical_errors": 142,
       "truth_ratio_pct": 100.0,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 130,
+        "FACT_EVENT→COMMENTARY": 131,
         "COMMENTARY→FACT_EVENT": 6,
         "COMMENTARY→BACKGROUND": 4,
         "FACT_EVENT→FEATURE": 1,
         "STATE_CONFIRMATION→FACT_EVENT": 2,
-        "BACKGROUND→COMMENTARY": 3,
+        "FACT_EVENT→REPORT": 1,
+        "BACKGROUND→COMMENTARY": 2,
         "REPORT→FACT_EVENT": 1,
         "FEATURE→COMMENTARY": 1
       }
     },
     "historical": {
       "processes": 1415,
-      "sample": 3879,
-      "agreement_pct": 90.4,
-      "decision_agreement_pct": 90.6,
-      "critical_errors": 365,
+      "sample": 3876,
+      "agreement_pct": 90.3,
+      "decision_agreement_pct": 90.5,
+      "critical_errors": 367,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 325,
+        "FACT_EVENT→COMMENTARY": 326,
         "COMMENTARY→FACT_EVENT": 33,
         "COMMENTARY→BACKGROUND": 4,
         "FACT_EVENT→FEATURE": 2,
         "STATE_CONFIRMATION→FACT_EVENT": 4,
-        "BACKGROUND→COMMENTARY": 3,
+        "FACT_EVENT→REPORT": 1,
+        "BACKGROUND→COMMENTARY": 2,
         "REPORT→FACT_EVENT": 1,
         "FEATURE→COMMENTARY": 2
       }
     },
     "events_stream": {
       "sample": 461,
-      "agreement_pct": 88.5,
-      "decision_agreement_pct": 89.4,
-      "critical_errors": 49,
+      "agreement_pct": 88.3,
+      "decision_agreement_pct": 88.9,
+      "critical_errors": 51,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 46,
+        "FACT_EVENT→COMMENTARY": 47,
         "REPORT→FACT_EVENT": 1,
-        "BACKGROUND→COMMENTARY": 2,
         "COMMENTARY→FACT_EVENT": 1,
+        "FACT_EVENT→REPORT": 1,
         "FACT_EVENT→FEATURE": 1,
+        "BACKGROUND→COMMENTARY": 1,
         "COMMENTARY→BACKGROUND": 2
       }
     },
@@ -82,7 +85,7 @@
     }
   },
   "class_source": {
-    "evidence_sic": 3879
+    "evidence_sic": 3876
   },
   "truth_ratio_pct": 100.0,
   "domain_statistics": {
@@ -90,21 +93,21 @@
       "pass": 253,
       "deny": 83
     },
-    "climate": {
-      "pass": 352,
-      "deny": 79
-    },
     "social": {
       "pass": 100,
       "deny": 44
     },
-    "economy": {
-      "pass": 241,
-      "deny": 107
+    "climate": {
+      "pass": 352,
+      "deny": 79
     },
     "technology": {
       "pass": 124,
       "deny": 32
+    },
+    "economy": {
+      "pass": 241,
+      "deny": 107
     }
   },
   "deny_impact": [
@@ -910,9 +913,9 @@
       "severity": 56,
       "pressure": 46,
       "first_seen": "2026-07-15",
-      "evidence_count": 4,
+      "evidence_count": 3,
       "evidence_classes": {
-        "COMMENTARY": 4
+        "COMMENTARY": 3
       },
       "status": "active",
       "causal_links": 6,
@@ -979,27 +982,27 @@
       "reason": "no FACT_EVENT in evidence"
     },
     {
+      "signal_id": "clim-климатичес-китай-6396",
+      "title": "Климатический сигнал — Китай",
+      "domain": "climate",
+      "severity": 56,
+      "pressure": 42,
+      "first_seen": "2026-07-19",
+      "evidence_count": 2,
+      "evidence_classes": {
+        "COMMENTARY": 2
+      },
+      "status": "active",
+      "causal_links": 6,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
       "signal_id": "clim-климатичес-северный-52c4",
       "title": "Климатический сигнал — Северный Ледовитый океан",
       "domain": "climate",
       "severity": 56,
       "pressure": 41,
       "first_seen": "2026-07-02",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "COMMENTARY": 1
-      },
-      "status": "active",
-      "causal_links": 0,
-      "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "clim-шторм-запорожс-fa2b",
-      "title": "Климатический сигнал — Запорожская область",
-      "domain": "climate",
-      "severity": 56,
-      "pressure": 41,
-      "first_seen": "2026-10-15",
       "evidence_count": 1,
       "evidence_classes": {
         "COMMENTARY": 1
@@ -1145,6 +1148,13 @@
       "delta": null
     },
     {
+      "signal_id": "econ-топливныйр-индия-1722",
+      "domain": "economy",
+      "legacy": 32,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "clim-климатичес-европа-eb4e",
       "domain": "climate",
       "legacy": 32,
@@ -1162,13 +1172,6 @@
       "signal_id": "soci-миграционн-россия-1c9f",
       "domain": "social",
       "legacy": 34,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "econ-топливныйр-индия-1722",
-      "domain": "economy",
-      "legacy": 32,
       "shadow": null,
       "delta": null
     },
@@ -1223,6 +1226,13 @@
     },
     {
       "signal_id": "clim-климатичес-краснояр-ba54",
+      "domain": "climate",
+      "legacy": 56,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "clim-климатичес-китай-6396",
       "domain": "climate",
       "legacy": 56,
       "shadow": null,
@@ -1285,9 +1295,9 @@
       "delta": null
     },
     {
-      "signal_id": "clim-климатичес-китай-6396",
+      "signal_id": "clim-вулканичес-никарагу-fc82",
       "domain": "climate",
-      "legacy": 56,
+      "legacy": 55,
       "shadow": null,
       "delta": null
     },
@@ -1419,13 +1429,6 @@
     },
     {
       "signal_id": "clim-наводнение-камчатск-e34c",
-      "domain": "climate",
-      "legacy": 56,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "clim-климатичес-южнокита-8bb3",
       "domain": "climate",
       "legacy": 56,
       "shadow": null,
