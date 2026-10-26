@@ -2,7 +2,7 @@
   "country": "GB",
   "date": "2026-10-26",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-26T05:47:14.565521+00:00",
+  "generated_at": "2026-10-26T05:56:45.481427+00:00",
   "node_count": 14,
   "edge_count": 13,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-GB",
       "type": "Country",
       "label": "GB",
-      "score": 67,
+      "score": 50,
       "props": {
-        "risk_score": 67
+        "risk_score": 50
       }
     },
     {
@@ -20,49 +20,54 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GB-economic",
       "type": "Domain",
       "label": "economic",
       "score": 45,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GB-climate",
       "type": "Domain",
       "label": "climate",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GB-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 67,
-      "trend": "stable"
+      "score": 33,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GB-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GB-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GB-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
+    },
+    {
+      "id": "DRIVER-GB-Economic",
+      "type": "Driver",
+      "label": "Economic"
     },
     {
       "id": "DRIVER-GB-Geopolitical",
@@ -73,18 +78,6 @@
       "id": "DRIVER-GB-Economic",
       "type": "Driver",
       "label": "Economic"
-    },
-    {
-      "id": "DRIVER-GB-Economic",
-      "type": "Driver",
-      "label": "Economic"
-    },
-    {
-      "id": "SIGNAL-GB-Власти_Вел",
-      "type": "Signal",
-      "label": "Власти Великобритании призвали жителей с",
-      "severity": 67,
-      "domain": "technology"
     },
     {
       "id": "SIGNAL-GB-Инфляция_в",
@@ -99,6 +92,13 @@
       "label": "Цены на природный газ в Хенри Хаб этим л",
       "severity": 35,
       "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-GB-В_Британии",
+      "type": "Signal",
+      "label": "В Британии опасаются вывода из эксплуата",
+      "severity": 33,
+      "domain": "technology"
     }
   ],
   "edges": [
@@ -124,7 +124,7 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-technology",
       "type": "CORRELATES",
-      "weight": 0.67
+      "weight": 0.33
     },
     {
       "from": "COUNTRY-GB",
@@ -145,6 +145,12 @@
       "weight": 0.05
     },
     {
+      "from": "DRIVER-GB-Economic",
+      "to": "COUNTRY-GB",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-GB-Geopolitical",
       "to": "COUNTRY-GB",
       "type": "CAUSES",
@@ -157,18 +163,6 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-GB-Economic",
-      "to": "COUNTRY-GB",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
-      "from": "SIGNAL-GB-Власти_Вел",
-      "to": "DOMAIN-GB-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.67
-    },
-    {
       "from": "SIGNAL-GB-Инфляция_в",
       "to": "DOMAIN-GB-economic",
       "type": "AMPLIFIES",
@@ -179,6 +173,12 @@
       "to": "DOMAIN-GB-economic",
       "type": "AMPLIFIES",
       "weight": 0.35
+    },
+    {
+      "from": "SIGNAL-GB-В_Британии",
+      "to": "DOMAIN-GB-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.33
     }
   ]
 }
