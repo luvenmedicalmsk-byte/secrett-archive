@@ -25756,6 +25756,25 @@ SF_FEATURE_CAP = 55
 SF_VULN_CAP = 70
 SF_INJ_CAP = 76
 SF_OIL_FLOOR = 70
+SF_PROTEST_FLOOR = 62
+_SF_PROT = re.compile(r'протест|митинг|демонстрац|манифестац|забастов|вышл\w*\s+на\s+улиц|беспоряд', re.I)
+_SF_PROT_N = re.compile(r'(\d{1,3}(?:[\s ]\d{3})+|\d+)\s*(тысяч\w*|тыс\.?)?\s+(?:человек|участник|демонстрант|протестующ|манифестант)', re.I)
+_SF_ARREST_N = re.compile(r'(?:задержа\w*|арестова\w*)\s+(?:более|свыше|около|почти|не менее)?\s*(\d{1,3}(?:[\s ]\d{3})+|\d+)|(\d{1,3}(?:[\s ]\d{3})+|\d+)\s+(?:человек\s+)?задержа', re.I)
+
+
+def _protest_scale(t):
+    tl = (t or '').lower()
+    if re.search(r'сотн\w+\s+тысяч|полмиллион|миллион\w*\s+(?:человек|участник)', tl):
+        return True
+    for m in _SF_PROT_N.finditer(tl):
+        n = int(re.sub(r'\D', '', m.group(1)) or 0) * (1000 if m.group(2) else 1)
+        if n >= 100000:
+            return True
+    for m in _SF_ARREST_N.finditer(tl):
+        n = int(re.sub(r'\D', '', m.group(1) or m.group(2) or '0') or 0)
+        if n >= 500:
+            return True
+    return False
 _SF_NUMW = {'один': 1, 'два': 2, 'двое': 2, 'три': 3, 'трое': 3, 'четыре': 4, 'четверо': 4, 'пять': 5, 'пятеро': 5}
 _SF_FRAGMENT = re.compile(r'^(?:перед этим|после этого|при этом|кроме того|в свою очередь|тем временем|в том числе)\b', re.I)
 _SF_STUDY = re.compile(r'могл[аио]?\s+привести\s+к\s+гибел|со\s+ссылкой\s+на\s+исследовани|согласно\s+(?:новому\s+)?исследовани|по\s+данным\s+(?:нового\s+)?исследовани', re.I)
@@ -26231,6 +26250,11 @@ def _feed_hygiene(events):
                     _n = 99
                 if _n <= 5:
                     new, why = min(new, SF_INJ_CAP), 'только пострадавшие'
+            # 26.10.2026: масштаб протеста. «Более 410 тысяч человек вышли на протесты
+            # во Франции» стояло на 46 — ниже единичного ДТП. От 100 тысяч
+            # участников или от 500 задержанных — не ниже 62. Откат: SF_PROTEST_FLOOR = 0.
+            if SF_PROTEST_FLOOR and new < SF_PROTEST_FLOOR and _SF_PROT.search(t) and _protest_scale(t):
+                new, why = SF_PROTEST_FLOOR, 'масштаб протеста'
             # ценовой шок нефти: Brent/WTI выше $100
             _oil = _SF_OIL.search(t)
             if _oil and int(_oil.group(1)) >= 100 and new < SF_OIL_FLOOR:
