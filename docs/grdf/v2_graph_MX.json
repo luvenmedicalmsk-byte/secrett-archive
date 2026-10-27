@@ -2,7 +2,7 @@
   "country": "MX",
   "date": "2026-10-27",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-27T16:48:23.648609+00:00",
+  "generated_at": "2026-10-27T17:08:38.425853+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,23 +10,23 @@
       "id": "COUNTRY-MX",
       "type": "Country",
       "label": "MX",
-      "score": 62,
+      "score": 60,
       "props": {
-        "risk_score": 62
+        "risk_score": 60
       }
     },
     {
       "id": "DOMAIN-MX-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 54,
-      "trend": "stable"
+      "score": 46,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-MX-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 62,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -34,14 +34,14 @@
       "type": "Domain",
       "label": "climate",
       "score": 58,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-MX-technology",
       "type": "Domain",
       "label": "technology",
       "score": 54,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-MX-social",
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-MX-Мексиканск",
-      "type": "Signal",
-      "label": "Мексиканские грузовики начали национальн",
-      "severity": 62,
-      "domain": "economic"
-    },
-    {
       "id": "SIGNAL-MX-Сильные_на",
       "type": "Signal",
       "label": "Сильные наводнения уносят автомобили и т",
@@ -99,6 +92,13 @@
       "label": "Второй день отмененных занятий в Универс",
       "severity": 54,
       "domain": "technology"
+    },
+    {
+      "id": "SIGNAL-MX-Нью-Мексик",
+      "type": "Signal",
+      "label": "Нью-Мексико запрашивает федеральную помо",
+      "severity": 52,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.54
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-economic",
       "type": "CORRELATES",
-      "weight": 0.62
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-MX",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-MX-climate",
-      "to": "DOMAIN-MX-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-MX-infrastructure",
-      "to": "DOMAIN-MX-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-MX-economic",
-      "to": "DOMAIN-MX-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-MX-climate",
       "to": "DOMAIN-MX-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -203,6 +182,27 @@
       "type": "AMPLIFIES",
       "weight": 0.65,
       "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-MX-climate",
+      "to": "DOMAIN-MX-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-MX-infrastructure",
+      "to": "DOMAIN-MX-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-MX-economic",
+      "to": "DOMAIN-MX-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-MX-geopolitical",
@@ -226,12 +226,6 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-MX-Мексиканск",
-      "to": "DOMAIN-MX-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.62
-    },
-    {
       "from": "SIGNAL-MX-Сильные_на",
       "to": "DOMAIN-MX-climate",
       "type": "AMPLIFIES",
@@ -242,6 +236,12 @@
       "to": "DOMAIN-MX-technology",
       "type": "AMPLIFIES",
       "weight": 0.54
+    },
+    {
+      "from": "SIGNAL-MX-Нью-Мексик",
+      "to": "DOMAIN-MX-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.52
     }
   ]
 }
