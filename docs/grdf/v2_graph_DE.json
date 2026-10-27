@@ -2,67 +2,67 @@
   "country": "DE",
   "date": "2026-10-27",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-27T23:21:09.675595+00:00",
+  "generated_at": "2026-10-27T23:29:12.952199+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-DE",
       "type": "Country",
       "label": "DE",
-      "score": 92,
+      "score": 77,
       "props": {
-        "risk_score": 92
+        "risk_score": 77
       }
     },
     {
       "id": "DOMAIN-DE-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
-      "trend": "stable"
+      "score": 45,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-DE-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
-      "trend": "stable"
+      "score": 59,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-DE-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 88,
-      "trend": "stable"
+      "score": 72,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-DE-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-DE-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-DE-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-DE-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DRIVER-DE-Geopolitical",
@@ -83,22 +83,22 @@
       "id": "SIGNAL-DE-Ветер:_Кра",
       "type": "Signal",
       "label": "Ветер: Край Гарц - Бергланд (Обергарц), ",
-      "severity": 88,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-DE-Явления_на",
-      "type": "Signal",
-      "label": "Явления на побережье: Гельголанд, Северн",
       "severity": 72,
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-DE-Гроза:_Кра",
+      "id": "SIGNAL-DE-Немецкая_а",
       "type": "Signal",
-      "label": "Гроза: Край Куксхафен - Внутренние район",
-      "severity": 72,
-      "domain": "climate"
+      "label": "Немецкая автостолица Штутгарт на грани ф",
+      "severity": 59,
+      "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-DE-Круизный_л",
+      "type": "Signal",
+      "label": "Круизный лайнер Mein Schiff 3 столкнулся",
+      "severity": 45,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,19 +106,19 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.45
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.59
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-climate",
       "type": "CORRELATES",
-      "weight": 0.88
+      "weight": 0.72
     },
     {
       "from": "COUNTRY-DE",
@@ -205,22 +205,43 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-DE-geopolitical",
+      "to": "DOMAIN-DE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-DE-infrastructure",
+      "to": "DOMAIN-DE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-DE-economic",
+      "to": "DOMAIN-DE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-DE-Ветер:_Кра",
       "to": "DOMAIN-DE-climate",
       "type": "AMPLIFIES",
-      "weight": 0.88
-    },
-    {
-      "from": "SIGNAL-DE-Явления_на",
-      "to": "DOMAIN-DE-climate",
-      "type": "AMPLIFIES",
       "weight": 0.72
     },
     {
-      "from": "SIGNAL-DE-Гроза:_Кра",
-      "to": "DOMAIN-DE-climate",
+      "from": "SIGNAL-DE-Немецкая_а",
+      "to": "DOMAIN-DE-economic",
       "type": "AMPLIFIES",
-      "weight": 0.72
+      "weight": 0.59
+    },
+    {
+      "from": "SIGNAL-DE-Круизный_л",
+      "to": "DOMAIN-DE-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.45
     }
   ]
 }

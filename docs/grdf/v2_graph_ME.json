@@ -2,7 +2,7 @@
   "country": "ME",
   "date": "2026-10-27",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-27T23:21:09.693603+00:00",
+  "generated_at": "2026-10-27T23:29:12.966026+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-ME",
       "type": "Country",
       "label": "ME",
-      "score": 50,
+      "score": 45,
       "props": {
-        "risk_score": 50
+        "risk_score": 45
       }
     },
     {
@@ -20,49 +20,49 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 45,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ME-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
-      "trend": "stable"
+      "score": 34,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ME-climate",
       "type": "Domain",
       "label": "climate",
       "score": 50,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ME-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ME-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ME-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ME-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DRIVER-ME-climate",
@@ -80,13 +80,6 @@
       "label": "economic"
     },
     {
-      "id": "SIGNAL-ME-Ветер:_Кон",
-      "type": "Signal",
-      "label": "Ветер: Континентальные и горные районы, ",
-      "severity": 50,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-ME-Шторм_—_Че",
       "type": "Signal",
       "label": "Шторм — Черногория",
@@ -99,6 +92,13 @@
       "label": "Геополитический процесс — Балканы",
       "severity": 60,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-ME-Экономичес",
+      "type": "Signal",
+      "label": "Экономический сигнал — Черногория",
+      "severity": 34,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-ME",
       "to": "DOMAIN-ME-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-ME",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-ME-climate",
-      "to": "DOMAIN-ME-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-ME-economic",
-      "to": "DOMAIN-ME-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-ME-social",
-      "to": "DOMAIN-ME-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-ME-climate",
       "to": "DOMAIN-ME-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -203,6 +182,27 @@
       "type": "AMPLIFIES",
       "weight": 0.55,
       "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ME-climate",
+      "to": "DOMAIN-ME-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ME-economic",
+      "to": "DOMAIN-ME-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-ME-social",
+      "to": "DOMAIN-ME-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "DOMAIN-ME-geopolitical",
@@ -226,12 +226,6 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-ME-Ветер:_Кон",
-      "to": "DOMAIN-ME-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.5
-    },
-    {
       "from": "SIGNAL-ME-Шторм_—_Че",
       "to": "DOMAIN-ME-climate",
       "type": "AMPLIFIES",
@@ -242,6 +236,12 @@
       "to": "DOMAIN-ME-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.6
+    },
+    {
+      "from": "SIGNAL-ME-Экономичес",
+      "to": "DOMAIN-ME-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.34
     }
   ]
 }
