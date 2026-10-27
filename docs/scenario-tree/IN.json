@@ -10,17 +10,26 @@
       "depth": 0
     },
     {
+      "id": "stress",
+      "label": "Stress Case",
+      "type": "stress",
+      "status": "active",
+      "parent": "ROOT",
+      "depth": 1,
+      "prob": 31.0
+    },
+    {
       "id": "worst",
       "label": "Worst Case",
       "type": "worst",
       "status": "active",
       "parent": "ROOT",
       "depth": 1,
-      "prob": 36.0
+      "prob": 42.0
     },
     {
       "id": "ASE-ACC-24",
-      "label": "Сценарий ускорения (deceleration)",
+      "label": "Сценарий ускорения (acceleration)",
       "type": "acceleration",
       "status": "emerging",
       "parent": "ROOT",
@@ -37,6 +46,15 @@
       "prob": 20
     },
     {
+      "id": "ASE-CRIT-WORST",
+      "label": "Критический каскад (ветвь КРИТИЧЕСКИХ рисков)",
+      "type": "critical_branch",
+      "status": "emerging",
+      "parent": "ROOT",
+      "depth": 1,
+      "prob": 12
+    },
+    {
       "id": "best-RET",
       "label": "Best Case [устарел]",
       "type": "retired",
@@ -51,25 +69,25 @@
       "parent": "ROOT",
       "depth": 2,
       "prob": 0
+    }
+  ],
+  "convergences": [
+    {
+      "scenario_a": "stress",
+      "scenario_b": "acceleration",
+      "score_gap": 0,
+      "prob_gap": 4.0,
+      "label": "Сближение: Stress Case ↔ Сценарий ускорения (acceleration)"
     },
     {
-      "id": "stress-RET",
-      "label": "Stress Case [устарел]",
-      "type": "retired",
-      "parent": "ROOT",
-      "depth": 2,
-      "prob": 0
+      "scenario_a": "worst",
+      "scenario_b": "acceleration",
+      "score_gap": 0,
+      "prob_gap": 7.0,
+      "label": "Сближение: Worst Case ↔ Сценарий ускорения (acceleration)"
     }
   ],
-  "convergences": [],
-  "divergences": [
-    {
-      "scenario_a": "acceleration",
-      "scenario_b": "deescalation_branch",
-      "score_gap": 48,
-      "label": "Расхождение: Сценарий ускорения (deceleration) ↔ Ветвь деэскалации: improving"
-    }
-  ],
-  "active_count": 3,
-  "retired_count": 3
+  "divergences": [],
+  "active_count": 5,
+  "retired_count": 2
 }
