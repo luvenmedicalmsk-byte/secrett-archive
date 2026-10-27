@@ -1,10 +1,10 @@
 {
-  "generated": "2026-10-27T22:44:23Z",
+  "generated": "2026-10-27T22:54:20Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
-    "PASS_FACT": 1078,
-    "DENY_COMMENTARY": 343,
+    "PASS_FACT": 1077,
+    "DENY_COMMENTARY": 344,
     "DENY_STATE_ONLY": 2,
     "DENY_BACKGROUND": 7,
     "DENY_FEATURE": 3,
@@ -18,9 +18,9 @@
     "unmatched": 4,
     "coverage_pct": 99.7,
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
-    "admission_pass_rate": 75.1,
-    "admission_deny_rate": 24.9,
-    "processes_without_fact": 358,
+    "admission_pass_rate": 75.0,
+    "admission_deny_rate": 25.0,
+    "processes_without_fact": 359,
     "report_evidence_count": 0,
     "reports_boosting": 0
   },
@@ -28,30 +28,32 @@
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
       "processes": 507,
-      "sample": 1530,
-      "agreement_pct": 87.7,
-      "decision_agreement_pct": 88.2,
-      "critical_errors": 180,
+      "sample": 1533,
+      "agreement_pct": 87.5,
+      "decision_agreement_pct": 88.1,
+      "critical_errors": 182,
       "truth_ratio_pct": 100.0,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 166,
+        "FACT_EVENT→COMMENTARY": 167,
         "COMMENTARY→FACT_EVENT": 13,
         "COMMENTARY→BACKGROUND": 5,
-        "BACKGROUND→COMMENTARY": 3,
+        "BACKGROUND→COMMENTARY": 4,
+        "FACT_EVENT→REPORT": 1,
         "REPORT→FACT_EVENT": 1
       }
     },
     "historical": {
       "processes": 1440,
-      "sample": 3889,
-      "agreement_pct": 89.7,
+      "sample": 3892,
+      "agreement_pct": 89.6,
       "decision_agreement_pct": 89.9,
-      "critical_errors": 391,
+      "critical_errors": 393,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 347,
+        "FACT_EVENT→COMMENTARY": 348,
         "COMMENTARY→FACT_EVENT": 38,
         "COMMENTARY→BACKGROUND": 5,
-        "BACKGROUND→COMMENTARY": 3,
+        "BACKGROUND→COMMENTARY": 4,
+        "FACT_EVENT→REPORT": 1,
         "REPORT→FACT_EVENT": 1,
         "STATE_CONFIRMATION→FACT_EVENT": 4,
         "FEATURE→COMMENTARY": 2,
@@ -59,15 +61,16 @@
       }
     },
     "events_stream": {
-      "sample": 503,
-      "agreement_pct": 87.1,
-      "decision_agreement_pct": 87.7,
-      "critical_errors": 62,
+      "sample": 505,
+      "agreement_pct": 86.7,
+      "decision_agreement_pct": 87.5,
+      "critical_errors": 63,
       "error_matrix": {
         "FACT_EVENT→COMMENTARY": 57,
         "COMMENTARY→FACT_EVENT": 4,
         "REPORT→FACT_EVENT": 1,
-        "BACKGROUND→COMMENTARY": 2,
+        "BACKGROUND→COMMENTARY": 3,
+        "FACT_EVENT→REPORT": 1,
         "COMMENTARY→BACKGROUND": 1
       }
     },
@@ -79,21 +82,17 @@
     }
   },
   "class_source": {
-    "evidence_sic": 3889
+    "evidence_sic": 3892
   },
   "truth_ratio_pct": 100.0,
   "domain_statistics": {
     "geopolitics": {
-      "pass": 251,
-      "deny": 91
+      "pass": 250,
+      "deny": 92
     },
     "social": {
       "pass": 100,
       "deny": 50
-    },
-    "technology": {
-      "pass": 123,
-      "deny": 33
     },
     "climate": {
       "pass": 357,
@@ -103,6 +102,10 @@
     "economy": {
       "pass": 247,
       "deny": 105
+    },
+    "technology": {
+      "pass": 123,
+      "deny": 33
     }
   },
   "deny_impact": [
@@ -257,6 +260,21 @@
       "reason": "no FACT_EVENT in evidence"
     },
     {
+      "signal_id": "geop-военныеуда-россия-27b9",
+      "title": "Военные удары — Россия",
+      "domain": "geopolitics",
+      "severity": 65,
+      "pressure": 57,
+      "first_seen": "2026-06-28",
+      "evidence_count": 1,
+      "evidence_classes": {
+        "COMMENTARY": 1
+      },
+      "status": "active",
+      "causal_links": 6,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
       "signal_id": "econ-возобновля-казахста-ba67",
       "title": "Инфляция — Казахстан",
       "domain": "economy",
@@ -388,7 +406,7 @@
         "COMMENTARY": 1
       },
       "status": "dormant",
-      "causal_links": 2,
+      "causal_links": 3,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -441,7 +459,7 @@
       "title": "Геополитический процесс — США",
       "domain": "geopolitics",
       "severity": 61,
-      "pressure": 62,
+      "pressure": 58,
       "first_seen": "2026-07-01",
       "evidence_count": 1,
       "evidence_classes": {
@@ -990,21 +1008,6 @@
       "status": "active",
       "causal_links": 2,
       "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "clim-климатичес-тихийоке-41c0",
-      "title": "Климатический сигнал — Тихий океан",
-      "domain": "climate",
-      "severity": 56,
-      "pressure": 48,
-      "first_seen": "2026-07-02",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "COMMENTARY": 1
-      },
-      "status": "active",
-      "causal_links": 0,
-      "reason": "no FACT_EVENT in evidence"
     }
   ],
   "report_log": [],
@@ -1031,6 +1034,13 @@
       "delta": null
     },
     {
+      "signal_id": "econ-топливныйр-москва-b2e4",
+      "domain": "economy",
+      "legacy": 52,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "geop-геополитич-сша-a91e",
       "domain": "geopolitics",
       "legacy": 61,
@@ -1038,9 +1048,9 @@
       "delta": null
     },
     {
-      "signal_id": "econ-топливныйр-москва-b2e4",
-      "domain": "economy",
-      "legacy": 52,
+      "signal_id": "geop-военныеуда-россия-27b9",
+      "domain": "geopolitics",
+      "legacy": 65,
       "shadow": null,
       "delta": null
     },
@@ -1421,19 +1431,12 @@
       "legacy": 71,
       "shadow": null,
       "delta": null
-    },
-    {
-      "signal_id": "clim-шторм-ставропо-42f2",
-      "domain": "climate",
-      "legacy": 56,
-      "shadow": null,
-      "delta": null
     }
   ],
   "deny_by_severity": {
     "0-30": 4,
     "31-50": 228,
-    "51-70": 118,
+    "51-70": 119,
     "71-90": 8,
     "91-100": 0
   }
