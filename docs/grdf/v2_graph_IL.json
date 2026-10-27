@@ -1,8 +1,8 @@
 {
   "country": "IL",
-  "date": "2026-10-26",
+  "date": "2026-10-27",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-26T23:46:42.481659+00:00",
+  "generated_at": "2026-10-27T00:09:05.215658+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -19,7 +19,7 @@
       "id": "DOMAIN-IL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 72,
+      "score": 65,
       "trend": "stable"
     },
     {
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IL-Израиль_за",
-      "type": "Signal",
-      "label": "Израиль запускает «ограниченную антитерр",
-      "severity": 72,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-IL-Туман:_Дол",
       "type": "Signal",
       "label": "Туман: Долина Зевулун, Склоны Западной Г",
@@ -99,6 +92,13 @@
       "label": "Аномальная жара: Долина Кинерет, Долина ",
       "severity": 50,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-IL-Военный_ко",
+      "type": "Signal",
+      "label": "Военный конфликт — Ближний Восток (систе",
+      "severity": 87,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.72
+      "weight": 0.65
     },
     {
       "from": "COUNTRY-IL",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-IL-geopolitical",
-      "to": "DOMAIN-IL-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-IL-infrastructure",
-      "to": "DOMAIN-IL-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-IL-economic",
-      "to": "DOMAIN-IL-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "DOMAIN-IL-climate",
       "to": "DOMAIN-IL-infrastructure",
       "type": "ESCALATES",
@@ -226,10 +205,25 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-IL-Израиль_за",
-      "to": "DOMAIN-IL-geopolitical",
+      "from": "DOMAIN-IL-geopolitical",
+      "to": "DOMAIN-IL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IL-infrastructure",
+      "to": "DOMAIN-IL-economic",
       "type": "AMPLIFIES",
-      "weight": 0.72
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IL-economic",
+      "to": "DOMAIN-IL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-IL-Туман:_Дол",
@@ -242,6 +236,12 @@
       "to": "DOMAIN-IL-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
+    },
+    {
+      "from": "SIGNAL-IL-Военный_ко",
+      "to": "DOMAIN-IL-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.87
     }
   ]
 }
