@@ -2,7 +2,7 @@
   "country": "CN",
   "date": "2026-10-27",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-27T04:45:49.317085+00:00",
+  "generated_at": "2026-10-27T05:07:21.198373+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 74,
+      "score": 78,
       "props": {
-        "risk_score": 74
+        "risk_score": 78
       }
     },
     {
@@ -27,14 +27,14 @@
       "type": "Domain",
       "label": "economic",
       "score": 60,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-climate",
       "type": "Domain",
       "label": "climate",
       "score": 74,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-technology",
@@ -80,9 +80,16 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CN-Туман:_рай",
+      "id": "SIGNAL-CN-Сильный_до",
       "type": "Signal",
-      "label": "Туман: район Юньян, район Наньмин, Уэньс",
+      "label": "Сильный дождь: Автономный уезд Можянг Ха",
+      "severity": 74,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-CN-Туман:_Рай",
+      "type": "Signal",
+      "label": "Туман: Район Уданг, район Юньян, район Н",
       "severity": 74,
       "domain": "climate"
     },
@@ -92,13 +99,6 @@
       "label": "Китайский индекс STAR50, отслеживающий к",
       "severity": 60,
       "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-CN-Брюссель_н",
-      "type": "Signal",
-      "label": "Брюссель нацеливается на китайский импор",
-      "severity": 44,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -205,7 +205,13 @@
       "lag_days": 90
     },
     {
-      "from": "SIGNAL-CN-Туман:_рай",
+      "from": "SIGNAL-CN-Сильный_до",
+      "to": "DOMAIN-CN-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.74
+    },
+    {
+      "from": "SIGNAL-CN-Туман:_Рай",
       "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
       "weight": 0.74
@@ -215,12 +221,6 @@
       "to": "DOMAIN-CN-economic",
       "type": "AMPLIFIES",
       "weight": 0.6
-    },
-    {
-      "from": "SIGNAL-CN-Брюссель_н",
-      "to": "DOMAIN-CN-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.44
     }
   ]
 }
