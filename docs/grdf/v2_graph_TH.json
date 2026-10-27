@@ -2,7 +2,7 @@
   "country": "TH",
   "date": "2026-10-27",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-27T05:47:41.245499+00:00",
+  "generated_at": "2026-10-27T06:08:53.228551+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -47,7 +47,7 @@
       "id": "DOMAIN-TH-social",
       "type": "Domain",
       "label": "social",
-      "score": 48,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -70,14 +70,14 @@
       "label": "climate"
     },
     {
-      "id": "DRIVER-TH-social",
-      "type": "Driver",
-      "label": "social"
-    },
-    {
       "id": "DRIVER-TH-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
+    },
+    {
+      "id": "DRIVER-TH-economic",
+      "type": "Driver",
+      "label": "economic"
     },
     {
       "id": "SIGNAL-TH-Наводнения",
@@ -94,11 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-TH-Испытание_",
+      "id": "SIGNAL-TH-Наводнение",
       "type": "Signal",
-      "label": "Испытание огнем: пограничные столкновени",
-      "severity": 48,
-      "domain": "social"
+      "label": "Наводнение — Таиланд",
+      "severity": 75,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -130,7 +130,7 @@
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-social",
       "type": "CORRELATES",
-      "weight": 0.48
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-TH",
@@ -151,37 +151,16 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-TH-social",
-      "to": "COUNTRY-TH",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
       "from": "DRIVER-TH-geopolitical",
       "to": "COUNTRY-TH",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-TH-climate",
-      "to": "DOMAIN-TH-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-TH-economic",
-      "to": "DOMAIN-TH-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-TH-social",
-      "to": "DOMAIN-TH-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
+      "from": "DRIVER-TH-economic",
+      "to": "COUNTRY-TH",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DOMAIN-TH-climate",
@@ -205,6 +184,27 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-TH-climate",
+      "to": "DOMAIN-TH-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-TH-economic",
+      "to": "DOMAIN-TH-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-TH-social",
+      "to": "DOMAIN-TH-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "SIGNAL-TH-Наводнения",
       "to": "DOMAIN-TH-climate",
       "type": "AMPLIFIES",
@@ -217,10 +217,10 @@
       "weight": 0.49
     },
     {
-      "from": "SIGNAL-TH-Испытание_",
-      "to": "DOMAIN-TH-social",
+      "from": "SIGNAL-TH-Наводнение",
+      "to": "DOMAIN-TH-climate",
       "type": "AMPLIFIES",
-      "weight": 0.48
+      "weight": 0.75
     }
   ]
 }
