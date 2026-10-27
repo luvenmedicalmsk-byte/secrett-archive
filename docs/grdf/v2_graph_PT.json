@@ -2,67 +2,72 @@
   "country": "PT",
   "date": "2026-10-27",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-27T10:31:04.602749+00:00",
+  "generated_at": "2026-10-27T10:48:32.259697+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-PT",
       "type": "Country",
       "label": "PT",
-      "score": 42,
+      "score": 50,
       "props": {
-        "risk_score": 42
+        "risk_score": 50
       }
     },
     {
       "id": "DOMAIN-PT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 36,
-      "trend": "stable"
+      "score": 63,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-economic",
       "type": "Domain",
       "label": "economic",
       "score": 51,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 52,
-      "trend": "stable"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-social",
       "type": "Domain",
       "label": "social",
       "score": 51,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
+    },
+    {
+      "id": "DRIVER-PT-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
     },
     {
       "id": "DRIVER-PT-climate",
@@ -75,15 +80,10 @@
       "label": "economic"
     },
     {
-      "id": "DRIVER-PT-social",
-      "type": "Driver",
-      "label": "social"
-    },
-    {
-      "id": "SIGNAL-PT-Пожарная_а",
+      "id": "SIGNAL-PT-Ливень:_Аз",
       "type": "Signal",
-      "label": "Пожарная активность — Португалия",
-      "severity": 52,
+      "label": "Ливень: Азоры - Восточная группа, Азоры ",
+      "severity": 50,
       "domain": "climate"
     },
     {
@@ -106,7 +106,7 @@
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.63
     },
     {
       "from": "COUNTRY-PT",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-climate",
       "type": "CORRELATES",
-      "weight": 0.52
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-PT",
@@ -145,6 +145,12 @@
       "weight": 0.05
     },
     {
+      "from": "DRIVER-PT-geopolitical",
+      "to": "COUNTRY-PT",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-PT-climate",
       "to": "COUNTRY-PT",
       "type": "CAUSES",
@@ -152,12 +158,6 @@
     },
     {
       "from": "DRIVER-PT-economic",
-      "to": "COUNTRY-PT",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
-      "from": "DRIVER-PT-social",
       "to": "COUNTRY-PT",
       "type": "CAUSES",
       "weight": 0.8
@@ -184,6 +184,27 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-PT-geopolitical",
+      "to": "DOMAIN-PT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-PT-infrastructure",
+      "to": "DOMAIN-PT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-PT-economic",
+      "to": "DOMAIN-PT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "DOMAIN-PT-climate",
       "to": "DOMAIN-PT-infrastructure",
       "type": "ESCALATES",
@@ -205,10 +226,10 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-PT-Пожарная_а",
+      "from": "SIGNAL-PT-Ливень:_Аз",
       "to": "DOMAIN-PT-climate",
       "type": "AMPLIFIES",
-      "weight": 0.52
+      "weight": 0.5
     },
     {
       "from": "SIGNAL-PT-Протесты_и",
