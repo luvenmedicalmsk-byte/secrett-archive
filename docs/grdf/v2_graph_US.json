@@ -2,7 +2,7 @@
   "country": "US",
   "date": "2026-10-27",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-27T03:25:59.507720+00:00",
+  "generated_at": "2026-10-27T03:46:43.021613+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-US-Опасная_по",
+      "type": "Signal",
+      "label": "Опасная погода на море: США",
+      "severity": 74,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-US-Прибрежное",
       "type": "Signal",
       "label": "Прибрежное наводнение: Флорида, Калифорн",
@@ -90,13 +97,6 @@
       "id": "SIGNAL-US-Наводнение",
       "type": "Signal",
       "label": "Наводнение: Техас, Флорида, Нью-Мексико ",
-      "severity": 74,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-US-Угроза_нав",
-      "type": "Signal",
-      "label": "Угроза наводнения: Гавайи, США",
       "severity": 74,
       "domain": "climate"
     }
@@ -226,6 +226,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-US-Опасная_по",
+      "to": "DOMAIN-US-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.74
+    },
+    {
       "from": "SIGNAL-US-Прибрежное",
       "to": "DOMAIN-US-climate",
       "type": "AMPLIFIES",
@@ -233,12 +239,6 @@
     },
     {
       "from": "SIGNAL-US-Наводнение",
-      "to": "DOMAIN-US-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.74
-    },
-    {
-      "from": "SIGNAL-US-Угроза_нав",
       "to": "DOMAIN-US-climate",
       "type": "AMPLIFIES",
       "weight": 0.74
