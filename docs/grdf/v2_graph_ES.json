@@ -2,9 +2,9 @@
   "country": "ES",
   "date": "2026-10-28",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-28T22:08:55.766322+00:00",
+  "generated_at": "2026-10-28T22:27:51.430174+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-ES",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-ES-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 74,
+      "score": 57,
       "trend": "stable"
     },
     {
@@ -33,7 +33,7 @@
       "id": "DOMAIN-ES-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 74,
       "trend": "stable"
     },
     {
@@ -87,18 +87,18 @@
       "domain": "social"
     },
     {
+      "id": "SIGNAL-ES-Безопаснос",
+      "type": "Signal",
+      "label": "Безопасность железных дорог под вопросом",
+      "severity": 74,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-ES-Крушение_в",
       "type": "Signal",
       "label": "Крушение высокоскоростного поезда в Испа",
       "severity": 74,
       "domain": "social"
-    },
-    {
-      "id": "SIGNAL-ES-По_меньшей",
-      "type": "Signal",
-      "label": "По меньшей мере 68 человек погибли после",
-      "severity": 74,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.74
+      "weight": 0.57
     },
     {
       "from": "COUNTRY-ES",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.74
     },
     {
       "from": "COUNTRY-ES",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-ES-climate",
+      "to": "DOMAIN-ES-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ES-economic",
+      "to": "DOMAIN-ES-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-ES-social",
+      "to": "DOMAIN-ES-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-ES-geopolitical",
       "to": "DOMAIN-ES-infrastructure",
       "type": "ESCALATES",
@@ -184,20 +205,41 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-ES-climate",
+      "to": "DOMAIN-ES-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-ES-infrastructure",
+      "to": "DOMAIN-ES-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ES-economic",
+      "to": "DOMAIN-ES-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-ES-До_68_выро",
       "to": "DOMAIN-ES-social",
       "type": "AMPLIFIES",
       "weight": 0.74
     },
     {
-      "from": "SIGNAL-ES-Крушение_в",
-      "to": "DOMAIN-ES-social",
+      "from": "SIGNAL-ES-Безопаснос",
+      "to": "DOMAIN-ES-climate",
       "type": "AMPLIFIES",
       "weight": 0.74
     },
     {
-      "from": "SIGNAL-ES-По_меньшей",
-      "to": "DOMAIN-ES-geopolitical",
+      "from": "SIGNAL-ES-Крушение_в",
+      "to": "DOMAIN-ES-social",
       "type": "AMPLIFIES",
       "weight": 0.74
     }
