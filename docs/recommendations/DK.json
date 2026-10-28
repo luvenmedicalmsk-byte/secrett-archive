@@ -2,33 +2,34 @@
   "country": "DK",
   "country_name": "Дания",
   "date": "2026-10-28",
-  "generated_at": "2026-10-28T13:08:18.707725+00:00",
-  "srs_score": 46,
+  "generated_at": "2026-10-28T13:27:57.490016+00:00",
+  "srs_score": 45,
   "srs_grade": "F",
   "srs_grade_ru": "Критический пересмотр",
   "priority_risks": [
     {
       "id": "R-03",
       "category": "HIGH_PRIORITY",
-      "title": "Системное смещение прогнозов: -11.9pt",
-      "detail": "Систематическая ошибка прогнозов -11.9pt снижает достоверность сценарного анализа.",
-      "metric_value": -11.86,
+      "title": "Системное смещение прогнозов: -10.7pt",
+      "detail": "Систематическая ошибка прогнозов -10.7pt снижает достоверность сценарного анализа.",
+      "metric_value": -10.68,
       "urgency": 80,
       "source": "validation_bias"
-    },
-    {
-      "id": "R-06",
-      "category": "WATCHLIST",
-      "title": "Дрейф уверенности прогнозов: +16.0pt",
-      "detail": "Уверенность прогнозной системы дрейфует на +16.0pt от краткосрочного к долгосрочному горизонту.",
-      "metric_value": 16,
-      "urgency": 60,
-      "source": "confidence_drift"
     }
   ],
-  "risk_count": 2,
-  "priority_opportunities": [],
-  "opp_count": 0,
+  "risk_count": 1,
+  "priority_opportunities": [
+    {
+      "id": "O-04",
+      "category": "WATCHLIST",
+      "title": "Тренд деэскалации: Δ=-10/день",
+      "detail": "Риск снижается со скоростью 10 пунктов в сутки. Возможность для стратегической деэскалации.",
+      "metric_value": -10,
+      "impact": 65,
+      "source": "delta_trend"
+    }
+  ],
+  "opp_count": 1,
   "emerging_shifts": [
     {
       "type": "deteriorating",
@@ -48,11 +49,6 @@
       "type": "horizon_degradation",
       "horizon": "d30",
       "detail": "Худший горизонт прогноза: d30. Увеличить частоту переобучения на этом горизонте."
-    },
-    {
-      "type": "confidence_drift",
-      "horizon": "long",
-      "detail": "Дрейф уверенности +16.0pt указывает на деградацию долгосрочных прогнозов."
     }
   ],
   "forecast_improvement": [
@@ -67,52 +63,44 @@
       "id": "R-03",
       "type": "risk",
       "priority": "HIGH_PRIORITY",
-      "title": "Системное смещение прогнозов: -11.9pt",
-      "rec_score": 52,
-      "metric_value": -11.86,
+      "title": "Системное смещение прогнозов: -10.7pt",
+      "rec_score": 50,
+      "metric_value": -10.68,
       "source": "validation_bias"
     },
     {
-      "id": "R-06",
-      "type": "risk",
+      "id": "O-04",
+      "type": "opportunity",
       "priority": "WATCHLIST",
-      "title": "Дрейф уверенности прогнозов: +16.0pt",
-      "rec_score": 41,
-      "metric_value": 16,
-      "source": "confidence_drift"
+      "title": "Тренд деэскалации: Δ=-10/день",
+      "rec_score": 44,
+      "metric_value": -10,
+      "source": "delta_trend"
     }
   ],
   "action_plan": [
     {
       "id": "ACT-R-03",
       "priority": "CRITICAL",
-      "action": "Реагировать: Системное смещение прогнозов: -11.9pt",
-      "rationale": "Систематическая ошибка прогнозов -11.9pt снижает достоверность сценарного анализа.",
+      "action": "Реагировать: Системное смещение прогнозов: -10.7pt",
+      "rationale": "Систематическая ошибка прогнозов -10.7pt снижает достоверность сценарного анализа.",
       "deadline": "немедленно",
       "source": "validation_bias"
     },
     {
-      "id": "ACT-R-06",
+      "id": "ACT-O-04",
       "priority": "STRATEGIC",
-      "action": "Реагировать: Дрейф уверенности прогнозов: +16.0pt",
-      "rationale": "Уверенность прогнозной системы дрейфует на +16.0pt от краткосрочного к долгосрочному горизонту.",
-      "deadline": "72 часа",
-      "source": "confidence_drift"
-    },
-    {
-      "id": "ACT-CONF",
-      "priority": "STRATEGIC",
-      "action": "Рекалибровать уверенность прогнозов → 49.0%",
-      "rationale": "Оптимизационный движок выявил отклонение от оптимальной уверенности.",
+      "action": "Использовать: Тренд деэскалации: Δ=-10/день",
+      "rationale": "Риск снижается со скоростью 10 пунктов в сутки. Возможность для стратегической деэскалации.",
       "deadline": "30 дней",
-      "source": "confidence_target"
+      "source": "delta_trend"
     }
   ],
-  "action_count": 3,
+  "action_count": 2,
   "rec_diagnostics": [],
   "diagnostic_count": 0,
-  "risk_score": 58,
-  "delta": 0,
+  "risk_score": 48,
+  "delta": -10,
   "domain": "social",
   "history_depth": 35
 }
