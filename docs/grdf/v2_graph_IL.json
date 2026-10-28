@@ -2,7 +2,7 @@
   "country": "IL",
   "date": "2026-10-28",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-28T17:11:08.839235+00:00",
+  "generated_at": "2026-10-28T17:29:11.958416+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -19,7 +19,7 @@
       "id": "DOMAIN-IL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 69,
+      "score": 73,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IL-Исполняющи",
+      "type": "Signal",
+      "label": "Исполняющий обязанности премьер-министра",
+      "severity": 73,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-IL-Туман:_Дол",
       "type": "Signal",
       "label": "Туман: Долина Хула, Израиль",
@@ -92,13 +99,6 @@
       "label": "Наводнение: Залив Эйлат Южная Арава, Сев",
       "severity": 72,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-IL-Геополитич",
-      "type": "Signal",
-      "label": "Геополитический процесс — Ближний Восток",
-      "severity": 92,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.69
+      "weight": 0.73
     },
     {
       "from": "COUNTRY-IL",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-IL-climate",
-      "to": "DOMAIN-IL-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-IL-infrastructure",
-      "to": "DOMAIN-IL-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-IL-economic",
-      "to": "DOMAIN-IL-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-IL-geopolitical",
       "to": "DOMAIN-IL-infrastructure",
       "type": "ESCALATES",
@@ -226,6 +205,33 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-IL-climate",
+      "to": "DOMAIN-IL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-IL-infrastructure",
+      "to": "DOMAIN-IL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IL-economic",
+      "to": "DOMAIN-IL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-IL-Исполняющи",
+      "to": "DOMAIN-IL-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.73
+    },
+    {
       "from": "SIGNAL-IL-Туман:_Дол",
       "to": "DOMAIN-IL-climate",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-IL-climate",
       "type": "AMPLIFIES",
       "weight": 0.72
-    },
-    {
-      "from": "SIGNAL-IL-Геополитич",
-      "to": "DOMAIN-IL-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.92
     }
   ]
 }
