@@ -2,7 +2,7 @@
   "country": "IT",
   "date": "2026-10-28",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-28T15:27:25.896120+00:00",
+  "generated_at": "2026-10-28T15:49:33.740264+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,23 +10,23 @@
       "id": "COUNTRY-IT",
       "type": "Country",
       "label": "IT",
-      "score": 50,
+      "score": 51,
       "props": {
-        "risk_score": 50
+        "risk_score": 51
       }
     },
     {
       "id": "DOMAIN-IT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 41,
-      "trend": "stable"
+      "score": 45,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 60,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 72,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-technology",
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
+      "id": "SIGNAL-IT-Туман:_Эми",
+      "type": "Signal",
+      "label": "Туман: Эмилия-Романья, Венето, Ломбардия",
+      "severity": 50,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-IT-Шторм_—_Ит",
       "type": "Signal",
       "label": "Шторм — Италия",
       "severity": 72,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-IT-Государств",
-      "type": "Signal",
-      "label": "Государственный долг — Италия",
-      "severity": 60,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.41
+      "weight": 0.45
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-economic",
       "type": "CORRELATES",
-      "weight": 0.6
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-IT",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-IT-climate",
-      "to": "DOMAIN-IT-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-IT-infrastructure",
-      "to": "DOMAIN-IT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-IT-economic",
-      "to": "DOMAIN-IT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-IT-climate",
       "to": "DOMAIN-IT-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -203,6 +182,27 @@
       "type": "AMPLIFIES",
       "weight": 0.65,
       "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-IT-climate",
+      "to": "DOMAIN-IT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-IT-infrastructure",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-IT-geopolitical",
@@ -232,16 +232,16 @@
       "weight": 0.5
     },
     {
+      "from": "SIGNAL-IT-Туман:_Эми",
+      "to": "DOMAIN-IT-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
       "from": "SIGNAL-IT-Шторм_—_Ит",
       "to": "DOMAIN-IT-climate",
       "type": "AMPLIFIES",
       "weight": 0.72
-    },
-    {
-      "from": "SIGNAL-IT-Государств",
-      "to": "DOMAIN-IT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.6
     }
   ]
 }
