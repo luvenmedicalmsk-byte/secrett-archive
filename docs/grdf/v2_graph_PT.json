@@ -2,7 +2,7 @@
   "country": "PT",
   "date": "2026-10-28",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-28T08:28:14.240301+00:00",
+  "generated_at": "2026-10-28T08:46:23.588071+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-PT-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 51,
+      "score": 32,
       "trend": "stable"
     },
     {
@@ -65,11 +65,6 @@
       "trend": "stable"
     },
     {
-      "id": "DRIVER-PT-economic",
-      "type": "Driver",
-      "label": "economic"
-    },
-    {
       "id": "DRIVER-PT-social",
       "type": "Driver",
       "label": "social"
@@ -80,6 +75,11 @@
       "label": "climate"
     },
     {
+      "id": "DRIVER-PT-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
+    },
+    {
       "id": "SIGNAL-PT-Ливень:_Аз",
       "type": "Signal",
       "label": "Ливень: Азоры - Восточная группа, Азоры ",
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
+      "id": "SIGNAL-PT-Португалия",
+      "type": "Signal",
+      "label": "Португалия делает обязательным формирова",
+      "severity": 32,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-PT-Протесты_и",
       "type": "Signal",
       "label": "Протесты и беспорядки — Португалия",
       "severity": 51,
       "domain": "social"
-    },
-    {
-      "id": "SIGNAL-PT-Экономичес",
-      "type": "Signal",
-      "label": "Экономический сигнал — Португалия",
-      "severity": 51,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-economic",
       "type": "CORRELATES",
-      "weight": 0.51
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-PT",
@@ -145,12 +145,6 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-PT-economic",
-      "to": "COUNTRY-PT",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
       "from": "DRIVER-PT-social",
       "to": "COUNTRY-PT",
       "type": "CAUSES",
@@ -158,6 +152,12 @@
     },
     {
       "from": "DRIVER-PT-climate",
+      "to": "COUNTRY-PT",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DRIVER-PT-geopolitical",
       "to": "COUNTRY-PT",
       "type": "CAUSES",
       "weight": 0.8
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-PT-climate",
-      "to": "DOMAIN-PT-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-PT-infrastructure",
-      "to": "DOMAIN-PT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-PT-economic",
-      "to": "DOMAIN-PT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-PT-geopolitical",
       "to": "DOMAIN-PT-infrastructure",
       "type": "ESCALATES",
@@ -226,20 +205,41 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-PT-climate",
+      "to": "DOMAIN-PT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-PT-infrastructure",
+      "to": "DOMAIN-PT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-PT-economic",
+      "to": "DOMAIN-PT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-PT-Ливень:_Аз",
       "to": "DOMAIN-PT-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-PT-Протесты_и",
-      "to": "DOMAIN-PT-social",
+      "from": "SIGNAL-PT-Португалия",
+      "to": "DOMAIN-PT-economic",
       "type": "AMPLIFIES",
-      "weight": 0.51
+      "weight": 0.32
     },
     {
-      "from": "SIGNAL-PT-Экономичес",
-      "to": "DOMAIN-PT-economic",
+      "from": "SIGNAL-PT-Протесты_и",
+      "to": "DOMAIN-PT-social",
       "type": "AMPLIFIES",
       "weight": 0.51
     }
