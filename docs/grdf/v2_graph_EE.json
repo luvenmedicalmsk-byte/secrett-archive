@@ -2,7 +2,7 @@
   "country": "EE",
   "date": "2026-10-28",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-28T01:07:57.436665+00:00",
+  "generated_at": "2026-10-28T01:27:05.703702+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -47,7 +47,7 @@
       "id": "DOMAIN-EE-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
+      "score": 58,
       "trend": "stable"
     },
     {
@@ -65,6 +65,11 @@
       "trend": "stable"
     },
     {
+      "id": "DRIVER-EE-social",
+      "type": "Driver",
+      "label": "social"
+    },
+    {
       "id": "DRIVER-EE-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
@@ -75,11 +80,6 @@
       "label": "economic"
     },
     {
-      "id": "DRIVER-EE-climate",
-      "type": "Driver",
-      "label": "climate"
-    },
-    {
       "id": "SIGNAL-EE-Воздушное_",
       "type": "Signal",
       "label": "Воздушное пространство — Эстония: помехи",
@@ -87,18 +87,18 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-EE-Swedbank_у",
-      "type": "Signal",
-      "label": "Swedbank увольняет 100 — Балтийские стра",
-      "severity": 50,
-      "domain": "economic"
-    },
-    {
       "id": "SIGNAL-EE-Экономичес",
       "type": "Signal",
       "label": "Экономический сигнал — Эстония",
       "severity": 50,
       "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-EE-Эпидемиоло",
+      "type": "Signal",
+      "label": "Эпидемиологический риск — Эстония",
+      "severity": 58,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -130,7 +130,7 @@
       "from": "COUNTRY-EE",
       "to": "DOMAIN-EE-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-EE",
@@ -145,6 +145,12 @@
       "weight": 0.05
     },
     {
+      "from": "DRIVER-EE-social",
+      "to": "COUNTRY-EE",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-EE-geopolitical",
       "to": "COUNTRY-EE",
       "type": "CAUSES",
@@ -152,12 +158,6 @@
     },
     {
       "from": "DRIVER-EE-economic",
-      "to": "COUNTRY-EE",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
-      "from": "DRIVER-EE-climate",
       "to": "COUNTRY-EE",
       "type": "CAUSES",
       "weight": 0.8
@@ -190,16 +190,16 @@
       "weight": 0.54
     },
     {
-      "from": "SIGNAL-EE-Swedbank_у",
+      "from": "SIGNAL-EE-Экономичес",
       "to": "DOMAIN-EE-economic",
       "type": "AMPLIFIES",
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-EE-Экономичес",
-      "to": "DOMAIN-EE-economic",
+      "from": "SIGNAL-EE-Эпидемиоло",
+      "to": "DOMAIN-EE-social",
       "type": "AMPLIFIES",
-      "weight": 0.5
+      "weight": 0.58
     }
   ]
 }
