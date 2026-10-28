@@ -25750,6 +25750,9 @@ TG_AGITPROP_OFF = ('readovkanews', 'rotfront_su', 'worldprotest')
 FEED_DEDUP_2410 = True
 SEV_FIX_2510 = True
 NOISE_2510 = True
+NOISE_CULTURE_STAFF = True
+_SF_CULT = re.compile(r'театр|\bмхт\b|музе[йяюе]|филармони|консерватори|балет|оркестр|цирк|кинотеатр|галере[яи]|библиотек', re.I)
+_SF_STAFF = re.compile(r'уволил\w*|уволен\w*|назначил\w*|назначен\w*|освободил\w*\s+от\s+должност|сменил\w*\s+(?:директор|руководител|худрук)|(?:новым|нового)\s+(?:директор|худрук|руководител)|отставк', re.I)
 HYG_AUTHOR_BLOG = ('Telegram/russianmacro',)
 _SF_CLICK = re.compile(r'^что-то\s|бьют\s+тревогу$|факап|порци\w*\s+позитив|удивительн\w*\s+на\s+этой\s+неделе|^вот\s+(?:почему|что)\b', re.I)
 _SF_NOISE = re.compile(r'продан\w*\s+на\s+аукцион|аукцион\w*\s+(?:sotheby|christie)|лошад\w*|табун\w*|'
@@ -26233,6 +26236,10 @@ def _feed_hygiene(events):
                     hide(e, 'кликбейт'); continue
                 if _SF_NOISE.search(t):
                     hide(e, 'не сигнал'); continue
+                # 28.10.2026: кадровые решения в учреждениях культуры («В МХТ имени Чехова
+                # уволили директора театра…») - не системный сигнал. Откат: NOISE_CULTURE_STAFF = False.
+                if NOISE_CULTURE_STAFF and _SF_CULT.search(t) and _SF_STAFF.search(t):
+                    hide(e, 'кадры в культуре'); continue
                 if _SF_PR_GOV.search(t) or (NOISE_PR_2410 and _is_pr_noise(t, (t + ' ' + sm).lower())):
                     hide(e, 'PR'); continue
                 if src in HYG_AUTHOR_BLOG:
