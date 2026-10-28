@@ -2,67 +2,67 @@
   "country": "KZ",
   "date": "2026-10-28",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-28T10:28:41.316519+00:00",
+  "generated_at": "2026-10-28T10:46:45.979805+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-KZ",
       "type": "Country",
       "label": "KZ",
-      "score": 65,
+      "score": 92,
       "props": {
-        "risk_score": 65
+        "risk_score": 92
       }
     },
     {
       "id": "DOMAIN-KZ-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 2,
-      "trend": "down"
+      "score": 81,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 65,
-      "trend": "down"
+      "score": 78,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 56,
-      "trend": "down"
+      "score": 92,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-technology",
       "type": "Domain",
       "label": "technology",
       "score": 56,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DRIVER-KZ-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-KZ-Пожарная_о",
+      "type": "Signal",
+      "label": "Пожарная опасность: Алматы (Алматинская ",
+      "severity": 92,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-KZ-ЦБ_казахст",
       "type": "Signal",
       "label": "ЦБ казахстана: Четвертое подряд снижение",
@@ -92,13 +99,6 @@
       "label": "Падение интернет-связи: Казахстан",
       "severity": 56,
       "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-KZ-Туман:_Еги",
-      "type": "Signal",
-      "label": "Туман: Егиндыкольский район (Акмолинская",
-      "severity": 56,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,19 +106,19 @@
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.02
+      "weight": 0.81
     },
     {
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-economic",
       "type": "CORRELATES",
-      "weight": 0.65
+      "weight": 0.78
     },
     {
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-climate",
       "type": "CORRELATES",
-      "weight": 0.56
+      "weight": 0.92
     },
     {
       "from": "COUNTRY-KZ",
@@ -205,6 +205,33 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-KZ-geopolitical",
+      "to": "DOMAIN-KZ-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-KZ-infrastructure",
+      "to": "DOMAIN-KZ-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-KZ-economic",
+      "to": "DOMAIN-KZ-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-KZ-Пожарная_о",
+      "to": "DOMAIN-KZ-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.92
+    },
+    {
       "from": "SIGNAL-KZ-ЦБ_казахст",
       "to": "DOMAIN-KZ-economic",
       "type": "AMPLIFIES",
@@ -213,12 +240,6 @@
     {
       "from": "SIGNAL-KZ-Падение_ин",
       "to": "DOMAIN-KZ-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.56
-    },
-    {
-      "from": "SIGNAL-KZ-Туман:_Еги",
-      "to": "DOMAIN-KZ-climate",
       "type": "AMPLIFIES",
       "weight": 0.56
     }
