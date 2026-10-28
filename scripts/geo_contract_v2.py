@@ -210,7 +210,42 @@ def _latin_abbr(text):
 
 def resolve_geo_v2(title, summary='', raw_coords=None, domain=None):
     title = _latin_abbr(title); summary = _latin_abbr(summary)
-    return _disputed(_eu_bloc(_resolve_geo_v2_core(title, summary, raw_coords, domain)), title)
+    gc = _resolve_geo_v2_core(title, summary, raw_coords, domain)
+    if GEO_TITLE_SUBJECT:
+        gc = _title_subject_override(gc, title, raw_coords, domain)
+    return _disputed(_eu_bloc(gc), title)
+
+
+# GEO_TITLE_SUBJECT (28.10.2026). «Россия сохраняет низкий уровень государственного
+# долга на фоне Европы, — подчеркнул Путин» получало Италию: локатив «В Италии»
+# стоял только в описании (сравнение), а страна-подлежащее в начале заголовка не
+# учитывалась. Если место взято локативом НЕ из заголовка, а заголовок начинается
+# с названия другой страны, событие относится к стране из заголовка.
+# Откат: GEO_TITLE_SUBJECT = False.
+GEO_TITLE_SUBJECT = True
+_TS_SOURCES = ('локатив', 'локатив по/над', 'генитив при опоре')
+def _title_subject_override(gc, title, raw_coords, domain):
+    try:
+        if not getattr(gc, 'country', None) or getattr(gc, 'source', None) not in _TS_SOURCES:
+            return gc
+        import geo_contract as _g
+        tl = (title or '').lower().lstrip(' «"\'')
+        start = None
+        for st, gv in _g.GAZ.items():
+            if gv[0] and _g._GAZ_RE[st].match(' ' + tl[:len(st) + 6]) and tl.startswith(st[:3]):
+                if start is None or len(st) > len(start[0]):
+                    start = (st, gv)
+        if not start or start[1][0] == gc.country:
+            return gc
+        # страна места не названа в заголовке
+        if any(gv[0] == gc.country and _g._GAZ_RE[st].search(' ' + tl + ' ') for st, gv in _g.GAZ.items()):
+            return gc
+        gt = _resolve_geo_v2_core(title, '', raw_coords, domain)
+        if getattr(gt, 'country', None) == start[1][0]:
+            return gt
+    except Exception:
+        return gc
+    return gc
 
 
 def _resolve_geo_v2_core(title, summary='', raw_coords=None, domain=None):
