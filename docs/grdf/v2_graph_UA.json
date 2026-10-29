@@ -2,7 +2,7 @@
   "country": "UA",
   "date": "2026-10-29",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-29T10:46:33.929749+00:00",
+  "generated_at": "2026-10-29T11:08:32.940021+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-UA",
       "type": "Country",
       "label": "UA",
-      "score": 90,
+      "score": 92,
       "props": {
-        "risk_score": 90
+        "risk_score": 92
       }
     },
     {
@@ -20,7 +20,7 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 98,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-economic",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-UA-При_нападе",
+      "type": "Signal",
+      "label": "При нападении российского дрона на поезд",
+      "severity": 90,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-UA-2_человека",
       "type": "Signal",
       "label": "2 человека погибли, 15 ранены — российск",
@@ -90,13 +97,6 @@
       "id": "SIGNAL-UA-Две_волны_",
       "type": "Signal",
       "label": "Две волны массированных ракетных атак об",
-      "severity": 77,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-UA-ВС_РФ_нано",
-      "type": "Signal",
-      "label": "ВС РФ наносят массированный удар по объе",
       "severity": 77,
       "domain": "geopolitical"
     }
@@ -184,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-UA-При_нападе",
+      "to": "DOMAIN-UA-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.9
+    },
+    {
       "from": "SIGNAL-UA-2_человека",
       "to": "DOMAIN-UA-geopolitical",
       "type": "AMPLIFIES",
@@ -191,12 +197,6 @@
     },
     {
       "from": "SIGNAL-UA-Две_волны_",
-      "to": "DOMAIN-UA-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.77
-    },
-    {
-      "from": "SIGNAL-UA-ВС_РФ_нано",
       "to": "DOMAIN-UA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.77
