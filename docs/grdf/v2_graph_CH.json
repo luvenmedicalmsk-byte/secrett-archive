@@ -2,67 +2,67 @@
   "country": "CH",
   "date": "2026-10-29",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-29T21:28:19.423321+00:00",
+  "generated_at": "2026-10-29T21:47:18.919475+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-CH",
       "type": "Country",
       "label": "CH",
-      "score": 50,
+      "score": 32,
       "props": {
-        "risk_score": 50
+        "risk_score": 32
       }
     },
     {
       "id": "DOMAIN-CH-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
-      "trend": "up"
+      "score": 62,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CH-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CH-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 60,
-      "trend": "up"
+      "score": 50,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CH-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CH-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
-      "trend": "up"
+      "score": 48,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CH-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CH-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DRIVER-CH-Geopolitical",
@@ -80,25 +80,25 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CH-Аномальный",
-      "type": "Signal",
-      "label": "Аномальный холод: Валь д'Аннивьес, Лёчен",
-      "severity": 50,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-CH-Почти_20%_",
-      "type": "Signal",
-      "label": "Почти 20% ледникового льда Швейцарии исч",
-      "severity": 32,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-CH-Климатичес",
       "type": "Signal",
       "label": "Климатический сигнал — Швейцария",
       "severity": 50,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-CH-Геополитич",
+      "type": "Signal",
+      "label": "Геополитический процесс — Швейцария",
+      "severity": 62,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-CH-Социальный",
+      "type": "Signal",
+      "label": "Социальный процесс — Швейцария",
+      "severity": 48,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.62
     },
     {
       "from": "COUNTRY-CH",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-climate",
       "type": "CORRELATES",
-      "weight": 0.6
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-CH",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-CH",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-CH-climate",
-      "to": "DOMAIN-CH-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-CH-infrastructure",
-      "to": "DOMAIN-CH-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-CH-economic",
-      "to": "DOMAIN-CH-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-CH-climate",
       "to": "DOMAIN-CH-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,22 +184,64 @@
       "lag_days": 90
     },
     {
-      "from": "SIGNAL-CH-Аномальный",
-      "to": "DOMAIN-CH-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.5
+      "from": "DOMAIN-CH-geopolitical",
+      "to": "DOMAIN-CH-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
     },
     {
-      "from": "SIGNAL-CH-Почти_20%_",
-      "to": "DOMAIN-CH-climate",
+      "from": "DOMAIN-CH-infrastructure",
+      "to": "DOMAIN-CH-economic",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CH-economic",
+      "to": "DOMAIN-CH-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "DOMAIN-CH-climate",
+      "to": "DOMAIN-CH-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-CH-infrastructure",
+      "to": "DOMAIN-CH-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CH-economic",
+      "to": "DOMAIN-CH-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "SIGNAL-CH-Климатичес",
       "to": "DOMAIN-CH-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
+    },
+    {
+      "from": "SIGNAL-CH-Геополитич",
+      "to": "DOMAIN-CH-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.62
+    },
+    {
+      "from": "SIGNAL-CH-Социальный",
+      "to": "DOMAIN-CH-social",
+      "type": "AMPLIFIES",
+      "weight": 0.48
     }
   ]
 }
