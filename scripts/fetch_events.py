@@ -13822,6 +13822,62 @@ def _approx_point_how(g, ppt, meta=None):
     return None
 
 
+GEO_TITLE_PICK_2910 = True
+_TP_LOC = re.compile(r'(?:^|\s)(?:в|во|на)\s+$')
+_TP_TGT = re.compile(r'(?:удар\w*|атак\w*|обстрел\w*|авиауд\w*|нал[её]т\w*|бомбардир\w*)\s+(?:\S+\s+){0,2}?по\s+$')
+
+
+def _title_country_pick(title):
+    """Страна события по заголовку, когда контракт её не определил (GEO_TITLE_PICK_2910)."""
+    try:
+        import geo_contract as _gc
+        if _GEO_GLOBAL_TITLE.search(title or ''):
+            return None
+        low = ' ' + (title or '').lower() + ' '
+        hits = []
+        for st, gv in _gc.GAZ.items():
+            if not gv or not gv[0] or len(gv) < 4 or gv[2] is None:
+                continue
+            if _gc.gaz_kind(st) != 'PLACE':      # персоны, ведомства, компании, прилагательные — не место
+                continue
+            rx = _gc._GAZ_RE.get(st)
+            if not rx:
+                continue
+            for m in rx.finditer(low):
+                a = m.start() + (0 if low[m.start()].isalpha() else 1)
+                _w = re.match(r'[а-яёa-z\-]+', low[a:])
+                _w = _w.group(0) if _w else ''
+                # прилагательное («израильская армия», «российская компания») — не место
+                if (' ' not in st and re.search(r'(?:ск|цк)(?:ий|ая|ое|ие|ой|ого|ому|ом|ую|их|им|ими|ые|ых|ым)$', _w)
+                        and not re.match(r'\s+(?:арави|коре|африк|осети|македони|каролин|ирланди|гвине|судан|америк|дакот)',
+                                         low[a + len(_w):])):
+                    continue
+                hits.append((a, -len(st), gv[0], gv))
+        if not hits:
+            return None
+        hits.sort()
+        seen, uniq = set(), []
+        for a, _l, cc, gv in hits:
+            if a in seen:
+                continue
+            seen.add(a); uniq.append((a, cc, gv))
+        for a, cc, gv in uniq:
+            if _TP_TGT.search(low[:a]):
+                return cc, gv, 'цель удара в заголовке'
+        a0, cc0, gv0 = uniq[0]
+        if a0 <= 2:
+            return cc0, gv0, 'страна-подлежащее в начале заголовка'
+        for a, cc, gv in uniq:
+            if _TP_LOC.search(low[:a]):
+                return cc, gv, 'локатив в заголовке'
+        ccs = {cc for _a, cc, _g in uniq}
+        if len(ccs) == 1:
+            return cc0, gv0, 'единственная страна в заголовке'
+    except Exception:
+        return None
+    return None
+
+
 def _apply_geo_contract(events):
     """GEO CONTRACT Phase 2 (docs/GEO_CONTRACT.md): авторитетная география платформы.
     resolve_geo() вычисляется ОДИН раз здесь; все гео-поля события — производные
@@ -14118,6 +14174,55 @@ def _apply_geo_contract(events):
                     }
     except Exception:
         pass
+    # GEO_TITLE_PICK_2910 (29.10.2026). Аудит 29.10: у 61 видимой записи страна
+    # не определена, хотя названа в заголовке: «Ответные удары дронов Судана…»,
+    # «Хуситы Йемена… удар по НПЗ в Саудовской Аравии», «Иордания сообщает, что
+    # удары по Сирии…», «Эстония построит бункеры», «Иран отверг предложение…».
+    # Правило срабатывает ТОЛЬКО когда контракт оставил страну пустой и место не
+    # зона/глобальное. Порядок: 1) локатив в заголовке («в/во/на X»); 2) цель
+    # удара («удары по X»); 3) страна-подлежащее в начале заголовка; 4) единственная
+    # страна в заголовке. Решение записывается в geo_decision.fallback.
+    # Откат: GEO_TITLE_PICK_2910 = False.
+    if GEO_TITLE_PICK_2910:
+        try:
+            _EU_REG2 = ('ЕС', 'Европа', 'Евросоюз', 'EU')
+            for e in events:
+                if e.get('primary_country') or e.get('territory_status') == 'disputed' or e.get('is_global'):
+                    continue
+                if (e.get('geo') or {}).get('process_place_type') in ('zone', 'global'):
+                    continue
+                if (e.get('region') or '') in _EU_REG2:
+                    continue
+                _pk = _title_country_pick(e.get('title') or '')
+                if not _pk:
+                    continue
+                _cc, _g, _rule = _pk
+                _gd_prev = (e.get('geo_decision') or {}).get('primary')
+                e['primary_country'] = _cc; e['country_code'] = _cc; e['event_country'] = _cc
+                _mc = list(e.get('mentioned_countries') or [])
+                if _cc not in _mc:
+                    _mc.insert(0, _cc)
+                e['mentioned_countries'] = _mc; e['country_codes'] = _mc
+                e['impact_countries'] = [c for c in _mc if c != _cc]
+                e['lat'], e['lng'] = _g[2], _g[3]
+                e['region'] = _g[1]; e['map_visible'] = True
+                _gd = e.get('geo') if isinstance(e.get('geo'), dict) else {}
+                _gd['country'] = _cc; _gd['country_ru'] = _g[1]
+                _gd['lat'], _gd['lng'] = _g[2], _g[3]
+                _gd['precision'] = 'single_mention'
+                _gd['source'] = 'страна из заголовка: ' + _rule
+                if COORD_ORIGIN: _gd['coord_origin'] = 'dictionary'
+                e['geo'] = _gd
+                e['geo_title_pick'] = _rule
+                if isinstance(e.get('geo_decision'), dict):
+                    e['geo_decision']['primary'] = _cc
+                    e['geo_decision']['region'] = _g[1]
+                    e['geo_decision']['precision'] = 'single_mention'
+                    e['geo_decision']['fallback'] = {
+                        'rule': 'title_country_pick', 'from': _gd_prev, 'to': _cc,
+                        'why': _rule, 'by': 'geo-fallback'}
+        except Exception:
+            pass
     # 24.09.2026. Предупреждение службы погоды выпускается ДЛЯ СТРАНЫ: страна
     # известна из самого канала, а не угадывается по тексту. Но в описании
     # областей встречаются береговые названия ("Адриатическое побережье",
@@ -25754,6 +25859,33 @@ NOISE_CULTURE_STAFF = True
 _SF_CULT = re.compile(r'театр|\bмхт\b|музе[йяюе]|филармони|консерватори|балет|оркестр|цирк|кинотеатр|галере[яи]|библиотек', re.I)
 _SF_STAFF = re.compile(r'уволил\w*|уволен\w*|назначил\w*|назначен\w*|освободил\w*\s+от\s+должност|сменил\w*\s+(?:директор|руководител|худрук)|(?:новым|нового)\s+(?:директор|худрук|руководител)|отставк', re.I)
 HYG_AUTHOR_BLOG = ('Telegram/russianmacro',)
+# 29.10.2026 · AUDIT_2910: аудит ленты 29.10 (шум, реклама, индексы, дубли сюжета).
+# Откат по частям: NOISE_2910, SEV_2910, STORY_DEDUP_2910, DEATH_FLOOR_2910 = False.
+NOISE_2910 = True
+SEV_2910 = True
+STORY_DEDUP_2910 = True
+DEATH_FLOOR_2910 = True
+_D29_CUM = re.compile(r'(?:возросл|вырос|достигл|превысил)\w*\s+(?:до\s+)?\d|общее\s+число|с\s+начала\s+(?:войны|конфликта|года)', re.I)
+_N29_AD = re.compile(r'позаботиться\s+о\s+будущем|больш\w*\s+мечт\w*|начал\w*\s+тестировать', re.I)
+_N29_PROTO = re.compile(r'^через\s+\d+\s+минут|заседани\w*\s+коллеги', re.I)
+_N29_REPLAY = re.compile(r'^(?:повтор|replay|прямой\s+эфир|live)\s*[:.\-—]', re.I)
+_N29_CLICK = re.compile(r'жутк\w*\s+момент|случайно\s+заснял|кадры\s+реакции|делятся\s+кадрами|научились\s+летать|'
+                        r'бьют\s+себя|что-то\s+не\s+сходилось|молни\w*\s+ударил\w*\s+в\s+(?:\w+\s+)?самол', re.I)
+_N29_DUBIOUS = re.compile(r'спойлер\w*\s+подъехал|топор\s*\+\s*18', re.I)
+_N29_GARBLED = re.compile(r'(?:\s[а-яё]{1,2}){2}$')
+_N29_STALE_FWD = re.compile(r'приближа|ожида|прогноз|надвига|движется\s+к', re.I)
+_N29_MONTH = {'январ': 1, 'феврал': 2, 'март': 3, 'апрел': 4, 'ма': 5, 'июн': 6, 'июл': 7, 'август': 8,
+              'сентябр': 9, 'октябр': 10, 'ноябр': 11, 'декабр': 12}
+SF_FEATURE_SRC = ('Mongabay', 'Yale E360', 'Grist', 'Inside Climate News', 'Carbon Brief', 'Climate Home News')
+_S29_ANALYSIS = re.compile(r'^(?:данные|анализ|расч[её]ты|оценк\w*)\s+(?:\S+\s+){0,3}показыва', re.I)
+_S29_DISCOUNT = re.compile(r'со\s+скидк\w*\s+\d+\s*%', re.I)
+_S29_RATE_HOLD = re.compile(r'(?:сохранил\w*|не\s+(?:стал\w*\s+)?(?:снижать|понизил\w*|повышать|повысил\w*)|'
+                            r'отказал\w*\s+(?:снижать|повышать))\s+(?:\S+\s+){0,3}ставк', re.I)
+_S29_APPOINT = re.compile(r'стал\w*\s+сенатор|назначен\w*\s+(?:нов\w+\s+)?(?:министр|губернатор|сенатор|посл)', re.I)
+_S29_EPI = re.compile(r'эбол|холер|марбург|оспа|чум[аы]|лихорадк|корь|кори\b|денге|mers|ближневосточн\w*\s+респиратор', re.I)
+_S29_CASES = re.compile(r'(\d{1,3}(?:[\s ,]\d{3})+|\d+)\s+(?:подтвержд\w*\s+)?(?:случа|заболевш|заражени)', re.I)
+_S29_EPI_DEAD = re.compile(r'(\d{1,3}(?:[\s ,]\d{3})+|\d+)\s+(?:подтвержд\w*\s+)?(?:смерт|погибш|умерш|летальн)', re.I)
+_S29_GAS = re.compile(r'газ\w*\D{0,60}?\$\s?(\d[\d\s ]{2,6})', re.I)
 _SF_CLICK = re.compile(r'^что-то\s|бьют\s+тревогу$|факап|порци\w*\s+позитив|удивительн\w*\s+на\s+этой\s+неделе|^вот\s+(?:почему|что)\b', re.I)
 _SF_NOISE = re.compile(r'продан\w*\s+на\s+аукцион|аукцион\w*\s+(?:sotheby|christie)|лошад\w*|табун\w*|'
                        r'^восстановлени\w*\s+(?:\S+\s+){0,2}лес|климатическ\w*\s+преимуществ', re.I)
@@ -25873,7 +26005,11 @@ _DF_RULES = [
                 r'(?:шахт|рудник|завод|фабрик|предприяти|нпз|комбинат|здани\w*\s+(?:\w+\s+){0,2}компани)', re.I), 'technology'),
     (re.compile(r'(?:самол[её]т|авиалайнер|борт\w*|рейс\w*)\s+(?:\S+\s+){0,8}?(?:сигнал\w*\s+бедстви|экстренн\w*\s+посад|аварийн\w*\s+посад|вынужденн\w*\s+посад)'
                 r'|молни\w*\s+ударил\w*\s+в\s+(?:\w+\s+)?самол', re.I), 'technology'),
-    (re.compile(r'шпион|шпионаж', re.I), 'geopolitics'),
+    (re.compile(r'(?:крушени|авари|катастроф|столкновени|сход)\w*\s+(?:\S+\s+){0,3}?(?:поезд|электричк|состав|железнодорож)|'
+                r'(?:поезд|железнодорож)\w*\s+(?:\S+\s+){0,2}?(?:катастроф|крушени|авари)', re.I), 'technology'),
+    (re.compile(r'алмаз|добытчик\w*', re.I), 'economy'),
+    (re.compile(r'(?:объявля\w*|выделил\w*)\s+о?\s*(?:займ|за[её]м|кредит)', re.I), 'economy'),
+    (re.compile(r'шпион|шпионаж|геноцид', re.I), 'geopolitics'),
     (re.compile(r'уровень\s+воды|паводк|наводнени|разлив\w*\s+рек|подтоплен', re.I), 'climate'),
 ]
 _HYG_CUM = re.compile(r'(?<![а-яё])с\s+(?:начала|октября|ноября|декабря|января|февраля|марта|апреля|мая|июня|июля|августа|сентября|\d{1,2}\s+[а-яё]+|20\d\d)', re.I)
@@ -26128,7 +26264,7 @@ def _feed_hygiene(events):
                         e['canon_domain'] = _dom
                         cnt['домен → ' + _dom] = cnt.get('домен → ' + _dom, 0) + 1
                     break
-        d = _hyg_deaths(t) if not _HYG_CUM.search(t) else None
+        d = _hyg_deaths(t) if not (_HYG_CUM.search(t) or (DEATH_FLOOR_2910 and _D29_CUM.search(t))) else None
         if _HYG_ROAD.search(t) and not re.search(r'астероид|метеорит|комет', t, re.I):
             cap = 66 if (d or 0) >= 20 else 60 if (d or 0) >= 10 else 52
             if e.get('domain') != 'social' or (e.get('severity') or 0) > cap:
@@ -26139,7 +26275,8 @@ def _feed_hygiene(events):
                 cnt['ДТП → социум'] = cnt.get('ДТП → социум', 0) + 1
             continue
         if d:
-            floor = 78 if d >= 100 else 74 if d >= 50 else 68 if d >= 20 else 0
+            floor = ((84 if d >= 100 else 80 if d >= 50 else 68 if d >= 20 else 0) if DEATH_FLOOR_2910
+                     else (78 if d >= 100 else 74 if d >= 50 else 68 if d >= 20 else 0))
             if floor and (e.get('severity') or 0) < floor:
                 e['severity_hygiene_from'] = e.get('severity')
                 e['severity'] = floor
@@ -26244,6 +26381,32 @@ def _feed_hygiene(events):
                     hide(e, 'PR'); continue
                 if src in HYG_AUTHOR_BLOG:
                     hide(e, 'авторский блог'); continue
+            if NOISE_2910:
+                if _N29_AD.search(t):
+                    hide(e, 'реклама/PR'); continue
+                if _N29_PROTO.search(t):
+                    hide(e, 'протокол'); continue
+                if _N29_REPLAY.search(t):
+                    hide(e, 'видео-повтор'); continue
+                if _N29_CLICK.search(t):
+                    hide(e, 'кликбейт'); continue
+                if _N29_DUBIOUS.search(sm) or _N29_DUBIOUS.search(t):
+                    hide(e, 'сомнительное'); continue
+                _lw = t.split()[-1].lower() if t.split() else ''
+                if _N29_GARBLED.search(t) and _lw not in ('юг', 'ес', 'рф', 'сша'):
+                    hide(e, 'битый перевод'); continue
+                # устаревшее: прогнозная запись о стихии, дата в описании старше 7 суток
+                if e.get('domain') == 'climate' and _N29_STALE_FWD.search(t + ' ' + sm):
+                    try:
+                        _ed = _d.fromisoformat((e.get('date') or '')[:10])
+                        _ds = []
+                        for _dd, _mm in re.findall(r'(?<!\d)(\d{1,2})\s+(январ|феврал|март|апрел|ма[яй]|июн|июл|август|сентябр|октябр|ноябр|декабр)', sm[:200].lower()):
+                            _mo = _N29_MONTH['март'] if _mm == 'март' else _N29_MONTH.get('ма' if _mm.startswith('ма') else _mm)
+                            _ds.append(_d(_ed.year if _mo <= _ed.month else _ed.year - 1, _mo, int(_dd)))
+                        if _ds and (_ed - max(_ds)).days > 7:
+                            hide(e, 'устаревшее'); continue
+                    except Exception:
+                        pass
             if _SF_STUDY.search(t) or _SF_STUDY.search(sm):
                 new, why = min(new, HYG_STUDY_CAP), 'исследование'
             if src in SF_SCIENCE_SRC:
@@ -26273,6 +26436,34 @@ def _feed_hygiene(events):
             _oil = _SF_OIL.search(t)
             if _oil and int(_oil.group(1)) >= 100 and new < SF_OIL_FLOOR:
                 new, why = SF_OIL_FLOOR, 'нефть выше $100'
+            if SEV_2910:
+                if src in SF_FEATURE_SRC:
+                    new, why = min(new, SF_FEATURE_CAP), 'очерк'
+                if _S29_ANALYSIS.search(t):
+                    new, why = min(new, 58), 'аналитика'
+                if _S29_DISCOUNT.search(t):
+                    new, why = min(new, 50), 'сделка с активом'
+                if _S29_RATE_HOLD.search(t):
+                    new, why = min(new, 56), 'ставка без изменений'
+                if e.get('domain') == 'geopolitics' and _S29_APPOINT.search(t) and not _SF_DEAD.search(t):
+                    new, why = min(new, 50), 'назначение'
+                # масштаб эпидемии: тысячи случаев или смертей
+                if _S29_EPI.search(t + ' ' + sm):
+                    _txt = t + ' ' + sm
+                    _num = lambda m: int(re.sub(r'\D', '', m.group(1)) or 0)
+                    _c = max([_num(m) for m in _S29_CASES.finditer(_txt)] or [0])
+                    _dth = max([_num(m) for m in _S29_EPI_DEAD.finditer(_txt)] or [0])
+                    _fl = 82 if (_c >= 10000 or _dth >= 1000) else 74 if (_c >= 1000 or _dth >= 100) else 0
+                    if _fl and new < _fl:
+                        new, why = _fl, 'масштаб эпидемии'
+                # ценовой шок газа в Европе: выше $1000 за тыс. м³
+                _gm = _S29_GAS.search(t)
+                if _gm and re.search(r'европ', t, re.I):
+                    try:
+                        if int(re.sub(r'\D', '', _gm.group(1))) >= 1000 and new < 62:
+                            new, why = 62, 'газ в Европе выше $1000'
+                    except Exception:
+                        pass
             if new != cur:
                 e['severity_hygiene_from'] = cur
                 e['severity'] = new
@@ -26326,9 +26517,76 @@ def _feed_hygiene(events):
                 e['dup_of'] = hit.get('id')
             else:
                 _kept.append((e, st_, nu_, dd))
+    # 29.10.2026 · STORY_DEDUP_2910: один сюжет из разных источников с разными
+    # доменами и регионами («крушение поезда в Испании» — 5 записей в трёх доменах,
+    # удар по рынку Ньялы — 5 записей с 21, 36 и «более 100» погибших, циклон
+    # «Арнаб» — 4). Ключ = класс сюжета + страна (или имя стихии); окно 3 суток.
+    # В ленте остаётся запись с наибольшей severity. Откат: STORY_DEDUP_2910 = False.
+    if STORY_DEDUP_2910:
+        _vis3 = [e for e in events if e.get('feed_visible') is not False and not e.get('alerts_only')]
+        _vis3.sort(key=lambda e: (-(e.get('severity') or 0), str(e.get('id'))))
+        _groups = {}
+        for e in _vis3:
+            t = e.get('title') or ''
+            k = _story_key(e)
+            if not k:
+                continue
+            try:
+                dd = _d.fromisoformat((e.get('date') or '')[:10])
+            except Exception:
+                continue
+            g = _groups.get(k)
+            if g and abs((g['d'] - dd).days) <= 3:
+                hide(e, 'дубль сюжета')
+                e['dup_of'] = g['e'].get('id')
+                g['n'] += 1
+            elif not g:
+                _groups[k] = {'e': e, 'd': dd, 'n': 1}
     if cnt:
         print('  [HYGIENE] скрыто из ленты: %s' % ', '.join('%s %d' % kv for kv in cnt.items()), file=sys.stderr)
     return sum(cnt.values())
+
+
+_SD_STORM = re.compile(r'(?i:циклон\w*|тайфун\w*|ураган\w*|шторм\w*)\s+(?:категори\w*\s+\d\s+)?«?([А-ЯЁA-Z][а-яёa-z\-]{2,})»?')
+_SD_CLASSES = (
+    ('rail', re.compile(r'поезд|железнодорож|электричк', re.I),
+     re.compile(r'круш|авари|катастроф|траур|погиб|жертв|столкнов|сош[её]л', re.I)),
+    ('market', re.compile(r'рын[ок]\w*|ярмарк', re.I), re.compile(r'дрон|беспилот|удар|атак|обстрел', re.I)),
+    ('missile', re.compile(r'баллистическ\w*\s+ракет|запуск\w*\s+(?:\S+\s+){0,2}ракет|запустил\w*\s+(?:\S+\s+){0,3}ракет', re.I), None),
+    ('rate', re.compile(r'ключев\w*\s+ставк|процентн\w*\s+ставк', re.I), None),
+    ('isis', re.compile(r'игил|исламск\w+\s+государств', re.I), None),
+    ('eu_protest', re.compile(r'протест|митинг', re.I), re.compile(r'европ', re.I)),
+    ('ras_tanura', re.compile(r'рас[\s\-]?тан', re.I), None),
+)
+_SD_CC = (('судан', 'SD'), ('испан', 'ES'), ('кндр', 'KP'), (r'северн\w*\s+коре', 'KP'), ('фрс', 'US'),
+          ('бразил', 'BR'), ('лул', 'BR'), ('сири', 'SY'), ('индия|андхр|одиш', 'IN'))
+
+
+def _story_key(e):
+    t = e.get('title') or ''
+    txt = t + ' ' + (e.get('summary') or '')[:300]
+    m = _SD_STORM.search(t)
+    if m and e.get('domain') == 'climate':
+        return ('storm', m.group(1).lower()[:6])
+    cc = e.get('primary_country') or ''
+    if not cc:
+        tl = t.lower()
+        for rx, c in _SD_CC:
+            if re.search(rx, tl):
+                cc = c; break
+    for name, rx1, rx2 in _SD_CLASSES:
+        if name in ('market',):
+            if rx1.search(txt) and rx2.search(t) and cc:
+                return (name, cc)
+            continue
+        if rx1.search(t) and (rx2 is None or rx2.search(t)):
+            if name in ('eu_protest', 'ras_tanura'):
+                return (name, '')
+            if name == 'missile' and cc != 'KP':      # пуски КНДР; удары ракетами по стране — разные события
+                continue
+            if cc:
+                return (name, cc)
+    return None
 
 # ── ОДИН ИНЦИДЕНТ — ОДНА ТОЧКА (INCIDENT_COLLAPSE, 11.10.2026) ────────────────
 # Удар по аэропорту Эр-Рияда пришёл из 13 источников: 13 точек вокруг города с
