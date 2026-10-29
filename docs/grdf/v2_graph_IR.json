@@ -2,7 +2,7 @@
   "country": "IR",
   "date": "2026-10-29",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-29T13:38:09.263135+00:00",
+  "generated_at": "2026-10-29T13:49:55.607495+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -10,24 +10,24 @@
       "id": "COUNTRY-IR",
       "type": "Country",
       "label": "IR",
-      "score": 74,
+      "score": 76,
       "props": {
-        "risk_score": 74
+        "risk_score": 76
       }
     },
     {
       "id": "DOMAIN-IR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 70,
-      "trend": "stable"
+      "score": 68,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 62,
-      "trend": "stable"
+      "score": 76,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-climate",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IR-Война_в_Ир",
+      "type": "Signal",
+      "label": "Война в Иране увеличивает счет за импорт",
+      "severity": 76,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-IR-Цены_на_не",
       "type": "Signal",
       "label": "Цены на нефть падают, так как Ванс начин",
@@ -92,13 +99,6 @@
       "label": "Президент Франции Эммануэль Макрон связа",
       "severity": 62,
       "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-IR-США_в_случ",
-      "type": "Signal",
-      "label": "США в случае возобновления боевых действ",
-      "severity": 62,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.7
+      "weight": 0.68
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-economic",
       "type": "CORRELATES",
-      "weight": 0.62
+      "weight": 0.76
     },
     {
       "from": "COUNTRY-IR",
@@ -184,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-IR-Война_в_Ир",
+      "to": "DOMAIN-IR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.76
+    },
+    {
       "from": "SIGNAL-IR-Цены_на_не",
       "to": "DOMAIN-IR-economic",
       "type": "AMPLIFIES",
@@ -192,12 +198,6 @@
     {
       "from": "SIGNAL-IR-Президент_",
       "to": "DOMAIN-IR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.62
-    },
-    {
-      "from": "SIGNAL-IR-США_в_случ",
-      "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.62
     }
