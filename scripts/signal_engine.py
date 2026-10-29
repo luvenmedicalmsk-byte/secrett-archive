@@ -334,6 +334,10 @@ _CLIM_PHEN=[('наводнение',r'наводн|паводок|разлив �
             ('сейсмика',r'землетряс|магнитуд|сейсм'),
             ('вулкан',r'вулкан|изверж|пепл'),
             ('шторм',r'ураган|\bшторм|смерч|шквал|тайфун|цунами')]
+PHEN_SCRUB_MULTI = True   # DEF-A4S5-01; откат — False
+def _clim_phens(t):
+    t=(t or '').lower()
+    return {name for name,pat in _CLIM_PHEN if re.search(pat,t)}
 def _clim_phen(e):
     t=(e.get('title') or '').lower()
     for name,pat in _CLIM_PHEN:
@@ -4351,6 +4355,14 @@ def write_signals_json(events, path):
               'Тепловая волна':'жара','Сейсмическая активность':'сейсмика'}.get(s.get('process_type'))
         if _pph:
             def _keep_phen(ttl):
+                # DEF-A4S5-01 (A4-S6): заголовок с несколькими климатическими явлениями
+                # («Засуха и аномальная жара: Поволжье и Черноземье») остаётся в процессе,
+                # если среди его явлений есть явление процесса. Раньше бралось только
+                # первое по порядку списка (засуха), и предупреждение удалялось из
+                # «Тепловой волны», не попадая больше ни в один процесс.
+                if PHEN_SCRUB_MULTI:
+                    ps=_clim_phens(ttl or '')
+                    return (not ps) or (_pph in ps)
                 p=_clim_phen({'title':ttl or ''})
                 return (p is None) or (p==_pph)
             if isinstance(s.get('evidence'),list):
