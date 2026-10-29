@@ -2,7 +2,7 @@
   "country": "ME",
   "date": "2026-10-29",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-29T23:27:33.614138+00:00",
+  "generated_at": "2026-10-29T23:35:59.234639+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-ME",
       "type": "Country",
       "label": "ME",
-      "score": 50,
+      "score": 45,
       "props": {
-        "risk_score": 50
+        "risk_score": 45
       }
     },
     {
@@ -26,7 +26,7 @@
       "id": "DOMAIN-ME-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 32,
       "trend": "down"
     },
     {
@@ -80,13 +80,6 @@
       "label": "economic"
     },
     {
-      "id": "SIGNAL-ME-Ветер:_Цен",
-      "type": "Signal",
-      "label": "Ветер: Центральный, Адриатическое побере",
-      "severity": 50,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-ME-Геополитич",
       "type": "Signal",
       "label": "Геополитический процесс — Балканы",
@@ -99,6 +92,13 @@
       "label": "Шторм — Черногория",
       "severity": 50,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-ME-Экономичес",
+      "type": "Signal",
+      "label": "Экономический сигнал — Черногория",
+      "severity": 32,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-ME",
       "to": "DOMAIN-ME-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-ME",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-ME-climate",
-      "to": "DOMAIN-ME-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-ME-economic",
-      "to": "DOMAIN-ME-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-ME-social",
-      "to": "DOMAIN-ME-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-ME-climate",
       "to": "DOMAIN-ME-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -203,6 +182,27 @@
       "type": "AMPLIFIES",
       "weight": 0.55,
       "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ME-climate",
+      "to": "DOMAIN-ME-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ME-economic",
+      "to": "DOMAIN-ME-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-ME-social",
+      "to": "DOMAIN-ME-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "DOMAIN-ME-geopolitical",
@@ -226,12 +226,6 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-ME-Ветер:_Цен",
-      "to": "DOMAIN-ME-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.5
-    },
-    {
       "from": "SIGNAL-ME-Геополитич",
       "to": "DOMAIN-ME-geopolitical",
       "type": "AMPLIFIES",
@@ -242,6 +236,12 @@
       "to": "DOMAIN-ME-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
+    },
+    {
+      "from": "SIGNAL-ME-Экономичес",
+      "to": "DOMAIN-ME-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.32
     }
   ]
 }
