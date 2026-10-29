@@ -2,7 +2,7 @@
   "country": "US",
   "date": "2026-10-29",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-29T19:49:12.943573+00:00",
+  "generated_at": "2026-10-29T20:26:29.058541+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -47,7 +47,7 @@
       "id": "DOMAIN-US-social",
       "type": "Domain",
       "label": "social",
-      "score": 74,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-US-Прибрежное",
+      "type": "Signal",
+      "label": "Прибрежное наводнение: Флорида, США",
+      "severity": 74,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-US-Внезапный_",
       "type": "Signal",
       "label": "Внезапный паводок: Нью-Мексико, Гавайи, ",
@@ -87,18 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-US-Сильный_ве",
+      "id": "SIGNAL-US-Угроза_нав",
       "type": "Signal",
-      "label": "Сильный ветер: Аляска, США",
+      "label": "Угроза наводнения: Нью-Мексико, Техас, А",
       "severity": 74,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-US-Предупрежд",
-      "type": "Signal",
-      "label": "Предупреждение правоохранительных органо",
-      "severity": 74,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -130,7 +130,7 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-social",
       "type": "CORRELATES",
-      "weight": 0.74
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-US",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-US-geopolitical",
-      "to": "DOMAIN-US-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-US-infrastructure",
-      "to": "DOMAIN-US-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-US-economic",
-      "to": "DOMAIN-US-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "DOMAIN-US-climate",
       "to": "DOMAIN-US-infrastructure",
       "type": "ESCALATES",
@@ -226,20 +205,41 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-US-geopolitical",
+      "to": "DOMAIN-US-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-US-infrastructure",
+      "to": "DOMAIN-US-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-US-Прибрежное",
+      "to": "DOMAIN-US-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.74
+    },
+    {
       "from": "SIGNAL-US-Внезапный_",
       "to": "DOMAIN-US-climate",
       "type": "AMPLIFIES",
       "weight": 0.74
     },
     {
-      "from": "SIGNAL-US-Сильный_ве",
+      "from": "SIGNAL-US-Угроза_нав",
       "to": "DOMAIN-US-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.74
-    },
-    {
-      "from": "SIGNAL-US-Предупрежд",
-      "to": "DOMAIN-US-social",
       "type": "AMPLIFIES",
       "weight": 0.74
     }
