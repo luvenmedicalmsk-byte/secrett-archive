@@ -1,14 +1,14 @@
 {
-  "generated": "2026-10-29T19:16:54Z",
+  "generated": "2026-10-29T19:27:43Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
     "PASS_FACT": 1086,
-    "DENY_COMMENTARY": 353,
-    "DENY_STATE_ONLY": 3,
+    "DENY_COMMENTARY": 354,
     "DENY_BACKGROUND": 7,
     "DENY_REPORT": 2,
     "DENY_FEATURE": 3,
+    "DENY_STATE_ONLY": 2,
     "UNMATCHED": 4
   },
   "kpi": {
@@ -26,47 +26,47 @@
   "shadow_reliability": {
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
-      "processes": 507,
-      "sample": 1657,
+      "processes": 508,
+      "sample": 1661,
       "agreement_pct": 87.3,
       "decision_agreement_pct": 87.7,
-      "critical_errors": 203,
+      "critical_errors": 205,
       "truth_ratio_pct": 100.0,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 177,
-        "COMMENTARY→FACT_EVENT": 22,
-        "FEATURE→COMMENTARY": 2,
+        "FACT_EVENT→COMMENTARY": 179,
+        "COMMENTARY→FACT_EVENT": 23,
         "COMMENTARY→BACKGROUND": 2,
         "BACKGROUND→COMMENTARY": 3,
-        "STATE_CONFIRMATION→FACT_EVENT": 3,
+        "STATE_CONFIRMATION→FACT_EVENT": 2,
+        "FEATURE→COMMENTARY": 1,
         "REPORT→FACT_EVENT": 1
       }
     },
     "historical": {
       "processes": 1458,
-      "sample": 3797,
+      "sample": 3800,
       "agreement_pct": 89.1,
-      "decision_agreement_pct": 89.4,
-      "critical_errors": 404,
+      "decision_agreement_pct": 89.3,
+      "critical_errors": 405,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 352,
-        "COMMENTARY→FACT_EVENT": 45,
-        "FEATURE→COMMENTARY": 4,
+        "FACT_EVENT→COMMENTARY": 353,
+        "COMMENTARY→FACT_EVENT": 46,
         "COMMENTARY→BACKGROUND": 4,
         "BACKGROUND→COMMENTARY": 3,
-        "STATE_CONFIRMATION→FACT_EVENT": 5,
+        "STATE_CONFIRMATION→FACT_EVENT": 4,
+        "FEATURE→COMMENTARY": 3,
         "REPORT→FACT_EVENT": 1,
         "FACT_EVENT→FEATURE": 1
       }
     },
     "events_stream": {
-      "sample": 503,
-      "agreement_pct": 86.9,
-      "decision_agreement_pct": 87.5,
-      "critical_errors": 63,
+      "sample": 511,
+      "agreement_pct": 86.1,
+      "decision_agreement_pct": 86.7,
+      "critical_errors": 68,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 55,
-        "COMMENTARY→FACT_EVENT": 6,
+        "FACT_EVENT→COMMENTARY": 59,
+        "COMMENTARY→FACT_EVENT": 7,
         "REPORT→FACT_EVENT": 1,
         "STATE_CONFIRMATION→FACT_EVENT": 1,
         "FEATURE→COMMENTARY": 1,
@@ -81,7 +81,7 @@
     }
   },
   "class_source": {
-    "evidence_sic": 3797
+    "evidence_sic": 3800
   },
   "truth_ratio_pct": 100.0,
   "domain_statistics": {
@@ -94,12 +94,12 @@
       "deny": 28
     },
     "social": {
-      "pass": 102,
-      "deny": 52
+      "pass": 101,
+      "deny": 53
     },
     "climate": {
-      "pass": 354,
-      "deny": 86,
+      "pass": 355,
+      "deny": 85,
       "unmatched": 4
     },
     "economy": {
@@ -330,7 +330,22 @@
         "REPORT": 1
       },
       "status": "active",
-      "causal_links": 1,
+      "causal_links": 2,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
+      "signal_id": "econ-топливныйр-европа-32a7",
+      "title": "Топливный рынок — Европа",
+      "domain": "economy",
+      "severity": 64,
+      "pressure": 66,
+      "first_seen": "2026-09-15",
+      "evidence_count": 2,
+      "evidence_classes": {
+        "COMMENTARY": 2
+      },
+      "status": "active",
+      "causal_links": 0,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -993,25 +1008,17 @@
       "status": "active",
       "causal_links": 2,
       "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "clim-пожарнаяак-сахалинс-db11",
-      "title": "Климатический сигнал — Сахалинская область",
-      "domain": "climate",
-      "severity": 56,
-      "pressure": 42,
-      "first_seen": "2026-09-18",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "COMMENTARY": 1
-      },
-      "status": "active",
-      "causal_links": 0,
-      "reason": "no FACT_EVENT in evidence"
     }
   ],
   "report_log": [],
   "severity_delta": [
+    {
+      "signal_id": "econ-топливныйр-европа-32a7",
+      "domain": "economy",
+      "legacy": 64,
+      "shadow": null,
+      "delta": null
+    },
     {
       "signal_id": "econ-инфляция-китай-30e9",
       "domain": "economy",
@@ -1023,6 +1030,13 @@
       "signal_id": "econ-macroрынок-европа-b333",
       "domain": "economy",
       "legacy": 76,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "clim-климатичес-европа-27d7",
+      "domain": "climate",
+      "legacy": 49,
       "shadow": null,
       "delta": null
     },
@@ -1125,13 +1139,6 @@
       "delta": null
     },
     {
-      "signal_id": "clim-климатичес-сша-ca49",
-      "domain": "climate",
-      "legacy": 35,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "econ-розничнаят-иран-c176",
       "domain": "economy",
       "legacy": 71,
@@ -1139,16 +1146,16 @@
       "delta": null
     },
     {
-      "signal_id": "clim-пожарнаяак-индонези-2239",
+      "signal_id": "clim-климатичес-атлантич-f8fb",
       "domain": "climate",
       "legacy": 44,
       "shadow": null,
       "delta": null
     },
     {
-      "signal_id": "clim-климатичес-атлантич-f8fb",
+      "signal_id": "clim-климатичес-сша-ca49",
       "domain": "climate",
-      "legacy": 44,
+      "legacy": 35,
       "shadow": null,
       "delta": null
     },
@@ -1191,13 +1198,6 @@
       "signal_id": "clim-климатичес-антаркти-807a",
       "domain": "climate",
       "legacy": 46,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "clim-климатичес-европа-27d7",
-      "domain": "climate",
-      "legacy": 34,
       "shadow": null,
       "delta": null
     },
@@ -1435,8 +1435,8 @@
   ],
   "deny_by_severity": {
     "0-30": 3,
-    "31-50": 238,
-    "51-70": 116,
+    "31-50": 237,
+    "51-70": 117,
     "71-90": 11,
     "91-100": 0
   }
