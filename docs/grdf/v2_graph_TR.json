@@ -2,7 +2,7 @@
   "country": "TR",
   "date": "2026-10-29",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-29T14:08:46.295284+00:00",
+  "generated_at": "2026-10-29T14:29:27.539245+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,31 +10,31 @@
       "id": "COUNTRY-TR",
       "type": "Country",
       "label": "TR",
-      "score": 70,
+      "score": 73,
       "props": {
-        "risk_score": 70
+        "risk_score": 73
       }
     },
     {
       "id": "DOMAIN-TR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 59,
-      "trend": "stable"
+      "score": 71,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 62,
+      "score": 5,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-TR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 70,
-      "trend": "stable"
+      "score": 72,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-technology",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-TR-2_человека",
+      "type": "Signal",
+      "label": "2 человека погибли — обрушение скальной ",
+      "severity": 72,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-TR-Гроза:_Ада",
       "type": "Signal",
       "label": "Гроза: Адана, Мерсин, Турция",
@@ -87,17 +94,10 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-TR-Турецкий_Ц",
+      "id": "SIGNAL-TR-Обрушение_",
       "type": "Signal",
-      "label": "Турецкий ЦБ: Ставка понижена после долго",
-      "severity": 62,
-      "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-TR-2_человека",
-      "type": "Signal",
-      "label": "2 человека погибли, когда сказочная труб",
-      "severity": 51,
+      "label": "Обрушение феи-камня убивает 2, ранит 1 в",
+      "severity": 65,
       "domain": "geopolitical"
     }
   ],
@@ -106,19 +106,19 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.59
+      "weight": 0.71
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-economic",
       "type": "CORRELATES",
-      "weight": 0.62
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-climate",
       "type": "CORRELATES",
-      "weight": 0.7
+      "weight": 0.72
     },
     {
       "from": "COUNTRY-TR",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-TR-climate",
-      "to": "DOMAIN-TR-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-TR-infrastructure",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-TR-economic",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-TR-climate",
       "to": "DOMAIN-TR-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -226,22 +205,43 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-TR-climate",
+      "to": "DOMAIN-TR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-TR-infrastructure",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-TR-2_человека",
+      "to": "DOMAIN-TR-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.72
+    },
+    {
       "from": "SIGNAL-TR-Гроза:_Ада",
       "to": "DOMAIN-TR-climate",
       "type": "AMPLIFIES",
       "weight": 0.7
     },
     {
-      "from": "SIGNAL-TR-Турецкий_Ц",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.62
-    },
-    {
-      "from": "SIGNAL-TR-2_человека",
+      "from": "SIGNAL-TR-Обрушение_",
       "to": "DOMAIN-TR-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.51
+      "weight": 0.65
     }
   ]
 }
