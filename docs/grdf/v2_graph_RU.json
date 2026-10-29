@@ -1,10 +1,10 @@
 {
   "country": "RU",
-  "date": "2026-10-28",
+  "date": "2026-10-29",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-28T23:47:03.045986+00:00",
+  "generated_at": "2026-10-29T00:08:07.584689+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-RU",
@@ -33,7 +33,7 @@
       "id": "DOMAIN-RU-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 59,
       "trend": "stable"
     },
     {
@@ -82,13 +82,6 @@
     {
       "id": "SIGNAL-RU-Два_челове",
       "type": "Signal",
-      "label": "Два человека пострадали в Москве во врем",
-      "severity": 89,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-RU-Два_челове",
-      "type": "Signal",
       "label": "Два человека погибли, 17 ранены из-за ат",
       "severity": 87,
       "domain": "geopolitical"
@@ -98,6 +91,13 @@
       "type": "Signal",
       "label": "В Воронеже в результате атаки дронов два",
       "severity": 86,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-RU-Два_челове",
+      "type": "Signal",
+      "label": "Два человека пострадали в Москве во врем",
+      "severity": 89,
       "domain": "geopolitical"
     }
   ],
@@ -118,7 +118,7 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.59
     },
     {
       "from": "COUNTRY-RU",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-RU-climate",
+      "to": "DOMAIN-RU-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-RU-economic",
+      "to": "DOMAIN-RU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-RU-social",
+      "to": "DOMAIN-RU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-RU-geopolitical",
       "to": "DOMAIN-RU-infrastructure",
       "type": "ESCALATES",
@@ -184,10 +205,25 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-RU-Два_челове",
-      "to": "DOMAIN-RU-geopolitical",
+      "from": "DOMAIN-RU-climate",
+      "to": "DOMAIN-RU-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-RU-infrastructure",
+      "to": "DOMAIN-RU-economic",
       "type": "AMPLIFIES",
-      "weight": 0.89
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-RU-economic",
+      "to": "DOMAIN-RU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "SIGNAL-RU-Два_челове",
@@ -200,6 +236,12 @@
       "to": "DOMAIN-RU-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.86
+    },
+    {
+      "from": "SIGNAL-RU-Два_челове",
+      "to": "DOMAIN-RU-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.89
     }
   ]
 }
