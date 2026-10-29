@@ -2,67 +2,67 @@
   "country": "ID",
   "date": "2026-10-29",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-29T02:46:10.520365+00:00",
+  "generated_at": "2026-10-29T03:07:16.122313+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-ID",
       "type": "Country",
       "label": "ID",
-      "score": 52,
+      "score": 56,
       "props": {
-        "risk_score": 52
+        "risk_score": 56
       }
     },
     {
       "id": "DOMAIN-ID-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
-      "trend": "down"
+      "score": 46,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-economic",
       "type": "Domain",
       "label": "economic",
       "score": 50,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 44,
-      "trend": "down"
+      "score": 56,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DRIVER-ID-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-ID-Гроза:_Цен",
+      "type": "Signal",
+      "label": "Гроза: Центральный Сулавеси, Острова Риа",
+      "severity": 56,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-ID-Самые_бога",
       "type": "Signal",
       "label": "Самые богатые магнаты Индонезии потеряли",
@@ -87,18 +94,11 @@
       "domain": "economic"
     },
     {
-      "id": "SIGNAL-ID-Лесные_пож",
+      "id": "SIGNAL-ID-Генеральны",
       "type": "Signal",
-      "label": "Лесные пожары в Индонезии влияют на каче",
-      "severity": 44,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-ID-Уголь_—_зе",
-      "type": "Signal",
-      "label": "Уголь — зелёная маска: план совместного ",
-      "severity": 44,
-      "domain": "climate"
+      "label": "Генеральный директор Фонда богатства Инд",
+      "severity": 46,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-ID",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-climate",
       "type": "CORRELATES",
-      "weight": 0.44
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-ID",
@@ -205,22 +205,43 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-ID-geopolitical",
+      "to": "DOMAIN-ID-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-ID-infrastructure",
+      "to": "DOMAIN-ID-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ID-economic",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-ID-Гроза:_Цен",
+      "to": "DOMAIN-ID-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.56
+    },
+    {
       "from": "SIGNAL-ID-Самые_бога",
       "to": "DOMAIN-ID-economic",
       "type": "AMPLIFIES",
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-ID-Лесные_пож",
-      "to": "DOMAIN-ID-climate",
+      "from": "SIGNAL-ID-Генеральны",
+      "to": "DOMAIN-ID-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.44
-    },
-    {
-      "from": "SIGNAL-ID-Уголь_—_зе",
-      "to": "DOMAIN-ID-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.44
+      "weight": 0.46
     }
   ]
 }
