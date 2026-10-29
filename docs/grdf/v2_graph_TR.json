@@ -2,7 +2,7 @@
   "country": "TR",
   "date": "2026-10-29",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-29T16:09:52.525780+00:00",
+  "generated_at": "2026-10-29T16:28:36.555807+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-TR",
       "type": "Country",
       "label": "TR",
-      "score": 73,
+      "score": 70,
       "props": {
-        "risk_score": 73
+        "risk_score": 70
       }
     },
     {
@@ -20,21 +20,21 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 65,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-TR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
-      "trend": "stable"
+      "score": 62,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-TR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 72,
-      "trend": "stable"
+      "score": 70,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-TR-technology",
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-TR-2_человека",
-      "type": "Signal",
-      "label": "2 человека погибли — обрушение скальной ",
-      "severity": 72,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-TR-Гроза:_Ада",
       "type": "Signal",
       "label": "Гроза: Адана, Мерсин, Турция",
@@ -99,6 +92,13 @@
       "label": "Обрушение феи-камня убивает 2, ранит 1 в",
       "severity": 65,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-TR-Турецкий_Ц",
+      "type": "Signal",
+      "label": "Турецкий ЦБ: Ставка понижена после долго",
+      "severity": 62,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,13 +112,13 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.62
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-climate",
       "type": "CORRELATES",
-      "weight": 0.72
+      "weight": 0.7
     },
     {
       "from": "COUNTRY-TR",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-TR-climate",
-      "to": "DOMAIN-TR-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-TR-economic",
-      "to": "DOMAIN-TR-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-TR-social",
-      "to": "DOMAIN-TR-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-TR-climate",
       "to": "DOMAIN-TR-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -203,6 +182,27 @@
       "type": "AMPLIFIES",
       "weight": 0.55,
       "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-TR-climate",
+      "to": "DOMAIN-TR-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-TR-social",
+      "to": "DOMAIN-TR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "DOMAIN-TR-geopolitical",
@@ -226,12 +226,6 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-TR-2_человека",
-      "to": "DOMAIN-TR-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.72
-    },
-    {
       "from": "SIGNAL-TR-Гроза:_Ада",
       "to": "DOMAIN-TR-climate",
       "type": "AMPLIFIES",
@@ -242,6 +236,12 @@
       "to": "DOMAIN-TR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.65
+    },
+    {
+      "from": "SIGNAL-TR-Турецкий_Ц",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.62
     }
   ]
 }
