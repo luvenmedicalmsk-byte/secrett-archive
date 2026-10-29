@@ -604,6 +604,14 @@ PROC_PROTEST_EU_MACRO = True
 # и legacy-счёт по слову «очаг» в summary назначал «Пожарная активность» (climate): геополитическое
 # событие уходило в климатические процессы. Откат — False.
 PROC_GPS_TYPE = True
+# DEF-A4S5-02 (A4-S6): записи «Подавление GPS» в _TYPE_DOMAIN/_TYPE_TEMPO действуют только при
+# включённом флаге. Без этого откат флагом оставлял рождённым GPS-сигналам темп 'medium' и домен
+# из реестра, а production без патча считает их по домену голосования ('slow').
+_GPS_TYPE_NAME = 'Подавление GPS'
+def _type_get(d, t):
+    if t == _GPS_TYPE_NAME and not PROC_GPS_TYPE:
+        return None
+    return d.get(t)
 _GPS_RX = _re.compile(r'(?:подавлени\w*\s+(?:gps|gnss|спутников\w*\s+навигац)|помех\w*\s+спутников\w*\s+навигац|'
                       r'глушени\w*\s+(?:gps|gnss)|gps[-\s]?(?:помех|глушен|спуфинг)|gnss[-\s]?(?:помех|глушен))'
                       r'(?!\w*\s*:\s*\d)', _re.I)   # «Помехи спутниковой навигации: 1» в сводке NOTAM — счётчик, не тема
@@ -1221,7 +1229,7 @@ _TYPE_TEMPO={
 }
 _DOMAIN_TEMPO={'climate':'fast','technology':'fast','economy':'medium','geopolitics':'slow','social':'medium'}
 def _lc_profile(sig):
-    tempo=_TYPE_TEMPO.get(sig.get('process_type')) or _DOMAIN_TEMPO.get(sig.get('primary_domain'),'medium')
+    tempo=_type_get(_TYPE_TEMPO, sig.get('process_type')) or _DOMAIN_TEMPO.get(sig.get('primary_domain'),'medium')
     return _LC_PROFILES[tempo], tempo
 
 LC_DONE_NOT_ABSORBING = True   # «Завершён» не поглощающее состояние; откат: False
@@ -3632,7 +3640,7 @@ def _build_one_signal(evs, meta=None):
     # домен процесса следует ТИПУ, а не объединению возможно-мисклассифицированных событий
     from collections import Counter as _Ctr
     _domvote=_Ctr(x.get('domain','') for x in evs if x.get('domain'))
-    primary_domain=_TYPE_DOMAIN.get(ptype) or (_domvote.most_common(1)[0][0] if _domvote else (domains[0] if domains else ''))
+    primary_domain=_type_get(_TYPE_DOMAIN, ptype) or (_domvote.most_common(1)[0][0] if _domvote else (domains[0] if domains else ''))
     domains=[primary_domain]+[d for d in domains if d and d!=primary_domain]  # primary первым
     name=f'{ptype} — {place}' if place and place!='Глобально' else ptype
     key_entity=actor or target or ''
