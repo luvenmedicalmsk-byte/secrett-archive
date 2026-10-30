@@ -2,7 +2,7 @@
   "country": "GR",
   "date": "2026-10-30",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-30T00:01:50.085229+00:00",
+  "generated_at": "2026-10-30T00:11:51.511427+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,17 +10,17 @@
       "id": "COUNTRY-GR",
       "type": "Country",
       "label": "GR",
-      "score": 50,
+      "score": 51,
       "props": {
-        "risk_score": 50
+        "risk_score": 51
       }
     },
     {
       "id": "DOMAIN-GR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 64,
-      "trend": "stable"
+      "score": 45,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-economic",
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 50,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-technology",
@@ -65,19 +65,26 @@
       "trend": "stable"
     },
     {
-      "id": "DRIVER-GR-geopolitical",
-      "type": "Driver",
-      "label": "geopolitical"
-    },
-    {
       "id": "DRIVER-GR-climate",
       "type": "Driver",
       "label": "climate"
     },
     {
+      "id": "DRIVER-GR-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
+    },
+    {
       "id": "DRIVER-GR-economic",
       "type": "Driver",
       "label": "economic"
+    },
+    {
+      "id": "SIGNAL-GR-Ливень:_Во",
+      "type": "Signal",
+      "label": "Ливень: Восточная Македония, Западная Ма",
+      "severity": 50,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-GR-Гроза:_Ион",
@@ -92,13 +99,6 @@
       "label": "Шторм — Греция",
       "severity": 50,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-GR-Военные_уд",
-      "type": "Signal",
-      "label": "Военные удары — Греция",
-      "severity": 64,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.64
+      "weight": 0.45
     },
     {
       "from": "COUNTRY-GR",
@@ -145,13 +145,13 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-GR-geopolitical",
+      "from": "DRIVER-GR-climate",
       "to": "COUNTRY-GR",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-GR-climate",
+      "from": "DRIVER-GR-geopolitical",
       "to": "COUNTRY-GR",
       "type": "CAUSES",
       "weight": 0.8
@@ -226,6 +226,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-GR-Ливень:_Во",
+      "to": "DOMAIN-GR-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
       "from": "SIGNAL-GR-Гроза:_Ион",
       "to": "DOMAIN-GR-climate",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-GR-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-GR-Военные_уд",
-      "to": "DOMAIN-GR-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.64
     }
   ]
 }
