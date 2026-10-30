@@ -2,9 +2,9 @@
   "country": "RS",
   "date": "2026-10-30",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-30T23:07:03.354815+00:00",
+  "generated_at": "2026-10-30T23:27:21.293849+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-RS",
@@ -33,7 +33,7 @@
       "id": "DOMAIN-RS-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 50,
       "trend": "stable"
     },
     {
@@ -75,9 +75,9 @@
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-RS-economic",
+      "id": "DRIVER-RS-climate",
       "type": "Driver",
-      "label": "economic"
+      "label": "climate"
     },
     {
       "id": "SIGNAL-RS-Вучич_прои",
@@ -94,11 +94,11 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-RS-В_Сербии_х",
+      "id": "SIGNAL-RS-Ливень:_Во",
       "type": "Signal",
-      "label": "В Сербии хотят запретить экспорт оружия ",
-      "severity": 46,
-      "domain": "geopolitical"
+      "label": "Ливень: Восточная Сербия, Сербия",
+      "severity": 50,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-RS",
       "to": "DOMAIN-RS-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-RS",
@@ -157,10 +157,31 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-RS-economic",
+      "from": "DRIVER-RS-climate",
       "to": "COUNTRY-RS",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-RS-climate",
+      "to": "DOMAIN-RS-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-RS-economic",
+      "to": "DOMAIN-RS-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-RS-social",
+      "to": "DOMAIN-RS-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "DOMAIN-RS-geopolitical",
@@ -184,6 +205,27 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-RS-climate",
+      "to": "DOMAIN-RS-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-RS-infrastructure",
+      "to": "DOMAIN-RS-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-RS-economic",
+      "to": "DOMAIN-RS-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-RS-Вучич_прои",
       "to": "DOMAIN-RS-social",
       "type": "AMPLIFIES",
@@ -196,10 +238,10 @@
       "weight": 0.59
     },
     {
-      "from": "SIGNAL-RS-В_Сербии_х",
-      "to": "DOMAIN-RS-geopolitical",
+      "from": "SIGNAL-RS-Ливень:_Во",
+      "to": "DOMAIN-RS-climate",
       "type": "AMPLIFIES",
-      "weight": 0.46
+      "weight": 0.5
     }
   ]
 }
