@@ -2,17 +2,17 @@
   "country": "JP",
   "date": "2026-10-30",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-30T05:47:40.741053+00:00",
+  "generated_at": "2026-10-30T06:07:57.651230+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-JP",
       "type": "Country",
       "label": "JP",
-      "score": 62,
+      "score": 77,
       "props": {
-        "risk_score": 62
+        "risk_score": 77
       }
     },
     {
@@ -20,49 +20,49 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
-      "trend": "stable"
+      "score": 68,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 56,
-      "trend": "stable"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-technology",
       "type": "Domain",
       "label": "technology",
       "score": 62,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-JP-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-JP-Банк_япони",
+      "type": "Signal",
+      "label": "Банк японии: Ставка на месте, но ситуаци",
+      "severity": 68,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-JP-В_Японии_п",
       "type": "Signal",
       "label": "В Японии по всей стране отключили систем",
@@ -87,18 +94,11 @@
       "domain": "technology"
     },
     {
-      "id": "SIGNAL-JP-Киберугроз",
+      "id": "SIGNAL-JP-Инфляция_—",
       "type": "Signal",
-      "label": "Киберугроза — Япония",
-      "severity": 62,
-      "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-JP-Климатичес",
-      "type": "Signal",
-      "label": "Климатический сигнал — Япония",
-      "severity": 56,
-      "domain": "climate"
+      "label": "Инфляция — Восточная Азия",
+      "severity": 68,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,13 +112,13 @@
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.68
     },
     {
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-climate",
       "type": "CORRELATES",
-      "weight": 0.56
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-JP",
@@ -163,46 +163,10 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-JP-climate",
-      "to": "DOMAIN-JP-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-JP-infrastructure",
+      "from": "SIGNAL-JP-Банк_япони",
       "to": "DOMAIN-JP-economic",
       "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-JP-economic",
-      "to": "DOMAIN-JP-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-JP-climate",
-      "to": "DOMAIN-JP-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-JP-economic",
-      "to": "DOMAIN-JP-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-JP-social",
-      "to": "DOMAIN-JP-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
+      "weight": 0.68
     },
     {
       "from": "SIGNAL-JP-В_Японии_п",
@@ -211,16 +175,10 @@
       "weight": 0.62
     },
     {
-      "from": "SIGNAL-JP-Киберугроз",
-      "to": "DOMAIN-JP-technology",
+      "from": "SIGNAL-JP-Инфляция_—",
+      "to": "DOMAIN-JP-economic",
       "type": "AMPLIFIES",
-      "weight": 0.62
-    },
-    {
-      "from": "SIGNAL-JP-Климатичес",
-      "to": "DOMAIN-JP-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.56
+      "weight": 0.68
     }
   ]
 }
