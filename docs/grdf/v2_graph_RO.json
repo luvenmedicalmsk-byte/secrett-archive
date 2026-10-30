@@ -2,9 +2,9 @@
   "country": "RO",
   "date": "2026-10-30",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-30T07:47:54.340043+00:00",
+  "generated_at": "2026-10-30T08:08:56.731754+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-RO",
@@ -33,7 +33,7 @@
       "id": "DOMAIN-RO-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 50,
       "trend": "stable"
     },
     {
@@ -70,14 +70,14 @@
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-RO-economic",
-      "type": "Driver",
-      "label": "economic"
-    },
-    {
       "id": "DRIVER-RO-climate",
       "type": "Driver",
       "label": "climate"
+    },
+    {
+      "id": "DRIVER-RO-economic",
+      "type": "Driver",
+      "label": "economic"
     },
     {
       "id": "SIGNAL-RO-Воздушное_",
@@ -87,18 +87,18 @@
       "domain": "geopolitical"
     },
     {
+      "id": "SIGNAL-RO-Ливень:_Вы",
+      "type": "Signal",
+      "label": "Ливень: Вылча, Сибиу, Прахова и ещё 8 ра",
+      "severity": 50,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-RO-Розничная_",
       "type": "Signal",
       "label": "Розничная торговля — Румыния",
       "severity": 32,
       "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-RO-Геополитич",
-      "type": "Signal",
-      "label": "Геополитический процесс — Румыния",
-      "severity": 32,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-RO",
       "to": "DOMAIN-RO-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-RO",
@@ -151,16 +151,58 @@
       "weight": 0.8
     },
     {
+      "from": "DRIVER-RO-climate",
+      "to": "COUNTRY-RO",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-RO-economic",
       "to": "COUNTRY-RO",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-RO-climate",
-      "to": "COUNTRY-RO",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-RO-climate",
+      "to": "DOMAIN-RO-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-RO-economic",
+      "to": "DOMAIN-RO-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-RO-social",
+      "to": "DOMAIN-RO-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-RO-climate",
+      "to": "DOMAIN-RO-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-RO-infrastructure",
+      "to": "DOMAIN-RO-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-RO-economic",
+      "to": "DOMAIN-RO-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-RO-geopolitical",
@@ -190,14 +232,14 @@
       "weight": 0.64
     },
     {
-      "from": "SIGNAL-RO-Розничная_",
-      "to": "DOMAIN-RO-economic",
+      "from": "SIGNAL-RO-Ливень:_Вы",
+      "to": "DOMAIN-RO-climate",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.5
     },
     {
-      "from": "SIGNAL-RO-Геополитич",
-      "to": "DOMAIN-RO-geopolitical",
+      "from": "SIGNAL-RO-Розничная_",
+      "to": "DOMAIN-RO-economic",
       "type": "AMPLIFIES",
       "weight": 0.32
     }
