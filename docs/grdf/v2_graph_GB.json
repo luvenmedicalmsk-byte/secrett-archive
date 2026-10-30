@@ -2,17 +2,17 @@
   "country": "GB",
   "date": "2026-10-30",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-30T12:47:50.443306+00:00",
+  "generated_at": "2026-10-30T13:07:33.700201+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-GB",
       "type": "Country",
       "label": "GB",
-      "score": 50,
+      "score": 54,
       "props": {
-        "risk_score": 50
+        "risk_score": 54
       }
     },
     {
@@ -20,49 +20,49 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-economic",
       "type": "Domain",
       "label": "economic",
       "score": 45,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 36,
-      "trend": "stable"
+      "score": 54,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-GB-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-GB-Великобрит",
+      "type": "Signal",
+      "label": "Великобритания представляет план по борь",
+      "severity": 54,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-GB-Инфляция_в",
       "type": "Signal",
       "label": "Инфляция в UK: Ключевым контрибьютором р",
@@ -90,13 +97,6 @@
       "id": "SIGNAL-GB-Бюджет_Вел",
       "type": "Signal",
       "label": "Бюджет Великобритании на 2026 год: ключе",
-      "severity": 32,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-GB-Раскрыто:_",
-      "type": "Signal",
-      "label": "Раскрыто: Великобритания полагалась на £",
       "severity": 32,
       "domain": "climate"
     }
@@ -118,7 +118,7 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-climate",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.54
     },
     {
       "from": "COUNTRY-GB",
@@ -163,6 +163,54 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-GB-climate",
+      "to": "DOMAIN-GB-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-GB-infrastructure",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GB-economic",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-GB-climate",
+      "to": "DOMAIN-GB-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-GB-economic",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-GB-social",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "SIGNAL-GB-Великобрит",
+      "to": "DOMAIN-GB-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.54
+    },
+    {
       "from": "SIGNAL-GB-Инфляция_в",
       "to": "DOMAIN-GB-economic",
       "type": "AMPLIFIES",
@@ -170,12 +218,6 @@
     },
     {
       "from": "SIGNAL-GB-Бюджет_Вел",
-      "to": "DOMAIN-GB-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.32
-    },
-    {
-      "from": "SIGNAL-GB-Раскрыто:_",
       "to": "DOMAIN-GB-climate",
       "type": "AMPLIFIES",
       "weight": 0.32
