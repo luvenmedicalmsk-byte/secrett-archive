@@ -2,7 +2,7 @@
   "country": "RU",
   "date": "2026-10-30",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-30T08:28:00.100519+00:00",
+  "generated_at": "2026-10-30T08:46:41.766085+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -10,17 +10,17 @@
       "id": "COUNTRY-RU",
       "type": "Country",
       "label": "RU",
-      "score": 87,
+      "score": 92,
       "props": {
-        "risk_score": 87
+        "risk_score": 92
       }
     },
     {
       "id": "DOMAIN-RU-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 90,
-      "trend": "stable"
+      "score": 100,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-economic",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-RU-Москва_под",
+      "type": "Signal",
+      "label": "Москва подверглась одной из крупнейших а",
+      "severity": 95,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-RU-В_Брянске_",
       "type": "Signal",
       "label": "В Брянске 1 человек погиб, шесть ранены ",
@@ -92,13 +99,6 @@
       "label": "Один человек погиб в результате атаки БП",
       "severity": 79,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-RU-Ночная_ата",
-      "type": "Signal",
-      "label": "Ночная атака БПЛА на Россию стала крупне",
-      "severity": 78,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.9
+      "weight": 1.0
     },
     {
       "from": "COUNTRY-RU",
@@ -184,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-RU-Москва_под",
+      "to": "DOMAIN-RU-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.95
+    },
+    {
       "from": "SIGNAL-RU-В_Брянске_",
       "to": "DOMAIN-RU-geopolitical",
       "type": "AMPLIFIES",
@@ -194,12 +200,6 @@
       "to": "DOMAIN-RU-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.79
-    },
-    {
-      "from": "SIGNAL-RU-Ночная_ата",
-      "to": "DOMAIN-RU-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.78
     }
   ]
 }
