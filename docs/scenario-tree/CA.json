@@ -10,26 +10,17 @@
       "depth": 0
     },
     {
-      "id": "stress",
-      "label": "Stress Case",
-      "type": "stress",
-      "status": "active",
-      "parent": "ROOT",
-      "depth": 1,
-      "prob": 30.0
-    },
-    {
       "id": "worst",
       "label": "Worst Case",
       "type": "worst",
       "status": "active",
       "parent": "ROOT",
       "depth": 1,
-      "prob": 40.0
+      "prob": 39.1
     },
     {
       "id": "ASE-ACC-25",
-      "label": "Сценарий ускорения (deceleration)",
+      "label": "Сценарий ускорения (acceleration)",
       "type": "acceleration",
       "status": "emerging",
       "parent": "ROOT",
@@ -46,6 +37,15 @@
       "prob": 20
     },
     {
+      "id": "ASE-CRIT-WORST",
+      "label": "Критический каскад (ветвь КРИТИЧЕСКИХ рисков)",
+      "type": "critical_branch",
+      "status": "emerging",
+      "parent": "ROOT",
+      "depth": 1,
+      "prob": 12
+    },
+    {
       "id": "best-RET",
       "label": "Best Case [устарел]",
       "type": "retired",
@@ -60,23 +60,26 @@
       "parent": "ROOT",
       "depth": 2,
       "prob": 0
-    }
-  ],
-  "convergences": [],
-  "divergences": [
-    {
-      "scenario_a": "stress",
-      "scenario_b": "deescalation_branch",
-      "score_gap": 30,
-      "label": "Расхождение: Stress Case ↔ Ветвь деэскалации: improving"
     },
     {
-      "scenario_a": "acceleration",
-      "scenario_b": "deescalation_branch",
-      "score_gap": 42,
-      "label": "Расхождение: Сценарий ускорения (deceleration) ↔ Ветвь деэскалации: improving"
+      "id": "stress-RET",
+      "label": "Stress Case [устарел]",
+      "type": "retired",
+      "parent": "ROOT",
+      "depth": 2,
+      "prob": 0
     }
   ],
+  "convergences": [
+    {
+      "scenario_a": "worst",
+      "scenario_b": "acceleration",
+      "score_gap": 0,
+      "prob_gap": 4.1,
+      "label": "Сближение: Worst Case ↔ Сценарий ускорения (acceleration)"
+    }
+  ],
+  "divergences": [],
   "active_count": 4,
-  "retired_count": 2
+  "retired_count": 3
 }
