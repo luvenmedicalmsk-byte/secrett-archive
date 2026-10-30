@@ -2,7 +2,7 @@
   "country": "GR",
   "date": "2026-10-30",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-30T21:15:46.833367+00:00",
+  "generated_at": "2026-10-30T21:27:13.009877+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,17 +10,17 @@
       "id": "COUNTRY-GR",
       "type": "Country",
       "label": "GR",
-      "score": 51,
+      "score": 50,
       "props": {
-        "risk_score": 51
+        "risk_score": 50
       }
     },
     {
       "id": "DOMAIN-GR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 45,
-      "trend": "up"
+      "score": 64,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GR-economic",
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 50,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GR-technology",
@@ -65,26 +65,19 @@
       "trend": "stable"
     },
     {
-      "id": "DRIVER-GR-climate",
-      "type": "Driver",
-      "label": "climate"
-    },
-    {
       "id": "DRIVER-GR-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
     },
     {
+      "id": "DRIVER-GR-climate",
+      "type": "Driver",
+      "label": "climate"
+    },
+    {
       "id": "DRIVER-GR-economic",
       "type": "Driver",
       "label": "economic"
-    },
-    {
-      "id": "SIGNAL-GR-Ливень:_До",
-      "type": "Signal",
-      "label": "Ливень: Додеканисские острова, Центральн",
-      "severity": 50,
-      "domain": "climate"
     },
     {
       "id": "SIGNAL-GR-Ветер:_Вос",
@@ -99,6 +92,13 @@
       "label": "Шторм — Греция",
       "severity": 50,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-GR-Военные_уд",
+      "type": "Signal",
+      "label": "Военные удары — Греция",
+      "severity": 64,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.45
+      "weight": 0.64
     },
     {
       "from": "COUNTRY-GR",
@@ -145,13 +145,13 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-GR-climate",
+      "from": "DRIVER-GR-geopolitical",
       "to": "COUNTRY-GR",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-GR-geopolitical",
+      "from": "DRIVER-GR-climate",
       "to": "COUNTRY-GR",
       "type": "CAUSES",
       "weight": 0.8
@@ -226,12 +226,6 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-GR-Ливень:_До",
-      "to": "DOMAIN-GR-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.5
-    },
-    {
       "from": "SIGNAL-GR-Ветер:_Вос",
       "to": "DOMAIN-GR-climate",
       "type": "AMPLIFIES",
@@ -242,6 +236,12 @@
       "to": "DOMAIN-GR-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
+    },
+    {
+      "from": "SIGNAL-GR-Военные_уд",
+      "to": "DOMAIN-GR-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.64
     }
   ]
 }
