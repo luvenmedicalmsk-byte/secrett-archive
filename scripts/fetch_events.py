@@ -25243,6 +25243,45 @@ def _es_bonus(v):
     return 0
 
 
+# 30.10.2026 · AGRI_OUTPUT_3010: спад производства сельхозкультур - экономика.
+# «Производство хлопка в Турции сокращается… упадет на 38 процентов» стояло
+# в геополитике на 46: классификатор поставил домен по умолчанию, а в словаре
+# предметов экономического масштаба нет производства и урожая. Запись
+# переводится в экономику (если причина не стихия - тогда это климат),
+# и величина спада получает обычную надбавку _econ_scale (от 30% - +15).
+# Откат: AGRI_OUTPUT_3010 = False.
+AGRI_OUTPUT_3010 = True
+_AG30_SUBJ = re.compile(r'(?:производств|урожа|сбор|посев|выращиван|экспорт)\w*\s+(?:\S+\s+){0,2}?'
+                        r'(?:хлопк|пшениц|зерн|кукуруз|ячмен|риса\b|сахар|свекл|подсолнечн|со[ия]\b|соев|кофе|какао|'
+                        r'олив|виноград|картофел|фрукт|овощ|чая\b|молок|мяс)|'
+                        r'(?:хлопк|пшениц|зерн|кукуруз|ячмен|сахар|подсолнечн|соев|кофе|какао)\w*\s+(?:\S+\s+){0,2}?'
+                        r'(?:урожа|производств|сбор)', re.I)
+_AG30_DOWN = re.compile(r'сокра\w*|упад\w*|упал\w*|сниз\w*|снижен\w*|падени\w*|обвал\w*|неурожа\w*', re.I)
+_AG30_HAZ = re.compile(r'засух|наводн|паводк|жар[аыу]\b|аномальн\w*\s+(?:жар|тепл)|заморозк|град\b|градом|пожар|ураган|тайфун|циклон|саранч', re.I)
+
+
+def _agri_output(events):
+    if not AGRI_OUTPUT_3010:
+        return 0
+    n = 0
+    for e in events:
+        if e.get('domain') not in ('geopolitics', 'social') or e.get('alerts_only'):
+            continue
+        t = e.get('title') or ''
+        blob = t + ' ' + (e.get('summary') or '')[:400]
+        if not (_AG30_SUBJ.search(t) or _AG30_SUBJ.search(blob)) or not _AG30_DOWN.search(blob):
+            continue
+        if _AG30_HAZ.search(blob):
+            continue
+        e['domain_hygiene_from'] = e.get('domain')
+        e['domain'] = 'economy'
+        e['canon_domain'] = 'economy'
+        n += 1
+    if n:
+        print('  [AGRI-OUTPUT] спад сельхозпроизводства → экономика: %d' % n, file=sys.stderr)
+    return n
+
+
 def _econ_scale(events):
     """Замер масштаба экономического изменения. Боевой вес не трогает без промоушена."""
     if not (ECON_SCALE_SHADOW or ECON_SCALE_APPLY):
@@ -25283,7 +25322,8 @@ def _econ_scale(events):
         # предметов описывает долги и цены, но не «кризис фондов».
         _mkt = _ES_MARKET.search(blob)
         _trade = _ES_TRADE.search(blob) and _es_mult(blob) is not None
-        if not _ES_SUBJ.search(blob) and not _mkt and not _trade:
+        if not _ES_SUBJ.search(blob) and not _mkt and not _trade and not (
+                AGRI_OUTPUT_3010 and _AG30_SUBJ.search(blob) and _AG30_DOWN.search(blob)):
             continue
         # Сверхстепень засчитывается и за названное изменение: «рекордные цены»
         # не содержат глагола движения, но сам рекорд и есть движение.
@@ -27547,6 +27587,7 @@ def save_enriched(events, previous_snapshot=None):
                 # Экономический масштаб после человеческого: запись, где вес
                 # уже поставлен по числу пострадавших, второй надбавки не
                 # получает (проверка severity_hs_shadow внутри).
+                _agri_output(enriched["events"])
                 _econ_scale(enriched["events"])
                 _macro_signal(enriched["events"])
                 _tail_caps(enriched["events"])
