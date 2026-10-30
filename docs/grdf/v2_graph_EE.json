@@ -2,7 +2,7 @@
   "country": "EE",
   "date": "2026-10-30",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-30T06:28:21.782898+00:00",
+  "generated_at": "2026-10-30T06:47:51.087717+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -47,7 +47,7 @@
       "id": "DOMAIN-EE-social",
       "type": "Domain",
       "label": "social",
-      "score": 50,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -75,9 +75,9 @@
       "label": "climate"
     },
     {
-      "id": "DRIVER-EE-social",
+      "id": "DRIVER-EE-economic",
       "type": "Driver",
-      "label": "social"
+      "label": "economic"
     },
     {
       "id": "SIGNAL-EE-Конференци",
@@ -87,18 +87,18 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-EE-Молодежь,_",
-      "type": "Signal",
-      "label": "Молодежь, занимающаяся 'трамвайным серфи",
-      "severity": 50,
-      "domain": "social"
-    },
-    {
       "id": "SIGNAL-EE-Ветер:_Сев",
       "type": "Signal",
       "label": "Ветер: Северная Балтийская море, Эстония",
       "severity": 50,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-EE-Военные_уд",
+      "type": "Signal",
+      "label": "Военные удары — Эстония",
+      "severity": 63,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -130,7 +130,7 @@
       "from": "COUNTRY-EE",
       "to": "DOMAIN-EE-social",
       "type": "CORRELATES",
-      "weight": 0.5
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-EE",
@@ -157,7 +157,7 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-EE-social",
+      "from": "DRIVER-EE-economic",
       "to": "COUNTRY-EE",
       "type": "CAUSES",
       "weight": 0.8
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-EE-geopolitical",
-      "to": "DOMAIN-EE-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-EE-infrastructure",
-      "to": "DOMAIN-EE-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-EE-economic",
-      "to": "DOMAIN-EE-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "DOMAIN-EE-climate",
       "to": "DOMAIN-EE-infrastructure",
       "type": "ESCALATES",
@@ -226,22 +205,43 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-EE-geopolitical",
+      "to": "DOMAIN-EE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-EE-infrastructure",
+      "to": "DOMAIN-EE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-EE-economic",
+      "to": "DOMAIN-EE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-EE-Конференци",
       "to": "DOMAIN-EE-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.63
     },
     {
-      "from": "SIGNAL-EE-Молодежь,_",
-      "to": "DOMAIN-EE-social",
-      "type": "AMPLIFIES",
-      "weight": 0.5
-    },
-    {
       "from": "SIGNAL-EE-Ветер:_Сев",
       "to": "DOMAIN-EE-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
+    },
+    {
+      "from": "SIGNAL-EE-Военные_уд",
+      "to": "DOMAIN-EE-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.63
     }
   ]
 }
