@@ -2,7 +2,7 @@
   "country": "UA",
   "date": "2026-10-30",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-30T03:45:52.485437+00:00",
+  "generated_at": "2026-10-30T04:07:29.344610+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-UA",
       "type": "Country",
       "label": "UA",
-      "score": 91,
+      "score": 92,
       "props": {
-        "risk_score": 91
+        "risk_score": 92
       }
     },
     {
@@ -20,7 +20,7 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 98,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-economic",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-UA-Международ",
+      "type": "Signal",
+      "label": "Международное агентство по атомной энерг",
+      "severity": 90,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-UA-При_нападе",
       "type": "Signal",
       "label": "При нападении российского дрона на поезд",
@@ -91,13 +98,6 @@
       "type": "Signal",
       "label": "Российская атака дронов на железнодорожн",
       "severity": 88,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-UA-Две_волны_",
-      "type": "Signal",
-      "label": "Две волны массированных ракетных атак об",
-      "severity": 77,
       "domain": "geopolitical"
     }
   ],
@@ -184,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-UA-Международ",
+      "to": "DOMAIN-UA-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.9
+    },
+    {
       "from": "SIGNAL-UA-При_нападе",
       "to": "DOMAIN-UA-geopolitical",
       "type": "AMPLIFIES",
@@ -194,12 +200,6 @@
       "to": "DOMAIN-UA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.88
-    },
-    {
-      "from": "SIGNAL-UA-Две_волны_",
-      "to": "DOMAIN-UA-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.77
     }
   ]
 }

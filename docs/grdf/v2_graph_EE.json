@@ -2,9 +2,9 @@
   "country": "EE",
   "date": "2026-10-30",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-30T03:45:52.489932+00:00",
+  "generated_at": "2026-10-30T04:07:29.351638+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-EE",
@@ -33,7 +33,7 @@
       "id": "DOMAIN-EE-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 50,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -47,7 +47,7 @@
       "id": "DOMAIN-EE-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
+      "score": 50,
       "trend": "stable"
     },
     {
@@ -70,14 +70,21 @@
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-EE-climate",
+      "id": "DRIVER-EE-social",
       "type": "Driver",
-      "label": "climate"
+      "label": "social"
     },
     {
       "id": "DRIVER-EE-economic",
       "type": "Driver",
       "label": "economic"
+    },
+    {
+      "id": "SIGNAL-EE-Конференци",
+      "type": "Signal",
+      "label": "Конференция по восстановлению Украины в ",
+      "severity": 63,
+      "domain": "geopolitical"
     },
     {
       "id": "SIGNAL-EE-Воздушное_",
@@ -87,18 +94,11 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-EE-Ветер:_Сев",
+      "id": "SIGNAL-EE-Молодежь,_",
       "type": "Signal",
-      "label": "Ветер: Северная Балтийская море, Эстония",
+      "label": "Молодежь, занимающаяся 'трамвайным серфи",
       "severity": 50,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-EE-Военные_уд",
-      "type": "Signal",
-      "label": "Военные удары — Эстония",
-      "severity": 63,
-      "domain": "geopolitical"
+      "domain": "social"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-EE",
       "to": "DOMAIN-EE-climate",
       "type": "CORRELATES",
-      "weight": 0.5
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-EE",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-EE",
       "to": "DOMAIN-EE-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-EE",
@@ -151,7 +151,7 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-EE-climate",
+      "from": "DRIVER-EE-social",
       "to": "COUNTRY-EE",
       "type": "CAUSES",
       "weight": 0.8
@@ -161,48 +161,6 @@
       "to": "COUNTRY-EE",
       "type": "CAUSES",
       "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-EE-climate",
-      "to": "DOMAIN-EE-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-EE-economic",
-      "to": "DOMAIN-EE-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-EE-social",
-      "to": "DOMAIN-EE-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-EE-climate",
-      "to": "DOMAIN-EE-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-EE-infrastructure",
-      "to": "DOMAIN-EE-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-EE-economic",
-      "to": "DOMAIN-EE-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
     },
     {
       "from": "DOMAIN-EE-geopolitical",
@@ -226,22 +184,22 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-EE-Конференци",
+      "to": "DOMAIN-EE-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.63
+    },
+    {
       "from": "SIGNAL-EE-Воздушное_",
       "to": "DOMAIN-EE-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.54
     },
     {
-      "from": "SIGNAL-EE-Ветер:_Сев",
-      "to": "DOMAIN-EE-climate",
+      "from": "SIGNAL-EE-Молодежь,_",
+      "to": "DOMAIN-EE-social",
       "type": "AMPLIFIES",
       "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-EE-Военные_уд",
-      "to": "DOMAIN-EE-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.63
     }
   ]
 }
