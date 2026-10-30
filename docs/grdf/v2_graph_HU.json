@@ -2,7 +2,7 @@
   "country": "HU",
   "date": "2026-10-30",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-30T07:27:50.335827+00:00",
+  "generated_at": "2026-10-30T07:47:54.334648+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-HU-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 36,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "geopolitical"
     },
     {
+      "id": "SIGNAL-HU-Годовой_те",
+      "type": "Signal",
+      "label": "Годовой темп роста ВВП Венгрии",
+      "severity": 32,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-HU-Технологич",
       "type": "Signal",
       "label": "Технологический сигнал — Венгрия",
@@ -90,13 +97,6 @@
       "id": "SIGNAL-HU-Водный_деф",
       "type": "Signal",
       "label": "Водный дефицит — Венгрия",
-      "severity": 62,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-HU-Тепловая_в",
-      "type": "Signal",
-      "label": "Тепловая волна — Венгрия",
       "severity": 62,
       "domain": "climate"
     }
@@ -112,7 +112,7 @@
       "from": "COUNTRY-HU",
       "to": "DOMAIN-HU-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-HU",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-HU-climate",
-      "to": "DOMAIN-HU-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-HU-economic",
-      "to": "DOMAIN-HU-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-HU-social",
-      "to": "DOMAIN-HU-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-HU-climate",
       "to": "DOMAIN-HU-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -203,6 +182,27 @@
       "type": "AMPLIFIES",
       "weight": 0.55,
       "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-HU-climate",
+      "to": "DOMAIN-HU-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-HU-economic",
+      "to": "DOMAIN-HU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-HU-social",
+      "to": "DOMAIN-HU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "DOMAIN-HU-geopolitical",
@@ -226,6 +226,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-HU-Годовой_те",
+      "to": "DOMAIN-HU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.32
+    },
+    {
       "from": "SIGNAL-HU-Технологич",
       "to": "DOMAIN-HU-technology",
       "type": "AMPLIFIES",
@@ -233,12 +239,6 @@
     },
     {
       "from": "SIGNAL-HU-Водный_деф",
-      "to": "DOMAIN-HU-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.62
-    },
-    {
-      "from": "SIGNAL-HU-Тепловая_в",
       "to": "DOMAIN-HU-climate",
       "type": "AMPLIFIES",
       "weight": 0.62
