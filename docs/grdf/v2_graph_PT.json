@@ -2,7 +2,7 @@
   "country": "PT",
   "date": "2026-10-30",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-30T16:08:17.546237+00:00",
+  "generated_at": "2026-10-30T16:19:46.023576+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-PT",
       "type": "Country",
       "label": "PT",
-      "score": 74,
+      "score": 79,
       "props": {
-        "risk_score": 74
+        "risk_score": 79
       }
     },
     {
@@ -20,49 +20,49 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 70,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
-      "trend": "stable"
+      "score": 57,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-climate",
       "type": "Domain",
       "label": "climate",
       "score": 50,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-technology",
       "type": "Domain",
       "label": "technology",
       "score": 70,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-PT-geopolitical",
@@ -75,9 +75,9 @@
       "label": "technology"
     },
     {
-      "id": "DRIVER-PT-climate",
+      "id": "DRIVER-PT-economic",
       "type": "Driver",
-      "label": "climate"
+      "label": "economic"
     },
     {
       "id": "SIGNAL-PT-Португалия",
@@ -87,18 +87,18 @@
       "domain": "technology"
     },
     {
-      "id": "SIGNAL-PT-Глобальные",
+      "id": "SIGNAL-PT-Черногория",
       "type": "Signal",
-      "label": "Глобальные лесные пожары, совместимость ",
-      "severity": 50,
-      "domain": "climate"
+      "label": "Черногория отвечает на протесты по повод",
+      "severity": 57,
+      "domain": "economic"
     },
     {
-      "id": "SIGNAL-PT-Геополитич",
+      "id": "SIGNAL-PT-Ливень:_Ма",
       "type": "Signal",
-      "label": "Геополитический процесс — Португалия",
-      "severity": 70,
-      "domain": "geopolitical"
+      "label": "Ливень: Мадейра - Южное побережье, Мадей",
+      "severity": 50,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.57
     },
     {
       "from": "COUNTRY-PT",
@@ -157,31 +157,10 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-PT-climate",
+      "from": "DRIVER-PT-economic",
       "to": "COUNTRY-PT",
       "type": "CAUSES",
       "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-PT-climate",
-      "to": "DOMAIN-PT-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-PT-economic",
-      "to": "DOMAIN-PT-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-PT-social",
-      "to": "DOMAIN-PT-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
     },
     {
       "from": "DOMAIN-PT-climate",
@@ -203,6 +182,27 @@
       "type": "AMPLIFIES",
       "weight": 0.55,
       "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-PT-climate",
+      "to": "DOMAIN-PT-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-PT-economic",
+      "to": "DOMAIN-PT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-PT-social",
+      "to": "DOMAIN-PT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "DOMAIN-PT-geopolitical",
@@ -232,16 +232,16 @@
       "weight": 0.7
     },
     {
-      "from": "SIGNAL-PT-Глобальные",
+      "from": "SIGNAL-PT-Черногория",
+      "to": "DOMAIN-PT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.57
+    },
+    {
+      "from": "SIGNAL-PT-Ливень:_Ма",
       "to": "DOMAIN-PT-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-PT-Геополитич",
-      "to": "DOMAIN-PT-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.7
     }
   ]
 }
