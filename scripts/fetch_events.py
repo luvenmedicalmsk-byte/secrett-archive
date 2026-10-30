@@ -25865,6 +25865,34 @@ NOISE_2910 = True
 SEV_2910 = True
 STORY_DEDUP_2910 = True
 DEATH_FLOOR_2910 = True
+# 30.10.2026 · CYBER_LOSS_3010: масштаб кибер-хищения. Взлом Binance на $6,3 млрд
+# (крупнейший в истории отрасли) стоял на 52-62 - ниже рядового бюллетеня об
+# уязвимости (83): в кибер-шкале нет маркера финансового ущерба, а «хакеры из КНДР»
+# не распознаётся как госгруппа. Нижняя граница по сумме: от $1 млрд - 84
+# (86 при атрибуции госгруппе), от $100 млн - 74, от $10 млн - 64.
+# Сюжет одного взлома биржи - одна запись в ленте (класс crypto_hack в STORY_DEDUP).
+# Откат: CYBER_LOSS_3010 = False.
+CYBER_LOSS_3010 = True
+_C30_HACK = re.compile(r'взлом|хакер|кибератак|кибер-атак|похит|похищ|украл|хищени|'
+                       r'инцидент\w*\s+информационн\w*\s+безопасн|\bhack|\bstole', re.I)
+_C30_STATE = re.compile(r'кндр|северокорейск|северн\w*\s+коре|lazarus|tradertraitor|\bapt\s?\d|госхакер|'
+                        r'государственн\w*\s+(?:хакер|киберподраздел|группиров)', re.I)
+_C30_USD = re.compile(r'\$\s?(\d+(?:[.,]\d+)?)\s*(млрд|млн|billion|million|bn|m)\b|'
+                      r'(\d+(?:[.,]\d+)?)\s*(млрд|млн)\s+(?:долл|\$)', re.I)
+_C30_EXCH = re.compile(r'binance|bybit|coinbase|kucoin|okx|kraken|bitget|htx|криптобирж\w*', re.I)
+
+
+def _c30_usd_max(txt):
+    best = 0.0
+    for m in _C30_USD.finditer(txt):
+        num, unit = (m.group(1), m.group(2)) if m.group(1) else (m.group(3), m.group(4))
+        try:
+            v = float(num.replace(',', '.'))
+        except Exception:
+            continue
+        mult = 1e9 if unit.lower() in ('млрд', 'billion', 'bn') else 1e6
+        best = max(best, v * mult)
+    return best
 _D29_CUM = re.compile(r'(?:возросл|вырос|достигл|превысил)\w*\s+(?:до\s+)?\d|общее\s+число|с\s+начала\s+(?:войны|конфликта|года)', re.I)
 _N29_AD = re.compile(r'позаботиться\s+о\s+будущем|больш\w*\s+мечт\w*|начал\w*\s+тестировать', re.I)
 _N29_PROTO = re.compile(r'^через\s+\d+\s+минут|заседани\w*\s+коллеги', re.I)
@@ -26012,6 +26040,8 @@ _DF_RULES = [
     (re.compile(r'шпион|шпионаж|геноцид', re.I), 'geopolitics'),
     (re.compile(r'уровень\s+воды|паводк|наводнени|разлив\w*\s+рек|подтоплен', re.I), 'climate'),
 ]
+if CYBER_LOSS_3010:   # 30.10.2026: возврат средств / уход криптобиржи из страны - экономика, не социум
+    _DF_RULES.append((re.compile(r'(?:криптобирж|binance|bybit|kucoin|coinbase)\w*\s+(?:\S+\s+){0,3}?(?:возврат|компенсац|прекраща\w*\s+обслуживани)', re.I), 'economy'))
 _HYG_CUM = re.compile(r'(?<![а-яё])с\s+(?:начала|октября|ноября|декабря|января|февраля|марта|апреля|мая|июня|июля|августа|сентября|\d{1,2}\s+[а-яё]+|20\d\d)', re.I)
 _HYG_NUMW = {'два': 2, 'три': 3, 'пять': 5, 'десять': 10, 'двадцать': 20, 'тридцать': 30, 'сорок': 40, 'пятьдесят': 50,
              'шестьдесят': 60, 'семьдесят': 70, 'восемьдесят': 80, 'девяносто': 90, 'сто': 100}
@@ -26456,6 +26486,13 @@ def _feed_hygiene(events):
                     _fl = 82 if (_c >= 10000 or _dth >= 1000) else 74 if (_c >= 1000 or _dth >= 100) else 0
                     if _fl and new < _fl:
                         new, why = _fl, 'масштаб эпидемии'
+                # масштаб кибер-хищения (CYBER_LOSS_3010)
+                if CYBER_LOSS_3010 and _C30_HACK.search(t):
+                    _ctx = t + ' ' + (e.get('summary') or '')[:600]
+                    _usd = _c30_usd_max(_ctx)
+                    _fl = (86 if _C30_STATE.search(_ctx) else 84) if _usd >= 1e9 else 74 if _usd >= 1e8 else 64 if _usd >= 1e7 else 0
+                    if _fl and new < _fl:
+                        new, why = _fl, 'масштаб кибер-хищения'
                 # ценовой шок газа в Европе: выше $1000 за тыс. м³
                 _gm = _S29_GAS.search(t)
                 if _gm and re.search(r'европ', t, re.I):
@@ -26574,6 +26611,10 @@ def _story_key(e):
         for rx, c in _SD_CC:
             if re.search(rx, tl):
                 cc = c; break
+    if CYBER_LOSS_3010 and _C30_HACK.search(t):
+        _ex = [x.lower() for x in _C30_EXCH.findall(t) if not x.lower().startswith('криптобирж')]
+        if _ex:
+            return ('crypto_hack', _ex[0])
     for name, rx1, rx2 in _SD_CLASSES:
         if name in ('market',):
             if rx1.search(txt) and rx2.search(t) and cc:
