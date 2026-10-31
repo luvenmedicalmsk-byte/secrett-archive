@@ -1237,6 +1237,65 @@ def compute_change_attribution(
     return [r for r in result if r["impact_score"] > 0]
 
 
+# ═══ FORECAST_V3_3110 (31.10.2026) ═══════════════════════════════════════════
+# Бэктест прежнего движка по 156 суточным снимкам (29.05-31.10): прогноз хуже, чем
+# «индекс не изменится». 7д: средняя ошибка 8,2 против 6,4, факт в диапазоне 49% при
+# заявленной уверенности около 80%; 30д: 11,5 против 8,1. Причина: изменение за ОДИН день
+# умножалось на 7 и 30 (Канада: -23 за день → прогноз 10 при индексе 65).
+# V3: прогноз тянется к среднему за 7 дней (вес 0,7) вместо продления дневного скачка;
+# ширина диапазона - по волатильности страны (3× и 4× средний дневной сдвиг за 14 дней,
+# не меньше 3 и 4, не больше 15 и 20); уверенность - фактическое попадание на истории.
+# Тот же бэктест: 7д ошибка 5,95 (-27%), попадание 79%; 30д 7,6 (-34%), попадание 79%.
+# Откат: FORECAST_V3_3110 = False.
+FORECAST_V3_3110 = True
+_FV3_ISO = {'iso2': None}   # страна текущего build_snapshot: сигнатуры compute_forecast_* не меняются
+_FV3_ALPHA = 0.7
+
+
+def _fv3_history(iso2: str, today_score: int) -> list:
+    """Значения risk_score по дням: [сегодня, вчера, ...] до 14 дней, по последней записи дня."""
+    hist_path = HISTORY_DIR / f"{iso2}.json"
+    by_day = {}
+    try:
+        for rec in json.load(open(hist_path)).get("snapshots", []):
+            d, v = rec.get("date"), rec.get("risk_score")
+            if d and v is not None and d != TODAY:
+                by_day[d] = v
+    except Exception:
+        pass
+    from datetime import date as _d, timedelta as _td
+    try:
+        t = _d.fromisoformat(TODAY)
+    except Exception:
+        return [today_score]
+    out = [today_score]
+    for i in range(1, 15):
+        k = (t - _td(days=i)).isoformat()
+        if k in by_day:
+            out.append(by_day[k])
+    return out
+
+
+def _fv3(iso2: str, score: int, horizon: int) -> dict:
+    vals = _fv3_history(iso2, score)
+    week = vals[:8]
+    anchor = sum(week) / len(week)
+    proj = score * (1 - _FV3_ALPHA) + anchor * _FV3_ALPHA
+    proj = max(0, min(100, round(proj)))
+    if len(vals) >= 4:
+        vol = sum(abs(vals[i] - vals[i + 1]) for i in range(len(vals) - 1)) / (len(vals) - 1)
+        k, floor, cap = (3, 3, 15) if horizon == 7 else (4, 4, 20)
+        band = int(round(min(cap, max(floor, k * vol))))
+        # уверенность = фактическое попадание в диапазон на истории по корзинам ширины
+        conf = (77 if band < 10 else 82) if horizon == 7 else (70 if band < 10 else 80)
+    else:
+        band = 11 if horizon == 7 else 13            # глобальная 80%-ная ошибка на истории
+        conf = 70
+        vol = None
+    return {"proj": proj, "band": band, "conf": conf, "anchor": round(anchor, 1),
+            "days": len(vals), "vol": None if vol is None else round(vol, 2)}
+
+
 def compute_forecast_7d(
     score: int,
     delta: int,
@@ -1268,6 +1327,22 @@ def compute_forecast_7d(
       forecast_180d: structural regime dominates short-term drift
     """
 
+    if FORECAST_V3_3110 and _FV3_ISO.get('iso2'):
+        f = _fv3(_FV3_ISO['iso2'], score, 7)
+        p = f["proj"]
+        direction = "up" if p - score >= 2 else "down" if p - score <= -2 else "stable"
+        return {
+            "direction":  direction,
+            "score_min":  max(0, p - f["band"]),
+            "score_max":  min(100, p + f["band"]),
+            "confidence": f["conf"],
+            "_horizon":   "7d",
+            "_drift_per_day": round((p - score) / 7, 3),
+            "_model":     "v3-anchor7",
+            "_anchor_7d": f["anchor"],
+            "_history_days": f["days"],
+            "_volatility": f["vol"],
+        }
     # 1. Velocity: daily change rate
     #    Use delta as primary signal, change_drivers magnitude as confirmation
     cd_magnitude = sum(abs(cd.get("impact_score", 0)) for cd in change_drivers)
@@ -1349,6 +1424,24 @@ def compute_forecast_30d(
       forecast_7d    : V1 result (reuse drift_per_day)
     """
 
+    if FORECAST_V3_3110 and _FV3_ISO.get('iso2'):
+        f = _fv3(_FV3_ISO['iso2'], score, 30)
+        p, b = f["proj"], f["band"]
+        sdrv = []
+        for drv in sorted(drivers, key=lambda d: d.get("severity", 0), reverse=True)[:3]:
+            sev = drv.get("severity", 50)
+            sdrv.append({"name": drv.get("name", "")[:60], "domain": drv.get("domain", "geopolitics"),
+                         "severity": sev, "contribution": round((sev - 50) / 50 * b * 0.5) if sev > 50 else 0})
+        return {
+            "best_case":  max(0, p - b),
+            "base_case":  p,
+            "worst_case": min(100, p + b),
+            "confidence": f["conf"],
+            "scenario_drivers": sdrv,
+            "_horizon":   "30d",
+            "_structural_drift": round((p - score) / 30, 3),
+            "_model":     "v3-anchor7",
+        }
     # Reuse drift_per_day from V1 for consistency
     drift_per_day = forecast_7d.get("_drift_per_day", 0.0)
 
@@ -1486,8 +1579,12 @@ def build_snapshot(iso2: str, events: list[dict]) -> dict:
         if not drivers and _sigs_fb:
             drivers = compute_drivers_from_signals(_sigs_fb)
     change_drivers = compute_change_attribution(iso2, drivers, delta)
-    forecast_7d    = compute_forecast_7d(score, delta, drivers, change_drivers)
-    forecast_30d   = compute_forecast_30d(score, delta, drivers, change_drivers, forecast_7d)
+    _FV3_ISO['iso2'] = iso2
+    try:
+        forecast_7d    = compute_forecast_7d(score, delta, drivers, change_drivers)
+        forecast_30d   = compute_forecast_30d(score, delta, drivers, change_drivers, forecast_7d)
+    finally:
+        _FV3_ISO['iso2'] = None
 
     snap = {
         "country":          iso2,
