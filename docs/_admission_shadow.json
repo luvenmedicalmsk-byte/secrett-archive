@@ -1,14 +1,14 @@
 {
-  "generated": "2026-10-31T17:36:05Z",
+  "generated": "2026-10-31T17:46:45Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
-    "PASS_FACT": 1102,
+    "PASS_FACT": 1103,
     "DENY_COMMENTARY": 352,
-    "DENY_STATE_ONLY": 3,
     "DENY_BACKGROUND": 8,
     "DENY_FEATURE": 3,
     "DENY_REPORT": 2,
+    "DENY_STATE_ONLY": 2,
     "UNMATCHED": 4
   },
   "kpi": {
@@ -19,23 +19,23 @@
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
     "admission_pass_rate": 75.0,
     "admission_deny_rate": 25.0,
-    "processes_without_fact": 368,
+    "processes_without_fact": 367,
     "report_evidence_count": 0,
     "reports_boosting": 0
   },
   "shadow_reliability": {
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
-      "processes": 491,
-      "sample": 1449,
-      "agreement_pct": 87.4,
-      "decision_agreement_pct": 87.5,
-      "critical_errors": 181,
+      "processes": 487,
+      "sample": 1455,
+      "agreement_pct": 87.5,
+      "decision_agreement_pct": 87.6,
+      "critical_errors": 180,
       "truth_ratio_pct": 99.7,
       "error_matrix": {
         "FACT_EVENT→COMMENTARY": 168,
         "FACT_EVENT→FEATURE": 2,
-        "COMMENTARY→FACT_EVENT": 9,
+        "COMMENTARY→FACT_EVENT": 8,
         "STATE_CONFIRMATION→FACT_EVENT": 1,
         "BACKGROUND→COMMENTARY": 2,
         "REPORT→FACT_EVENT": 1
@@ -43,12 +43,12 @@
     },
     "historical": {
       "processes": 1474,
-      "sample": 3790,
+      "sample": 3801,
       "agreement_pct": 89.4,
       "decision_agreement_pct": 89.5,
-      "critical_errors": 398,
+      "critical_errors": 399,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 355,
+        "FACT_EVENT→COMMENTARY": 356,
         "FACT_EVENT→FEATURE": 3,
         "COMMENTARY→FACT_EVENT": 36,
         "STATE_CONFIRMATION→FACT_EVENT": 3,
@@ -58,12 +58,12 @@
       }
     },
     "events_stream": {
-      "sample": 472,
-      "agreement_pct": 84.7,
-      "decision_agreement_pct": 85.0,
-      "critical_errors": 71,
+      "sample": 481,
+      "agreement_pct": 84.6,
+      "decision_agreement_pct": 84.8,
+      "critical_errors": 73,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 66,
+        "FACT_EVENT→COMMENTARY": 68,
         "REPORT→FACT_EVENT": 1,
         "COMMENTARY→FACT_EVENT": 3,
         "FACT_EVENT→FEATURE": 1,
@@ -78,7 +78,7 @@
     }
   },
   "class_source": {
-    "evidence_sic": 3790,
+    "evidence_sic": 3801,
     "shadow_title_summary": 4
   },
   "truth_ratio_pct": 99.9,
@@ -88,8 +88,8 @@
       "deny": 89
     },
     "technology": {
-      "pass": 131,
-      "deny": 27
+      "pass": 132,
+      "deny": 26
     },
     "climate": {
       "pass": 370,
@@ -283,7 +283,7 @@
         "REPORT": 1
       },
       "status": "active",
-      "causal_links": 1,
+      "causal_links": 0,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -374,21 +374,6 @@
       },
       "status": "active",
       "causal_links": 0,
-      "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "tech-отключение-украина-867b",
-      "title": "Энергоблэкаут — Украина",
-      "domain": "technology",
-      "severity": 62,
-      "pressure": 48,
-      "first_seen": "2026-07-06",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "STATE_CONFIRMATION": 1
-      },
-      "status": "active",
-      "causal_links": 8,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -951,11 +936,11 @@
       "title": "Валютный рынок",
       "domain": "economy",
       "severity": 56,
-      "pressure": 54,
+      "pressure": 55,
       "first_seen": "2026-07-21",
-      "evidence_count": 1,
+      "evidence_count": 2,
       "evidence_classes": {
-        "COMMENTARY": 1
+        "COMMENTARY": 2
       },
       "status": "active",
       "causal_links": 0,
@@ -1004,6 +989,21 @@
       },
       "status": "active",
       "causal_links": 2,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
+      "signal_id": "clim-климатичес-тихийоке-41c0",
+      "title": "Климатический сигнал — Тихий океан",
+      "domain": "climate",
+      "severity": 56,
+      "pressure": 45,
+      "first_seen": "2026-07-02",
+      "evidence_count": 2,
+      "evidence_classes": {
+        "COMMENTARY": 2
+      },
+      "status": "active",
+      "causal_links": 0,
       "reason": "no FACT_EVENT in evidence"
     }
   ],
@@ -1118,13 +1118,6 @@
       "signal_id": "geop-геополитич-иран-31f9",
       "domain": "geopolitics",
       "legacy": 34,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "tech-отключение-украина-867b",
-      "domain": "technology",
-      "legacy": 62,
       "shadow": null,
       "delta": null
     },
@@ -1428,12 +1421,19 @@
       "legacy": 56,
       "shadow": null,
       "delta": null
+    },
+    {
+      "signal_id": "soci-протестыиб-франция-e910",
+      "domain": "social",
+      "legacy": 46,
+      "shadow": null,
+      "delta": null
     }
   ],
   "deny_by_severity": {
     "0-30": 3,
     "31-50": 234,
-    "51-70": 125,
+    "51-70": 124,
     "71-90": 6,
     "91-100": 0
   }
