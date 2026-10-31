@@ -5171,6 +5171,37 @@ _DIG_GUARD = re.compile(
     r'тестирован|обновлен\w*\s+прилож|новая\s+верси|запуск\w*\s+сервис)', re.I)
 
 
+# 31.10.2026 · CRYPTO_INGEST_3110: кражи криптовалюты и атаки, атрибутированные КНДР, на входе.
+# Разбор журнала прохождения 29.10 (за 22 минуты до атаки на Binance): «Северокорейские
+# хакеры украли $2,84 млн у институционального держателя криптовалюты» отброшена квотой
+# домена (и стояла в климате), кампании Lazarus - квотой, «Malicious Firefox extensions
+# impersonate crypto wallets» и все англоязычные сообщения о краже $6,3 млрд у Binance
+# и о краже у пользователей Polymarket - фильтром «нет маркеров». Такие записи:
+# не отсекаются фильтром «нет маркеров», идут вне квоты домена, домен - технологии.
+# Откат: CRYPTO_INGEST_3110 = False.
+CRYPTO_INGEST_3110 = True
+_CI31_ENT = re.compile(r'binance|bybit|bitget|kucoin|coinbase|\bokx\b|kraken|\bhtx\b|\bmexc\b|polymarket|ledger|trezor|'
+                       r'metamask|tether|\busdt\b|\busdc\b|стейблкоин|stablecoin|крипт(?!ограф)|crypto(?!graph)|блокчейн|blockchain|\bdefi\b|'
+                       r'tornado\s+cash|биткоин|bitcoin|ethereum|эфириум|wallet', re.I)
+_CI31_THEFT = re.compile(r'взлом|хакер|похит|похищ|украл|украд|хищени|краж|ограбл|вывел\w*|выводят|скомпрометир|'
+                         r'имплант|вредонос|фишинг|\bhack|stole|steal|theft|heist|drain|breach|exploit|implant|malicious|phishing|compromis', re.I)
+_CI31_STATE = re.compile(r'кндр|северокор|северн\w*\s+коре|пхеньян|lazarus|tradertraitor|waterplum|kimsuky|andariel|'
+                         r'north\s+korea|dprk|pyongyang', re.I)
+_CI31_HACK = re.compile(r'хакер|взлом|похит|похищ|украл|краж|кибер|шпион|вредонос|hack|stole|steal|theft|cyber|malware|espionage|campaign|кампани', re.I)
+_CI31_STOP = re.compile(r'майнинг|майнер|cryptominer|mining|криптомайн', re.I)
+
+
+def _is_crypto_theft(blob):
+    """Кража/компрометация в криптоинфраструктуре или киберактивность КНДР."""
+    if not CRYPTO_INGEST_3110 or not blob:
+        return False
+    if _CI31_STOP.search(blob):
+        return False
+    if _CI31_ENT.search(blob) and _CI31_THEFT.search(blob):
+        return True
+    return bool(_CI31_STATE.search(blob) and _CI31_HACK.search(blob))
+
+
 def _is_digital_failure(blob):
     """Сбой цифровой инфраструктуры: объект плюс состояние."""
     b = str(blob or '').lower()
@@ -7871,7 +7902,8 @@ def process_events(raw_items):
                 and not _is_electoral_event(_blob)
                 and not _is_regulatory_event(_blob)
                 and not _is_judicial_event(_blob)
-                and not _is_digital_failure(_blob)):
+                and not _is_digital_failure(_blob)
+                and not _is_crypto_theft(_blob)):
             _trace(_tid,'SEVERITY','removed',reason='sev_nomarker'); _lost('sev', item); _lost('sev_nomarker', item); continue
 
         # ANALYTIC ADMISSION: слабый сигнал (ниже порога ленты) допускается в аналитический
@@ -8313,6 +8345,15 @@ def process_events(raw_items):
         if ((ev.get('meta') or {}).get('kind') in _OFFICIAL_SIGNAL_KINDS and (ev.get('meta') or {}).get('verified')):
             _trace(ev.get('_obs_tid'),'BUILT',domain=d, severity=ev.get('severity'),
                    canon_type=ev.get('canon_type'), source=ev.get('source'))
+            balanced.append(ev)
+            continue
+        # CRYPTO_INGEST_3110: кражи криптовалюты и киберактивность КНДР - вне квоты домена,
+        # домен - технологии (единицы записей в сутки; квота вытесняла их бюллетенями).
+        if _is_crypto_theft(((ev.get('title') or '') + ' ' + (ev.get('summary') or ev.get('desc') or '')[:300])):
+            if d != 'technology':
+                ev['domain'] = 'technology'; ev['canon_domain'] = 'technology'; d = 'technology'
+            _trace(ev.get('_obs_tid'),'BUILT',domain=d, severity=ev.get('severity'),
+                   canon_type=ev.get('canon_type'), source=ev.get('source'), layer='crypto_ingest')
             balanced.append(ev)
             continue
         quota = DOMAIN_QUOTA.get(d, MAX_EVENTS)
@@ -25962,7 +26003,7 @@ DEATH_FLOOR_2910 = True
 # Сюжет одного взлома биржи - одна запись в ленте (класс crypto_hack в STORY_DEDUP).
 # Откат: CYBER_LOSS_3010 = False.
 CYBER_LOSS_3010 = True
-_C30_HACK = re.compile(r'взлом|хакер|кибератак|кибер-атак|похит|похищ|украл|хищени|'
+_C30_HACK = re.compile(r'взлом|хакер|кибератак|кибер-атак|похит|похищ|украл|хищени|краж|ограбл|theft|heist|drain|steal|'
                        r'инцидент\w*\s+информационн\w*\s+безопасн|\bhack|\bstole', re.I)
 _C30_STATE = re.compile(r'кндр|северокорейск|северн\w*\s+коре|lazarus|tradertraitor|\bapt\s?\d|госхакер|'
                         r'государственн\w*\s+(?:хакер|киберподраздел|группиров)', re.I)
@@ -26585,6 +26626,9 @@ def _feed_hygiene(events):
                     _ctx = t + ' ' + (e.get('summary') or '')[:600]
                     _usd = _c30_usd_max(_ctx)
                     _fl = (86 if _C30_STATE.search(_ctx) else 84) if _usd >= 1e9 else 74 if _usd >= 1e8 else 64 if _usd >= 1e7 else 0
+                    # 31.10: кража, атрибутированная госгруппе (КНДР, Lazarus) - не ниже 64 при любой сумме
+                    if CRYPTO_INGEST_3110 and _fl < 64 and _C30_STATE.search(_ctx) and _CI31_ENT.search(_ctx):
+                        _fl = 64
                     if _fl and new < _fl:
                         new, why = _fl, 'масштаб кибер-хищения'
                 # ценовой шок газа в Европе: выше $1000 за тыс. м³
