@@ -2,7 +2,7 @@
   "country": "SK",
   "date": "2026-10-31",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-31T07:27:49.915626+00:00",
+  "generated_at": "2026-10-31T08:06:54.777649+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-SK-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
+      "score": 36,
       "trend": "stable"
     },
     {
@@ -40,7 +40,7 @@
       "id": "DOMAIN-SK-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 47,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -70,14 +70,21 @@
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-SK-technology",
-      "type": "Driver",
-      "label": "technology"
-    },
-    {
       "id": "DRIVER-SK-economic",
       "type": "Driver",
       "label": "economic"
+    },
+    {
+      "id": "DRIVER-SK-climate",
+      "type": "Driver",
+      "label": "climate"
+    },
+    {
+      "id": "SIGNAL-SK-Вывод_запа",
+      "type": "Signal",
+      "label": "Вывод запасов природного газа Словакии",
+      "severity": 35,
+      "domain": "economic"
     },
     {
       "id": "SIGNAL-SK-Военные_уд",
@@ -87,17 +94,10 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-SK-Технологич",
+      "id": "SIGNAL-SK-Экономичес",
       "type": "Signal",
-      "label": "Технологический сигнал — Словакия",
-      "severity": 47,
-      "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-SK-Государств",
-      "type": "Signal",
-      "label": "Государственный долг — Словакия",
-      "severity": 32,
+      "label": "Экономический сигнал — Словакия",
+      "severity": 35,
       "domain": "economic"
     }
   ],
@@ -112,7 +112,7 @@
       "from": "COUNTRY-SK",
       "to": "DOMAIN-SK-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-SK",
@@ -124,7 +124,7 @@
       "from": "COUNTRY-SK",
       "to": "DOMAIN-SK-technology",
       "type": "CORRELATES",
-      "weight": 0.47
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-SK",
@@ -151,13 +151,13 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-SK-technology",
+      "from": "DRIVER-SK-economic",
       "to": "COUNTRY-SK",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-SK-economic",
+      "from": "DRIVER-SK-climate",
       "to": "COUNTRY-SK",
       "type": "CAUSES",
       "weight": 0.8
@@ -184,22 +184,22 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-SK-Вывод_запа",
+      "to": "DOMAIN-SK-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.35
+    },
+    {
       "from": "SIGNAL-SK-Военные_уд",
       "to": "DOMAIN-SK-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.53
     },
     {
-      "from": "SIGNAL-SK-Технологич",
-      "to": "DOMAIN-SK-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.47
-    },
-    {
-      "from": "SIGNAL-SK-Государств",
+      "from": "SIGNAL-SK-Экономичес",
       "to": "DOMAIN-SK-economic",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.35
     }
   ]
 }
