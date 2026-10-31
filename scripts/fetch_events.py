@@ -5188,7 +5188,7 @@ _CI31_THEFT = re.compile(r'взлом|хакер|похит|похищ|укра�
 _CI31_STATE = re.compile(r'кндр|северокор|северн\w*\s+коре|пхеньян|lazarus|tradertraitor|waterplum|kimsuky|andariel|'
                          r'north\s+korea|dprk|pyongyang', re.I)
 _CI31_HACK = re.compile(r'хакер|взлом|похит|похищ|украл|краж|кибер|шпион|вредонос|hack|stole|steal|theft|cyber|malware|espionage|campaign|кампани', re.I)
-_CI31_STOP = re.compile(r'майнинг|майнер|cryptominer|mining|криптомайн', re.I)
+_CI31_STOP = re.compile(r'майнинг|майнер|cryptominer|mining|криптомайн|криптоалгоритм|ежеквартальн\w*\s+(?:номер|выпуск)|в\s+печать|предварительн\w*\s+заказ', re.I)
 
 
 def _is_crypto_theft(blob):
