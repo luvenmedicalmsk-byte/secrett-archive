@@ -628,6 +628,13 @@ _GPS_RX = _re.compile(r'(?:подавлени\w*\s+(?:gps|gnss|спутнико�
 # а Bitget попадал в «Военные удары», Ledger - в «Розничную торговлю», и цепочка
 # Bitget → Ledger → Polymarket → Binance не была видна. Откат - False.
 PROC_CRYPTO_TYPE = True
+# PROC_CRYPTO_ARCHIVE 31.10.2026: хроника процесса «Криптоинфраструктура» не ограничена окном
+# ленты (~14 дней). Свидетельства процесса копятся в docs/_crypto_archive.json (засеян из истории
+# публикаций с июня 2026) и подмешиваются в evidence процесса. Тяжесть, давление и стадия
+# считаются по текущему окну, как раньше; архив меняет только хронику и evidence_count.
+# Откат: PROC_CRYPTO_ARCHIVE = False (файл архива можно не трогать).
+PROC_CRYPTO_ARCHIVE = True
+_CRYPTO_ARCHIVE_CAP = 400
 _CRYPTO_TYPE_NAME = 'Криптоинфраструктура'
 _CRY_ENT = _re.compile(r'binance|bybit|bitget|kucoin|coinbase|\bokx\b|kraken|\bhtx\b|polymarket|ledger|trezor|metamask|'
                        r'tether|\busdt\b|\busdc\b|стейблкоин|крипт|crypto|блокчейн|\bdefi\b|tornado\s+cash|'
@@ -2835,6 +2842,50 @@ def _identity_v2_prepare(previous):
     return merged, remap, lineage
 
 
+def _crypto_archive_merge(signals, arch_path):
+    """PROC_CRYPTO_ARCHIVE: хроника крипто-процесса = текущие свидетельства + архив."""
+    def _k(t):
+        return re.sub(r'[^а-яёa-z0-9]', '', (t or '').lower())[:38]
+    try:
+        arch = json.load(open(arch_path, encoding='utf-8'))
+        if not isinstance(arch, list): arch = []
+    except Exception:
+        arch = []
+    tgt = [s for s in signals if s.get('process_type') == _CRYPTO_TYPE_NAME]
+    by = {}
+    for a in arch:
+        if isinstance(a, dict) and a.get('title'):
+            by[_k(a['title'])] = a
+    for s in tgt:
+        for e in (s.get('evidence') or []):
+            k = _k(e.get('title'))
+            if not k: continue
+            old = by.get(k)
+            rec = {f: e.get(f) for f in ('title', 'source', 'date', 'severity', 'summary', 'sic_class')}
+            rec['summary'] = (rec.get('summary') or '')[:300]
+            if old: rec['severity'] = max(old.get('severity') or 0, rec.get('severity') or 0)
+            by[k] = rec
+    arch = sorted(by.values(), key=lambda a: (str(a.get('date') or ''), a.get('severity') or 0), reverse=True)[:_CRYPTO_ARCHIVE_CAP]
+    added = 0
+    for s in tgt:
+        have = {_k(e.get('title')) for e in (s.get('evidence') or [])}
+        ev = list(s.get('evidence') or [])
+        for a in arch:
+            k = _k(a.get('title'))
+            if k in have: continue
+            x = dict(a); x['archived'] = True
+            x.setdefault('role', _role(x.get('source')))
+            ev.append(x); have.add(k); added += 1
+        ev.sort(key=lambda e: (str(e.get('date') or ''), e.get('severity') or 0), reverse=True)
+        s['evidence'] = ev
+        s['evidence_count'] = len(ev)
+        _ds = [str(e.get('date') or '') for e in ev if e.get('date')]
+        if _ds:
+            s['chronicle_since'] = min(_ds)[:10]
+    with open(arch_path, 'w', encoding='utf-8') as f:
+        json.dump(arch, f, ensure_ascii=False, indent=0)
+    print(f'  [CRYPTO-ARCHIVE] архив {len(arch)} · процессов {len(tgt)} · из архива добавлено {added}', file=sys.stderr)
+
 def evolve_signals(current, previous, now=None, want_report=False, prev_global=None, memory=None, apply_identity_v2=None):
     """v1.3+v1.4: сшивает снапшот с историей по СТАБИЛЬНОМУ signal_id (Continuity Engine)."""
     now=now or _now_iso()
@@ -4541,6 +4592,11 @@ def write_signals_json(events, path):
     except Exception as _le:
         print(f'[LINKS] skip: {_le}', file=sys.stderr)
 
+    if PROC_CRYPTO_ARCHIVE:
+        try:
+            _crypto_archive_merge(evolved, os.path.join(os.path.dirname(path), '_crypto_archive.json'))
+        except Exception as _ce:
+            print(f'  [CRYPTO-ARCHIVE] skip: {_ce}', file=sys.stderr)
     out={'updated':now,'count':len(evolved),'schema':'process-signal-v1.6',
          'global_health':global_health,'patterns_detected':patterns,'report':report,'signals':evolved}
     if TOMBSTONE_CONSERVATION:
