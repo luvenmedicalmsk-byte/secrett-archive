@@ -221,7 +221,7 @@ _TYPE_DOMAIN={
  'Оборонное производство':'geopolitics','Геополитический процесс':'geopolitics',
  'Отключение интернета':'technology','Уязвимость ПО':'technology','Киберугроза':'technology','Фишинговая кампания':'technology',
  'Авиационный инцидент':'technology','Технологический сигнал':'technology',
- 'Эпидемиологический риск':'social','Миграционная политика':'social','Протесты и беспорядки':'social','Подавление GPS':'geopolitics','Криминальный оборот':'social','Социальный процесс':'social',
+ 'Эпидемиологический риск':'social','Миграционная политика':'social','Протесты и беспорядки':'social','Подавление GPS':'geopolitics','Криптоинфраструктура':'technology','Криминальный оборот':'social','Социальный процесс':'social',
  # ТИПЫ КАНОНА, КОТОРЫХ В РЕЕСТРЕ НЕ БЫЛО (29.09.2026).
  # _process_type берёт тип из canon_type, и словарь канона шире этого
  # реестра. Тип вне реестра означает, что домен процесса решается
@@ -615,10 +615,38 @@ _GPS_TYPE_NAME = 'Подавление GPS'
 def _type_get(d, t):
     if t == _GPS_TYPE_NAME and not PROC_GPS_TYPE:
         return None
+    if t == _CRYPTO_TYPE_NAME and not PROC_CRYPTO_TYPE:
+        return None
     return d.get(t)
 _GPS_RX = _re.compile(r'(?:подавлени\w*\s+(?:gps|gnss|спутников\w*\s+навигац)|помех\w*\s+спутников\w*\s+навигац|'
                       r'глушени\w*\s+(?:gps|gnss)|gps[-\s]?(?:помех|глушен|спуфинг)|gnss[-\s]?(?:помех|глушен))'
                       r'(?!\w*\s*:\s*\d)', _re.I)   # «Помехи спутниковой навигации: 1» в сводке NOTAM — счётчик, не тема
+# PROC_CRYPTO_TYPE (31.10.2026, по запросу Мии): события о криптоинфраструктуре - взломы и кражи
+# на биржах, в кошельках и DeFi, заморозки стейблкоинов, санкции и отмывание через криптоплощадки,
+# уход бирж из стран - собираются в один глобальный процесс «Криптоинфраструктура» независимо от
+# домена и места события. До флага они растворялись в «Киберугроза - Глобально» (39 записей обо всём),
+# а Bitget попадал в «Военные удары», Ledger - в «Розничную торговлю», и цепочка
+# Bitget → Ledger → Polymarket → Binance не была видна. Откат - False.
+PROC_CRYPTO_TYPE = True
+_CRYPTO_TYPE_NAME = 'Криптоинфраструктура'
+_CRY_ENT = _re.compile(r'binance|bybit|bitget|kucoin|coinbase|\bokx\b|kraken|\bhtx\b|polymarket|ledger|trezor|metamask|'
+                       r'tether|\busdt\b|\busdc\b|стейблкоин|крипт|crypto|блокчейн|\bdefi\b|tornado\s+cash|'
+                       r'биткоин|bitcoin|ethereum|эфириум|tradertraitor|lazarus', _re.I)
+_CRY_INC = _re.compile(r'взлом|хакер|похит|похищ|украл|хищени|краж|атак|скомпрометир|компрометац|утечк|вредонос|имплант|'
+                       r'заморо[зж]|блокир|отмыв|санкц|прекращ\w*\s+обслуживан|приостанов\w*\s+(?:вывод|ввод|продаж|торг)|'
+                       r'мошенн|фишинг|инцидент|вывел\w*|выводят|отток', _re.I)
+_CRY_STOP = _re.compile(r'майнинг|майнер|криптомайн', _re.I)
+def _is_crypto(e):
+    t = e.get('title') or ''
+    if _CRY_STOP.search(t):
+        return False
+    if not _CRY_ENT.search(t):
+        return False
+    return bool(_CRY_INC.search(t) or _CRY_INC.search((e.get('summary') or '')[:300]))
+def _is_crypto_cluster(evs):
+    if not evs:
+        return False
+    return 2 * sum(1 for e in evs if _is_crypto(e)) > len(evs)
 _PROTEST_EU_EXTRA = {'IE':'Ирландия','DK':'Дания','FI':'Финляндия','NO':'Норвегия','LU':'Люксембург',
     'LT':'Литва','LV':'Латвия','EE':'Эстония','MT':'Мальта','CY':'Кипр','IS':'Исландия','SI':'Словения',
     'HR':'Хорватия','BG':'Болгария','AL':'Албания','RS':'Сербия','BA':'Босния и Герцеговина',
@@ -639,6 +667,8 @@ def _is_protest_cluster(evs):
 def _process_type(evs, domain):
     """Тип процесса по SCORING (побеждает тип с макс. числом совпадений в ЗАГОЛОВКАХ),
     устойчив к смешанным кластерам. Заголовки весомее summary."""
+    if PROC_CRYPTO_TYPE and _is_crypto_cluster(evs):
+        return _CRYPTO_TYPE_NAME
     if PROC_PROTEST_TYPE and _is_protest_cluster(evs):
         return 'Протесты и беспорядки'
     # A2 CANARY: для включённых доменов тип берётся из canon_type (не legacy scoring).
@@ -1227,7 +1257,7 @@ _TYPE_TEMPO={
  'Тепловая волна':'fast','Пожарная активность':'fast','Наводнение':'fast','Похолодание':'fast',
  'Уязвимость ПО':'fast','Фишинговая кампания':'fast','Киберугроза':'fast','Технологический сигнал':'fast',
  'Топливный рынок':'medium','Валютный рынок':'medium','Розничная торговля':'medium','Экономический сигнал':'medium',
- 'Эпидемиологический риск':'medium','Миграционная политика':'medium','Протесты и беспорядки':'medium','Подавление GPS':'medium','Криминальный оборот':'medium','Социальный процесс':'medium',
+ 'Эпидемиологический риск':'medium','Миграционная политика':'medium','Протесты и беспорядки':'medium','Подавление GPS':'medium','Криптоинфраструктура':'medium','Криминальный оборот':'medium','Социальный процесс':'medium',
  'Климатическая политика':'slow','Водный дефицит':'slow','Санкционное давление':'slow','Военные удары':'slow',
  'Инфляция':'slow','Геополитический процесс':'slow','Визовые ограничения':'slow','Оборонное производство':'slow',
 }
@@ -2955,6 +2985,17 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
                           and ((x.get('process_type') or '')=='Подавление GPS')==_cg]
                     _prev_same=_alt[0] if _alt else None
                     if _prev_same is None: _resc_step=''
+            # PROC_CRYPTO_TYPE: тот же сторож, что для GPS. identity_key «Криптоинфраструктуры»
+            # (technology|Глобально) совпадает с «Киберугроза - Глобально»: без сторожа новый
+            # процесс забрал бы историю общего кибер-процесса.
+            if PROC_CRYPTO_TYPE and _prev_same is not None and _resc_step=='identity_key':
+                _cc=(cur.get('process_type')==_CRYPTO_TYPE_NAME)
+                if _cc != ((_prev_same.get('process_type') or '')==_CRYPTO_TYPE_NAME):
+                    _alt=[x for x in (previous or []) if x.get('identity_key')==_ik
+                          and x.get('signal_id') not in seen
+                          and ((x.get('process_type') or '')==_CRYPTO_TYPE_NAME)==_cc]
+                    _prev_same=_alt[0] if _alt else None
+                    if _prev_same is None: _resc_step=''
             if _prev_same and _prev_same['signal_id'] not in seen:
                 n_matched+=1; n_identity_rescued+=1
                 # наследуем СТАРЫЙ signal_id — identity побеждает изменение классификации
@@ -3194,6 +3235,7 @@ def _cluster(events, apply_cb=False):
     DOM=[e.get('domain','') for e in events]; LT=[_loc_tmpl(e) for e in events]; ENT=[_is_entity_tmpl(e) for e in events]
     ORG=[_origin_v2(e) for e in events]
     PHEN=[_clim_phen(e) for e in events]
+    CRY=[PROC_CRYPTO_TYPE and _is_crypto(e) for e in events]
     OGN=[o['origin'] for o in ORG]; OCF=[o['confidence'] for o in ORG]
     df=Counter()
     for s in TK:
@@ -3217,6 +3259,12 @@ def _cluster(events, apply_cb=False):
         if ra!=rb: parent[ra]=rb
     for i in range(n):
         for j in range(i+1,n):
+            # PROC_CRYPTO_TYPE: криптоинфраструктура - один глобальный процесс поверх доменов и мест;
+            # с остальными событиями не смешивается.
+            if CRY[i] or CRY[j]:
+                if CRY[i] and CRY[j]:
+                    union(i,j); _cbunion(i,j)
+                continue
             if DOM[i]!=DOM[j]: continue
             a,b=TK[i],TK[j]
             if not a or not b: continue
@@ -3641,6 +3689,8 @@ def _build_one_signal(evs, meta=None):
         place=macro; place_iso=None            # многоместное явление одной макрозоны -> имя по региону
     actor,target=_actor_target(evs)
     ptype=_process_type(evs, domains[0])
+    if ptype==_CRYPTO_TYPE_NAME and PROC_CRYPTO_TYPE:
+        place='Глобально'; place_iso=None; macro='Глобально'   # биржи и сети - вне одной страны
     # домен процесса следует ТИПУ, а не объединению возможно-мисклассифицированных событий
     from collections import Counter as _Ctr
     _domvote=_Ctr(x.get('domain','') for x in evs if x.get('domain'))
