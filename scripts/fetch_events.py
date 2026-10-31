@@ -23177,6 +23177,7 @@ _SQ_OPINION = {'Foreign Policy','Foreign Affairs','The Economist','The Diplomat'
 _SQ_NONSYS = re.compile(r'дерево упал|перформанс|арт-акци|выпал из окна|школьн\w*\s+\w*автобус|упал\w*\s+на\s+\w*автобус', re.I)
 
 PAN_EU_TITLE = True
+PAN_EU_GEO_SYNC = True   # DEF-A4S5-03; откат — False (прежнее поведение)
 _PAN_EU_T = re.compile(r'(?:всю|вся|по всей|всей)\s+европ\w*|по европе\s+прокатил\w*|в\s+десятк\w+\s+стран\s+европ\w*', re.I)
 
 
@@ -26525,7 +26526,29 @@ def _feed_hygiene(events):
                 e['region_hygiene_from'] = e.get('region')
                 e['region'] = 'Европа'
                 e['primary_country'] = ''; e['event_country'] = ''; e['country_code'] = ''
-                e['lat'], e['lng'] = 50.1, 9.9
+                if PAN_EU_GEO_SYNC:
+                    # DEF-A4S5-03 (A4-S6): событие получает зону «europe» из реестра Geo
+                    # Contract целиком — точку, тип зоны и подписи, как любое событие, которое
+                    # контракт сам отнёс к Европе. Раньше менялись только lat/lng (своей точкой
+                    # 50.1/9.9) и регион, а geo, geo_decision и basis.geo оставались страновыми:
+                    # нарушались I7, I8, I10 и I-CONSISTENCY.
+                    import geo_contract as _gcz
+                    _zn, _zt, _zla, _zln, _zb = _gcz.ZONES['europe']
+                    e['lat'], e['lng'] = _zla, _zln
+                    _g = e.get('geo') if isinstance(e.get('geo'), dict) else {}
+                    _g.update({'country': None, 'country_ru': None, 'region': _zn, 'lat': _zla, 'lng': _zln,
+                               'precision': 'centroid', 'process_place_type': 'zone', 'zone_id': 'europe',
+                               'zone_type': _zt, 'coord_origin': 'dictionary'})
+                    e['geo'] = _g
+                    _gd = e.get('geo_decision')
+                    if isinstance(_gd, dict):
+                        _gd.update({'primary': None, 'precision': 'centroid',
+                                    'why_primary': 'зона без страновой принадлежности', 'pan_eu_title': True})
+                    _bg = (e.get('basis') or {}).get('geo') if isinstance(e.get('basis'), dict) else None
+                    if isinstance(_bg, dict):
+                        _bg.update({'country': None, 'precision': 'centroid', 'how': 'опорная точка зоны из справочника'})
+                else:
+                    e['lat'], e['lng'] = 50.1, 9.9
                 cnt['регион → Европа'] = cnt.get('регион → Европа', 0) + 1
             # шум и PR (25.10): удержанные записи не проходили S43 повторно
             if NOISE_2510:
