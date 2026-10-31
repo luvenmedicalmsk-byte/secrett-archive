@@ -1,8 +1,8 @@
 {
   "country": "LT",
-  "date": "2026-10-30",
+  "date": "2026-10-31",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-30T23:46:43.826455+00:00",
+  "generated_at": "2026-10-31T00:06:54.510397+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -19,14 +19,14 @@
       "id": "DOMAIN-LT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
+      "score": 35,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-LT-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -70,14 +70,14 @@
       "label": "climate"
     },
     {
-      "id": "DRIVER-LT-economic",
-      "type": "Driver",
-      "label": "economic"
-    },
-    {
       "id": "DRIVER-LT-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
+    },
+    {
+      "id": "DRIVER-LT-economic",
+      "type": "Driver",
+      "label": "economic"
     },
     {
       "id": "SIGNAL-LT-Ветер:_Юго",
@@ -94,11 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-LT-Уровень_мо",
+      "id": "SIGNAL-LT-Военные_уд",
       "type": "Signal",
-      "label": "Уровень молодежной безработицы в Литве",
-      "severity": 32,
-      "domain": "economic"
+      "label": "Военные удары — Литва",
+      "severity": 35,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-LT",
       "to": "DOMAIN-LT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-LT",
       "to": "DOMAIN-LT-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-LT",
@@ -151,37 +151,16 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-LT-economic",
-      "to": "COUNTRY-LT",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
       "from": "DRIVER-LT-geopolitical",
       "to": "COUNTRY-LT",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-LT-climate",
-      "to": "DOMAIN-LT-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-LT-infrastructure",
-      "to": "DOMAIN-LT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-LT-economic",
-      "to": "DOMAIN-LT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
+      "from": "DRIVER-LT-economic",
+      "to": "COUNTRY-LT",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DOMAIN-LT-climate",
@@ -205,6 +184,27 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-LT-climate",
+      "to": "DOMAIN-LT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-LT-infrastructure",
+      "to": "DOMAIN-LT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-LT-economic",
+      "to": "DOMAIN-LT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-LT-Ветер:_Юго",
       "to": "DOMAIN-LT-climate",
       "type": "AMPLIFIES",
@@ -217,10 +217,10 @@
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-LT-Уровень_мо",
-      "to": "DOMAIN-LT-economic",
+      "from": "SIGNAL-LT-Военные_уд",
+      "to": "DOMAIN-LT-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.35
     }
   ]
 }

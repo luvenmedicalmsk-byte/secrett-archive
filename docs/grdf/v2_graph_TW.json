@@ -1,10 +1,10 @@
 {
   "country": "TW",
-  "date": "2026-10-30",
+  "date": "2026-10-31",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-30T23:46:43.819459+00:00",
+  "generated_at": "2026-10-31T00:06:54.500287+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-TW",
@@ -33,7 +33,7 @@
       "id": "DOMAIN-TW-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 63,
       "trend": "stable"
     },
     {
@@ -65,6 +65,11 @@
       "trend": "stable"
     },
     {
+      "id": "DRIVER-TW-climate",
+      "type": "Driver",
+      "label": "climate"
+    },
+    {
       "id": "DRIVER-TW-economic",
       "type": "Driver",
       "label": "economic"
@@ -73,18 +78,6 @@
       "id": "DRIVER-TW-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
-    },
-    {
-      "id": "DRIVER-TW-climate",
-      "type": "Driver",
-      "label": "climate"
-    },
-    {
-      "id": "SIGNAL-TW-ВВП_Тайван",
-      "type": "Signal",
-      "label": "ВВП Тайваня вырос на 14,36% — третий ква",
-      "severity": 60,
-      "domain": "economic"
     },
     {
       "id": "SIGNAL-TW-Инфляция_—",
@@ -99,6 +92,13 @@
       "label": "Экономический сигнал — Тайвань",
       "severity": 60,
       "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-TW-Шторм_—_Та",
+      "type": "Signal",
+      "label": "Шторм — Тайвань",
+      "severity": 63,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-TW",
       "to": "DOMAIN-TW-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.63
     },
     {
       "from": "COUNTRY-TW",
@@ -145,6 +145,12 @@
       "weight": 0.05
     },
     {
+      "from": "DRIVER-TW-climate",
+      "to": "COUNTRY-TW",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-TW-economic",
       "to": "COUNTRY-TW",
       "type": "CAUSES",
@@ -157,16 +163,46 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-TW-climate",
-      "to": "COUNTRY-TW",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-TW-climate",
+      "to": "DOMAIN-TW-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
     },
     {
-      "from": "SIGNAL-TW-ВВП_Тайван",
+      "from": "DOMAIN-TW-infrastructure",
       "to": "DOMAIN-TW-economic",
       "type": "AMPLIFIES",
-      "weight": 0.6
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TW-economic",
+      "to": "DOMAIN-TW-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-TW-climate",
+      "to": "DOMAIN-TW-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-TW-economic",
+      "to": "DOMAIN-TW-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-TW-social",
+      "to": "DOMAIN-TW-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "SIGNAL-TW-Инфляция_—",
@@ -179,6 +215,12 @@
       "to": "DOMAIN-TW-economic",
       "type": "AMPLIFIES",
       "weight": 0.6
+    },
+    {
+      "from": "SIGNAL-TW-Шторм_—_Та",
+      "to": "DOMAIN-TW-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.63
     }
   ]
 }

@@ -1,68 +1,68 @@
 {
   "country": "KZ",
-  "date": "2026-10-30",
+  "date": "2026-10-31",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-30T23:46:43.821638+00:00",
+  "generated_at": "2026-10-31T00:06:54.503484+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-KZ",
       "type": "Country",
       "label": "KZ",
-      "score": 65,
+      "score": 58,
       "props": {
-        "risk_score": 65
+        "risk_score": 58
       }
     },
     {
       "id": "DOMAIN-KZ-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 56,
-      "trend": "stable"
+      "score": 38,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-KZ-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 65,
-      "trend": "stable"
+      "score": 5,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-KZ-climate",
       "type": "Domain",
       "label": "climate",
       "score": 56,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-KZ-technology",
       "type": "Domain",
       "label": "technology",
       "score": 56,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-KZ-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-KZ-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-KZ-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DRIVER-KZ-Geopolitical",
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-KZ-ЦБ_казахст",
-      "type": "Signal",
-      "label": "ЦБ казахстана: Четвертое подряд снижение",
-      "severity": 65,
-      "domain": "economic"
-    },
-    {
       "id": "SIGNAL-KZ-Падение_ин",
       "type": "Signal",
       "label": "Падение интернет-связи: Казахстан",
@@ -99,6 +92,13 @@
       "label": "Туман: Кокпектинский район (Абайская обл",
       "severity": 56,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-KZ-Гололедно_",
+      "type": "Signal",
+      "label": "Гололедно - изморозевое отложение: Бород",
+      "severity": 56,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.56
+      "weight": 0.38
     },
     {
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-economic",
       "type": "CORRELATES",
-      "weight": 0.65
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-KZ",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-KZ-climate",
-      "to": "DOMAIN-KZ-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-KZ-infrastructure",
-      "to": "DOMAIN-KZ-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-KZ-economic",
-      "to": "DOMAIN-KZ-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-KZ-climate",
       "to": "DOMAIN-KZ-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,31 +184,25 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-KZ-geopolitical",
+      "from": "DOMAIN-KZ-climate",
       "to": "DOMAIN-KZ-infrastructure",
       "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
+      "weight": 0.82,
+      "lag_days": 7
     },
     {
       "from": "DOMAIN-KZ-infrastructure",
       "to": "DOMAIN-KZ-economic",
       "type": "AMPLIFIES",
-      "weight": 0.72,
+      "weight": 0.68,
       "lag_days": 14
     },
     {
       "from": "DOMAIN-KZ-economic",
-      "to": "DOMAIN-KZ-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
-      "from": "SIGNAL-KZ-ЦБ_казахст",
       "to": "DOMAIN-KZ-economic",
       "type": "AMPLIFIES",
-      "weight": 0.65
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "SIGNAL-KZ-Падение_ин",
@@ -239,6 +212,12 @@
     },
     {
       "from": "SIGNAL-KZ-Туман:_Кок",
+      "to": "DOMAIN-KZ-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.56
+    },
+    {
+      "from": "SIGNAL-KZ-Гололедно_",
       "to": "DOMAIN-KZ-climate",
       "type": "AMPLIFIES",
       "weight": 0.56
