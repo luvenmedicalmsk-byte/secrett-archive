@@ -5183,7 +5183,7 @@ CRYPTO_INGEST_3110 = True
 _CI31_ENT = re.compile(r'binance|bybit|bitget|kucoin|coinbase|\bokx\b|kraken|\bhtx\b|\bmexc\b|polymarket|ledger|trezor|'
                        r'metamask|tether|\busdt\b|\busdc\b|стейблкоин|stablecoin|крипт(?!ограф)|crypto(?!graph)|блокчейн|blockchain|\bdefi\b|'
                        r'tornado\s+cash|биткоин|bitcoin|ethereum|эфириум|wallet', re.I)
-_CI31_THEFT = re.compile(r'взлом|хакер|похит|похищ|украл|украд|хищени|краж|ограбл|вывел\w*|выводят|скомпрометир|'
+_CI31_THEFT = re.compile(r'утечк|\\bleak|взлом|хакер|похит|похищ|украл|украд|хищени|краж|ограбл|вывел\w*|выводят|скомпрометир|'
                          r'имплант|вредонос|фишинг|\bhack|stole|steal|theft|heist|drain|breach|exploit|implant|malicious|phishing|compromis', re.I)
 _CI31_STATE = re.compile(r'кндр|северокор|северн\w*\s+коре|пхеньян|lazarus|tradertraitor|waterplum|kimsuky|andariel|'
                          r'north\s+korea|dprk|pyongyang', re.I)
@@ -26013,6 +26013,77 @@ _C30_USD = re.compile(r'\$\s?(\d+(?:[.,]\d+)?)\s*(млрд|млн|billion|millio
 _C30_EXCH = re.compile(r'binance|bybit|coinbase|kucoin|okx|kraken|bitget|htx|криптобирж\w*', re.I)
 
 
+# 31.10.2026 · CRYPTO_SEV_3110: индекс записей о криптоинцидентах во всех слоях, а не только
+# в ленте. В процессе «Криптоинфраструктура» 15 из 25 свидетельств стояли на 34-50: правила
+# масштаба (CYBER_LOSS_3010) работают только для видимых записей, а скрытые дубли и
+# контекст оставались с базовым индексом («Binance взломали и выводят миллиарды» - 34,
+# «Tether заморозил $971 млн» - 34). Нижняя граница по сумме (от $1 млрд или «миллиарды» - 84,
+# 86 при атрибуции госгруппе; от $100 млн - 74; от $10 млн - 64; от $1 млн - 58), кража или
+# взлом без суммы - 56, атрибуция КНДР/Lazarus - не ниже 64. Откат: CRYPTO_SEV_3110 = False.
+CRYPTO_SEV_3110 = True
+_CS31_BLN = re.compile(r'миллиард\w*|млрд|billion', re.I)
+_CS31_INC = re.compile(r'утечк|\\bleak|взлом|хакер|похит|похищ|украл|краж|ограбл|вывел\w*|выводят|скомпрометир|имплант|вредонос|'
+                       r'фишинг|заморо[зж]|\bhack|stole|steal|theft|heist|drain|breach|compromis|malicious', re.I)
+
+
+def _crypto_sev_pass(events):
+    if not (CRYPTO_SEV_3110 and CRYPTO_INGEST_3110):
+        return 0
+    n = 0
+    for e in events:
+        if e.get('alerts_only'):
+            continue
+        t = e.get('title') or ''
+        ctx = t + ' ' + (e.get('summary') or '')[:600]
+        if not _is_crypto_theft(ctx) or not _CS31_INC.search(t + ' ' + (e.get('summary') or '')[:200]):
+            continue
+        usd = _c30_usd_max(ctx)
+        if usd < 1e9 and _CS31_BLN.search(t) and not re.search(r'\d', t.split('млрд')[0][-6:] if 'млрд' in t else ''):
+            usd = max(usd, 1e9)
+        state = bool(_C30_STATE.search(ctx))
+        fl = ((86 if state else 84) if usd >= 1e9 else 74 if usd >= 1e8 else 64 if usd >= 1e7 else 58 if usd >= 1e6 else 56)
+        if state:
+            fl = max(fl, 64)
+        cur = e.get('severity') or 0
+        if cur < fl:
+            e['severity_hygiene_from'] = cur
+            e['severity'] = fl
+            e['severity_crypto_why'] = {'сумма_usd': int(usd) if usd else None, 'госгруппа': state, 'нижняя_граница': fl}
+            n += 1
+        # один сюжет взлома биржи (то же название в заголовке, окно 3 суток) - индекс сюжета
+        _ex = [x.lower() for x in _C30_EXCH.findall(t) if not x.lower().startswith('криптобирж')]
+        if _ex and not re.search(r'предупред|рассказал|объяснил|как\s+произошл', t, re.I):
+            e['_cs31_story'] = _ex[0]
+    groups = {}
+    for e in events:
+        k = e.pop('_cs31_story', None)
+        if k:
+            groups.setdefault(k, []).append(e)
+    from datetime import date as _d
+    for k, lst in groups.items():
+        for e in lst:
+            try:
+                de = _d.fromisoformat((e.get('date') or '')[:10])
+            except Exception:
+                continue
+            top = 0
+            for o in lst:
+                try:
+                    if abs((_d.fromisoformat((o.get('date') or '')[:10]) - de).days) <= 3:
+                        top = max(top, (o.get('severity_crypto_why') or {}).get('нижняя_граница') or 0, o.get('severity') or 0)
+                except Exception:
+                    pass
+            top = min(top, 86)
+            if (e.get('severity') or 0) < top:
+                e.setdefault('severity_hygiene_from', e.get('severity'))
+                e['severity'] = top
+                e['severity_crypto_why'] = dict(e.get('severity_crypto_why') or {}, сюжет=k, нижняя_граница=top)
+                n += 1
+    if n:
+        print('  [CRYPTO-SEV] индекс криптоинцидентов поднят: %d' % n, file=sys.stderr)
+    return n
+
+
 def _c30_usd_max(txt):
     best = 0.0
     for m in _C30_USD.finditer(txt):
@@ -26720,6 +26791,7 @@ def _feed_hygiene(events):
     # удар по рынку Ньялы — 5 записей с 21, 36 и «более 100» погибших, циклон
     # «Арнаб» — 4). Ключ = класс сюжета + страна (или имя стихии); окно 3 суток.
     # В ленте остаётся запись с наибольшей severity. Откат: STORY_DEDUP_2910 = False.
+    _crypto_sev_pass(events)
     if STORY_DEDUP_2910:
         _vis3 = [e for e in events if e.get('feed_visible') is not False and not e.get('alerts_only')]
         _vis3.sort(key=lambda e: (-(e.get('severity') or 0), str(e.get('id'))))
