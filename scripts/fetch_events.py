@@ -25251,6 +25251,55 @@ def _es_bonus(v):
 # и величина спада получает обычную надбавку _econ_scale (от 30% - +15).
 # Откат: AGRI_OUTPUT_3010 = False.
 AGRI_OUTPUT_3010 = True
+# 31.10.2026 · YEAR_GUARD_3110: «Спотовая цена газа в Европе превысила $1200 за тысячу
+# кубометров» скрывалась как «история/дальний прогноз»: число 1200 читалось как год.
+# Число с валютой или единицей измерения рядом - не год. Откат: YEAR_GUARD_3110 = False.
+YEAR_GUARD_3110 = True
+_Y31_RE = re.compile(r'(?<![\d$€£¥₽.,])(?<!\$\s)(1[0-9]{3}|2[0-9]{3})(?![\d.,])(?!\s*(?:\$|€|долл|евро|руб|₽|тыс|млн|млрд|кубо|м³|тонн|баррел|км|%|процент|человек|чел\b|раз\b|единиц|штук|голов|мв\b|гвт|мвт))', re.I)
+# 31.10.2026 · RALLY_CAP_3110: акция протеста по поводу катастрофы - не сама катастрофа.
+# «Более 1000 человек собрались у здания министерства транспорта… за катастрофу,
+# которая унесла жизни 68 человек» получала 79: число погибших бралось из описания.
+# Акция в заголовке, погибшие только в описании - не выше 62. Откат: RALLY_CAP_3110 = False.
+RALLY_CAP_3110 = True
+_R31_RALLY = re.compile(r'протест|митинг|демонстрац|манифестац|вышл\w*\s+на\s+улиц|акци\w*\s+протест|'
+                        r'собрал\w*\s+(?:\S+\s+){0,3}?(?:у|возле|перед)\s+(?:здани|министерств|парламент|посольств|мэри)', re.I)
+_R31_DEAD = re.compile(r'погиб|убит|убил|жертв|смерт|скончал|унес\w*\s+(?:\S+\s+){0,1}жизн', re.I)
+# 31.10.2026 · GAS_STORAGE_3110: недозаполнение газохранилищ Европы перед зимой.
+# «Германии не удастся заполнить газовые хранилища в срок до 1 ноября… около 62%,
+# средний показатель 70% не достигнут» стояло на 34. Нижняя граница: 66 при
+# заполнении до 65% или «рекордно низком» уровне, иначе 62. Применяется и к записям
+# «Контекста»: класс записи не меняется. Откат: GAS_STORAGE_3110 = False.
+GAS_STORAGE_3110 = True
+_GS31_SUBJ = re.compile(r'газохранилищ|хранилищ\w*\s+(?:\S+\s+){0,1}газа|газов\w*\s+хранилищ|запас\w*\s+газа\s+в\s+(?:\S+\s+){0,2}хранилищ', re.I)
+_GS31_LOW = re.compile(r'не\s+удастся|не\s+смож|не\s+достиг|недостиж|ниже\s+(?:\S+\s+){0,3}(?:цел|норм|средн|уровн)|'
+                       r'рекордно\s+низк|минимальн|отстава|не\s+заполн|недозаполн', re.I)
+_GS31_EU = re.compile(r'европ|\bес\b|евросоюз|германи|франци|итали|австри|нидерланд|венгри|чехи|словаки|польш|бельги|болгари|румыни', re.I)
+_GS31_PCT = re.compile(r'(\d{1,2}(?:[.,]\d)?)\s*(?:%|процент)', re.I)
+
+
+def _gas_storage(events):
+    if not GAS_STORAGE_3110:
+        return 0
+    n = 0
+    for e in events:
+        if e.get('alerts_only'):
+            continue
+        t = e.get('title') or ''
+        blob = t + ' ' + (e.get('summary') or '')[:400]
+        if not _GS31_SUBJ.search(blob) or not _GS31_LOW.search(blob) or not _GS31_EU.search(blob):
+            continue
+        pcts = [float(x.replace(',', '.')) for x in _GS31_PCT.findall(blob)]
+        low = re.search(r'рекордно\s+низк|минимальн', blob, re.I) or (pcts and min(pcts) <= 65)
+        fl = 66 if low else 62
+        cur = e.get('severity') or 0
+        if cur < fl:
+            e['severity_hygiene_from'] = cur
+            e['severity'] = fl
+            e['severity_gs_why'] = {'правило': 'газохранилища ниже цели', 'заполнение_%': min(pcts) if pcts else None, 'нижняя_граница': fl}
+            n += 1
+    if n:
+        print('  [GAS-STORAGE] недозаполнение газохранилищ ↑: %d' % n, file=sys.stderr)
+    return n
 _AG30_SUBJ = re.compile(r'(?:производств|урожа|сбор|посев|выращиван|экспорт)\w*\s+(?:\S+\s+){0,2}?'
                         r'(?:хлопк|пшениц|зерн|кукуруз|ячмен|риса\b|сахар|свекл|подсолнечн|со[ия]\b|соев|кофе|какао|'
                         r'олив|виноград|картофел|фрукт|овощ|чая\b|молок|мяс)|'
@@ -26280,6 +26329,8 @@ def _feed_hygiene(events):
             continue
         t = e.get('title') or ''
         yrs = [int(y) for y in re.findall(r'(?<!\d)(1[0-9]{3}|2[0-9]{3})(?!\d)', t)]
+        if YEAR_GUARD_3110:   # «$1200 за тысячу кубометров» - цена, а не 1200 год
+            yrs = [int(m.group(1)) for m in _Y31_RE.finditer(t)]
         if FEED_UNTRANSLATED_GATE and _untranslated_title(t):
             hide(e, 'не переведено'); continue
         # 24.10.2026: блог вендора — продукт и маркетинг, не событие; в аналитике
@@ -26526,6 +26577,9 @@ def _feed_hygiene(events):
                     _fl = 82 if (_c >= 10000 or _dth >= 1000) else 74 if (_c >= 1000 or _dth >= 100) else 0
                     if _fl and new < _fl:
                         new, why = _fl, 'масштаб эпидемии'
+                if (RALLY_CAP_3110 and new > 62 and _R31_RALLY.search(t) and not _R31_DEAD.search(t)
+                        and _R31_DEAD.search((e.get('summary') or '')[:400])):
+                    new, why = 62, 'акция по поводу катастрофы'
                 # масштаб кибер-хищения (CYBER_LOSS_3010)
                 if CYBER_LOSS_3010 and _C30_HACK.search(t):
                     _ctx = t + ' ' + (e.get('summary') or '')[:600]
@@ -27589,6 +27643,7 @@ def save_enriched(events, previous_snapshot=None):
                 # получает (проверка severity_hs_shadow внутри).
                 _agri_output(enriched["events"])
                 _econ_scale(enriched["events"])
+                _gas_storage(enriched["events"])
                 _macro_signal(enriched["events"])
                 _tail_caps(enriched["events"])
                 _zone_place(enriched["events"])
