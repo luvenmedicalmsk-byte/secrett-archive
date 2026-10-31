@@ -2,9 +2,9 @@
   "country": "MY",
   "date": "2026-10-31",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-31T02:27:24.003946+00:00",
+  "generated_at": "2026-10-31T02:47:31.866631+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-MY",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-MY-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
+      "score": 46,
       "trend": "stable"
     },
     {
@@ -70,14 +70,14 @@
       "label": "economic"
     },
     {
-      "id": "DRIVER-MY-climate",
-      "type": "Driver",
-      "label": "climate"
-    },
-    {
       "id": "DRIVER-MY-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
+    },
+    {
+      "id": "DRIVER-MY-climate",
+      "type": "Driver",
+      "label": "climate"
     },
     {
       "id": "SIGNAL-MY-Наводнение",
@@ -94,11 +94,11 @@
       "domain": "economic"
     },
     {
-      "id": "SIGNAL-MY-Стратегиче",
+      "id": "SIGNAL-MY-Геополитич",
       "type": "Signal",
-      "label": "Стратегические ресурсы — Малайзия",
-      "severity": 46,
-      "domain": "economic"
+      "label": "Геополитический процесс — Юго-Восточная ",
+      "severity": 62,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-MY",
       "to": "DOMAIN-MY-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-MY",
@@ -151,16 +151,37 @@
       "weight": 0.8
     },
     {
+      "from": "DRIVER-MY-geopolitical",
+      "to": "COUNTRY-MY",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-MY-climate",
       "to": "COUNTRY-MY",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-MY-geopolitical",
-      "to": "COUNTRY-MY",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-MY-geopolitical",
+      "to": "DOMAIN-MY-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-MY-infrastructure",
+      "to": "DOMAIN-MY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-MY-economic",
+      "to": "DOMAIN-MY-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-MY-Наводнение",
@@ -175,10 +196,10 @@
       "weight": 0.65
     },
     {
-      "from": "SIGNAL-MY-Стратегиче",
-      "to": "DOMAIN-MY-economic",
+      "from": "SIGNAL-MY-Геополитич",
+      "to": "DOMAIN-MY-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.46
+      "weight": 0.62
     }
   ]
 }
