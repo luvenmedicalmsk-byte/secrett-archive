@@ -2,7 +2,7 @@
   "country": "PT",
   "date": "2026-10-31",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-31T13:07:39.916618+00:00",
+  "generated_at": "2026-10-31T13:26:23.167482+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,59 +10,64 @@
       "id": "COUNTRY-PT",
       "type": "Country",
       "label": "PT",
-      "score": 50,
+      "score": 72,
       "props": {
-        "risk_score": 50
+        "risk_score": 72
       }
     },
     {
       "id": "DOMAIN-PT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 70,
-      "trend": "stable"
+      "score": 71,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-economic",
       "type": "Domain",
       "label": "economic",
       "score": 57,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 50,
-      "trend": "stable"
+      "score": 72,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
+    },
+    {
+      "id": "DRIVER-PT-climate",
+      "type": "Driver",
+      "label": "climate"
     },
     {
       "id": "DRIVER-PT-geopolitical",
@@ -75,15 +80,17 @@
       "label": "economic"
     },
     {
-      "id": "DRIVER-PT-climate",
-      "type": "Driver",
-      "label": "climate"
-    },
-    {
       "id": "SIGNAL-PT-Ливень:_Ма",
       "type": "Signal",
-      "label": "Ливень: Мадейра - Южное побережье, Мадей",
-      "severity": 50,
+      "label": "Ливень: Мадейра - Порту-Санту, Мадейра -",
+      "severity": 72,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-PT-Климатичес",
+      "type": "Signal",
+      "label": "Климатический сигнал — Португалия",
+      "severity": 72,
       "domain": "climate"
     },
     {
@@ -92,13 +99,6 @@
       "label": "Экономический сигнал — Португалия",
       "severity": 57,
       "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-PT-Геополитич",
-      "type": "Signal",
-      "label": "Геополитический процесс — Португалия",
-      "severity": 70,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.7
+      "weight": 0.71
     },
     {
       "from": "COUNTRY-PT",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-climate",
       "type": "CORRELATES",
-      "weight": 0.5
+      "weight": 0.72
     },
     {
       "from": "COUNTRY-PT",
@@ -145,6 +145,12 @@
       "weight": 0.05
     },
     {
+      "from": "DRIVER-PT-climate",
+      "to": "COUNTRY-PT",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-PT-geopolitical",
       "to": "COUNTRY-PT",
       "type": "CAUSES",
@@ -152,12 +158,6 @@
     },
     {
       "from": "DRIVER-PT-economic",
-      "to": "COUNTRY-PT",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
-      "from": "DRIVER-PT-climate",
       "to": "COUNTRY-PT",
       "type": "CAUSES",
       "weight": 0.8
@@ -229,19 +229,19 @@
       "from": "SIGNAL-PT-Ливень:_Ма",
       "to": "DOMAIN-PT-climate",
       "type": "AMPLIFIES",
-      "weight": 0.5
+      "weight": 0.72
+    },
+    {
+      "from": "SIGNAL-PT-Климатичес",
+      "to": "DOMAIN-PT-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.72
     },
     {
       "from": "SIGNAL-PT-Экономичес",
       "to": "DOMAIN-PT-economic",
       "type": "AMPLIFIES",
       "weight": 0.57
-    },
-    {
-      "from": "SIGNAL-PT-Геополитич",
-      "to": "DOMAIN-PT-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.7
     }
   ]
 }
