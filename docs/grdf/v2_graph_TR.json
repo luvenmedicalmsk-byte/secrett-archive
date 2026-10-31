@@ -2,7 +2,7 @@
   "country": "TR",
   "date": "2026-10-31",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-31T15:27:32.877210+00:00",
+  "generated_at": "2026-10-31T15:47:47.583199+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,23 +10,23 @@
       "id": "COUNTRY-TR",
       "type": "Country",
       "label": "TR",
-      "score": 72,
+      "score": 73,
       "props": {
-        "risk_score": 72
+        "risk_score": 73
       }
     },
     {
       "id": "DOMAIN-TR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 60,
-      "trend": "stable"
+      "score": 64,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 62,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 72,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-technology",
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
+      "id": "SIGNAL-TR-Гроза:_Муг",
+      "type": "Signal",
+      "label": "Гроза: Мугла, Турция",
+      "severity": 70,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-TR-Выданы_пре",
       "type": "Signal",
       "label": "Выданы предупреждения о сильных дождях и",
       "severity": 62,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-TR-Турецкий_Ц",
-      "type": "Signal",
-      "label": "Турецкий ЦБ: Ставка понижена после долго",
-      "severity": 62,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.6
+      "weight": 0.64
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-economic",
       "type": "CORRELATES",
-      "weight": 0.62
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-TR",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-TR-climate",
-      "to": "DOMAIN-TR-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-TR-infrastructure",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-TR-economic",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-TR-climate",
       "to": "DOMAIN-TR-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -203,6 +182,27 @@
       "type": "AMPLIFIES",
       "weight": 0.65,
       "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-TR-climate",
+      "to": "DOMAIN-TR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-TR-infrastructure",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-TR-geopolitical",
@@ -232,14 +232,14 @@
       "weight": 0.72
     },
     {
-      "from": "SIGNAL-TR-Выданы_пре",
+      "from": "SIGNAL-TR-Гроза:_Муг",
       "to": "DOMAIN-TR-climate",
       "type": "AMPLIFIES",
-      "weight": 0.62
+      "weight": 0.7
     },
     {
-      "from": "SIGNAL-TR-Турецкий_Ц",
-      "to": "DOMAIN-TR-economic",
+      "from": "SIGNAL-TR-Выданы_пре",
+      "to": "DOMAIN-TR-climate",
       "type": "AMPLIFIES",
       "weight": 0.62
     }
