@@ -2,7 +2,7 @@
   "country": "GR",
   "date": "2026-10-31",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-31T09:27:46.513904+00:00",
+  "generated_at": "2026-10-31T10:01:46.075342+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -47,7 +47,7 @@
       "id": "DOMAIN-GR-social",
       "type": "Domain",
       "label": "social",
-      "score": 32,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -75,16 +75,9 @@
       "label": "climate"
     },
     {
-      "id": "DRIVER-GR-social",
+      "id": "DRIVER-GR-economic",
       "type": "Driver",
-      "label": "social"
-    },
-    {
-      "id": "SIGNAL-GR-Кровати_в_",
-      "type": "Signal",
-      "label": "Кровати в больницах Греции",
-      "severity": 32,
-      "domain": "social"
+      "label": "economic"
     },
     {
       "id": "SIGNAL-GR-Шторм_—_Гр",
@@ -99,6 +92,13 @@
       "label": "Военные удары — Греция",
       "severity": 64,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-GR-Водный_деф",
+      "type": "Signal",
+      "label": "Водный дефицит — Греция",
+      "severity": 47,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -130,7 +130,7 @@
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-social",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-GR",
@@ -157,7 +157,7 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-GR-social",
+      "from": "DRIVER-GR-economic",
       "to": "COUNTRY-GR",
       "type": "CAUSES",
       "weight": 0.8
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-GR-geopolitical",
-      "to": "DOMAIN-GR-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-GR-infrastructure",
-      "to": "DOMAIN-GR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-GR-economic",
-      "to": "DOMAIN-GR-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "DOMAIN-GR-climate",
       "to": "DOMAIN-GR-infrastructure",
       "type": "ESCALATES",
@@ -226,10 +205,25 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-GR-Кровати_в_",
+      "from": "DOMAIN-GR-geopolitical",
+      "to": "DOMAIN-GR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-GR-infrastructure",
+      "to": "DOMAIN-GR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GR-economic",
       "to": "DOMAIN-GR-social",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-GR-Шторм_—_Гр",
@@ -242,6 +236,12 @@
       "to": "DOMAIN-GR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.64
+    },
+    {
+      "from": "SIGNAL-GR-Водный_деф",
+      "to": "DOMAIN-GR-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.47
     }
   ]
 }
