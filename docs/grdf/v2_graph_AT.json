@@ -2,7 +2,7 @@
   "country": "AT",
   "date": "2026-10-31",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-31T09:07:49.957164+00:00",
+  "generated_at": "2026-10-31T09:27:46.499875+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -47,7 +47,7 @@
       "id": "DOMAIN-AT-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
+      "score": 32,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "economic"
     },
     {
+      "id": "SIGNAL-AT-Кровати_в_",
+      "type": "Signal",
+      "label": "Кровати в больницах Австрии",
+      "severity": 32,
+      "domain": "social"
+    },
+    {
       "id": "SIGNAL-AT-Шторм_—_Ав",
       "type": "Signal",
       "label": "Шторм — Австрия",
@@ -92,13 +99,6 @@
       "label": "Возобновляемая энергетика — Австрия",
       "severity": 32,
       "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-AT-Геополитич",
-      "type": "Signal",
-      "label": "Геополитический процесс — Австрия",
-      "severity": 32,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -130,7 +130,7 @@
       "from": "COUNTRY-AT",
       "to": "DOMAIN-AT-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-AT",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-AT-climate",
-      "to": "DOMAIN-AT-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-AT-infrastructure",
-      "to": "DOMAIN-AT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-AT-economic",
-      "to": "DOMAIN-AT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-AT-climate",
       "to": "DOMAIN-AT-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,6 +184,33 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-AT-climate",
+      "to": "DOMAIN-AT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-AT-infrastructure",
+      "to": "DOMAIN-AT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-AT-economic",
+      "to": "DOMAIN-AT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-AT-Кровати_в_",
+      "to": "DOMAIN-AT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.32
+    },
+    {
       "from": "SIGNAL-AT-Шторм_—_Ав",
       "to": "DOMAIN-AT-climate",
       "type": "AMPLIFIES",
@@ -213,12 +219,6 @@
     {
       "from": "SIGNAL-AT-Возобновля",
       "to": "DOMAIN-AT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.32
-    },
-    {
-      "from": "SIGNAL-AT-Геополитич",
-      "to": "DOMAIN-AT-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.32
     }

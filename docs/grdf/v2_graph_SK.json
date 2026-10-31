@@ -2,7 +2,7 @@
   "country": "SK",
   "date": "2026-10-31",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-31T09:07:49.953745+00:00",
+  "generated_at": "2026-10-31T09:27:46.496539+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -40,14 +40,14 @@
       "id": "DOMAIN-SK-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 47,
+      "score": 5,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-SK-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
+      "score": 32,
       "trend": "stable"
     },
     {
@@ -70,14 +70,21 @@
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-SK-technology",
-      "type": "Driver",
-      "label": "technology"
-    },
-    {
       "id": "DRIVER-SK-economic",
       "type": "Driver",
       "label": "economic"
+    },
+    {
+      "id": "DRIVER-SK-social",
+      "type": "Driver",
+      "label": "social"
+    },
+    {
+      "id": "SIGNAL-SK-Кровати_в_",
+      "type": "Signal",
+      "label": "Кровати в больницах Словакии",
+      "severity": 32,
+      "domain": "social"
     },
     {
       "id": "SIGNAL-SK-Военные_уд",
@@ -92,13 +99,6 @@
       "label": "Экономический сигнал — Словакия",
       "severity": 35,
       "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-SK-Технологич",
-      "type": "Signal",
-      "label": "Технологический сигнал — Словакия",
-      "severity": 47,
-      "domain": "technology"
     }
   ],
   "edges": [
@@ -124,13 +124,13 @@
       "from": "COUNTRY-SK",
       "to": "DOMAIN-SK-technology",
       "type": "CORRELATES",
-      "weight": 0.47
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-SK",
       "to": "DOMAIN-SK-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-SK",
@@ -151,13 +151,13 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-SK-technology",
+      "from": "DRIVER-SK-economic",
       "to": "COUNTRY-SK",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-SK-economic",
+      "from": "DRIVER-SK-social",
       "to": "COUNTRY-SK",
       "type": "CAUSES",
       "weight": 0.8
@@ -184,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-SK-Кровати_в_",
+      "to": "DOMAIN-SK-social",
+      "type": "AMPLIFIES",
+      "weight": 0.32
+    },
+    {
       "from": "SIGNAL-SK-Военные_уд",
       "to": "DOMAIN-SK-geopolitical",
       "type": "AMPLIFIES",
@@ -194,12 +200,6 @@
       "to": "DOMAIN-SK-economic",
       "type": "AMPLIFIES",
       "weight": 0.35
-    },
-    {
-      "from": "SIGNAL-SK-Технологич",
-      "to": "DOMAIN-SK-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.47
     }
   ]
 }

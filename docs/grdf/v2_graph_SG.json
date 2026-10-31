@@ -2,9 +2,9 @@
   "country": "SG",
   "date": "2026-10-31",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-31T09:07:49.969365+00:00",
+  "generated_at": "2026-10-31T09:27:46.512220+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-SG",
@@ -19,14 +19,14 @@
       "id": "DOMAIN-SG-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
+      "score": 46,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-SG-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
+      "score": 31,
       "trend": "stable"
     },
     {
@@ -65,6 +65,11 @@
       "trend": "stable"
     },
     {
+      "id": "DRIVER-SG-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
+    },
+    {
       "id": "DRIVER-SG-climate",
       "type": "Driver",
       "label": "climate"
@@ -73,18 +78,6 @@
       "id": "DRIVER-SG-technology",
       "type": "Driver",
       "label": "technology"
-    },
-    {
-      "id": "DRIVER-SG-economic",
-      "type": "Driver",
-      "label": "economic"
-    },
-    {
-      "id": "SIGNAL-SG-Средняя_но",
-      "type": "Signal",
-      "label": "Средняя ночная ставка Сингапура (SORA)",
-      "severity": 32,
-      "domain": "economic"
     },
     {
       "id": "SIGNAL-SG-Наводнение",
@@ -99,6 +92,13 @@
       "label": "Киберугроза — Юго-Восточная Азия",
       "severity": 50,
       "domain": "technology"
+    },
+    {
+      "id": "SIGNAL-SG-Геополитич",
+      "type": "Signal",
+      "label": "Геополитический процесс — Юго-Восточная ",
+      "severity": 62,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.31
     },
     {
       "from": "COUNTRY-SG",
@@ -145,6 +145,12 @@
       "weight": 0.05
     },
     {
+      "from": "DRIVER-SG-geopolitical",
+      "to": "COUNTRY-SG",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-SG-climate",
       "to": "COUNTRY-SG",
       "type": "CAUSES",
@@ -157,16 +163,25 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-SG-economic",
-      "to": "COUNTRY-SG",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-SG-geopolitical",
+      "to": "DOMAIN-SG-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
     },
     {
-      "from": "SIGNAL-SG-Средняя_но",
+      "from": "DOMAIN-SG-infrastructure",
       "to": "DOMAIN-SG-economic",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-SG-economic",
+      "to": "DOMAIN-SG-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-SG-Наводнение",
@@ -179,6 +194,12 @@
       "to": "DOMAIN-SG-technology",
       "type": "AMPLIFIES",
       "weight": 0.5
+    },
+    {
+      "from": "SIGNAL-SG-Геополитич",
+      "to": "DOMAIN-SG-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.62
     }
   ]
 }
