@@ -2,24 +2,24 @@
   "country": "CZ",
   "date": "2026-10-31",
   "grdf_version": "2.0",
-  "generated_at": "2026-10-31T22:45:34.722110+00:00",
-  "node_count": 13,
-  "edge_count": 12,
+  "generated_at": "2026-10-31T23:08:28.992596+00:00",
+  "node_count": 14,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-CZ",
       "type": "Country",
       "label": "CZ",
-      "score": 48,
+      "score": 49,
       "props": {
-        "risk_score": 48
+        "risk_score": 49
       }
     },
     {
       "id": "DOMAIN-CZ-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 35,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -27,14 +27,14 @@
       "type": "Domain",
       "label": "economic",
       "score": 22,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CZ-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "stable"
+      "score": 49,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CZ-technology",
@@ -48,7 +48,7 @@
       "type": "Domain",
       "label": "social",
       "score": 46,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CZ-infrastructure",
@@ -65,19 +65,26 @@
       "trend": "stable"
     },
     {
+      "id": "DRIVER-CZ-climate",
+      "type": "Driver",
+      "label": "climate"
+    },
+    {
       "id": "DRIVER-CZ-social",
       "type": "Driver",
       "label": "social"
     },
     {
-      "id": "DRIVER-CZ-geopolitical",
-      "type": "Driver",
-      "label": "geopolitical"
-    },
-    {
       "id": "DRIVER-CZ-economic",
       "type": "Driver",
       "label": "economic"
+    },
+    {
+      "id": "SIGNAL-CZ-В_Чехии_пр",
+      "type": "Signal",
+      "label": "В Чехии при аварии небольшого самолета п",
+      "severity": 49,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-CZ-Протесты_и",
@@ -99,7 +106,7 @@
       "from": "COUNTRY-CZ",
       "to": "DOMAIN-CZ-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CZ",
@@ -111,7 +118,7 @@
       "from": "COUNTRY-CZ",
       "to": "DOMAIN-CZ-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.49
     },
     {
       "from": "COUNTRY-CZ",
@@ -138,13 +145,13 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-CZ-social",
+      "from": "DRIVER-CZ-climate",
       "to": "COUNTRY-CZ",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-CZ-geopolitical",
+      "from": "DRIVER-CZ-social",
       "to": "COUNTRY-CZ",
       "type": "CAUSES",
       "weight": 0.8
@@ -154,6 +161,54 @@
       "to": "COUNTRY-CZ",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-CZ-climate",
+      "to": "DOMAIN-CZ-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-CZ-economic",
+      "to": "DOMAIN-CZ-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-CZ-social",
+      "to": "DOMAIN-CZ-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-CZ-climate",
+      "to": "DOMAIN-CZ-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-CZ-infrastructure",
+      "to": "DOMAIN-CZ-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CZ-economic",
+      "to": "DOMAIN-CZ-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-CZ-В_Чехии_пр",
+      "to": "DOMAIN-CZ-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.49
     },
     {
       "from": "SIGNAL-CZ-Протесты_и",
