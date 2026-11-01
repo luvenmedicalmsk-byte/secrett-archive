@@ -9399,9 +9399,38 @@ def _domain_fix(events):
             e['domain'] = 'social'
     _dom_trace(events, 'W3_domain_fix')           # TASK-278 · точка 4
     return events
+# D-08a LINEAGE_NDUP_P10 (01.11.2026). _ndup_collapse и P10 удаляли события молча,
+# и lineage относил потерю к catch-all «enrich_merge» (RCA D-08: 21 USGS-событие).
+# Теперь обе функции пишут точную причину через _trace. Только наблюдаемость:
+# условия, пороги и состав выхода не меняются. Трасса пишется лишь для события,
+# чьего _obs_tid нет в выходе функции, и лишь если у трассы ещё нет финала.
+# Откат: LINEAGE_NDUP_P10 = False.
+LINEAGE_NDUP_P10 = True
+
+
+def _lin_removed(removed, survivors, stage, reason, winner_of=None):
+    """Регистрирует удаление в lineage без влияния на поток событий."""
+    if not (LINEAGE and LINEAGE_NDUP_P10):
+        return
+    _alive = {x.get('_obs_tid') for x in survivors if x.get('_obs_tid')}
+    for _r in removed:
+        _tid = _r.get('_obs_tid')
+        if not _tid or _tid in _alive:
+            continue
+        _rec = _LINEAGE_LOG.get(_tid)
+        if _rec is not None and '_finals' in _rec:
+            continue
+        _meta = {}
+        _w = winner_of(_r) if winner_of else None
+        if _w is not None:
+            _meta['winner_trace'] = _w.get('_obs_tid')
+            _meta['winner_title'] = (_w.get('title') or '')[:120]
+        _trace(_tid, stage, 'removed', reason=reason, **_meta)
+
+
 def _ndup_collapse(events):
     """Near-dup collapse (паритет с C2 Событий): перефраз. репосты, тот же домен, дата +-3д, оставляем макс. риск."""
-    kept=[]; out=[]
+    kept=[]; out=[]; _grp={}
     for e in events:
         ew=_ndup_stems(e.get('title')); et=_ndup_day(e.get('date')); dup=-1
         for idx,k in enumerate(kept):
@@ -9410,10 +9439,22 @@ def _ndup_collapse(events):
             inter,ratio=_ndup_ovl(ew,k['words'])
             if inter>=4 and ratio>=0.6: dup=idx; break
         if dup<0:
+            _grp[len(out)]=[e]
             kept.append({'dom':(e.get('domain') or ''),'t':et,'words':ew,'idx':len(out)}); out.append(e)
         else:
             pi=kept[dup]['idx']
+            _grp[pi].append(e)
             if _ndup_sev(e)>_ndup_sev(out[pi]): out[pi]=e; kept[dup]['words']=ew
+    if LINEAGE and LINEAGE_NDUP_P10:
+        try:
+            _win={}
+            for _pi,_mem in _grp.items():
+                for _m in _mem:
+                    if _m is not out[_pi]: _win[id(_m)]=out[_pi]
+            _lin_removed([_m for _mem in _grp.values() for _m in _mem if id(_m) in _win], out,
+                         'NDUP_COLLAPSE', 'ndup_collapse', winner_of=lambda _x: _win.get(id(_x)))
+        except Exception as _lq:
+            print('  [WARN] ndup lineage fail: %s' % _lq, file=sys.stderr)
     return out
 GEO_NOCOUNTRY_THRESHOLD = 0.05  # аварийный порог доли событий без страны
 _GEO_VAGUE_RE = re.compile(r'север\\w* стран|приграничн|неназван|неустановл|неуказан|в одной из стран|unnamed region|border area', re.I)
@@ -9521,6 +9562,12 @@ def _p10_drop_quake_cards(events):
         _n = len(events) - len(_out)
         if _n:
             print('  P10: убрано технических карточек землетрясений: %d' % _n, file=sys.stderr)
+            try:
+                _kept_ids = {id(x) for x in _out}
+                _lin_removed([x for x in events if id(x) not in _kept_ids], _out,
+                             'P10_QUAKE_CARD', 'p10_quake_card')
+            except Exception as _lq:
+                print('  [WARN] P10 lineage fail: %s' % _lq, file=sys.stderr)
         return _out
     except Exception as _eq:
         print('  [WARN] P10 quake-filter fail: %s' % _eq, file=sys.stderr)
