@@ -2,9 +2,9 @@
   "country": "IR",
   "date": "2026-11-01",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-01T19:48:17.541066+00:00",
+  "generated_at": "2026-11-01T20:08:13.824671+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-IR",
@@ -33,7 +33,7 @@
       "id": "DOMAIN-IR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 44,
       "trend": "stable"
     },
     {
@@ -47,7 +47,7 @@
       "id": "DOMAIN-IR-social",
       "type": "Domain",
       "label": "social",
-      "score": 44,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -94,11 +94,11 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-IR-Цены_на_га",
+      "id": "SIGNAL-IR-Ученые_обн",
       "type": "Signal",
-      "label": "Цены на газ сейчас высокие, но для многи",
+      "label": "Ученые обнаружили скрытую вулканическую ",
       "severity": 44,
-      "domain": "social"
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-IR",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-social",
       "type": "CORRELATES",
-      "weight": 0.44
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-IR",
@@ -161,6 +161,48 @@
       "to": "COUNTRY-IR",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-IR-climate",
+      "to": "DOMAIN-IR-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IR-economic",
+      "to": "DOMAIN-IR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-IR-social",
+      "to": "DOMAIN-IR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-IR-climate",
+      "to": "DOMAIN-IR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-IR-infrastructure",
+      "to": "DOMAIN-IR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IR-economic",
+      "to": "DOMAIN-IR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-IR-geopolitical",
@@ -196,8 +238,8 @@
       "weight": 0.52
     },
     {
-      "from": "SIGNAL-IR-Цены_на_га",
-      "to": "DOMAIN-IR-social",
+      "from": "SIGNAL-IR-Ученые_обн",
+      "to": "DOMAIN-IR-climate",
       "type": "AMPLIFIES",
       "weight": 0.44
     }
