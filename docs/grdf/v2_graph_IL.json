@@ -1,8 +1,8 @@
 {
   "country": "IL",
-  "date": "2026-10-31",
+  "date": "2026-11-01",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-01T00:00:28.468251+00:00",
+  "generated_at": "2026-11-01T00:09:36.082224+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,59 +10,59 @@
       "id": "COUNTRY-IL",
       "type": "Country",
       "label": "IL",
-      "score": 83,
+      "score": 78,
       "props": {
-        "risk_score": 83
+        "risk_score": 78
       }
     },
     {
       "id": "DOMAIN-IL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 65,
-      "trend": "stable"
+      "score": 64,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IL-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IL-climate",
       "type": "Domain",
       "label": "climate",
       "score": 50,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IL-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IL-social",
       "type": "Domain",
       "label": "social",
-      "score": 83,
-      "trend": "stable"
+      "score": 5,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IL-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IL-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DRIVER-IL-Geopolitical",
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IL-Израиль_уб",
-      "type": "Signal",
-      "label": "Израиль убил 1,574 палестинцев с момента",
-      "severity": 83,
-      "domain": "social"
-    },
-    {
       "id": "SIGNAL-IL-Явления_на",
       "type": "Signal",
       "label": "Явления на побережье: Море - Юг, Море - ",
@@ -97,7 +90,14 @@
       "id": "SIGNAL-IL-Военный_ко",
       "type": "Signal",
       "label": "Военный конфликт — Ближний Восток (систе",
-      "severity": 87,
+      "severity": 86,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-IL-Военные_уд",
+      "type": "Signal",
+      "label": "Военные удары — Ближний Восток",
+      "severity": 86,
       "domain": "geopolitical"
     }
   ],
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.65
+      "weight": 0.64
     },
     {
       "from": "COUNTRY-IL",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-social",
       "type": "CORRELATES",
-      "weight": 0.83
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-IL",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-IL-geopolitical",
-      "to": "DOMAIN-IL-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-IL-infrastructure",
-      "to": "DOMAIN-IL-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-IL-economic",
-      "to": "DOMAIN-IL-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "DOMAIN-IL-climate",
       "to": "DOMAIN-IL-infrastructure",
       "type": "ESCALATES",
@@ -226,10 +205,25 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-IL-Израиль_уб",
+      "from": "DOMAIN-IL-geopolitical",
+      "to": "DOMAIN-IL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IL-infrastructure",
+      "to": "DOMAIN-IL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IL-economic",
       "to": "DOMAIN-IL-social",
       "type": "AMPLIFIES",
-      "weight": 0.83
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-IL-Явления_на",
@@ -241,7 +235,13 @@
       "from": "SIGNAL-IL-Военный_ко",
       "to": "DOMAIN-IL-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.87
+      "weight": 0.86
+    },
+    {
+      "from": "SIGNAL-IL-Военные_уд",
+      "to": "DOMAIN-IL-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.86
     }
   ]
 }
