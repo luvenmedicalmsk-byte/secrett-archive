@@ -2,8 +2,8 @@
   "country": "PT",
   "country_name": "Португалия",
   "date": "2026-11-01",
-  "generated_at": "2026-11-01T20:26:06.198225+00:00",
-  "evolution_score": 80,
+  "generated_at": "2026-11-01T20:47:33.147382+00:00",
+  "evolution_score": 83,
   "grade": "A",
   "grade_ru": "Высокая эволюция",
   "active_scenarios": [
@@ -12,56 +12,101 @@
       "type": "escalation_branch",
       "name": "Ветвь эскалации: deteriorating",
       "trigger": "Тренд: нарастание давления",
-      "score": 89,
+      "score": 90,
       "probability": 18,
       "confidence": 50,
       "trend_strength": 65,
       "status": "emerging",
       "source": "recommendation_shift",
       "domain": "climate"
+    },
+    {
+      "id": "ASE-CRIT-WORST",
+      "type": "critical_branch",
+      "name": "Критический каскад (ветвь КРИТИЧЕСКИХ рисков)",
+      "trigger": "Критический уровень риска: 80",
+      "score": 95,
+      "probability": 12,
+      "confidence": 60,
+      "trend_strength": 80,
+      "status": "emerging",
+      "source": "critical_risk",
+      "domain": "climate"
     }
   ],
-  "active_count": 1,
+  "active_count": 2,
   "emerging_scenarios": [
     {
       "id": "ASE-ESC-DETE",
       "type": "escalation_branch",
       "name": "Ветвь эскалации: deteriorating",
       "trigger": "Тренд: нарастание давления",
-      "score": 89,
+      "score": 90,
       "probability": 18,
       "confidence": 50,
       "trend_strength": 65,
       "status": "emerging",
       "source": "recommendation_shift",
       "domain": "climate"
+    },
+    {
+      "id": "ASE-CRIT-WORST",
+      "type": "critical_branch",
+      "name": "Критический каскад (ветвь КРИТИЧЕСКИХ рисков)",
+      "trigger": "Критический уровень риска: 80",
+      "score": 95,
+      "probability": 12,
+      "confidence": 60,
+      "trend_strength": 80,
+      "status": "emerging",
+      "source": "critical_risk",
+      "domain": "climate"
     }
   ],
-  "convergences": [],
+  "convergences": [
+    {
+      "scenario_a": "escalation_branch",
+      "scenario_b": "critical_branch",
+      "score_gap": 5,
+      "prob_gap": 6,
+      "label": "Сближение: Ветвь эскалации: deteriorating ↔ Критический каскад (ветвь КРИТИЧЕСКИХ рисков)"
+    }
+  ],
   "divergences": [],
   "ranked_pathways": [
+    {
+      "id": "ASE-CRIT-WORST",
+      "name": "Критический каскад (ветвь КРИТИЧЕСКИХ рисков)",
+      "type": "critical_branch",
+      "status": "emerging",
+      "probability": 40.0,
+      "score": 95,
+      "confidence": 60,
+      "trend_strength": 80,
+      "scenario_score": 66
+    },
     {
       "id": "ASE-ESC-DETE",
       "name": "Ветвь эскалации: deteriorating",
       "type": "escalation_branch",
       "status": "emerging",
-      "probability": 100.0,
-      "score": 89,
+      "probability": 60.0,
+      "score": 90,
       "confidence": 50,
       "trend_strength": 65,
-      "scenario_score": 76
+      "scenario_score": 65
     }
   ],
-  "pathway_count": 1,
+  "pathway_count": 2,
   "future_landscape": {
-    "dominant_pathway": "Ветвь эскалации: deteriorating",
-    "dominant_prob": 100.0,
-    "dominant_score": 89,
-    "outlook": "stable",
-    "narrative": "Базовый сценарий 'Ветвь эскалации: deteriorating' (100%) — ситуация стабильна. Скор 89.",
-    "n_convergences": 0,
+    "dominant_pathway": "Критический каскад (ветвь КРИТИЧЕСКИХ рисков)",
+    "dominant_prob": 40.0,
+    "dominant_score": 95,
+    "outlook": "deteriorating",
+    "narrative": "Доминирующий сценарий 'Критический каскад (ветвь КРИТИЧЕСКИХ рисков)' (40%) указывает на ухудшение — скор 95. Риск системной эскалации.",
+    "n_convergences": 1,
     "n_divergences": 0,
-    "landscape_complexity": 10
+    "landscape_complexity": 20
   },
   "diagnostics": [
     {
@@ -71,15 +116,15 @@
     }
   ],
   "diagnostic_count": 1,
-  "scenario_diversity_index": 0,
-  "future_stability_index": 100,
+  "scenario_diversity_index": 10,
+  "future_stability_index": 70,
   "retired_scenarios": [
     {
       "type": "best",
       "name": "Best Case",
       "name_ru": "Лучший сценарий",
       "probability": 31,
-      "score": 47,
+      "score": 48,
       "delta_from_current": -32,
       "state": "contained",
       "state_ru": "Контролируемо",
@@ -87,8 +132,8 @@
       "impact_ru": "Умеренный",
       "velocity": "explosive",
       "velocity_ru": "Взрывной",
-      "recovery_days": 258,
-      "future_pressure": 29,
+      "recovery_days": 264,
+      "future_pressure": 30,
       "future_resilience": 45,
       "future_probability": 31,
       "drivers": [
@@ -102,7 +147,7 @@
         {
           "horizon": "30d",
           "label": "30 дней",
-          "score": 47,
+          "score": 48,
           "state": "contained",
           "state_ru": "Контролируемо",
           "delta_from_current": -32
@@ -110,15 +155,15 @@
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 42,
-          "state": "stabilization",
-          "state_ru": "Стабилизация",
+          "score": 43,
+          "state": "contained",
+          "state_ru": "Контролируемо",
           "delta_from_current": -37
         },
         {
           "horizon": "180d",
           "label": "180 дней",
-          "score": 37,
+          "score": 38,
           "state": "stabilization",
           "state_ru": "Стабилизация",
           "delta_from_current": -42
@@ -126,7 +171,7 @@
         {
           "horizon": "365d",
           "label": "365 дней",
-          "score": 33,
+          "score": 34,
           "state": "stabilization",
           "state_ru": "Стабилизация",
           "delta_from_current": -46
@@ -141,8 +186,8 @@
       "type": "base",
       "name": "Base Case",
       "name_ru": "Базовый сценарий",
-      "probability": 20,
-      "score": 67,
+      "probability": 22,
+      "score": 68,
       "delta_from_current": -12,
       "state": "escalating",
       "state_ru": "Эскалация",
@@ -150,10 +195,10 @@
       "impact_ru": "Тяжёлый",
       "velocity": "explosive",
       "velocity_ru": "Взрывной",
-      "recovery_days": 368,
-      "future_pressure": 50,
+      "recovery_days": 374,
+      "future_pressure": 51,
       "future_resilience": 42,
-      "future_probability": 20,
+      "future_probability": 22,
       "drivers": [
         {
           "driver": "Ливень: Мадейра - Порту-Санту, Мадейра - Южно",
@@ -165,7 +210,7 @@
         {
           "horizon": "30d",
           "label": "30 дней",
-          "score": 67,
+          "score": 68,
           "state": "escalating",
           "state_ru": "Эскалация",
           "delta_from_current": -12
@@ -173,39 +218,39 @@
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 72,
+          "score": 71,
           "state": "escalating",
           "state_ru": "Эскалация",
-          "delta_from_current": -7
+          "delta_from_current": -9
         },
         {
           "horizon": "180d",
           "label": "180 дней",
-          "score": 77,
+          "score": 74,
           "state": "critical",
           "state_ru": "Критическая эскалация",
-          "delta_from_current": -2
+          "delta_from_current": -6
         },
         {
           "horizon": "365d",
           "label": "365 дней",
-          "score": 82,
+          "score": 77,
           "state": "critical",
           "state_ru": "Критическая эскалация",
-          "delta_from_current": 3
+          "delta_from_current": -3
         }
       ],
-      "evolved_probability": 19.6,
+      "evolved_probability": 21.5,
       "evolved_confidence": 25,
-      "evolution_delta": -0.4,
+      "evolution_delta": -0.5,
       "status": "retiring"
     },
     {
       "type": "stress",
       "name": "Stress Case",
       "name_ru": "Стресс-сценарий",
-      "probability": 24,
-      "score": 77,
+      "probability": 23,
+      "score": 78,
       "delta_from_current": -2,
       "state": "critical",
       "state_ru": "Критическая эскалация",
@@ -213,10 +258,10 @@
       "impact_ru": "Тяжёлый",
       "velocity": "moderate",
       "velocity_ru": "Умеренный",
-      "recovery_days": 423,
-      "future_pressure": 62,
+      "recovery_days": 429,
+      "future_pressure": 63,
       "future_resilience": 39,
-      "future_probability": 24,
+      "future_probability": 23,
       "drivers": [
         {
           "driver": "Ливень: Мадейра - Порту-Санту, Мадейра - Южно",
@@ -232,7 +277,7 @@
         {
           "horizon": "30d",
           "label": "30 дней",
-          "score": 77,
+          "score": 78,
           "state": "critical",
           "state_ru": "Критическая эскалация",
           "delta_from_current": -2
@@ -240,7 +285,7 @@
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 83,
+          "score": 84,
           "state": "critical",
           "state_ru": "Критическая эскалация",
           "delta_from_current": 4
@@ -248,7 +293,7 @@
         {
           "horizon": "180d",
           "label": "180 дней",
-          "score": 89,
+          "score": 90,
           "state": "cascade",
           "state_ru": "Каскадный кризис",
           "delta_from_current": 10
@@ -259,10 +304,10 @@
           "score": 95,
           "state": "cascade",
           "state_ru": "Каскадный кризис",
-          "delta_from_current": 16
+          "delta_from_current": 15
         }
       ],
-      "evolved_probability": 23.5,
+      "evolved_probability": 22.5,
       "evolved_confidence": 25,
       "evolution_delta": -0.5,
       "status": "retiring"
@@ -271,19 +316,19 @@
       "type": "worst",
       "name": "Worst Case",
       "name_ru": "Худший сценарий",
-      "probability": 25,
-      "score": 87,
+      "probability": 24,
+      "score": 88,
       "delta_from_current": 8,
-      "state": "critical",
-      "state_ru": "Критическая эскалация",
+      "state": "cascade",
+      "state_ru": "Каскадный кризис",
       "impact": "catastrophic",
       "impact_ru": "Катастрофический",
       "velocity": "explosive",
       "velocity_ru": "Взрывной",
-      "recovery_days": 478,
-      "future_pressure": 74,
+      "recovery_days": 484,
+      "future_pressure": 75,
       "future_resilience": 32,
-      "future_probability": 25,
+      "future_probability": 24,
       "drivers": [
         {
           "driver": "Ливень: Мадейра - Порту-Санту, Мадейра - Южно",
@@ -299,9 +344,9 @@
         {
           "horizon": "30d",
           "label": "30 дней",
-          "score": 87,
-          "state": "critical",
-          "state_ru": "Критическая эскалация",
+          "score": 88,
+          "state": "cascade",
+          "state_ru": "Каскадный кризис",
           "delta_from_current": 8
         },
         {
@@ -310,7 +355,7 @@
           "score": 95,
           "state": "cascade",
           "state_ru": "Каскадный кризис",
-          "delta_from_current": 16
+          "delta_from_current": 15
         },
         {
           "horizon": "180d",
@@ -318,7 +363,7 @@
           "score": 95,
           "state": "cascade",
           "state_ru": "Каскадный кризис",
-          "delta_from_current": 16
+          "delta_from_current": 15
         },
         {
           "horizon": "365d",
@@ -326,12 +371,12 @@
           "score": 95,
           "state": "cascade",
           "state_ru": "Каскадный кризис",
-          "delta_from_current": 16
+          "delta_from_current": 15
         }
       ],
-      "evolved_probability": 26.7,
+      "evolved_probability": 25.6,
       "evolved_confidence": 25,
-      "evolution_delta": 1.7,
+      "evolution_delta": 1.6,
       "status": "retiring"
     }
   ],
@@ -340,11 +385,11 @@
     "fc_acc": 83,
     "sc_val": 100,
     "prob_cal": 85,
-    "adapt": 65,
+    "adapt": 80,
     "stability": 52
   },
   "history_depth": 4,
-  "risk_score": 79,
-  "delta": 2,
+  "risk_score": 80,
+  "delta": 1,
   "domain": "climate"
 }
