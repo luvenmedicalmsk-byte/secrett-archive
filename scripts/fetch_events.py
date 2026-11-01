@@ -6336,9 +6336,28 @@ _RECLASS_TECH_KEEP = re.compile(
 _RECLASS_KINETIC = re.compile(r'поразил\w*|поражен\w*|удар\w*\s+по|обстрел\w*|ракетн\w*|бпла|беспилотн\w*|авиаудар\w*', re.I)
 
 
+# NATDIS_ANALOGY_0111 (01.11.2026). Стихийное бедствие в СРАВНЕНИИ не делает событие
+# климатическим. «Частные инвестфирмы включают „ИИ-сбой“ в кредитные договоры как
+# форс-мажор наравне с ураганами и пандемиями» получало тип «Шторм» и домен «Климат»:
+# жёсткая сигнатура S44 и канон видели слово «ураган». Сравнительный оборот вырезается
+# из текста только для этих двух проверок. Откат: NATDIS_ANALOGY_0111 = False.
+NATDIS_ANALOGY_0111 = True
+_NATDIS_ANALOGY = re.compile(
+    r'(?:наравне|наряду|в\s+одном\s+ряду|по\s+аналогии|подобно|сравним\w*|сопоставим\w*|словно|будто|как\s+и)'
+    r'\s+(?:со?\s+)?(?:[а-яёa-z«»"-]+\s+){0,3}?'
+    r'(?:ураган|тайфун|циклон|торнадо|смерч|землетряс|цунами|наводнен|извержен|шторм)\w*'
+    r'(?:\s+(?:и|или)\s+[а-яё]+)?', re.I)
+
+
+def _strip_natdis_analogy(text):
+    if not NATDIS_ANALOGY_0111 or not text:
+        return text
+    return _NATDIS_ANALOGY.sub(' ', text)
+
+
 def _reclass_domain(title, summary, current):
     """S44: основной риск по содержанию. Переносим только в СТРОГО более подходящий домен."""
-    b = ((title or '') + ' ' + (summary or '')).lower()
+    b = _strip_natdis_analogy(((title or '') + ' ' + (summary or ''))).lower()
     # Удар по дата-центру остаётся военным событием: «ВС РФ поразили
     # дата-центр, заводы и объекты энергетики» уходит в geopolitics, как раньше.
     if (current == 'technology' and _RECLASS_TECH_KEEP.search(b)
@@ -7122,6 +7141,8 @@ DEBT_LOW_GUARD = True
 
 def _recompute_severity(ev):
     b = ((ev.get('title') or '') + ' ' + (ev.get('summary') or '')).lower()
+    if NATDIS_ANALOGY_0111:
+        b = _strip_natdis_analogy(b)
     dom = ev.get('domain') or ''
     sev = ev.get('severity', 45) or 45
     _S482_FCAST = ('пожарная опасность','штормовое предупреждение','предупреждение о сильном ветре','предупреждение о ветре','предупреждение о жаре','предупреждение о засухе','предупреждение о гололёде','предупреждение о гололед','предупреждение о погодных','метеопредупрежд','опасные метеоявления','оранжевый уровень опасности','жёлтый уровень опасности','желтый уровень опасности')
@@ -10968,6 +10989,8 @@ _GEO_GLOBAL_TITLE = re.compile(
 def _canon_type_of(title, summ, _ban=None, _fb=False, _scores=None, _nat_src=False):
     # _ban / _fb — SHADOW-параметры (ADR-005). По умолчанию (_ban=None, _fb=False)
     # поведение функции БАЙТ-ИДЕНТИЧНО прежнему: обе ветви ниже не активируются.
+    if NATDIS_ANALOGY_0111:
+        title = _strip_natdis_analogy(title); summ = _strip_natdis_analogy(summ)
     _txt = title + ' ' + summ
     _commem = bool(_COMMEM_GUARD.search(_txt)) and not _PRESENT_STRIKE.search(_txt)
     # Причина приоритетнее лексического триггера: эпидемия отменяет «Рынок труда»
