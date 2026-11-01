@@ -2,7 +2,7 @@
   "country": "SK",
   "date": "2026-11-01",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-01T06:27:05.296425+00:00",
+  "generated_at": "2026-11-01T06:47:13.738904+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-SK-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 35,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "economic"
     },
     {
+      "id": "SIGNAL-SK-Туман:_Зво",
+      "type": "Signal",
+      "label": "Туман: Зволен, Банска-Бистрица, Детва, С",
+      "severity": 50,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-SK-Ветер:_Око",
       "type": "Signal",
       "label": "Ветер: Околица Кошице, Кошице, Словакия",
@@ -92,13 +99,6 @@
       "label": "Военные удары — Словакия",
       "severity": 53,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-SK-Экономичес",
-      "type": "Signal",
-      "label": "Экономический сигнал — Словакия",
-      "severity": 35,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-SK",
       "to": "DOMAIN-SK-economic",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-SK",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-SK-climate",
-      "to": "DOMAIN-SK-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-SK-infrastructure",
-      "to": "DOMAIN-SK-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-SK-economic",
-      "to": "DOMAIN-SK-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-SK-climate",
       "to": "DOMAIN-SK-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -203,6 +182,27 @@
       "type": "AMPLIFIES",
       "weight": 0.65,
       "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-SK-climate",
+      "to": "DOMAIN-SK-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-SK-infrastructure",
+      "to": "DOMAIN-SK-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-SK-economic",
+      "to": "DOMAIN-SK-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-SK-geopolitical",
@@ -226,6 +226,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-SK-Туман:_Зво",
+      "to": "DOMAIN-SK-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
       "from": "SIGNAL-SK-Ветер:_Око",
       "to": "DOMAIN-SK-climate",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-SK-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.53
-    },
-    {
-      "from": "SIGNAL-SK-Экономичес",
-      "to": "DOMAIN-SK-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.35
     }
   ]
 }
