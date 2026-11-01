@@ -2,7 +2,7 @@
   "country": "CZ",
   "date": "2026-11-01",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-01T11:48:21.921997+00:00",
+  "generated_at": "2026-11-01T12:08:11.680065+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-CZ",
       "type": "Country",
       "label": "CZ",
-      "score": 48,
+      "score": 49,
       "props": {
-        "risk_score": 48
+        "risk_score": 49
       }
     },
     {
@@ -26,7 +26,7 @@
       "id": "DOMAIN-CZ-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 22,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 49,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CZ-technology",
@@ -48,7 +48,7 @@
       "type": "Domain",
       "label": "social",
       "score": 46,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CZ-infrastructure",
@@ -75,9 +75,16 @@
       "label": "social"
     },
     {
-      "id": "DRIVER-CZ-economic",
+      "id": "DRIVER-CZ-geopolitical",
       "type": "Driver",
-      "label": "economic"
+      "label": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-CZ-В_Чехии_пр",
+      "type": "Signal",
+      "label": "В Чехии при аварии небольшого самолета п",
+      "severity": 49,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-CZ-Климатичес",
@@ -92,13 +99,6 @@
       "label": "Протесты и беспорядки — Чехия",
       "severity": 46,
       "domain": "social"
-    },
-    {
-      "id": "SIGNAL-CZ-Экономичес",
-      "type": "Signal",
-      "label": "Экономический сигнал — Чехия",
-      "severity": 22,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-CZ",
       "to": "DOMAIN-CZ-economic",
       "type": "CORRELATES",
-      "weight": 0.22
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CZ",
@@ -157,7 +157,7 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-CZ-economic",
+      "from": "DRIVER-CZ-geopolitical",
       "to": "COUNTRY-CZ",
       "type": "CAUSES",
       "weight": 0.8
@@ -205,6 +205,12 @@
       "lag_days": 30
     },
     {
+      "from": "SIGNAL-CZ-В_Чехии_пр",
+      "to": "DOMAIN-CZ-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.49
+    },
+    {
       "from": "SIGNAL-CZ-Климатичес",
       "to": "DOMAIN-CZ-climate",
       "type": "AMPLIFIES",
@@ -215,12 +221,6 @@
       "to": "DOMAIN-CZ-social",
       "type": "AMPLIFIES",
       "weight": 0.46
-    },
-    {
-      "from": "SIGNAL-CZ-Экономичес",
-      "to": "DOMAIN-CZ-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.22
     }
   ]
 }
