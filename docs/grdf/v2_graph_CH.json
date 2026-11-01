@@ -2,25 +2,25 @@
   "country": "CH",
   "date": "2026-11-01",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-01T14:10:23.926807+00:00",
+  "generated_at": "2026-11-01T14:29:08.563848+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-CH",
       "type": "Country",
       "label": "CH",
-      "score": 66,
+      "score": 69,
       "props": {
-        "risk_score": 66
+        "risk_score": 69
       }
     },
     {
       "id": "DOMAIN-CH-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 50,
-      "trend": "up"
+      "score": 5,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CH-economic",
@@ -33,7 +33,7 @@
       "id": "DOMAIN-CH-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 50,
+      "score": 51,
       "trend": "up"
     },
     {
@@ -87,18 +87,18 @@
       "domain": "social"
     },
     {
+      "id": "SIGNAL-CH-Ветер:_Нио",
+      "type": "Signal",
+      "label": "Ветер: Нион - Терр-Сент, Морж - Коссоней",
+      "severity": 50,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-CH-Аномальный",
       "type": "Signal",
       "label": "Аномальный холод: Лёченталь - Натерс, Ва",
       "severity": 50,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-CH-Беспорядки",
-      "type": "Signal",
-      "label": "Беспорядки начались в Швейцарии: в Цюрих",
-      "severity": 45,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.5
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CH",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-climate",
       "type": "CORRELATES",
-      "weight": 0.5
+      "weight": 0.51
     },
     {
       "from": "COUNTRY-CH",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-CH-geopolitical",
-      "to": "DOMAIN-CH-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-CH-infrastructure",
-      "to": "DOMAIN-CH-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-CH-economic",
-      "to": "DOMAIN-CH-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "DOMAIN-CH-climate",
       "to": "DOMAIN-CH-infrastructure",
       "type": "ESCALATES",
@@ -232,16 +211,16 @@
       "weight": 0.54
     },
     {
-      "from": "SIGNAL-CH-Аномальный",
+      "from": "SIGNAL-CH-Ветер:_Нио",
       "to": "DOMAIN-CH-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-CH-Беспорядки",
-      "to": "DOMAIN-CH-geopolitical",
+      "from": "SIGNAL-CH-Аномальный",
+      "to": "DOMAIN-CH-climate",
       "type": "AMPLIFIES",
-      "weight": 0.45
+      "weight": 0.5
     }
   ]
 }
