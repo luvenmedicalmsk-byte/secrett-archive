@@ -9385,7 +9385,7 @@ def _domain_fix(events):
         t = ((e.get('title') or '') + ' ' + (e.get('summary') or '')).lower()
         # Природные события (землетрясения, цунами, наводнения и т.п.) -> climate,
         # даже если LLM ошибочно отнёс их к geopolitics/economy («ударили по...»).
-        if e.get('domain') in ('geopolitics', 'economy', 'social') and _NAT_RE.search(t):
+        if e.get('domain') in ('geopolitics', 'economy', 'social') and _NAT_RE.search(_strip_natdis_analogy(t)):
             # IDR-010 · F1: прежний домен сохраняется. Канонизация ещё не
             # выполнена, тип неизвестен, поэтому решение откладывается до
             # _domain_integrity_restore — там оно принимается по типу.
