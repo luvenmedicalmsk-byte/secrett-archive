@@ -2,11 +2,20 @@
   "country": "CH",
   "country_name": "Швейцария",
   "date": "2026-11-01",
-  "generated_at": "2026-11-01T17:17:01.829875+00:00",
-  "srs_score": 60,
+  "generated_at": "2026-11-01T17:27:53.581335+00:00",
+  "srs_score": 63,
   "srs_grade": "C",
   "srs_grade_ru": "Умеренная",
   "priority_risks": [
+    {
+      "id": "R-06",
+      "category": "WATCHLIST",
+      "title": "Дрейф уверенности прогнозов: -13.0pt",
+      "detail": "Уверенность прогнозной системы дрейфует на -13.0pt от краткосрочного к долгосрочному горизонту.",
+      "metric_value": -13,
+      "urgency": 56,
+      "source": "confidence_drift"
+    },
     {
       "id": "R-05",
       "category": "STRATEGIC",
@@ -15,15 +24,6 @@
       "metric_value": 2,
       "urgency": 54,
       "source": "decision_bias"
-    },
-    {
-      "id": "R-06",
-      "category": "WATCHLIST",
-      "title": "Дрейф уверенности прогнозов: -12.0pt",
-      "detail": "Уверенность прогнозной системы дрейфует на -12.0pt от краткосрочного к долгосрочному горизонту.",
-      "metric_value": -12,
-      "urgency": 54,
-      "source": "confidence_drift"
     }
   ],
   "risk_count": 2,
@@ -71,7 +71,7 @@
     {
       "type": "confidence_drift",
       "horizon": "long",
-      "detail": "Дрейф уверенности -12.0pt указывает на деградацию долгосрочных прогнозов."
+      "detail": "Дрейф уверенности -13.0pt указывает на деградацию долгосрочных прогнозов."
     }
   ],
   "forecast_improvement": [
@@ -83,7 +83,7 @@
     {
       "type": "alpha_positive",
       "horizon": "all",
-      "detail": "Положительная альфа стратегии (+3.06pt) — решения превосходят пассивный базис."
+      "detail": "Положительная альфа стратегии (+3.03pt) — решения превосходят пассивный базис."
     }
   ],
   "ranked_recommendations": [
@@ -106,6 +106,15 @@
       "source": "decision_success"
     },
     {
+      "id": "R-06",
+      "type": "risk",
+      "priority": "WATCHLIST",
+      "title": "Дрейф уверенности прогнозов: -13.0pt",
+      "rec_score": 37,
+      "metric_value": -13,
+      "source": "confidence_drift"
+    },
+    {
       "id": "R-05",
       "type": "risk",
       "priority": "STRATEGIC",
@@ -113,18 +122,17 @@
       "rec_score": 36,
       "metric_value": 2,
       "source": "decision_bias"
-    },
-    {
-      "id": "R-06",
-      "type": "risk",
-      "priority": "WATCHLIST",
-      "title": "Дрейф уверенности прогнозов: -12.0pt",
-      "rec_score": 36,
-      "metric_value": -12,
-      "source": "confidence_drift"
     }
   ],
   "action_plan": [
+    {
+      "id": "ACT-R-06",
+      "priority": "STRATEGIC",
+      "action": "Реагировать: Дрейф уверенности прогнозов: -13.0pt",
+      "rationale": "Уверенность прогнозной системы дрейфует на -13.0pt от краткосрочного к долгосрочному горизонту.",
+      "deadline": "7 дней",
+      "source": "confidence_drift"
+    },
     {
       "id": "ACT-R-05",
       "priority": "STRATEGIC",
@@ -132,14 +140,6 @@
       "rationale": "Выявлено 2 смещений: Гиперреакция, Недостаточная реакция. Рекомендуется рекалибровка стратегии.",
       "deadline": "7 дней",
       "source": "decision_bias"
-    },
-    {
-      "id": "ACT-R-06",
-      "priority": "STRATEGIC",
-      "action": "Реагировать: Дрейф уверенности прогнозов: -12.0pt",
-      "rationale": "Уверенность прогнозной системы дрейфует на -12.0pt от краткосрочного к долгосрочному горизонту.",
-      "deadline": "7 дней",
-      "source": "confidence_drift"
     },
     {
       "id": "ACT-O-05",
@@ -156,13 +156,21 @@
       "rationale": "Исторический процент успешных решений 78.7% — выше среднего. Поддерживать текущий подход.",
       "deadline": "30 дней",
       "source": "decision_success"
+    },
+    {
+      "id": "ACT-CONF",
+      "priority": "STRATEGIC",
+      "action": "Рекалибровать уверенность прогнозов → 55.0%",
+      "rationale": "Оптимизационный движок выявил отклонение от оптимальной уверенности.",
+      "deadline": "30 дней",
+      "source": "confidence_target"
     }
   ],
-  "action_count": 4,
+  "action_count": 5,
   "rec_diagnostics": [],
   "diagnostic_count": 0,
-  "risk_score": 66,
+  "risk_score": 69,
   "delta": 3,
-  "domain": "social",
+  "domain": "climate",
   "history_depth": 157
 }
