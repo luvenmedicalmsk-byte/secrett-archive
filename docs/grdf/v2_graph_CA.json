@@ -2,25 +2,25 @@
   "country": "CA",
   "date": "2026-11-02",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-02T04:28:08.908420+00:00",
+  "generated_at": "2026-11-02T04:48:05.366480+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-CA",
       "type": "Country",
       "label": "CA",
-      "score": 91,
+      "score": 92,
       "props": {
-        "risk_score": 91
+        "risk_score": 92
       }
     },
     {
       "id": "DOMAIN-CA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
-      "trend": "stable"
+      "score": 56,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-economic",
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 74,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-technology",
@@ -47,8 +47,8 @@
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
-      "score": 56,
-      "trend": "down"
+      "score": 5,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CA-infrastructure",
@@ -94,11 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-CA-Качество_в",
+      "id": "SIGNAL-CA-Туман:_Ком",
       "type": "Signal",
-      "label": "Качество воздуха: Дункан, Канада",
+      "label": "Туман: Компания Стеттлер рядом со Стеттл",
       "severity": 56,
-      "domain": "social"
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-CA",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-social",
       "type": "CORRELATES",
-      "weight": 0.56
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CA",
@@ -205,6 +205,27 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-CA-geopolitical",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-CA-Канадские_",
       "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
@@ -217,8 +238,8 @@
       "weight": 0.72
     },
     {
-      "from": "SIGNAL-CA-Качество_в",
-      "to": "DOMAIN-CA-social",
+      "from": "SIGNAL-CA-Туман:_Ком",
+      "to": "DOMAIN-CA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.56
     }
