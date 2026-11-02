@@ -5980,6 +5980,10 @@ def _is_news_not_signal(title, summary, domain):
                  and any(w in b for w in ('самолет','самолёт','вертолет','вертолёт','параплан','парашютн','дельтаплан','легкомоторн')))
     if NOISE_EN_0211 and not _accident and _ACC_EN.search(b) and _ACC_EN_OBJ.search(b) and not _ACC_EN_COMBAT.search(b):
         _accident = True
+    # тот же флаг: в русском переводе частный самолёт - «бизнес-джет», «Learjet»
+    if NOISE_EN_0211 and not _accident and any(w in b for w in ('крушени','авиакатастроф','разбил')) \
+            and re.search(r'(?<![а-яё])джет|learjet|cessna|частн\w*\s+(?:самол|борт)', b):
+        _accident = True
     _gas = ('взрыв' in b and any(w in b for w in ('газа','бытов','в жилом','в квартир','в доме','котельн','газовый баллон','газового баллон')))
     if _fluff or _local or ((_accident or _gas) and not _combat):
         return True
