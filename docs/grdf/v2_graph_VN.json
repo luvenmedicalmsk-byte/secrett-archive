@@ -2,9 +2,9 @@
   "country": "VN",
   "date": "2026-11-02",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-02T10:48:38.778193+00:00",
+  "generated_at": "2026-11-02T11:07:25.398873+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-VN",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-VN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
+      "score": 46,
       "trend": "stable"
     },
     {
@@ -40,7 +40,7 @@
       "id": "DOMAIN-VN-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 37,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -75,9 +75,9 @@
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-VN-technology",
+      "id": "DRIVER-VN-economic",
       "type": "Driver",
-      "label": "technology"
+      "label": "economic"
     },
     {
       "id": "SIGNAL-VN-Наводнение",
@@ -94,11 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-VN-Киберугроз",
+      "id": "SIGNAL-VN-Геополитич",
       "type": "Signal",
-      "label": "Киберугроза — Юго-Восточная Азия",
-      "severity": 50,
-      "domain": "technology"
+      "label": "Геополитический процесс — Юго-Восточная ",
+      "severity": 62,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-VN",
@@ -124,7 +124,7 @@
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-technology",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-VN",
@@ -157,7 +157,7 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-VN-technology",
+      "from": "DRIVER-VN-economic",
       "to": "COUNTRY-VN",
       "type": "CAUSES",
       "weight": 0.8
@@ -205,6 +205,27 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-VN-geopolitical",
+      "to": "DOMAIN-VN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-VN-infrastructure",
+      "to": "DOMAIN-VN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-VN-economic",
+      "to": "DOMAIN-VN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-VN-Наводнение",
       "to": "DOMAIN-VN-climate",
       "type": "AMPLIFIES",
@@ -217,10 +238,10 @@
       "weight": 0.52
     },
     {
-      "from": "SIGNAL-VN-Киберугроз",
-      "to": "DOMAIN-VN-technology",
+      "from": "SIGNAL-VN-Геополитич",
+      "to": "DOMAIN-VN-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.5
+      "weight": 0.62
     }
   ]
 }
