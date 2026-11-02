@@ -2,72 +2,67 @@
   "country": "PT",
   "date": "2026-11-02",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-02T23:06:04.915834+00:00",
+  "generated_at": "2026-11-02T23:27:39.847908+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-PT",
       "type": "Country",
       "label": "PT",
-      "score": 72,
+      "score": 50,
       "props": {
-        "risk_score": 72
+        "risk_score": 50
       }
     },
     {
       "id": "DOMAIN-PT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 52,
-      "trend": "stable"
+      "score": -3,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-economic",
       "type": "Domain",
       "label": "economic",
       "score": 53,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-PT-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 72,
-      "trend": "stable"
+      "score": 50,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-PT-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-PT-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-PT-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-PT-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
-    },
-    {
-      "id": "DRIVER-PT-climate",
-      "type": "Driver",
-      "label": "climate"
+      "trend": "down"
     },
     {
       "id": "DRIVER-PT-economic",
@@ -75,22 +70,20 @@
       "label": "economic"
     },
     {
-      "id": "DRIVER-PT-geopolitical",
+      "id": "DRIVER-PT-climate",
       "type": "Driver",
-      "label": "geopolitical"
+      "label": "climate"
+    },
+    {
+      "id": "DRIVER-PT-technology",
+      "type": "Driver",
+      "label": "technology"
     },
     {
       "id": "SIGNAL-PT-Ливень:_Ма",
       "type": "Signal",
       "label": "Ливень: Мадейра - Порту-Санту, Мадейра -",
-      "severity": 72,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-PT-Климатичес",
-      "type": "Signal",
-      "label": "Климатический сигнал — Португалия",
-      "severity": 72,
+      "severity": 50,
       "domain": "climate"
     },
     {
@@ -99,6 +92,13 @@
       "label": "Экономический сигнал — Португалия",
       "severity": 53,
       "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-PT-Климатичес",
+      "type": "Signal",
+      "label": "Климатический сигнал — Португалия",
+      "severity": 50,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.52
+      "weight": -0.03
     },
     {
       "from": "COUNTRY-PT",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-climate",
       "type": "CORRELATES",
-      "weight": 0.72
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-PT",
@@ -145,19 +145,19 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-PT-climate",
-      "to": "COUNTRY-PT",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
       "from": "DRIVER-PT-economic",
       "to": "COUNTRY-PT",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-PT-geopolitical",
+      "from": "DRIVER-PT-climate",
+      "to": "COUNTRY-PT",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DRIVER-PT-technology",
       "to": "COUNTRY-PT",
       "type": "CAUSES",
       "weight": 0.8
@@ -205,43 +205,22 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-PT-geopolitical",
-      "to": "DOMAIN-PT-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-PT-infrastructure",
-      "to": "DOMAIN-PT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-PT-economic",
-      "to": "DOMAIN-PT-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "SIGNAL-PT-Ливень:_Ма",
       "to": "DOMAIN-PT-climate",
       "type": "AMPLIFIES",
-      "weight": 0.72
-    },
-    {
-      "from": "SIGNAL-PT-Климатичес",
-      "to": "DOMAIN-PT-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.72
+      "weight": 0.5
     },
     {
       "from": "SIGNAL-PT-Экономичес",
       "to": "DOMAIN-PT-economic",
       "type": "AMPLIFIES",
       "weight": 0.53
+    },
+    {
+      "from": "SIGNAL-PT-Климатичес",
+      "to": "DOMAIN-PT-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
     }
   ]
 }
