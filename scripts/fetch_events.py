@@ -5847,6 +5847,22 @@ def _is_agency_pr(blob):
     return bool(_AGENCY_PR_RE.search(b)) or bool(_CALL_TO_ACTION_RE.search(b))
 
 
+# NOISE_EN_0211 (02.11.2026). Паритет английского текста для двух фильтров шума.
+# Отбор (S43) идёт ДО перевода, а признаки аварии и дайджеста были только русские:
+# «'Looked like a missile': Jet crash leaves massive crater in Florida» (Times of India,
+# частный Learjet, 9 погибших) прошло в ленту с 55, хотя русская версия той же
+# новости (TN news) отсеяна. Еженедельная сводка THN «What a week in cybersecurity»
+# («Это2Shell. То2Shell. Всё2Shell. КАКАЯ НЕДЕЛЯ В #КИБЕРБЕЗОПАСНОСТИ») попала в
+# ленту и в процесс «Технологический сигнал» с 83. Откат: NOISE_EN_0211 = False.
+NOISE_EN_0211 = True
+_DIGEST_EN_RE = re.compile(
+    r'what\s+a\s+week\s+in|weekly\s+recap|week\s+in\s+review|this\s+week\s+in\s+(?:cyber|security)|'
+    r'какая\s+неделя\s+в|еженедельн\w*\s+(?:обзор|дайджест|сводк)\w*', re.I)
+_ACC_EN = re.compile(r'\b(?:crash(?:es|ed)?|crash-land\w*)\b', re.I)
+_ACC_EN_OBJ = re.compile(r'\b(?:plane|jet|aircraft|learjet|cessna|piper|helicopter|chopper|glider|seaplane)\b', re.I)
+_ACC_EN_COMBAT = re.compile(r'\b(?:shot\s+down|downed|air\s+defen[cs]e|drone|airstrike|strike[sd]?|attack(?:ed|s)?|warplane|fighter\s+jet|military)\b', re.I)
+
+
 def _is_digest(blob):
     """Сводка выпуска: перечень материалов вместо одного события.
     Третий признак структурный: рубрик много, события нет. Замер на 1782
@@ -5854,6 +5870,8 @@ def _is_digest(blob):
     в четыре не задевает ничего."""
     b = str(blob or '')
     if _DIGEST_RE.search(b) or _DIGEST_LIST_RE.search(b):
+        return True
+    if NOISE_EN_0211 and _DIGEST_EN_RE.search(b):
         return True
     _t = b.lower()
     return sum(1 for _r in _DIGEST_RUBRICS if _r in _t) >= 4
@@ -5960,6 +5978,8 @@ def _is_news_not_signal(title, summary, domain):
     )
     _accident = (any(w in b for w in ('крушени','авиакатастроф','разбил'))
                  and any(w in b for w in ('самолет','самолёт','вертолет','вертолёт','параплан','парашютн','дельтаплан','легкомоторн')))
+    if NOISE_EN_0211 and not _accident and _ACC_EN.search(b) and _ACC_EN_OBJ.search(b) and not _ACC_EN_COMBAT.search(b):
+        _accident = True
     _gas = ('взрыв' in b and any(w in b for w in ('газа','бытов','в жилом','в квартир','в доме','котельн','газовый баллон','газового баллон')))
     if _fluff or _local or ((_accident or _gas) and not _combat):
         return True

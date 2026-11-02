@@ -628,6 +628,8 @@ _GPS_RX = _re.compile(r'(?:подавлени\w*\s+(?:gps|gnss|спутнико�
 # а Bitget попадал в «Военные удары», Ledger - в «Розничную торговлю», и цепочка
 # Bitget → Ledger → Polymarket → Binance не была видна. Откат - False.
 PROC_CRYPTO_TYPE = True
+# NOISE_EN_0211 (02.11.2026): еженедельные сводки убираются из свидетельств процессов. Откат: False.
+NOISE_EN_0211 = True
 # PROC_CRYPTO_ARCHIVE 31.10.2026: хроника процесса «Криптоинфраструктура» не ограничена окном
 # ленты (~14 дней). Свидетельства процесса копятся в docs/_crypto_archive.json (засеян из истории
 # публикаций с июня 2026) и подмешиваются в evidence процесса. Тяжесть, давление и стадия
@@ -4437,10 +4439,15 @@ def write_signals_json(events, path):
     # (continuation-процессы тянут старые evidence/timeline до фикса). Гарантия чистого вывода.
     _SCRUB=re.compile(r'бодяж|фуфло|туфта|брехн|пал[её]ва|галим|развалюх|обосра|зашкварн|'
                       r'фонов\w* сообщени|сводка\s*\(\d+|дайджест\s*\(\d+|\(\d+\s*сообщени', re.I)
+    # NOISE_EN_0211 (02.11.2026): еженедельная сводка («Это2Shell… КАКАЯ НЕДЕЛЯ В
+    # #КИБЕРБЕЗОПАСНОСТИ», THN, 83) - перечень материалов, а не событие. Признак часто
+    # только в summary, поэтому проверяются заголовок и начало summary.
+    _DIG=re.compile(r'какая\s+неделя\s+в|what\s+a\s+week\s+in|weekly\s+recap|еженедельн\w*\s+(?:обзор|дайджест|сводк)', re.I)
     for s in evolved:
         ev=s.get('evidence')
         if isinstance(ev,list):
-            s['evidence']=[e for e in ev if not _SCRUB.search((e.get('title') or ''))]
+            s['evidence']=[e for e in ev if not _SCRUB.search((e.get('title') or ''))
+                           and not (NOISE_EN_0211 and _DIG.search((e.get('title') or '')+' '+(e.get('summary') or '')[:300]))]
         tl=s.get('timeline')
         if isinstance(tl,list):
             s['timeline']=[t for t in tl if not _SCRUB.search((t.get('event') or ''))]
