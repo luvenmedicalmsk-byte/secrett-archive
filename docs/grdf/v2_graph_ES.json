@@ -1,8 +1,8 @@
 {
   "country": "ES",
-  "date": "2026-11-01",
+  "date": "2026-11-02",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-01T23:47:21.733691+00:00",
+  "generated_at": "2026-11-02T00:08:08.687987+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,17 +10,17 @@
       "id": "COUNTRY-ES",
       "type": "Country",
       "label": "ES",
-      "score": 92,
+      "score": 88,
       "props": {
-        "risk_score": 92
+        "risk_score": 88
       }
     },
     {
       "id": "DOMAIN-ES-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 80,
-      "trend": "stable"
+      "score": 45,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ES-economic",
@@ -33,15 +33,15 @@
       "id": "DOMAIN-ES-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 56,
-      "trend": "stable"
+      "score": 72,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ES-technology",
       "type": "Domain",
       "label": "technology",
       "score": 75,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ES-social",
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-ES-'Столкнове",
-      "type": "Signal",
-      "label": "'Столкновение на скорости 160-200 км/ч':",
-      "severity": 80,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-ES-Число_жерт",
       "type": "Signal",
       "label": "Число жертв железнодорожной катастрофы в",
@@ -94,10 +87,17 @@
       "domain": "technology"
     },
     {
-      "id": "SIGNAL-ES-'Опустошен",
+      "id": "SIGNAL-ES-Ливень:_Ка",
       "type": "Signal",
-      "label": "'Опустошение, отчаяние': Испания начинае",
-      "severity": 74,
+      "label": "Ливень: Камп де Картахена и Мазаррон, До",
+      "severity": 72,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-ES-В_испанско",
+      "type": "Signal",
+      "label": "В испанской Гранаде на одном из старейши",
+      "severity": 61,
       "domain": "technology"
     }
   ],
@@ -106,7 +106,7 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.8
+      "weight": 0.45
     },
     {
       "from": "COUNTRY-ES",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-climate",
       "type": "CORRELATES",
-      "weight": 0.56
+      "weight": 0.72
     },
     {
       "from": "COUNTRY-ES",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-ES-geopolitical",
-      "to": "DOMAIN-ES-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-ES-infrastructure",
-      "to": "DOMAIN-ES-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-ES-economic",
-      "to": "DOMAIN-ES-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "DOMAIN-ES-climate",
       "to": "DOMAIN-ES-infrastructure",
       "type": "ESCALATES",
@@ -226,10 +205,25 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-ES-'Столкнове",
-      "to": "DOMAIN-ES-geopolitical",
+      "from": "DOMAIN-ES-geopolitical",
+      "to": "DOMAIN-ES-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-ES-infrastructure",
+      "to": "DOMAIN-ES-economic",
       "type": "AMPLIFIES",
-      "weight": 0.8
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ES-economic",
+      "to": "DOMAIN-ES-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-ES-Число_жерт",
@@ -238,10 +232,16 @@
       "weight": 0.75
     },
     {
-      "from": "SIGNAL-ES-'Опустошен",
+      "from": "SIGNAL-ES-Ливень:_Ка",
+      "to": "DOMAIN-ES-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.72
+    },
+    {
+      "from": "SIGNAL-ES-В_испанско",
       "to": "DOMAIN-ES-technology",
       "type": "AMPLIFIES",
-      "weight": 0.74
+      "weight": 0.61
     }
   ]
 }
