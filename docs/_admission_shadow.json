@@ -1,10 +1,10 @@
 {
-  "generated": "2026-11-02T14:07:15Z",
+  "generated": "2026-11-02T14:47:05Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
     "PASS_FACT": 1096,
-    "DENY_COMMENTARY": 362,
+    "DENY_COMMENTARY": 361,
     "DENY_FEATURE": 4,
     "DENY_BACKGROUND": 7,
     "DENY_REPORT": 2,
@@ -12,65 +12,62 @@
     "UNMATCHED": 4
   },
   "kpi": {
-    "processes_total": 1477,
-    "matched": 1473,
+    "processes_total": 1476,
+    "matched": 1472,
     "unmatched": 4,
     "coverage_pct": 99.7,
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
-    "admission_pass_rate": 74.4,
-    "admission_deny_rate": 25.6,
-    "processes_without_fact": 377,
+    "admission_pass_rate": 74.5,
+    "admission_deny_rate": 25.5,
+    "processes_without_fact": 376,
     "report_evidence_count": 0,
     "reports_boosting": 0
   },
   "shadow_reliability": {
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
-      "processes": 437,
-      "sample": 1457,
-      "agreement_pct": 86.0,
-      "decision_agreement_pct": 86.2,
-      "critical_errors": 201,
+      "processes": 438,
+      "sample": 1464,
+      "agreement_pct": 86.2,
+      "decision_agreement_pct": 86.4,
+      "critical_errors": 199,
       "truth_ratio_pct": 99.7,
       "error_matrix": {
         "FACT_EVENT→COMMENTARY": 182,
-        "COMMENTARY→FACT_EVENT": 15,
+        "COMMENTARY→FACT_EVENT": 14,
         "FACT_EVENT→FEATURE": 2,
-        "STATE_CONFIRMATION→FACT_EVENT": 1,
         "BACKGROUND→COMMENTARY": 2,
         "REPORT→FACT_EVENT": 1,
         "STATE_CONFIRMATION→COMMENTARY": 1
       }
     },
     "historical": {
-      "processes": 1477,
-      "sample": 3817,
-      "agreement_pct": 88.9,
-      "decision_agreement_pct": 89.0,
-      "critical_errors": 419,
+      "processes": 1476,
+      "sample": 3821,
+      "agreement_pct": 89.0,
+      "decision_agreement_pct": 89.1,
+      "critical_errors": 417,
       "error_matrix": {
         "FACT_EVENT→COMMENTARY": 370,
-        "COMMENTARY→FACT_EVENT": 41,
+        "COMMENTARY→FACT_EVENT": 40,
         "FACT_EVENT→FEATURE": 3,
-        "STATE_CONFIRMATION→FACT_EVENT": 4,
         "BACKGROUND→COMMENTARY": 2,
         "REPORT→FACT_EVENT": 1,
         "STATE_CONFIRMATION→COMMENTARY": 1,
+        "STATE_CONFIRMATION→FACT_EVENT": 3,
         "FEATURE→COMMENTARY": 2
       }
     },
     "events_stream": {
-      "sample": 475,
-      "agreement_pct": 83.8,
-      "decision_agreement_pct": 84.2,
-      "critical_errors": 75,
+      "sample": 471,
+      "agreement_pct": 84.3,
+      "decision_agreement_pct": 84.5,
+      "critical_errors": 73,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 68,
+        "FACT_EVENT→COMMENTARY": 67,
         "REPORT→FACT_EVENT": 1,
         "COMMENTARY→FACT_EVENT": 4,
         "FACT_EVENT→FEATURE": 1,
-        "STATE_CONFIRMATION→COMMENTARY": 1,
-        "STATE_CONFIRMATION→FACT_EVENT": 1,
         "BACKGROUND→COMMENTARY": 1
       }
     },
@@ -82,14 +79,18 @@
     }
   },
   "class_source": {
-    "evidence_sic": 3817,
+    "evidence_sic": 3821,
     "shadow_title_summary": 4
   },
   "truth_ratio_pct": 99.9,
   "domain_statistics": {
     "geopolitics": {
-      "pass": 246,
-      "deny": 98
+      "pass": 245,
+      "deny": 99
+    },
+    "economy": {
+      "pass": 251,
+      "deny": 109
     },
     "social": {
       "pass": 104,
@@ -99,10 +100,6 @@
       "pass": 363,
       "deny": 85,
       "unmatched": 4
-    },
-    "economy": {
-      "pass": 250,
-      "deny": 111
     },
     "technology": {
       "pass": 133,
@@ -356,7 +353,7 @@
       "title": "Топливный рынок",
       "domain": "economy",
       "severity": 62,
-      "pressure": 35,
+      "pressure": 36,
       "first_seen": "2026-07-01",
       "evidence_count": 1,
       "evidence_classes": {
@@ -487,6 +484,21 @@
       "reason": "no FACT_EVENT in evidence"
     },
     {
+      "signal_id": "geop-военныеуда-сша-ae22",
+      "title": "Военные удары — США",
+      "domain": "geopolitics",
+      "severity": 60,
+      "pressure": 55,
+      "first_seen": "2026-09-03",
+      "evidence_count": 1,
+      "evidence_classes": {
+        "COMMENTARY": 1
+      },
+      "status": "active",
+      "causal_links": 4,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
       "signal_id": "geop-геополитич-ближнийв-cff8",
       "title": "Геополитический процесс — Ближний Восток",
       "domain": "geopolitics",
@@ -607,21 +619,6 @@
       "reason": "no FACT_EVENT in evidence"
     },
     {
-      "signal_id": "tech-технологич-россия-62df",
-      "title": "Технологический сигнал — Россия",
-      "domain": "technology",
-      "severity": 59,
-      "pressure": 54,
-      "first_seen": "2026-10-21",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "COMMENTARY": 1
-      },
-      "status": "active",
-      "causal_links": 0,
-      "reason": "no FACT_EVENT in evidence"
-    },
-    {
       "signal_id": "clim-климатичес-дальнийв-326f",
       "title": "Климатический сигнал — Дальний Восток",
       "domain": "climate",
@@ -667,6 +664,21 @@
       "reason": "no FACT_EVENT in evidence"
     },
     {
+      "signal_id": "tech-технологич-россия-62df",
+      "title": "Технологический сигнал — Россия",
+      "domain": "technology",
+      "severity": 59,
+      "pressure": 54,
+      "first_seen": "2026-10-21",
+      "evidence_count": 1,
+      "evidence_classes": {
+        "COMMENTARY": 1
+      },
+      "status": "fading",
+      "causal_links": 0,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
       "signal_id": "geop-санкционно-канада-cb1d",
       "title": "Санкционное давление — Канада",
       "domain": "geopolitics",
@@ -678,7 +690,7 @@
         "COMMENTARY": 3
       },
       "status": "fading",
-      "causal_links": 3,
+      "causal_links": 2,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -761,29 +773,14 @@
       "title": "Эпидемиологический риск — Нигерия",
       "domain": "social",
       "severity": 58,
-      "pressure": 41,
+      "pressure": 47,
       "first_seen": "2026-10-20",
       "evidence_count": 1,
       "evidence_classes": {
         "COMMENTARY": 1
       },
       "status": "fading",
-      "causal_links": 2,
-      "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "econ-финансовый-канада-6615",
-      "title": "Финансовый рынок — Канада",
-      "domain": "economy",
-      "severity": 58,
-      "pressure": 40,
-      "first_seen": "2026-07-24",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "COMMENTARY": 1
-      },
-      "status": "fading",
-      "causal_links": 6,
+      "causal_links": 3,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -896,7 +893,7 @@
       "title": "Экономический спад — США",
       "domain": "economy",
       "severity": 57,
-      "pressure": 32,
+      "pressure": 38,
       "first_seen": "2026-09-17",
       "evidence_count": 1,
       "evidence_classes": {
@@ -919,6 +916,21 @@
       },
       "status": "archived",
       "causal_links": 6,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
+      "signal_id": "clim-климатичес-атлантич-f8fb",
+      "title": "Климатический сигнал — Атлантический океан",
+      "domain": "climate",
+      "severity": 56,
+      "pressure": 60,
+      "first_seen": "2026-07-07",
+      "evidence_count": 2,
+      "evidence_classes": {
+        "COMMENTARY": 2
+      },
+      "status": "active",
+      "causal_links": 0,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -995,21 +1007,6 @@
       "status": "active",
       "causal_links": 2,
       "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "clim-климатичес-хакасия-7154",
-      "title": "Климатический сигнал — Хакасия",
-      "domain": "climate",
-      "severity": 56,
-      "pressure": 44,
-      "first_seen": "2026-07-19",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "COMMENTARY": 1
-      },
-      "status": "active",
-      "causal_links": 6,
-      "reason": "no FACT_EVENT in evidence"
     }
   ],
   "report_log": [],
@@ -1029,6 +1026,13 @@
       "delta": null
     },
     {
+      "signal_id": "clim-климатичес-атлантич-f8fb",
+      "domain": "climate",
+      "legacy": 56,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "soci-миграционн-глобальн-aafb",
       "domain": "social",
       "legacy": 63,
@@ -1043,16 +1047,16 @@
       "delta": null
     },
     {
-      "signal_id": "geop-санкционно-европа-сша-b56a",
+      "signal_id": "geop-военныеуда-сша-ae22",
       "domain": "geopolitics",
-      "legacy": 56,
+      "legacy": 60,
       "shadow": null,
       "delta": null
     },
     {
-      "signal_id": "tech-технологич-россия-62df",
-      "domain": "technology",
-      "legacy": 59,
+      "signal_id": "geop-санкционно-европа-сша-b56a",
+      "domain": "geopolitics",
+      "legacy": 56,
       "shadow": null,
       "delta": null
     },
@@ -1116,13 +1120,6 @@
       "signal_id": "geop-санкционно-сербия-7fd4",
       "domain": "geopolitics",
       "legacy": 46,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "clim-климатичес-атлантич-f8fb",
-      "domain": "climate",
-      "legacy": 44,
       "shadow": null,
       "delta": null
     },
@@ -1358,6 +1355,13 @@
       "delta": null
     },
     {
+      "signal_id": "clim-водныйдефи-янао-a919",
+      "domain": "climate",
+      "legacy": 56,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "clim-наводнение-камчатск-e34c",
       "domain": "climate",
       "legacy": 56,
@@ -1372,9 +1376,9 @@
       "delta": null
     },
     {
-      "signal_id": "clim-водныйдефи-янао-a919",
-      "domain": "climate",
-      "legacy": 56,
+      "signal_id": "econ-топливныйр-глобальн-27f0",
+      "domain": "economy",
+      "legacy": 62,
       "shadow": null,
       "delta": null
     },
@@ -1426,19 +1430,12 @@
       "legacy": 47,
       "shadow": null,
       "delta": null
-    },
-    {
-      "signal_id": "econ-экономичес-индия-ba12",
-      "domain": "economy",
-      "legacy": 44,
-      "shadow": null,
-      "delta": null
     }
   ],
   "deny_by_severity": {
     "0-30": 3,
-    "31-50": 236,
-    "51-70": 132,
+    "31-50": 234,
+    "51-70": 133,
     "71-90": 6,
     "91-100": 0
   }
