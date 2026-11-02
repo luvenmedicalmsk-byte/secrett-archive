@@ -2,9 +2,9 @@
   "country": "GB",
   "date": "2026-11-02",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-02T16:10:20.634842+00:00",
+  "generated_at": "2026-11-02T16:28:58.772545+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-GB",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-GB-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
+      "score": 57,
       "trend": "stable"
     },
     {
@@ -65,14 +65,14 @@
       "trend": "stable"
     },
     {
-      "id": "DRIVER-GB-Economic",
-      "type": "Driver",
-      "label": "Economic"
-    },
-    {
       "id": "DRIVER-GB-Geopolitical",
       "type": "Driver",
       "label": "Geopolitical"
+    },
+    {
+      "id": "DRIVER-GB-Economic",
+      "type": "Driver",
+      "label": "Economic"
     },
     {
       "id": "DRIVER-GB-Economic",
@@ -94,11 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-GB-Анализ:_Ка",
+      "id": "SIGNAL-GB-Санкционно",
       "type": "Signal",
-      "label": "Анализ: Как Великобритания потратила бол",
-      "severity": 32,
-      "domain": "climate"
+      "label": "Санкционное давление — Великобритания",
+      "severity": 57,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.57
     },
     {
       "from": "COUNTRY-GB",
@@ -145,12 +145,6 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-GB-Economic",
-      "to": "COUNTRY-GB",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
       "from": "DRIVER-GB-Geopolitical",
       "to": "COUNTRY-GB",
       "type": "CAUSES",
@@ -161,6 +155,33 @@
       "to": "COUNTRY-GB",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DRIVER-GB-Economic",
+      "to": "COUNTRY-GB",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-GB-geopolitical",
+      "to": "DOMAIN-GB-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-GB-infrastructure",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GB-economic",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-GB-Бюджет_Вел",
@@ -175,10 +196,10 @@
       "weight": 0.32
     },
     {
-      "from": "SIGNAL-GB-Анализ:_Ка",
-      "to": "DOMAIN-GB-climate",
+      "from": "SIGNAL-GB-Санкционно",
+      "to": "DOMAIN-GB-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.57
     }
   ]
 }
