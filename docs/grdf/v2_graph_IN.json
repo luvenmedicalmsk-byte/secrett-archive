@@ -2,25 +2,25 @@
   "country": "IN",
   "date": "2026-11-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-03T05:25:37.767288+00:00",
+  "generated_at": "2026-11-03T05:35:48.131959+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-IN",
       "type": "Country",
       "label": "IN",
-      "score": 89,
+      "score": 92,
       "props": {
-        "risk_score": 89
+        "risk_score": 92
       }
     },
     {
       "id": "DOMAIN-IN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
-      "trend": "stable"
+      "score": 65,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-economic",
@@ -47,8 +47,8 @@
       "id": "DOMAIN-IN-social",
       "type": "Domain",
       "label": "social",
-      "score": 57,
-      "trend": "up"
+      "score": 5,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IN-infrastructure",
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
+      "id": "SIGNAL-IN-Один_челов",
+      "type": "Signal",
+      "label": "Один человек погиб после того, как неопо",
+      "severity": 65,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-IN-Циклон_Арн",
       "type": "Signal",
       "label": "Циклон Арнаб унес 3 жизни после выхода н",
       "severity": 60,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-IN-Индийский_",
-      "type": "Signal",
-      "label": "Индийский гражданин погиб в результате с",
-      "severity": 57,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.65
     },
     {
       "from": "COUNTRY-IN",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-social",
       "type": "CORRELATES",
-      "weight": 0.57
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-IN",
@@ -205,22 +205,43 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-IN-geopolitical",
+      "to": "DOMAIN-IN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IN-infrastructure",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-IN-Красное_ув",
       "to": "DOMAIN-IN-climate",
       "type": "AMPLIFIES",
       "weight": 0.86
     },
     {
+      "from": "SIGNAL-IN-Один_челов",
+      "to": "DOMAIN-IN-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.65
+    },
+    {
       "from": "SIGNAL-IN-Циклон_Арн",
       "to": "DOMAIN-IN-climate",
       "type": "AMPLIFIES",
       "weight": 0.6
-    },
-    {
-      "from": "SIGNAL-IN-Индийский_",
-      "to": "DOMAIN-IN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.57
     }
   ]
 }
