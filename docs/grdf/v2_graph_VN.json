@@ -2,9 +2,9 @@
   "country": "VN",
   "date": "2026-11-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-03T02:47:39.541058+00:00",
+  "generated_at": "2026-11-03T03:06:32.986234+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-VN",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-VN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
+      "score": 46,
       "trend": "stable"
     },
     {
@@ -80,13 +80,6 @@
       "label": "economic"
     },
     {
-      "id": "SIGNAL-VN-Производст",
-      "type": "Signal",
-      "label": "Производство электроэнергии во Вьетнаме",
-      "severity": 32,
-      "domain": "economic"
-    },
-    {
       "id": "SIGNAL-VN-Наводнение",
       "type": "Signal",
       "label": "Наводнение — Вьетнам",
@@ -99,6 +92,13 @@
       "label": "Наводнение — Юго-Восточная Азия",
       "severity": 52,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-VN-Геополитич",
+      "type": "Signal",
+      "label": "Геополитический процесс — Юго-Восточная ",
+      "severity": 62,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-VN",
@@ -205,10 +205,25 @@
       "lag_days": 90
     },
     {
-      "from": "SIGNAL-VN-Производст",
+      "from": "DOMAIN-VN-geopolitical",
+      "to": "DOMAIN-VN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-VN-infrastructure",
       "to": "DOMAIN-VN-economic",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-VN-economic",
+      "to": "DOMAIN-VN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-VN-Наводнение",
@@ -221,6 +236,12 @@
       "to": "DOMAIN-VN-climate",
       "type": "AMPLIFIES",
       "weight": 0.52
+    },
+    {
+      "from": "SIGNAL-VN-Геополитич",
+      "to": "DOMAIN-VN-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.62
     }
   ]
 }
