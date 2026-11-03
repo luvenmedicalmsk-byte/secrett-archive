@@ -2,18 +2,27 @@
   "country": "GB",
   "country_name": "Великобритания",
   "date": "2026-11-03",
-  "generated_at": "2026-11-03T11:46:01.270547+00:00",
-  "srs_score": 54,
+  "generated_at": "2026-11-03T12:07:49.871851+00:00",
+  "srs_score": 59,
   "srs_grade": "D",
   "srs_grade_ru": "Требует внимания",
   "priority_risks": [
     {
+      "id": "R-02",
+      "category": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+7/день",
+      "detail": "Скорость ухудшения 7 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "metric_value": 7,
+      "urgency": 90,
+      "source": "delta"
+    },
+    {
       "id": "R-04",
       "category": "STRATEGIC",
-      "title": "Множественные диагностические проблемы: 3",
-      "detail": "Обнаружено 3 диагностических предупреждений в стратегическом слое. Возможны системные ошибки.",
-      "metric_value": 3,
-      "urgency": 64,
+      "title": "Множественные диагностические проблемы: 4",
+      "detail": "Обнаружено 4 диагностических предупреждений в стратегическом слое. Возможны системные ошибки.",
+      "metric_value": 4,
+      "urgency": 72,
       "source": "diagnostics"
     },
     {
@@ -24,9 +33,18 @@
       "metric_value": 2,
       "urgency": 54,
       "source": "decision_bias"
+    },
+    {
+      "id": "R-06",
+      "category": "WATCHLIST",
+      "title": "Дрейф уверенности прогнозов: +10.0pt",
+      "detail": "Уверенность прогнозной системы дрейфует на +10.0pt от краткосрочного к долгосрочному горизонту.",
+      "metric_value": 10,
+      "urgency": 50,
+      "source": "confidence_drift"
     }
   ],
-  "risk_count": 2,
+  "risk_count": 4,
   "priority_opportunities": [
     {
       "id": "O-05",
@@ -48,8 +66,8 @@
     },
     {
       "type": "horizon_shift",
-      "title": "Горизонт d30 точнее, d90 — слабее",
-      "detail": "Система прогнозирует надёжнее на горизонте d30 и менее точно на d90. Скорректируйте горизонты планирования.",
+      "title": "Горизонт d7 точнее, d90 — слабее",
+      "detail": "Система прогнозирует надёжнее на горизонте d7 и менее точно на d90. Скорректируйте горизонты планирования.",
       "direction": "neutral"
     }
   ],
@@ -62,17 +80,35 @@
     {
       "type": "confidence_drift",
       "horizon": "long",
-      "detail": "Дрейф уверенности +8.0pt указывает на деградацию долгосрочных прогнозов."
+      "detail": "Дрейф уверенности +10.0pt указывает на деградацию долгосрочных прогнозов."
     }
   ],
   "forecast_improvement": [
     {
       "type": "horizon_strength",
-      "horizon": "d30",
-      "detail": "Лучший горизонт прогноза: d30. Рассмотреть расширение использования."
+      "horizon": "d7",
+      "detail": "Лучший горизонт прогноза: d7. Рассмотреть расширение использования."
     }
   ],
   "ranked_recommendations": [
+    {
+      "id": "R-02",
+      "type": "risk",
+      "priority": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+7/день",
+      "rec_score": 63,
+      "metric_value": 7,
+      "source": "delta"
+    },
+    {
+      "id": "R-04",
+      "type": "risk",
+      "priority": "STRATEGIC",
+      "title": "Множественные диагностические проблемы: 4",
+      "rec_score": 54,
+      "metric_value": 4,
+      "source": "diagnostics"
+    },
     {
       "id": "O-05",
       "type": "opportunity",
@@ -83,15 +119,6 @@
       "source": "high_alpha"
     },
     {
-      "id": "R-04",
-      "type": "risk",
-      "priority": "STRATEGIC",
-      "title": "Множественные диагностические проблемы: 3",
-      "rec_score": 50,
-      "metric_value": 3,
-      "source": "diagnostics"
-    },
-    {
       "id": "R-05",
       "type": "risk",
       "priority": "STRATEGIC",
@@ -99,14 +126,31 @@
       "rec_score": 44,
       "metric_value": 2,
       "source": "decision_bias"
+    },
+    {
+      "id": "R-06",
+      "type": "risk",
+      "priority": "WATCHLIST",
+      "title": "Дрейф уверенности прогнозов: +10.0pt",
+      "rec_score": 42,
+      "metric_value": 10,
+      "source": "confidence_drift"
     }
   ],
   "action_plan": [
     {
+      "id": "ACT-R-02",
+      "priority": "CRITICAL",
+      "action": "Реагировать: Быстрая эскалация: Δ=+7/день",
+      "rationale": "Скорость ухудшения 7 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "deadline": "немедленно",
+      "source": "delta"
+    },
+    {
       "id": "ACT-R-04",
-      "priority": "STRATEGIC",
-      "action": "Реагировать: Множественные диагностические проблемы: 3",
-      "rationale": "Обнаружено 3 диагностических предупреждений в стратегическом слое. Возможны системные ошибки.",
+      "priority": "HIGH_PRIORITY",
+      "action": "Реагировать: Множественные диагностические проблемы: 4",
+      "rationale": "Обнаружено 4 диагностических предупреждений в стратегическом слое. Возможны системные ошибки.",
       "deadline": "72 часа",
       "source": "diagnostics"
     },
@@ -127,11 +171,11 @@
       "source": "high_alpha"
     }
   ],
-  "action_count": 3,
+  "action_count": 4,
   "rec_diagnostics": [],
   "diagnostic_count": 0,
-  "risk_score": 61,
-  "delta": 4,
+  "risk_score": 68,
+  "delta": 7,
   "domain": "climate",
   "history_depth": 159
 }
