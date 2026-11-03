@@ -9422,6 +9422,13 @@ def _domain_arbiter(events):
     # У событий без вмешательства арбитра решение тоже фиксируется: иначе
     # отсутствие поля читалось бы как «арбитр не отработал», а не как
     # «вмешательство не потребовалось».
+    # FEED_AUDIT_0311: удержанное событие несёт решение прошлого прогона, а канон
+    # пересчитан (новые защиты). Устаревшее решение пересобирается (иначе I5).
+    if FEED_AUDIT_0311:
+        for e in (events or []):
+            _dd0 = e.get('domain_decision')
+            if isinstance(_dd0, dict) and not _dd0.get('arbiter') and _dd0.get('canon_type') != e.get('canon_type'):
+                e.pop('domain_decision', None)
     for e in (events or []):
         if 'domain_decision' not in e:
             e['domain_decision'] = {'writer': _last_domain_writer(e),
