@@ -2,7 +2,7 @@
   "country": "TR",
   "date": "2026-11-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-03T07:08:19.052257+00:00",
+  "generated_at": "2026-11-03T07:29:21.773685+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,17 +10,17 @@
       "id": "COUNTRY-TR",
       "type": "Country",
       "label": "TR",
-      "score": 68,
+      "score": 71,
       "props": {
-        "risk_score": 68
+        "risk_score": 71
       }
     },
     {
       "id": "DOMAIN-TR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 58,
-      "trend": "stable"
+      "score": 70,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-economic",
@@ -33,8 +33,8 @@
       "id": "DOMAIN-TR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 53,
-      "trend": "stable"
+      "score": 61,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-technology",
@@ -47,8 +47,8 @@
       "id": "DOMAIN-TR-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
-      "trend": "stable"
+      "score": 71,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-infrastructure",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-TR-Главные_те",
+      "type": "Signal",
+      "label": "Главные темы за день – 29 октября",
+      "severity": 71,
+      "domain": "social"
+    },
+    {
       "id": "SIGNAL-TR-Интерактив",
       "type": "Signal",
       "label": "Интерактив: Кто хочет чего на саммите CO",
@@ -92,13 +99,6 @@
       "label": "Гроза: Измир, Айдын, Балыкесир и ещё 4 п",
       "severity": 50,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-TR-Санкционно",
-      "type": "Signal",
-      "label": "Санкционное давление — Ближний Восток (с",
-      "severity": 76,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.58
+      "weight": 0.7
     },
     {
       "from": "COUNTRY-TR",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-climate",
       "type": "CORRELATES",
-      "weight": 0.53
+      "weight": 0.61
     },
     {
       "from": "COUNTRY-TR",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.71
     },
     {
       "from": "COUNTRY-TR",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-TR-climate",
-      "to": "DOMAIN-TR-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-TR-infrastructure",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-TR-economic",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-TR-geopolitical",
       "to": "DOMAIN-TR-infrastructure",
       "type": "ESCALATES",
@@ -226,6 +205,33 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-TR-climate",
+      "to": "DOMAIN-TR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-TR-infrastructure",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-TR-Главные_те",
+      "to": "DOMAIN-TR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.71
+    },
+    {
       "from": "SIGNAL-TR-Интерактив",
       "to": "DOMAIN-TR-climate",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-TR-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-TR-Санкционно",
-      "to": "DOMAIN-TR-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.76
     }
   ]
 }
