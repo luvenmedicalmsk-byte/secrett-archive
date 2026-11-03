@@ -2,7 +2,7 @@
   "country": "UA",
   "date": "2026-11-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-03T08:08:40.861870+00:00",
+  "generated_at": "2026-11-03T08:25:15.541967+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -10,17 +10,17 @@
       "id": "COUNTRY-UA",
       "type": "Country",
       "label": "UA",
-      "score": 90,
+      "score": 92,
       "props": {
-        "risk_score": 90
+        "risk_score": 92
       }
     },
     {
       "id": "DOMAIN-UA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 90,
-      "trend": "stable"
+      "score": 99,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-economic",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-UA-Мониторинг",
+      "type": "Signal",
+      "label": "Мониторинг ракетной войны: Российские бо",
+      "severity": 91,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-UA-26_человек",
       "type": "Signal",
       "label": "26 человек погибли в результате удара Ро",
@@ -92,13 +99,6 @@
       "label": "Зеленский идёт ва-банк и нарушает все пр",
       "severity": 75,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-UA-Один_челов",
-      "type": "Signal",
-      "label": "Один человек погиб, 22 человека пострада",
-      "severity": 75,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.9
+      "weight": 0.99
     },
     {
       "from": "COUNTRY-UA",
@@ -184,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-UA-Мониторинг",
+      "to": "DOMAIN-UA-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.91
+    },
+    {
       "from": "SIGNAL-UA-26_человек",
       "to": "DOMAIN-UA-geopolitical",
       "type": "AMPLIFIES",
@@ -191,12 +197,6 @@
     },
     {
       "from": "SIGNAL-UA-Зеленский_",
-      "to": "DOMAIN-UA-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.75
-    },
-    {
-      "from": "SIGNAL-UA-Один_челов",
       "to": "DOMAIN-UA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.75
