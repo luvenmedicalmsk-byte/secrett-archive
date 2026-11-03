@@ -2,7 +2,7 @@
   "country": "ES",
   "date": "2026-11-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-03T23:07:40.532765+00:00",
+  "generated_at": "2026-11-03T23:26:39.457142+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -33,7 +33,7 @@
       "id": "DOMAIN-ES-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 88,
+      "score": 72,
       "trend": "stable"
     },
     {
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-ES-Ливень:_Се",
-      "type": "Signal",
-      "label": "Ливень: Северное побережье Аликанте, Южн",
-      "severity": 88,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-ES-Министр_тр",
       "type": "Signal",
       "label": "Министр транспорта Испании подаст в отст",
@@ -99,6 +92,13 @@
       "label": "Опрос: Трагедия поезда Урда подрывает ша",
       "severity": 74,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-ES-Ливень:_Юж",
+      "type": "Signal",
+      "label": "Ливень: Южное побережье Аликанте, Вега д",
+      "severity": 72,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-climate",
       "type": "CORRELATES",
-      "weight": 0.88
+      "weight": 0.72
     },
     {
       "from": "COUNTRY-ES",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-ES-climate",
-      "to": "DOMAIN-ES-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-ES-infrastructure",
-      "to": "DOMAIN-ES-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-ES-economic",
-      "to": "DOMAIN-ES-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-ES-geopolitical",
       "to": "DOMAIN-ES-infrastructure",
       "type": "ESCALATES",
@@ -226,10 +205,25 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-ES-Ливень:_Се",
-      "to": "DOMAIN-ES-climate",
+      "from": "DOMAIN-ES-climate",
+      "to": "DOMAIN-ES-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-ES-infrastructure",
+      "to": "DOMAIN-ES-economic",
       "type": "AMPLIFIES",
-      "weight": 0.88
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ES-economic",
+      "to": "DOMAIN-ES-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "SIGNAL-ES-Министр_тр",
@@ -242,6 +236,12 @@
       "to": "DOMAIN-ES-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.74
+    },
+    {
+      "from": "SIGNAL-ES-Ливень:_Юж",
+      "to": "DOMAIN-ES-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.72
     }
   ]
 }
