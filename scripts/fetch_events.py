@@ -18513,7 +18513,8 @@ def fetch_telegram():
                 # KZ_SOURCES_0311 (03.11.2026): казахстанские каналы. tengrinews подтверждён
                 # самим изданием; остальные адреса вероятные - несуществующий канал
                 # отрабатывает как пустой (исключение ловится по каналу), журнал покажет.
-                'tengrinews', 'zakonkz', 'ordakz', 'vlastkz', 'kursivkz', 'kazinform_ru']
+                # Журнал 03.11: ordakz, kursivkz, kazinform_ru не существуют - убраны.
+                'tengrinews', 'zakonkz', 'vlastkz']
     # 24.10.2026: агитационные каналы отключены — пропаганда и лозунги вместо
     # сигналов («Париж требует голову Макрона», «Эх, барин запретил нам
     # возмущаться»). Откат: TG_AGITPROP_OFF = ().
@@ -21495,18 +21496,14 @@ def fetch_regional():
         {"url": "https://www.aa.com.tr/en/rss/default?cat=guncel", "source": "Anadolu Agency", "bias": 6},
         # Казахстан. KZ_SOURCES_0311 (03.11.2026, просьба Мии): прежние адреса
         # молчали (Tengri 404, Kapital 403 в журнале прогона). Сеть мастерской
-        # закрыта, поэтому по нескольку вероятных адресов на издание - какой
-        # живой, покажут журнал и _regional_probe.json; мёртвые убрать.
+        # закрыта, поэтому проверялось по журналу прогона 03.11 07:31: живые
+        # адреса оставлены; tengrinews.kz/rss/ (таймаут), zakon.kz/rss/ и
+        # vlast.kz/rss/ (404), inform.kz/ru/rss, informburo.kz/rss и
+        # kapital.kz/rss/ (403) убраны. Zakon.kz и Vlast.kz идут через Telegram.
         {"url": "https://tengrinews.kz/news.rss", "source": "Tengri News", "bias": 7},
-        {"url": "https://tengrinews.kz/rss/", "source": "Tengri News", "bias": 7},
-        {"url": "https://www.zakon.kz/rss/", "source": "Zakon.kz", "bias": 6},
         {"url": "https://www.inform.kz/rss/rus.xml", "source": "Kazinform", "bias": 6},
-        {"url": "https://www.inform.kz/ru/rss", "source": "Kazinform", "bias": 6},
         {"url": "https://orda.kz/feed/", "source": "Orda.kz", "bias": 7},
         {"url": "https://kursiv.media/feed/", "source": "Kursiv", "bias": 6},
-        {"url": "https://vlast.kz/rss/", "source": "Vlast.kz", "bias": 7},
-        {"url": "https://informburo.kz/rss", "source": "Informburo", "bias": 7},
-        {"url": "https://kapital.kz/rss/", "source": "Kapital KZ", "bias": 6},
         # Беларусь
         {"url": "https://reforma.by/rss", "source": "Reforma BY", "bias": 7},
         {"url": "https://spring96.org/rss", "source": "Viasna HR", "bias": 8},
