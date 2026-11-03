@@ -5863,6 +5863,63 @@ _ACC_EN_OBJ = re.compile(r'\b(?:plane|jet|aircraft|learjet|cessna|piper|helicopt
 _ACC_EN_COMBAT = re.compile(r'\b(?:shot\s+down|downed|air\s+defen[cs]e|drone|airstrike|strike[sd]?|attack(?:ed|s)?|warplane|fighter\s+jet|military)\b', re.I)
 
 
+# FEED_AUDIT_0311 (03.11.2026). Аудит ленты 03.11: шум, тип и индекс.
+#   канон: «уязвим» без ИТ-контекста не «Уязвимость ПО» («Климатически уязвимая
+#     Африка…» 94); «Розничная торговля» не для кибератак, протестов и стрельбы
+#     (холодильники супермаркетов, протесты во Франции); «подрывает шансы» не
+#     «Покушение»; золото не «Топливный рынок»; кибератака без кинетики не
+#     «Военные удары»;
+#   индекс: кибератака на технологические системы (охлаждение, SCADA, водоснабжение)
+#     получает пол 66, в нескольких странах 70; научно-аналитические источники не
+#     получают пол масштаба бедствия по накопленным числам из текста;
+#   шум: реклама вендоров («…показывает необходимость тестирования»), PR ведомств
+#     («развеивает мифы», «не зафиксировано»), обрывки заголовков, палеонаука,
+#     сводки «Кратко»/«Выпуск №», ДТП и столкновения вертолётов, стрельба в магазине.
+# Откат: FEED_AUDIT_0311 = False.
+FEED_AUDIT_0311 = True
+_FA_VENDOR = re.compile(r'показыва\w*\s+необходимост|shows?\s+(?:the\s+)?need|почему\s+(?:вам|компаниям|бизнесу)\s+(?:нужн|стоит)', re.I)
+_FA_PR = re.compile(r'развеива\w*\s+(?:\w+\s+){0,2}миф|рассказ\w*\s+о\s+пользе', re.I)
+_FA_NONEVENT_T = re.compile(r'(?:вспыш\w*|случа\w*|завоз\w*|заболевани\w*)[^.]{0,80}не\s+(?:было\s+)?зафиксирован\w*', re.I)
+_FA_FRAG_T = re.compile(r'\s(?:с|со|в|во|на|о|об|по|для|и|к|от|из|за|при)\s*$')
+_FA_PALEO = re.compile(r'(?:\d+|сотни|сотен|десятк\w*)\s+(?:млн|миллион\w*)\s+лет|возрастом\s+(?:около\s+)?\d|ледников\w*\s+эпох|термостат\w*\s+земли', re.I)
+_FA_DIGEST = re.compile(r'(?:—|-)\s*кратко\s*:|мировые\s+новости\s*(?:—|-)\s*кратко|выпуск\s*№', re.I)
+_FA_ROAD = re.compile(r'автомобил\w*\s+(?:\w+\s+)?потерял\w*\s+управлени|переворот\w*\s+(?:в|на)\s+(?:округе|шоссе|трассе|дороге)|(?<![а-яё])дтп(?![а-яё])|\brollover\b|\bcar\s+crash', re.I)
+_FA_AIR = re.compile(r'столкновени\w*\s+(?:\w+\s+)?(?:вертол[её]т|самол[её]т|воздушн)|авиакатастроф', re.I)
+_FA_SHOOT = re.compile(r'стрельб\w*[^.]{0,60}(?:магазин|бар[еу]?\b|клуб|вечеринк|ресторан|кафе|торгов\w*\s+центр)|(?:магазин|бар[еу]?\b|клуб|вечеринк|ресторан|кафе)[^.]{0,60}стрельб', re.I)
+_FA_SHOOT_BIG = re.compile(r'теракт|массов\w*\s+(?:стрельб|убийств)|(?<!\d)(?:[1-9]\d+)\s+(?:человек|погиб|убит)', re.I)
+_FA_CYBER = re.compile(r'хакер|кибератак|кибер-атак|взлом|вымогател|ransomware|вредоносн', re.I)
+_FA_KINETIC = re.compile(r'ракет|бпла|беспилотн|дрон|артиллер|авиаудар|обстрел|снаряд|бомб', re.I)
+_FA_OT = re.compile(r'холодильн|охлажден|scada|асу\s*тп|промышленн\w*\s+(?:систем|контроллер)|водоснабж|водоочист|насосн|энергосистем|подстанц|котельн|\bics\b|отоплени', re.I)
+_FA_MULTI = re.compile(r'(?:в|из)\s+(?:\d+|двух|трёх|трех|четырёх|четырех|пяти|шести|семи|восьми|девяти|десяти|нескольк\w*)\s+стран', re.I)
+_FA_ITCTX = re.compile(r'кибер|программ|\bcve\b|патч|эксплойт|софт|сервер|браузер|android|windows|linux|ios\b|прошивк|устройств|приложени|сайт|плагин|библиотек|пакет|ядр[оа]|chrome|firefox|cisco|fortinet|ivanti|microsoft|apple|google', re.I)
+_FA_ITCTX_CS = re.compile(r'(?<![а-яёА-ЯЁ])ПО(?![а-яёА-ЯЁ])')
+_FA_NONIT_VULN = re.compile(r'климатическ\w*\s+уязвим|уязвим\w*\s+(?:к|перед)\s+(?:\w+\s+)?(?:климат|бедств|изменени|засух|наводнен|жар|потеплен|стихи|шторм|ураган)|'
+    r'уязвим\w*\s+(?:\w+\s+)?(?:групп|сло[ие]в?|населени|сообществ|стран|регион|побережь|город|семей|детей|людей)|'
+    r'(?<![а-яё])(?:стран|регион|побережь|город|населени|сообществ|инфраструктур)\w*\s+(?:\w+\s+)?уязвим', re.I)
+_FA_SCI_SRC = {'Phys.org Climate', 'ScienceDaily Climate', 'Yale E360', 'Grist', 'Carbon Brief',
+               'Yale Climate Connections', 'Climate Home News'}
+
+
+def _fa_noise(title, b):
+    """FEED_AUDIT_0311: дополнительный шум для S43. b - title+summary в нижнем регистре."""
+    t = (title or '').strip()
+    tl = t.lower()
+    if _FA_VENDOR.search(tl) or _FA_PR.search(tl):
+        return True
+    if _FA_NONEVENT_T.search(tl) and not re.search(r'впервые|рекорд', tl):
+        return True
+    if len(t) < 60 and _FA_FRAG_T.search(re.sub(r'[\s.…]+$', '', t)):
+        return True
+    if _FA_PALEO.search(tl) or _FA_DIGEST.search(b):
+        return True
+    _comb = bool(_FA_KINETIC.search(b))
+    if (_FA_ROAD.search(b) or _FA_AIR.search(b)) and not _comb and not re.search(r'военн|солдат|военнослуж', b):
+        return True
+    if _FA_SHOOT.search(b) and not _FA_SHOOT_BIG.search(b):
+        return True
+    return False
+
+
 def _is_digest(blob):
     """Сводка выпуска: перечень материалов вместо одного события.
     Третий признак структурный: рубрик много, события нет. Замер на 1782
@@ -5958,6 +6015,8 @@ def _is_news_not_signal(title, summary, domain):
     # «нхлебные»: 31 событие отсеивалось как спортивная новость, включая
     # данные ЦБ по инфляции и сообщения о конфликте.
     if _is_digest(b) or _is_agency_pr(b) or _is_personal_story(title):
+        return True
+    if FEED_AUDIT_0311 and _fa_noise(title, b):
         return True
     if RETRO_TITLE and _is_retro_title(title):
         return True
@@ -7183,6 +7242,9 @@ def _recompute_severity(ev):
     _disaster = any(w in b for w in ('наводнен','паводок','циклон','тайфун','ураган','шторм','оползен','землетряс','лесной пожар','сель'))
     _natscale = any(w in b for w in ('вся страна','по всей стране','национальн','столиц','чрезвычайн положени','несколько стран','десятки тысяч','сотни погиб','тысяч эвакуир','государственн бедств','штатов'))
     _scale_fl = _disaster_scale_floor(b)
+    if FEED_AUDIT_0311 and ev.get('source') in _FA_SCI_SRC:
+        # аналитика: масштаб берётся только из заголовка, накопленные числа из текста не в счёт
+        _scale_fl = _disaster_scale_floor((ev.get('title') or '').lower())
     # ФАЗА ВОССТАНОВЛЕНИЯ. Guard был поставлен 22.09.2026 только в пост-
     # обработке сохранённых событий, и этого оказалось мало: основной подъём
     # идёт ЗДЕСЬ, в _recompute_severity. «Япония начинает уборку после тайфуна
@@ -7223,6 +7285,11 @@ def _recompute_severity(ev):
     # затопление без атаки не поднимаются. Откат: MARITIME_ATTACK_FLOOR = 0.
     if MARITIME_ATTACK_FLOOR and _MAR_ATK.search(ev.get('title') or '') and not _MAR_NEG.search(ev.get('title') or ''):
         sev = max(sev, MARITIME_ATTACK_FLOOR)
+    # FEED_AUDIT_0311: кибератака на технологические системы (охлаждение, SCADA,
+    # водоснабжение, энергосистема) - физический эффект; в нескольких странах выше.
+    _fa_t = (ev.get('title') or '')
+    if FEED_AUDIT_0311 and _FA_CYBER.search(_fa_t) and _FA_OT.search(_fa_t) and not _FA_KINETIC.search(b):
+        sev = max(sev, 70 if _FA_MULTI.search(b) else 66)
     # ПОВЫШЕНИЕ: стратегические ресурсы / критич. инфраструктура / каскад
     if any(w in b for w in ('газопровод','нефтепровод','санкц','sanction','ядерн','nuclear','аэс','пролив','strait','коридор','энергосист','power grid','блэкаут','blackout','цепочк поставок','supply chain','swift','дефолт','default')):
         sev = max(sev, 62)
@@ -11137,6 +11204,23 @@ def _canon_type_of(title, summ, _ban=None, _fb=False, _scores=None, _nat_src=Fal
     if CANON_INFL_COMPARE_GUARD and best == 'Инфляция' and _INFL_CMP_G.search(_txt) and not _INFL_DATA_G.search(_txt):
         if _fb: return _canon_type_of(title, summ, (_ban or set()) | {best}, True)
         return None, 'infl-compare-guard'
+    if FEED_AUDIT_0311 and best:
+        _g = None
+        if best == 'Уязвимость ПО' and _FA_NONIT_VULN.search(title) and not _FA_CYBER.search(_txt) and not _FA_ITCTX_CS.search(title):
+            _g = 'vuln-guard'
+        elif best in _RETAIL_CANON and (_FA_CYBER.search(_txt) or re.search(r'протест|митинг|беспоряд|стрельб|погиб|(?<![а-яё])ранен(?![а-яё]*е\b)', _txt, re.I)):
+            _g = 'retail-guard'
+        elif best == 'Покушение' and re.search(r'подрыва\w*\s+(?:\w+\s+)?(?:шанс|довери|позици|рейтинг|авторитет|экономик)', _txt, re.I) \
+                and not re.search(r'покушени|теракт|взрывн', _txt, re.I):
+            _g = 'attempt-guard'
+        elif best == 'Топливный рынок' and re.search(r'золот|драгметалл|серебр', title, re.I) \
+                and not re.search(r'нефт|бензин|топлив|дизел|(?<![а-яё])газ', title, re.I):
+            _g = 'fuel-guard'
+        elif best == 'Военные удары' and _FA_CYBER.search(_txt) and not _FA_KINETIC.search(_txt):
+            _g = 'cyber-war-guard'
+        if _g:
+            if _fb: return _canon_type_of(title, summ, (_ban or set()) | {best}, True)
+            return None, _g
     return best, br
 
 # ═══ TD-002: временный debug-контур False Domain Routing. Только stderr-печать
@@ -11156,7 +11240,8 @@ TD002_DEBUG = True
 # только в shadow. Поля добавляются, ни одно не переопределяется.
 CANON_DECISION = True
 _CD_TOP = 5          # сколько кандидатов сохраняем помимо победителя
-_CD_GUARDS = ('sport-guard', 'fire-guard', 'heat-guard', 'bio-attack-guard')
+_CD_GUARDS = ('sport-guard', 'fire-guard', 'heat-guard', 'bio-attack-guard',
+              'vuln-guard', 'retail-guard', 'attempt-guard', 'fuel-guard', 'cyber-war-guard')
 
 
 def _canon_decision(e, _best, _reason, _sc):
@@ -23327,6 +23412,8 @@ def _signal_quality_pass(events):
                         # сообщение о ликвидации его последствий.
                         if RECOVERY_GUARD and _fl and _is_recovery_phase(e.get('title')):
                             _fl = 0
+                        if FEED_AUDIT_0311 and e.get('source') in _FA_SCI_SRC:
+                            _fl = _disaster_scale_floor((e.get('title') or '').lower())
                         if _fl and _fl > (e.get('severity') or 0):
                             # Подпись правила исправлена 22.09.2026: в журнале стояло
                             # «инфраструктурный объект в тексте», хотя это пересчёт по
