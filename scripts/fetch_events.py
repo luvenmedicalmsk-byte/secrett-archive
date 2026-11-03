@@ -5899,6 +5899,40 @@ _FA_NONIT_VULN = re.compile(r'климатическ\w*\s+уязвим|уязв�
 _FA_SCI_SRC = {'Phys.org Climate', 'ScienceDaily Climate', 'Yale E360', 'Grist', 'Carbon Brief',
                'Yale Climate Connections', 'Climate Home News'}
 
+# SEV_AUDIT_0311 (аудит индексов 03.11.2026). Откат: SEV_AUDIT_0311 = False.
+SEV_AUDIT_0311 = True
+# Ежедневные подборки Zakon.kz: «Главные темы за день – 29 октября»,
+# «Что произошло в мире за ночь – 30 октября». Только по заголовку.
+_SA_DIGEST_T = re.compile(r'^\s*(?:главные\s+(?:темы|новости|события)\s+за\s+(?:день|сутки|неделю)|'
+                          r'что\s+произошло\s+(?:в\s+мире\s+|в\s+казахстане\s+)?за\s+(?:ночь|день|сутки|неделю))', re.I)
+# Производный материал о прошлом событии: опрос, мнение, аналитика.
+_SA_DERIV_T = re.compile(r'^\s*(?:опрос|мнение|колонка|аналитика|комментарий|интервью)\s*[:\-—–]|'
+                         r'подрыва\w*\s+шансы|рейтинг\w*\s+(?:партии|правительства)', re.I)
+# Оценочные и накопленные числа в тексте (не жертвы самого события).
+_SA_ESTIM = re.compile(r'оценива\w*\s+\d|по\s+оценк\w+|связанн\w+\s+с\s+загрязнен|преждевременн\w+\s+смерт|'
+                       r'подверглись\s+воздействию', re.I)
+_SA_DEATH_T = re.compile(r'погиб|жертв|смерт|умер|убит|тел[аов]?\b', re.I)
+# Заявление о событии - не само событие (для киберпола по ОТ).
+_SA_STMT_T = re.compile(r'призвал|заявил|считает|опроверг|не\s+спешить|обвинени|отрица|по\s+словам', re.I)
+
+
+def _sa_scale_floor(ev, b, full):
+    """Пол масштаба с учётом SEV_AUDIT_0311. full - пол по всему тексту."""
+    if not full:
+        return full
+    t = ev.get('title') or ''
+    tf = _disaster_scale_floor(t.lower())
+    if FEED_AUDIT_0311 and ev.get('source') in _FA_SCI_SRC:
+        return tf
+    if not SEV_AUDIT_0311:
+        return full
+    if _SA_DERIV_T.search(t):
+        return tf
+    if _SA_ESTIM.search(ev.get('summary') or '') and not _SA_DEATH_T.search(t):
+        # оценки и накопленные итоги в тексте: не выше регионального уровня
+        return max(tf, min(full, 62))
+    return full
+
 
 def _fa_noise(title, b):
     """FEED_AUDIT_0311: дополнительный шум для S43. b - title+summary в нижнем регистре."""
@@ -5911,6 +5945,8 @@ def _fa_noise(title, b):
     if len(t) < 60 and _FA_FRAG_T.search(re.sub(r'[\s.…]+$', '', t)):
         return True
     if _FA_PALEO.search(tl) or _FA_DIGEST.search(b):
+        return True
+    if SEV_AUDIT_0311 and _SA_DIGEST_T.search(t):
         return True
     _comb = bool(_FA_KINETIC.search(b))
     if (_FA_ROAD.search(b) or _FA_AIR.search(b)) and not _comb and not re.search(r'военн|солдат|военнослуж', b):
@@ -7242,9 +7278,8 @@ def _recompute_severity(ev):
     _disaster = any(w in b for w in ('наводнен','паводок','циклон','тайфун','ураган','шторм','оползен','землетряс','лесной пожар','сель'))
     _natscale = any(w in b for w in ('вся страна','по всей стране','национальн','столиц','чрезвычайн положени','несколько стран','десятки тысяч','сотни погиб','тысяч эвакуир','государственн бедств','штатов'))
     _scale_fl = _disaster_scale_floor(b)
-    if FEED_AUDIT_0311 and ev.get('source') in _FA_SCI_SRC:
-        # аналитика: масштаб берётся только из заголовка, накопленные числа из текста не в счёт
-        _scale_fl = _disaster_scale_floor((ev.get('title') or '').lower())
+    # аналитика, опрос, оценки: накопленные числа из текста не задают верх шкалы
+    _scale_fl = _sa_scale_floor(ev, b, _scale_fl)
     # ФАЗА ВОССТАНОВЛЕНИЯ. Guard был поставлен 22.09.2026 только в пост-
     # обработке сохранённых событий, и этого оказалось мало: основной подъём
     # идёт ЗДЕСЬ, в _recompute_severity. «Япония начинает уборку после тайфуна
@@ -7276,6 +7311,13 @@ def _recompute_severity(ev):
     # ПОВЫШЕНИЕ: глобальный/многострановой охват -- ТОЛЬКО вместе с риск-существительным
     _global = any(w in b for w in ('глобальн','по всему миру','worldwide','несколько стран','страны ес','мировой рынок','пандеми','pandemic'))
     _risknoun = any(w in b for w in ('кризис','crisis','война','войн','war','санкц','sanction','дефицит','обвал','крах','эпидеми','дефолт','default','коллапс','collapse','рецесс','recession','блэкаут','blackout','катастроф','эвакуац'))
+    if _global and _risknoun and SEV_AUDIT_0311:
+        # склейка нескольких постов Telegram: охват и риск из чужого поста не поднимают заголовок
+        _tl = (ev.get('title') or '').lower()
+        _gw = ('глобальн','по всему миру','worldwide','несколько стран','страны ес','мировой рынок','пандеми','pandemic','мир')
+        _rw = ('кризис','crisis','война','войн','war','санкц','sanction','дефицит','обвал','крах','эпидеми','дефолт','default','коллапс','collapse','рецесс','recession','блэкаут','blackout','катастроф','эвакуац')
+        if not (any(w in _tl for w in _gw) or any(w in _tl for w in _rw)):
+            _global = False
     if _global and _risknoun:
         sev = max(sev, 76)
     # 24.10.2026: атака на гражданские суда — удар по морскому коридору,
@@ -7288,7 +7330,8 @@ def _recompute_severity(ev):
     # FEED_AUDIT_0311: кибератака на технологические системы (охлаждение, SCADA,
     # водоснабжение, энергосистема) - физический эффект; в нескольких странах выше.
     _fa_t = (ev.get('title') or '')
-    if FEED_AUDIT_0311 and _FA_CYBER.search(_fa_t) and _FA_OT.search(_fa_t) and not _FA_KINETIC.search(b):
+    if FEED_AUDIT_0311 and _FA_CYBER.search(_fa_t) and _FA_OT.search(_fa_t) and not _FA_KINETIC.search(b) \
+            and not (SEV_AUDIT_0311 and _SA_STMT_T.search(_fa_t)):
         sev = max(sev, 70 if _FA_MULTI.search(b) else 66)
     # ПОВЫШЕНИЕ: стратегические ресурсы / критич. инфраструктура / каскад
     if any(w in b for w in ('газопровод','нефтепровод','санкц','sanction','ядерн','nuclear','аэс','пролив','strait','коридор','энергосист','power grid','блэкаут','blackout','цепочк поставок','supply chain','swift','дефолт','default')):
@@ -23474,8 +23517,7 @@ def _signal_quality_pass(events):
                         # сообщение о ликвидации его последствий.
                         if RECOVERY_GUARD and _fl and _is_recovery_phase(e.get('title')):
                             _fl = 0
-                        if FEED_AUDIT_0311 and e.get('source') in _FA_SCI_SRC:
-                            _fl = _disaster_scale_floor((e.get('title') or '').lower())
+                        _fl = _sa_scale_floor(e, _bt, _fl)
                         if _fl and _fl > (e.get('severity') or 0):
                             # Подпись правила исправлена 22.09.2026: в журнале стояло
                             # «инфраструктурный объект в тексте», хотя это пересчёт по
@@ -25023,6 +25065,8 @@ _SW_RULES = [
     ('жертвы',           _SW_VICT,    5),
 ]
 _SW_CAP = 25        # потолок прибавки: правило не должно уводить вес в отрыв
+_SW_NOFATAL_MAX = 85   # SEV_AUDIT_0311: потолок прибавки для удара без погибших
+_SW_FATAL = re.compile(r'погиб|убит|убил|уничтожил\w*\s+\d+\s+человек|скончал|смертельн|тела\s+\d|жертвами\s+стали', re.I)
 _SW_MAX = 95        # верх шкалы остаётся за критическим уровнем
 
 
@@ -25721,6 +25765,85 @@ def _econ_scale(events):
     return len(moved)
 
 
+# ── ПОЛ ПО ЧИСЛУ ЖЕРТВ УДАРА (SEV_AUDIT_0311) ───────────────────────────────
+# Повод, 03.11.2026. «73 человека пострадали в результате российского
+# авиаудара по ... больнице в Харькове» стояло на 59 без единого правила,
+# «Число погибших при ударе по Камышевахе выросло до 31» на 75, а удар
+# по НПЗ с двумя ранеными на 95. HUMAN_SCALE начинает с 100 человек и в
+# бою выключен, поэтому десятки погибших при ударе не читались никем.
+# Число берётся ТОЛЬКО из заголовка совершённого удара: в тексте бывают
+# накопленные итоги. Правило только поднимает, ничего не снижает.
+_CF_DEATH_BANDS = ((30, 85), (10, 80), (5, 74), (2, 68))
+_CF_HURT_BANDS = ((100, 78), (50, 72), (20, 66))
+_CF_REV = re.compile(r'(?:число|количество)\s+(?P<kind>погибш\w*|жертв\w*|убит\w*|пострадавш\w*|ранен\w*)'
+                     r'[^.\d]{0,60}?(?:до|составило|достигло)\s+(?P<n>\d{1,5})|'
+                     r'(?P<kind2>погибл\w*|погибш\w*|убит\w*|пострадал\w*|ранен\w*)\s+'
+                     r'(?:не\s+менее\s+|по\s+меньшей\s+мере\s+|более\s+|около\s+)?(?P<n2>\d{1,5})\s+(?:человек|мирн)', re.I)
+
+
+def _cf_counts(title):
+    """Наибольшее число погибших и пострадавших, названное в заголовке."""
+    dead = hurt = 0
+    t = title or ''
+    for m in list(_HS_NUM.finditer(t)) + list(_HS_NUM_WORD.finditer(t)):
+        raw = (m.group(1) or '').strip()
+        n = _HS_WORDNUM.get(raw.lower())
+        if n is None:
+            try:
+                n = int(re.sub(r'[^\d]', '', raw) or 0)
+            except ValueError:
+                continue
+        if _HS_YEAR.match(str(n)) or n > 100000:
+            continue
+        if _HS_DEATH_RX.match(m.group('kind')):
+            dead = max(dead, n)
+        else:
+            hurt = max(hurt, n)
+    for m in _CF_REV.finditer(t):
+        k = (m.group('kind') or m.group('kind2') or '').lower()
+        n = int(m.group('n') or m.group('n2') or 0)
+        if _HS_YEAR.match(str(n)):
+            continue
+        if k.startswith(('погиб', 'жертв', 'убит')):
+            dead = max(dead, n)
+        else:
+            hurt = max(hurt, n)
+    return dead, hurt
+
+
+def _casualty_floor(events):
+    if not SEV_AUDIT_0311:
+        return 0
+    n = 0
+    for e in events:
+        if e.get('domain') != 'geopolitics' or e.get('sic_class') not in (None, '', 'EVENT'):
+            continue
+        head = e.get('title') or ''
+        if not _SW_STRIKE.search(head + ' ' + (e.get('summary') or '')):
+            continue
+        if (_SW_TALK.search(head) and not _SW_CLAIM.search(head)) or not _SW_ACTED.search(head):
+            continue
+        if _HS_FCAST.search(head) or re.search(r'фейерверк|пиротехн', head, re.I):
+            continue
+        dead, hurt = _cf_counts(head)
+        fl = 0
+        for edge, v in _CF_DEATH_BANDS:
+            if dead >= edge:
+                fl = v; break
+        for edge, v in _CF_HURT_BANDS:
+            if hurt >= edge:
+                fl = max(fl, v); break
+        cur = e.get('severity') or 0
+        if fl > cur:
+            e['severity'] = _sev_log(e, 'casualty_floor', cur, fl,
+                                     'пол по числу жертв удара в заголовке: погибших %d, пострадавших %d' % (dead, hurt),
+                                     'boost')
+            n += 1
+    if n:
+        print('  [CASUALTY-FLOOR] поднято %d' % n, file=sys.stderr)
+    return n
+
+
 def _human_scale(events):
     """Замер масштаба человеческих потерь. Боевой вес не трогает без промоушена."""
     if not (HUMAN_SCALE_SHADOW or HUMAN_SCALE_APPLY):
@@ -25842,6 +25965,13 @@ def _strike_weight(events):
         if _prev and isinstance(_prev[0].get('from'), (int, float)):
             base = _prev[0]['from']
         new = min(_SW_MAX, base + min(add, _SW_CAP))
+        # SEV_AUDIT_0311: удар без погибших не уходит в верх шкалы только по
+        # признакам «жизнеобеспечение» и «жертвы» (раненые). «Беспилотники
+        # ударили по НПЗ в Ярославле», двое раненых: 82 -> 95, выше удара по
+        # школе с 29 погибшими (91).
+        if SEV_AUDIT_0311 and not _SW_FATAL.search(blob) \
+                and 'массированность' not in hits and 'масштаб числом' not in hits:
+            new = min(new, max(base, _SW_NOFATAL_MAX))
         e['severity_shadow'] = new
         e['severity_shadow_why'] = hits
         if new != base:
@@ -28020,6 +28150,7 @@ def save_enriched(events, previous_snapshot=None):
                 _strike_weight(enriched["events"])
                 _mil_escalation(enriched["events"])
                 _human_scale(enriched["events"])
+                _casualty_floor(enriched["events"])
                 # Экономический масштаб после человеческого: запись, где вес
                 # уже поставлен по числу пострадавших, второй надбавки не
                 # получает (проверка severity_hs_shadow внутри).
