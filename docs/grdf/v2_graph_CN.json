@@ -2,7 +2,7 @@
   "country": "CN",
   "date": "2026-11-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-03T14:47:06.185850+00:00",
+  "generated_at": "2026-11-03T15:05:11.776629+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 74,
+      "score": 78,
       "props": {
-        "risk_score": 74
+        "risk_score": 78
       }
     },
     {
@@ -34,14 +34,14 @@
       "type": "Domain",
       "label": "climate",
       "score": 74,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-technology",
       "type": "Domain",
       "label": "technology",
       "score": 64,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-social",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-CN-Метеоролог",
+      "type": "Signal",
+      "label": "Метеорологический риск геологической кат",
+      "severity": 74,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-CN-Сильный_до",
       "type": "Signal",
       "label": "Сильный дождь: город Лэйчжоу, Автономный",
@@ -92,13 +99,6 @@
       "label": "Падение интернет-связи: Китай",
       "severity": 64,
       "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-CN-Снегопад:_",
-      "type": "Signal",
-      "label": "Снегопад: Уезд Кедонг, Уезд Кешань, Уезд",
-      "severity": 56,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -205,6 +205,12 @@
       "lag_days": 90
     },
     {
+      "from": "SIGNAL-CN-Метеоролог",
+      "to": "DOMAIN-CN-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.74
+    },
+    {
       "from": "SIGNAL-CN-Сильный_до",
       "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
@@ -215,12 +221,6 @@
       "to": "DOMAIN-CN-technology",
       "type": "AMPLIFIES",
       "weight": 0.64
-    },
-    {
-      "from": "SIGNAL-CN-Снегопад:_",
-      "to": "DOMAIN-CN-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.56
     }
   ]
 }
