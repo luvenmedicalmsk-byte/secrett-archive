@@ -2,17 +2,17 @@
   "country": "IN",
   "country_name": "Индия",
   "date": "2026-11-03",
-  "generated_at": "2026-11-03T15:05:07.195394+00:00",
+  "generated_at": "2026-11-03T15:25:32.434464+00:00",
   "risk_score": 86,
-  "scenario_score": 56,
-  "instability": 79,
+  "scenario_score": 36,
+  "instability": 34,
   "instability_v2": true,
   "scenarios": [
     {
       "type": "best",
       "name": "Best Case",
       "name_ru": "Лучший сценарий",
-      "probability": 20,
+      "probability": 29,
       "score": 72,
       "delta_from_current": -14,
       "state": "escalating",
@@ -24,7 +24,7 @@
       "recovery_days": 401,
       "future_pressure": 55,
       "future_resilience": 43,
-      "future_probability": 20,
+      "future_probability": 29,
       "drivers": [
         {
           "driver": "Деэскалация",
@@ -37,33 +37,33 @@
           "horizon": "30d",
           "label": "30 дней",
           "score": 72,
-          "state": "critical",
-          "state_ru": "Критическая эскалация",
+          "state": "escalating",
+          "state_ru": "Эскалация",
           "delta_from_current": -14
         },
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 62,
-          "state": "critical",
-          "state_ru": "Критическая эскалация",
-          "delta_from_current": -24
+          "score": 64,
+          "state": "escalating",
+          "state_ru": "Эскалация",
+          "delta_from_current": -22
         },
         {
           "horizon": "180d",
           "label": "180 дней",
-          "score": 53,
-          "state": "critical",
-          "state_ru": "Критическая эскалация",
-          "delta_from_current": -33
+          "score": 57,
+          "state": "contained",
+          "state_ru": "Контролируемо",
+          "delta_from_current": -29
         },
         {
           "horizon": "365d",
           "label": "365 дней",
-          "score": 46,
-          "state": "critical",
-          "state_ru": "Критическая эскалация",
-          "delta_from_current": -40
+          "score": 50,
+          "state": "contained",
+          "state_ru": "Контролируемо",
+          "delta_from_current": -36
         }
       ]
     },
@@ -71,19 +71,19 @@
       "type": "base",
       "name": "Base Case",
       "name_ru": "Базовый сценарий",
-      "probability": 5,
+      "probability": 18,
       "score": 89,
       "delta_from_current": 3,
       "state": "cascade",
       "state_ru": "Каскадный кризис",
       "impact": "catastrophic",
       "impact_ru": "Катастрофический",
-      "velocity": "explosive",
-      "velocity_ru": "Взрывной",
+      "velocity": "moderate",
+      "velocity_ru": "Умеренный",
       "recovery_days": 495,
       "future_pressure": 73,
       "future_resilience": 40,
-      "future_probability": 5,
+      "future_probability": 18,
       "drivers": [
         {
           "driver": "Красное уведомление о тропический циклон MURA",
@@ -107,26 +107,26 @@
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 95,
+          "score": 89,
           "state": "cascade",
           "state_ru": "Каскадный кризис",
-          "delta_from_current": 9
+          "delta_from_current": 3
         },
         {
           "horizon": "180d",
           "label": "180 дней",
-          "score": 95,
+          "score": 89,
           "state": "cascade",
           "state_ru": "Каскадный кризис",
-          "delta_from_current": 9
+          "delta_from_current": 3
         },
         {
           "horizon": "365d",
           "label": "365 дней",
-          "score": 95,
+          "score": 89,
           "state": "cascade",
           "state_ru": "Каскадный кризис",
-          "delta_from_current": 9
+          "delta_from_current": 3
         }
       ]
     },
@@ -134,7 +134,7 @@
       "type": "stress",
       "name": "Stress Case",
       "name_ru": "Стресс-сценарий",
-      "probability": 31,
+      "probability": 25,
       "score": 94,
       "delta_from_current": 8,
       "state": "cascade",
@@ -146,7 +146,7 @@
       "recovery_days": 523,
       "future_pressure": 79,
       "future_resilience": 37,
-      "future_probability": 31,
+      "future_probability": 25,
       "drivers": [
         {
           "driver": "Красное уведомление о тропический циклон MURA",
@@ -201,7 +201,7 @@
       "type": "worst",
       "name": "Worst Case",
       "name_ru": "Худший сценарий",
-      "probability": 44,
+      "probability": 28,
       "score": 95,
       "delta_from_current": 9,
       "state": "cascade",
@@ -213,7 +213,7 @@
       "recovery_days": 529,
       "future_pressure": 83,
       "future_resilience": 31,
-      "future_probability": 44,
+      "future_probability": 28,
       "drivers": [
         {
           "driver": "Красное уведомление о тропический циклон MURA",
@@ -267,25 +267,25 @@
   ],
   "transition_triggers": [
     {
-      "condition": "delta ≥ 34 за 24ч",
+      "condition": "delta ≥ 3 за 24ч",
       "leads_to": "worst",
-      "probability": 44
+      "probability": 28
     },
     {
       "condition": "Драйвер severity ≥ 85 в climate",
       "leads_to": "stress",
-      "probability": 31
+      "probability": 25
     },
     {
       "condition": "Деэскалация ключевого кризиса",
       "leads_to": "best",
-      "probability": 20
+      "probability": 29
     },
     {
       "condition": "Цепочка распространения → 3+ страны",
       "leads_to": "worst",
-      "probability": 28
+      "probability": 12
     }
   ],
-  "dominant_scenario": "worst"
+  "dominant_scenario": "best"
 }
