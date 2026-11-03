@@ -7508,7 +7508,7 @@ FORCE_KEEPS_SEVERITY = True
 # last_ck (последняя пройденная точка) и ck_path. Отдельно считаются повторные _obs_tid
 # на входе (потеря трассы против потери события). Только наблюдаемость: состав ленты
 # не меняется. Откат: LINEAGE_GAP_PROBE = False.
-LINEAGE_GAP_PROBE = False
+LINEAGE_GAP_PROBE = True
 _GAP_CK = {}
 _GAP_SEEN = {}
 
