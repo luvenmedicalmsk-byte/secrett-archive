@@ -2,7 +2,7 @@
   "country": "GR",
   "date": "2026-11-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-03T13:10:27.682581+00:00",
+  "generated_at": "2026-11-03T13:46:58.110634+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-GR",
       "type": "Country",
       "label": "GR",
-      "score": 88,
+      "score": 48,
       "props": {
-        "risk_score": 88
+        "risk_score": 48
       }
     },
     {
@@ -20,54 +20,49 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 64,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GR-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 88,
-      "trend": "stable"
+      "score": 50,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GR-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GR-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GR-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
-    },
-    {
-      "id": "DRIVER-GR-climate",
-      "type": "Driver",
-      "label": "climate"
+      "trend": "down"
     },
     {
       "id": "DRIVER-GR-geopolitical",
@@ -75,16 +70,14 @@
       "label": "geopolitical"
     },
     {
+      "id": "DRIVER-GR-climate",
+      "type": "Driver",
+      "label": "climate"
+    },
+    {
       "id": "DRIVER-GR-economic",
       "type": "Driver",
       "label": "economic"
-    },
-    {
-      "id": "SIGNAL-GR-Ливень:_Во",
-      "type": "Signal",
-      "label": "Ливень: Восточный Пелопоннес, Додеканисс",
-      "severity": 88,
-      "domain": "climate"
     },
     {
       "id": "SIGNAL-GR-Военные_уд",
@@ -98,6 +91,13 @@
       "type": "Signal",
       "label": "Шторм — Греция",
       "severity": 50,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-GR-Водный_деф",
+      "type": "Signal",
+      "label": "Водный дефицит — Греция",
+      "severity": 47,
       "domain": "climate"
     }
   ],
@@ -118,7 +118,7 @@
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-climate",
       "type": "CORRELATES",
-      "weight": 0.88
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-GR",
@@ -145,13 +145,13 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-GR-climate",
+      "from": "DRIVER-GR-geopolitical",
       "to": "COUNTRY-GR",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-GR-geopolitical",
+      "from": "DRIVER-GR-climate",
       "to": "COUNTRY-GR",
       "type": "CAUSES",
       "weight": 0.8
@@ -226,12 +226,6 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-GR-Ливень:_Во",
-      "to": "DOMAIN-GR-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.88
-    },
-    {
       "from": "SIGNAL-GR-Военные_уд",
       "to": "DOMAIN-GR-geopolitical",
       "type": "AMPLIFIES",
@@ -242,6 +236,12 @@
       "to": "DOMAIN-GR-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
+    },
+    {
+      "from": "SIGNAL-GR-Водный_деф",
+      "to": "DOMAIN-GR-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.47
     }
   ]
 }
