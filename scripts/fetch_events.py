@@ -18467,7 +18467,11 @@ def fetch_telegram():
                 'Social_engineering', 'Russian_OSINT', 'alexmakus', 'xakep_ru',
                 'sterngang', 'Ateobreaking', 'investorbiz',
                 'Tyumen72chs', 'kraschp', 'chp_irkutsk', 'inc54', 'chp_ekb', 'chp_55',
-                'alertasdowndetector', 'dciber', 'ctinow', 'thehackernews', 'Cyber_Security_Channel']
+                'alertasdowndetector', 'dciber', 'ctinow', 'thehackernews', 'Cyber_Security_Channel',
+                # KZ_SOURCES_0311 (03.11.2026): казахстанские каналы. tengrinews подтверждён
+                # самим изданием; остальные адреса вероятные - несуществующий канал
+                # отрабатывает как пустой (исключение ловится по каналу), журнал покажет.
+                'tengrinews', 'zakonkz', 'ordakz', 'vlastkz', 'kursivkz', 'kazinform_ru']
     # 24.10.2026: агитационные каналы отключены — пропаганда и лозунги вместо
     # сигналов («Париж требует голову Макрона», «Эх, барин запретил нам
     # возмущаться»). Откат: TG_AGITPROP_OFF = ().
@@ -18481,7 +18485,8 @@ def fetch_telegram():
     TG_DISPLAY = {'ecotopor':'Economics RU','toporlive':'TN news','investorbiz':'Economics','banksta':'B News','Tyumen72chs':'T news','kraschp':'K News','chp_irkutsk':'Irk News','inc54':'N News','chp_ekb':'Ekb News','chp_55':'Omsk News','NeKaspersky':'IT','anti_malware':'AM Live','trueosint':'Cyber',
                   'f6_cybersecurity':'Cybersecurity','SecLabNews':'Lab News','Social_engineering':'Engineering',
                   'Russian_OSINT':'R Osint','alexmakus':'Cybersec','xakep_ru':'Xakep IT','sterngang':'Data D','Ateobreaking':'A breaking',
-                  'alertasdowndetector':'Downdetector','dciber':'Dciber','ctinow':'Cyber Threat','thehackernews':'THN','Cyber_Security_Channel':'Cyber SN','ru_downdetector_su':'Downdetector RU'}
+                  'alertasdowndetector':'Downdetector','dciber':'Dciber','ctinow':'Cyber Threat','thehackernews':'THN','Cyber_Security_Channel':'Cyber SN','ru_downdetector_su':'Downdetector RU',
+                  'tengrinews':'Tengri News','zakonkz':'Zakon.kz','ordakz':'Orda.kz','vlastkz':'Vlast.kz','kursivkz':'Kursiv','kazinform_ru':'Kazinform'}
     # соц-источники: пропускаем ТОЛЬКО риск-сигналы (пиар/нейтральное отсекаем)
     SOCIAL_SRC = {'minzdrav_ru', 'mintrudrf', 'zdravblog', 'readovkanews', 'bazabazon', 'mash',
                   'rospotrebnadzor_ru', 'mediamedics', 'rotfront_su', 'worldprotest', 'populationdemography', 'demografic', 'rakshademography', 'sterngang'}
@@ -21446,9 +21451,20 @@ def fetch_regional():
         {"url": "https://www.turkishminute.com/feed/", "source": "Turkish Minute", "bias": 7},
         # Запасной адрес без cat проверен 28.09.2026 и не отвечает, основной живой.
         {"url": "https://www.aa.com.tr/en/rss/default?cat=guncel", "source": "Anadolu Agency", "bias": 6},
-        # Казахстан
-        {"url": "https://tengrinews.kz/rss/all.xml", "source": "Tengri News", "bias": 7},
-        {"url": "https://kapital.kz/rss/all/", "source": "Kapital KZ", "bias": 6},
+        # Казахстан. KZ_SOURCES_0311 (03.11.2026, просьба Мии): прежние адреса
+        # молчали (Tengri 404, Kapital 403 в журнале прогона). Сеть мастерской
+        # закрыта, поэтому по нескольку вероятных адресов на издание - какой
+        # живой, покажут журнал и _regional_probe.json; мёртвые убрать.
+        {"url": "https://tengrinews.kz/news.rss", "source": "Tengri News", "bias": 7},
+        {"url": "https://tengrinews.kz/rss/", "source": "Tengri News", "bias": 7},
+        {"url": "https://www.zakon.kz/rss/", "source": "Zakon.kz", "bias": 6},
+        {"url": "https://www.inform.kz/rss/rus.xml", "source": "Kazinform", "bias": 6},
+        {"url": "https://www.inform.kz/ru/rss", "source": "Kazinform", "bias": 6},
+        {"url": "https://orda.kz/feed/", "source": "Orda.kz", "bias": 7},
+        {"url": "https://kursiv.media/feed/", "source": "Kursiv", "bias": 6},
+        {"url": "https://vlast.kz/rss/", "source": "Vlast.kz", "bias": 7},
+        {"url": "https://informburo.kz/rss", "source": "Informburo", "bias": 7},
+        {"url": "https://kapital.kz/rss/", "source": "Kapital KZ", "bias": 6},
         # Беларусь
         {"url": "https://reforma.by/rss", "source": "Reforma BY", "bias": 7},
         {"url": "https://spring96.org/rss", "source": "Viasna HR", "bias": 8},
