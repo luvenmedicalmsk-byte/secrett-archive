@@ -7502,6 +7502,25 @@ _MIL_OVERRIDE_RE = re.compile(
 FORCE_KEEPS_SEVERITY = True
 
 
+# D-08a-2B LINEAGE_GAP_PROBE (02.11.2026) - диагностика catch-all «gate_unattributed».
+# Контрольные точки цикла process_events пишутся в отдельный словарь по _obs_tid;
+# записи не меняются. Трассе, которая иначе получила бы gate_unattributed, добавляются
+# last_ck (последняя пройденная точка) и ck_path. Отдельно считаются повторные _obs_tid
+# на входе (потеря трассы против потери события). Только наблюдаемость: состав ленты
+# не меняется. Откат: LINEAGE_GAP_PROBE = False.
+LINEAGE_GAP_PROBE = False
+_GAP_CK = {}
+_GAP_SEEN = {}
+
+
+def _gck(tid, label):
+    try:
+        if LINEAGE and tid:
+            _GAP_CK.setdefault(tid, []).append(label)
+    except Exception:
+        pass
+
+
 def process_events(raw_items):
     events = []
     seen_ids = set()
@@ -7649,6 +7668,8 @@ def process_events(raw_items):
     _OPED_SOURCES = {'War on the Rocks', 'Geopolitical Futures', 'Project Syndicate Economy', 'Project Syndicate'}
     for item in raw_items:
         _tid = _obs_assign(item)
+        if LINEAGE_GAP_PROBE and _tid:
+            _GAP_SEEN[_tid] = _GAP_SEEN.get(_tid, 0) + 1
         # ДИАГНОСТИКА (Event Provenance): паспорт записи на входе. Позволяет найти
         # событие по названию и восстановить, какой загрузчик и какой фид его дал.
         _trace(_tid, 'INGESTED', source=item.get('source'),
@@ -7658,6 +7679,7 @@ def process_events(raw_items):
                feed_domain=(item.get('_domain') or item.get('domain') or None),
                ingest_time=datetime.now(timezone.utc).strftime('%H:%M:%SZ'),
                parser_commit=_parser_version())
+        if LINEAGE_GAP_PROBE: _gck(_tid, 'c01_after_ingested')
         _src_l = str(item.get('source','')).strip().lower()
         _src_ch = _src_l.split('/')[-1]  # канал после 'telegram/' — сравниваем и полное имя, и канал
         if _src_l in _BLOCKED_SOURCES or _src_ch in _BLOCKED_SOURCES:
@@ -7677,12 +7699,14 @@ def process_events(raw_items):
         # title НЕ трогаем: _clean_title сплитит по \n ДО strip_html (ранняя очистка сломала бы).
         if item.get('desc'):
             item['desc'] = strip_html(item['desc'])
+        if LINEAGE_GAP_PROBE: _gck(_tid, 'c02_after_old')
         _src0 = item.get('source','')
         if _src0.startswith('Telegram/') or _src0 in _TG_SRC:
             _ld = _text_latest_date((item.get('title','') or '') + ' ' + (item.get('desc','') or ''))
             if _ld is not None and (datetime.now(timezone.utc).date() - _ld).days > 14:
                 _trace(_tid,'OLD','removed',reason='old'); _lost('old', item); continue
 
+        if LINEAGE_GAP_PROBE: _gck(_tid, 'c03_text')
         title_low = (item.get('title','') or '').lower()
         desc_low = (item.get('desc','') or '').lower()
         text_low = title_low + ' ' + desc_low
@@ -7695,6 +7719,7 @@ def process_events(raw_items):
             _trace(_tid,'FILTER','removed',reason='ad'); _lost('ad', item); continue
 
         # S34B governance: REMOVE-источники отбрасываем до обработки
+        if LINEAGE_GAP_PROBE: _gck(_tid, 'c04_gov')
         _gov = SOURCE_GOVERNANCE.get(item.get('source',''), {})
         # D7 (Pre-Release Window): Telegram-агрегаторы весят ниже официальных/научных
         # источников. Безопасная калибровка, расширяемая через SOURCE_GOVERNANCE.
@@ -7810,6 +7835,7 @@ def process_events(raw_items):
         # Telegram -- без порога (раскладываем по словам, не режем severity)
         # S39: видео-тизеры (Смотрите:/Видео:/Watch:) -- кликбейт, убираем безусловно;
         # само событие приходит нормальным сигналом из профильных источников
+        if LINEAGE_GAP_PROBE: _gck(_tid, 'c05_after_geo')
         _ttl0 = str(item.get('title','')).strip().lower()
         if _ttl0.startswith(('смотрите','смотри:','видео:','watch:','смотреть','фото:')):
             _trace(_tid,'SEVERITY','removed',reason='sev_teaser'); _lost('sev', item); _lost('sev_teaser', item); continue
@@ -7851,6 +7877,7 @@ def process_events(raw_items):
         if _fluff or _local or ((_accident or _gas or _home_fire) and not _combat):
             _trace(_tid,'SEVERITY','removed',reason='sev_content'); _lost('sev', item); _lost('sev_content', item); continue
         # S38: системные сигналы -- мимо порога и шум-фильтра, с высоким полом severity
+        if LINEAGE_GAP_PROBE: _gck(_tid, 'c06_after_content')
         _sys = _systemic_class(item.get('title',''), item.get('desc','')) if item.get('_force_severity') is None else None
         if _sys:
             domain = _sys[0]; severity = max(severity, _sys[1])
@@ -7858,6 +7885,7 @@ def process_events(raw_items):
             domain = 'climate'  # S40: стихия -- только климат, независимо от источника
         # РАННИЙ ГАРД ИСТОЧНИКА (Мия 20.07): климат/социум-источники получают домен ДО квотирования,
         # иначе классификатор кидает их в чужую квоту -> overflow (guard в save_enriched был слишком поздно).
+        if LINEAGE_GAP_PROBE: _gck(_tid, 'c07_sys')
         _isrc=item.get('source','')
         if _isrc in ('Inside Climate News','Carbon Brief','Climate Home News','Mongabay','Yale Climate Connections','Grist','Phys.org Climate','ScienceDaily Climate'):
             domain='climate'
@@ -7898,6 +7926,7 @@ def process_events(raw_items):
             if 'severity' in _corr: severity=_corr['severity']
             if _corr.get('reject'): item['_semantic_reject']=True
             item.update(_sv)          # semantic_validation/score/confidence/flags/reason
+        if LINEAGE_GAP_PROBE: _gck(_tid, 'c08_severity_calc')
         _is_tg = str(item.get('source','')).startswith('Telegram')
         # ═══ ПОРОГ ЛЕНТЫ ПО ПРИРОДЕ ДОМЕНА ═══
         # SEVERITY_THRESHOLD=45 писался под НОВОСТНОЙ климат («погибли», «разрушено»),
@@ -8022,6 +8051,7 @@ def process_events(raw_items):
         # слой ТОЛЬКО при аналитической ценности — иначе даже пройдя шум-фильтры остаётся вне
         # ленты и вне аналитики. Ценность = риск-сигнатура (для Pressure/Radar) ИЛИ явная
         # страна+домен (для Country Analytics). Так шум не растёт, а слабые сигналы копятся.
+        if LINEAGE_GAP_PROBE: _gck(_tid, 'c09_after_sev_gates')
         if _below_feed:
             _tl = (item.get('title') or '')
             _has_sig = bool(_SIG_RE.search(_blob))
@@ -8137,6 +8167,7 @@ def process_events(raw_items):
         # Координаты в КЛЮЧЕ (не в заголовке) различают очаги, не портя карточку.
         # Округление до 0.5° = сетка ~50 км: реальные дубли одного очага схлопнутся,
         # разные очаги — нет.
+        if LINEAGE_GAP_PROBE: _gck(_tid, 'c10_after_admission')
         _id_geo = ''
         if item.get('_lat') is not None and item.get('_lng') is not None:
             try:
@@ -8184,6 +8215,7 @@ def process_events(raw_items):
                     _trace(_tid,'DEDUP','removed',reason='dup_wordset')
                     _lost('dup', item); continue
                 seen_wordsets.setdefault(_wk[0], (_wk[1], _nsrc))
+        if LINEAGE_GAP_PROBE: _gck(_tid, 'c11_after_dedup')
         seen_ids.add(ev_id)
 
         svgX, svgY = coord_to_svg(lat, lng)
@@ -8222,6 +8254,7 @@ def process_events(raw_items):
             # но перестаёт стоять в одном ряду с реализованными потерями.
             severity = max(20, int(severity) - _mod_d)
 
+        if LINEAGE_GAP_PROBE: _gck(_tid, 'c12_build_ev')
         _ev = {
             "id": ev_id,
             "_obs_tid": item.get('_obs_tid'),
@@ -8251,6 +8284,7 @@ def process_events(raw_items):
             _ev["event_kind"] = 'geophysical' if any(w in _bk for w in (
                 'землетряс','earthquake','quake','магнитуд','сейсм','seismic','афтершок','aftershock',
                 'вулкан','volcano','извержен','eruption','цунами','tsunami','оползен','landslide','сель ')) else 'meteorological'
+        if LINEAGE_GAP_PROBE: _gck(_tid, 'c13_append')
         events.append(_ev)
 
     # S45: пересчёт severity по масштабу риска (а не по громкости) -- до сортировки/квот/отбора
@@ -9082,7 +9116,15 @@ def process_events(raw_items):
         for _tid2,_rec2 in list(_LINEAGE_LOG.items()):
             if _tid2 in _fin or '_finals' in _rec2: continue
             _had_built = any(s.get('stage')=='BUILT' for s in _rec2.get('route',[]))
-            _trace(_tid2,'TOPIC_CAP','removed',reason=('post_build_filter' if _had_built else 'gate_unattributed'))
+            _gmeta = {}
+            if LINEAGE_GAP_PROBE and not _had_built:
+                try:
+                    _ckp = _GAP_CK.get(_tid2) or []
+                    _gmeta = {'last_ck': (_ckp[-1] if _ckp else 'c00_none'), 'ck_path': _ckp[-6:],
+                              'ingested_n': _GAP_SEEN.get(_tid2, 0)}
+                except Exception:
+                    _gmeta = {}
+            _trace(_tid2,'TOPIC_CAP','removed',reason=('post_build_filter' if _had_built else 'gate_unattributed'), **_gmeta)
     return top_events
 
 _ACTOR_REGION = [('евросоюз','ЕС'),('еврокомисс','ЕС'),('еврокоми','ЕС'),('брюссель','ЕС'),('ес ','ЕС'),('ес,','ЕС'),
