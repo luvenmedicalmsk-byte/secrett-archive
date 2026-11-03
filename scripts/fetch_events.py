@@ -17097,6 +17097,14 @@ def _cap_aggregate(items, country, svc, source):
         areas = _ru_names([_expand_abbr(a) for a in g['areas']])
         place = _place_line(areas, country)
         text = _ru_names([_expand_abbr(lead.get('desc') or '')])[0].strip()
+        # CAP_DESC_TR 04.11.2026: текст предупреждения переводится ДО того, как к нему
+        # добавлен русский список районов. Иначе доля кириллицы в склейке выше порога
+        # is_english, и описание INMET оставалось на португальском.
+        if text and is_english(text):
+            try:
+                text = (translate_batch([text], force=True) or [text])[0] or text
+            except Exception:
+                pass
         if text and not text.endswith('.'):
             text += '.'
         body = text
