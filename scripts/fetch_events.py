@@ -7592,6 +7592,11 @@ FORCE_KEEPS_SEVERITY = True
 # на входе (потеря трассы против потери события). Только наблюдаемость: состав ленты
 # не меняется. Откат: LINEAGE_GAP_PROBE = False.
 LINEAGE_GAP_PROBE = True
+LINEAGE_EXACT_REASONS = False  # D-08a-2: точные причины вместо post_build_filter / enrich_merge
+# Причины включаются по отдельности: в canary только подтверждённые реальными
+# удалениями (инвентаризация 04.11: infra_anchor 23, signal_quality 7 из 30).
+LINEAGE_EXACT_ON = {'infra_anchor': False, 'signal_quality': False, 'noise_card': False,
+                    's43_news_not_signal': False, 'kev_cap': False}
 LINEAGE_RISK_GATE = True    # D-08a-2C: причина risk_gate вместо gate_unattributed
 _GAP_CK = {}
 _GAP_SEEN = {}
@@ -8859,6 +8864,7 @@ def process_events(raw_items):
                   and not _is_broken_fragment(e.get('title',''), e.get('summary',''))
                   and len(re.findall(r'[іїєґІЇЄҐ]', (e.get('title') or '') + (e.get('summary') or ''))) < 3)]
     _post_lost('S43_новость_не_сигнал', _s43_in, top_events)
+    _lin_exact(_s43_in, top_events, 'S43', 's43_news_not_signal')
     # S44: домен по содержанию -- переназначаем неверно-доменные сигналы (политика из экономики и т.п.)
     _dom_trace(top_events, 'CLASSIFIER')          # TASK-278 · точка 1
     _moved = 0
@@ -9024,6 +9030,7 @@ def process_events(raw_items):
         _kev_in = list(top_events)
         top_events = [e for e in top_events if (not _is_kev(e)) or id(e) in _keep]
         _post_lost('кап_CISA_KEV', _kev_in, top_events)
+        _lin_exact(_kev_in, top_events, 'KEV_CAP', 'kev_cap')
         print(f"  [Этап9b] CISA KEV: оставлено {_KEV_CAP} из {len(_kev)}", file=sys.stderr)
 
     # ═══ ЗАПИСЬ УЧЁТА ЛИМИТОВ ОТОБРАЖЕНИЯ ═══════════════════════════════════
@@ -9631,6 +9638,21 @@ def _domain_fix(events):
 # чьего _obs_tid нет в выходе функции, и лишь если у трассы ещё нет финала.
 # Откат: LINEAGE_NDUP_P10 = False.
 LINEAGE_NDUP_P10 = True
+
+
+def _lin_exact(before, after, stage, reason):
+    """D-08a-2: точная причина для шагов, которые раньше уходили в catch-all.
+    Только наблюдаемость, поток не меняется. Включается LINEAGE_EXACT_REASONS."""
+    if not (LINEAGE and (LINEAGE_EXACT_REASONS or LINEAGE_EXACT_ON.get(reason))):
+        return
+    try:
+        _alive = {x.get('_obs_tid') for x in after if x.get('_obs_tid')}
+        for _r in before:
+            _tid = _r.get('_obs_tid')
+            if _tid and _tid not in _alive and '_finals' not in (_LINEAGE_LOG.get(_tid) or {}):
+                _trace(_tid, stage, 'removed', reason=reason)
+    except Exception as _lx:
+        print('  [WARN] lineage exact %s: %s' % (reason, _lx), file=sys.stderr)
 
 
 def _lin_removed(removed, survivors, stage, reason, winner_of=None):
@@ -28367,13 +28389,19 @@ def save_enriched(events, previous_snapshot=None):
             _egp('k04_до_domain_fix', enriched["events"])
             enriched["events"] = _domain_fix(enriched["events"])
             _egp('k05_domain_fix', enriched["events"])
+            _lx0 = list(enriched["events"])
             enriched["events"] = _infra_anchor(enriched["events"])
+            _lin_exact(_lx0, enriched["events"], 'INFRA_ANCHOR', 'infra_anchor')
             _egp('k06_infra_anchor', enriched["events"])
             enriched["events"] = _ndup_collapse(enriched["events"])
             _egp('k07_ndup', enriched["events"])
-            enriched["events"] = _drop_noise_cards(_p10_drop_quake_cards(enriched["events"]))
+            _lx0 = _p10_drop_quake_cards(enriched["events"])
+            enriched["events"] = _drop_noise_cards(_lx0)
+            _lin_exact(_lx0, enriched["events"], 'NOISE_CARD', 'noise_card')
             _egp('k08_p10_noise_cards', enriched["events"])
+            _lx0 = list(enriched["events"])
             enriched["events"] = _signal_quality_pass(enriched["events"])
+            _lin_exact(_lx0, enriched["events"], 'SIGNAL_QUALITY', 'signal_quality')
             _egp('k09_signal_quality', enriched["events"])
             enriched["events"] = _retain_critical(enriched["events"], previous_snapshot)
             _egp('k10_retain_critical', enriched["events"])
