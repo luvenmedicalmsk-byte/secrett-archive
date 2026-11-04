@@ -7592,6 +7592,7 @@ FORCE_KEEPS_SEVERITY = True
 # на входе (потеря трассы против потери события). Только наблюдаемость: состав ленты
 # не меняется. Откат: LINEAGE_GAP_PROBE = False.
 LINEAGE_GAP_PROBE = True
+LINEAGE_RISK_GATE = False   # D-08a-2C: причина risk_gate вместо gate_unattributed
 _GAP_CK = {}
 _GAP_SEEN = {}
 
@@ -23214,6 +23215,20 @@ def _risk_gate(events):
         return events
     kept = [e for e in events if verdict.get(e['id'], True)]  # нет вердикта -> оставляем
     print(f"  Risk-gate: отсеяно шума {len(events) - len(kept)} из {len(cand)} пограничных", file=sys.stderr)
+    # D-08a-2C LINEAGE_RISK_GATE: удаление LLM-гейтом трассируется собственной причиной.
+    # RCA D-08a-2B (03.11.2026): все 58 трасс gate_unattributed первой канареечной
+    # публикации имели last_ck=c13_append, то есть исчезали именно здесь. Только
+    # наблюдаемость: состав kept не меняется. Откат: LINEAGE_RISK_GATE = False.
+    if LINEAGE and LINEAGE_RISK_GATE:
+        try:
+            _alive = {x.get('_obs_tid') for x in kept if x.get('_obs_tid')}
+            for _r in events:
+                _tid = _r.get('_obs_tid')
+                if _tid and _tid not in _alive and '_finals' not in (_LINEAGE_LOG.get(_tid) or {}):
+                    _trace(_tid, 'RISK_GATE', 'removed', reason='risk_gate',
+                           severity=_r.get('severity'), domain=_r.get('domain'))
+        except Exception as _rq:
+            print('  [WARN] risk_gate lineage fail: %s' % _rq, file=sys.stderr)
     return kept
 
 
