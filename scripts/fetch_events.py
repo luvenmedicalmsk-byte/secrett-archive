@@ -5934,6 +5934,44 @@ def _sa_scale_floor(ev, b, full):
     return full
 
 
+# NOISE_0411 (аудит ленты 04.11.2026). Откат: NOISE_0411 = False.
+NOISE_0411 = True
+# Бытовой прогноз погоды региональных СМИ: «Какой будет погода в Казахстане 31 октября»,
+# «Сильный снег и заморозки до -7°C ожидаются в Казахстане во вторник».
+_N4_WX = re.compile(r'какой\s+будет\s+погода|погода\s+на\s+(?:завтра|выходные|неделю)|'
+                    r'(?:снег|дожд\w*|туман|заморозк\w*|ветер|похолодани\w*|потеплени\w*)[^.]{0,60}'
+                    r'(?:ожида\w+|прогнозиру\w+)\s+в\s+[А-ЯЁ]', re.I)
+_N4_WX_SEV = re.compile(r'штормов|чрезвычайн|\bчс\b|эвакуац|погиб|рекордн|аномальн|ураган|буран|оранжев|красн\w+\s+уров', re.I)
+# Протокол: выступления и визиты без события.
+_N4_PROTO = re.compile(r'о\s+ч[её]м\s+(?:ещ[её]\s+)?(?:говорил|рассказал|заявил)|'
+                       r'выступил\w*\s+на\s+(?:\d+-?м\s+)?(?:саммит|форум|заседани|съезд)|'
+                       r'в\s+рамках\s+(?:\S+\s+){0,3}(?:саммит|форум|визит)\w*|^о\s+помощи\s+', re.I)
+# Локальный пожар, уже потушенный, без жертв.
+_N4_FIRE_DONE = re.compile(r'(?:пожар|возгорани\w*)[^.]{0,50}(?:ликвидирова|потушил|потушен|локализова)\w*', re.I)
+# Разбор слухов и «страшилок».
+_N4_DEBUNK = re.compile(r'страшилк', re.I)
+# Научно-популярные и аналитические ленты: событие должно быть названо в заголовке.
+_N4_ANALYTIC_SRC = {'Grist', 'ScienceDaily Climate', 'Phys.org Climate', 'Yale Climate Connections',
+                    'Yale E360', 'Wildfire Today', 'Lab News'}
+_N4_EVENT_T = re.compile(r'погиб|жертв|эвакуир|разруш|затопл|пострадал|рекорд|землетряс|ураган|тайфун|'
+                         r'циклон|наводнен|извержен|пожар\w*\s+(?:уничтож|охватил|бушу)|чрезвычайн|взлом|утечк|атак', re.I)
+
+
+def _n4_noise(title, b, source=None):
+    t = title or ''
+    # погодные предупреждения приходят официальными лентами (CAP); здесь судит только заголовок
+    if _N4_WX.search(t) and not _N4_WX_SEV.search(t):
+        return True
+    if _N4_PROTO.search(t) and not re.search(r'(?<![а-яё])(?:погиб|удар|атак|санкци|войн|ядерн)', t, re.I):
+        return True
+    if _N4_FIRE_DONE.search(t) and not re.search(r'(?<![а-яё])(?:погиб|пострадал|гектар|лесн|удар|атак|бпла|дрон|ракет|взрыв)', t, re.I) \
+            and not re.search(r'погиб|госпитализ|(?<!без )(?<!нет )жертв(?!\w*\s+нет)', b):
+        return True
+    if _N4_DEBUNK.search(t):
+        return True
+    return False
+
+
 def _fa_noise(title, b):
     """FEED_AUDIT_0311: дополнительный шум для S43. b - title+summary в нижнем регистре."""
     t = (title or '').strip()
@@ -6040,7 +6078,7 @@ def _is_pr_noise(title, b):
     return False
 
 
-def _is_news_not_signal(title, summary, domain):
+def _is_news_not_signal(title, summary, domain, source=None):
     """S43: «сигнал или шум» на финальном (русском) тексте. True = новость, не сигнал.
     Дубль логики S41/S42, но на переведённом тексте -- ловит мусор из англоязычных
     источников, который прошёл цикл на английском (перевод делается после отбора)."""
@@ -6053,6 +6091,8 @@ def _is_news_not_signal(title, summary, domain):
     if _is_digest(b) or _is_agency_pr(b) or _is_personal_story(title):
         return True
     if FEED_AUDIT_0311 and _fa_noise(title, b):
+        return True
+    if NOISE_0411 and _n4_noise(title, b, source):
         return True
     if RETRO_TITLE and _is_retro_title(title):
         return True
@@ -8814,7 +8854,7 @@ def process_events(raw_items):
     _s43_in = list(top_events)
     top_events = [e for e in top_events
                   if (e.get('meta') or {}).get('verified')
-                  or (not _is_news_not_signal(e.get('title',''), e.get('summary',''), e.get('domain',''))
+                  or (not _is_news_not_signal(e.get('title',''), e.get('summary',''), e.get('domain',''), e.get('source'))
                   and not _is_broken_fragment(e.get('title',''), e.get('summary',''))
                   and len(re.findall(r'[іїєґІЇЄҐ]', (e.get('title') or '') + (e.get('summary') or ''))) < 3)]
     _post_lost('S43_новость_не_сигнал', _s43_in, top_events)
@@ -10335,7 +10375,7 @@ def _signal_gate(events):
                 r'прекратит производство|может лечь в основу|отраслев\w* стандарт)', low):
             rej['PR/регуляторика/опрос'] += 1; continue
         # 4) уже существующая логика «новость, не сигнал» (S43) + шум-заголовки (S37)
-        if _is_news_not_signal(t, s, dom):
+        if _is_news_not_signal(t, s, dom, e.get('source')):
             rej['новость без сигнала'] += 1; continue
         kept.append(e)
     if sum(rej.values()):
@@ -23737,7 +23777,7 @@ def _retain_critical(evs, prev):
             if RETAIN_READMIT:
                 try:
                     if _is_news_not_signal(e.get('title', ''), e.get('summary', ''),
-                                           e.get('domain', '')):
+                                           e.get('domain', ''), e.get('source')):
                         _dropped += 1
                         continue
                 except Exception:
