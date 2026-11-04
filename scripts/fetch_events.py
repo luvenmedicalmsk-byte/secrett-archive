@@ -7592,7 +7592,7 @@ FORCE_KEEPS_SEVERITY = True
 # на входе (потеря трассы против потери события). Только наблюдаемость: состав ленты
 # не меняется. Откат: LINEAGE_GAP_PROBE = False.
 LINEAGE_GAP_PROBE = True
-LINEAGE_RISK_GATE = False   # D-08a-2C: причина risk_gate вместо gate_unattributed
+LINEAGE_RISK_GATE = True    # D-08a-2C: причина risk_gate вместо gate_unattributed
 _GAP_CK = {}
 _GAP_SEEN = {}
 
