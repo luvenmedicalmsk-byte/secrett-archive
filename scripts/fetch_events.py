@@ -9194,6 +9194,7 @@ def process_events(raw_items):
     except Exception as _e:
         print('  [WARN] loss debug:', _e, file=sys.stderr)
     _save_tr_disk()
+    _event_cluster_shadow(top_events)
     if LINEAGE:
         _fin={x.get('_obs_tid') for x in top_events if x.get('_obs_tid')}
         for _tid2,_rec2 in list(_LINEAGE_LOG.items()):
@@ -9649,6 +9650,112 @@ def _lin_removed(removed, survivors, stage, reason, winner_of=None):
             _meta['winner_trace'] = _w.get('_obs_tid')
             _meta['winner_title'] = (_w.get('title') or '')[:120]
         _trace(_tid, stage, 'removed', reason=reason, **_meta)
+
+
+# ── EVENT_CLUSTER_SHADOW (04.11.2026) ──────────────────────────────────────
+# Замер склейки одного события из разных источников («удар по школе» 5 записей,
+# «взлом Binance» 3, «НПЗ в Ярославле» 3). _ndup_collapse ловит только перефраз
+# с большим совпадением слов; переводы разных агентств его не проходят.
+# ТОЛЬКО ТЕНЬ: лента не меняется, кластеры пишутся в docs/_cluster_shadow.json.
+# Правило пары: тот же домен, даты ±2 дня, общий редкий якорь (имя собственное
+# из заголовка и начала текста), нет конфликта чисел жертв (>35%), нет конфликта
+# стран, нет противоположной фазы («приостановлен» / «восстановлен»), совпадение
+# основ ≥0.25 (≥0.4, если общие якоря только прилагательные «…ской»).
+# Кластер собирается полной связью: новая запись должна подходить ко ВСЕМ членам.
+# Откат: EVENT_CLUSTER_SHADOW = False.
+EVENT_CLUSTER_SHADOW = True
+_ECS_STOP = ('россия', 'россий', 'украин', 'сша', 'китай', 'иран', 'израил', 'европ', 'мир', 'презид',
+             'правит', 'трамп', 'путин', 'зеленс', 'нетань', 'минобо', 'монито', 'сегодн', 'ночью', 'кроме', 'также')
+_ECS_MACHINE = {'GPSJam', 'IODA', 'Cloudflare Radar', 'EUROCONTROL NOTAM', 'JTWC', 'USGS', 'GDACS',
+                'NASA FIRMS', 'МЧС России'}
+_ECS_SERIES = re.compile(r'^\s*(?:мониторинг ракетной войны|война россии и украины)\s*:\s*', re.I)
+_ECS_STOPPH = re.compile(r'приостанов|остановлен|прекращ', re.I)
+_ECS_RESUME = re.compile(r'восстановлен|возобновл', re.I)
+
+
+def _ecs_anchors(text, src):
+    srcw = {w.lower()[:6] for w in re.findall(r'\w{4,}', src or '')}
+    out = {}
+    for m in re.finditer(r'[A-ZА-ЯЁ][\w\-]{3,}|[A-Z]{2,}\w*', text):
+        w = m.group(0).lower()
+        st = w[:6]
+        pre = text[max(0, m.start() - 2):m.start()].strip()
+        if (m.start() == 0 or pre in ('.', ':', '—', '-', '«', '"')) and not re.match(r'[A-Z]', m.group(0)):
+            continue
+        if st in srcw or st.startswith(_ECS_STOP):
+            continue
+        adj = bool(re.search(r'(?:ск|цк)(?:ой|ая|ий|ое|ого|их|ую)$', w))
+        out[st] = out.get(st, True) and adj
+    return out
+
+
+def _event_cluster_shadow(events):
+    if not EVENT_CLUSTER_SHADOW:
+        return
+    try:
+        ev = [e for e in events if e.get('feed_visible', True)]
+        n = len(ev)
+        A = [_ecs_anchors((e.get('title') or '') + ' ' + (e.get('summary') or '')[:220], e.get('source')) for e in ev]
+        import collections as _col
+        df = _col.Counter(a for x in A for a in x)
+        lim = max(3, n * 0.03)
+        T = [_ECS_SERIES.sub('', e.get('title') or '') for e in ev]
+        W = [_ndup_stems(t) for t in T]
+        D = [_ndup_day(e.get('date')) for e in ev]
+        C = [_cf_counts(t) for t in T]
+        cc = [(e.get('country_code') or '').upper() for e in ev]
+
+        def _conf(a, b):
+            return bool(a and b and abs(a - b) > max(a, b) * 0.35)
+
+        def _match(i, j):
+            a, b = ev[i], ev[j]
+            if a.get('domain') != b.get('domain'):
+                return False
+            if a.get('source') in _ECS_MACHINE or b.get('source') in _ECS_MACHINE:
+                return False
+            if D[i] is not None and D[j] is not None and abs(D[i] - D[j]) > 2:
+                return False
+            if cc[i] and cc[j] and cc[i] != cc[j]:
+                return False
+            rare = [x for x in set(A[i]) & set(A[j]) if df[x] <= lim]
+            if not rare:
+                return False
+            if _conf(C[i][0], C[j][0]) or _conf(C[i][1], C[j][1]):
+                return False
+            if (_ECS_STOPPH.search(T[i]) and _ECS_RESUME.search(T[j])) or (_ECS_RESUME.search(T[i]) and _ECS_STOPPH.search(T[j])):
+                return False
+            noun = [x for x in rare if not (A[i].get(x) and A[j].get(x))]
+            _, ratio = _ndup_ovl(W[i], W[j])
+            need = 0.25 if noun else 0.4
+            if a.get('source') == b.get('source'):
+                need = max(need, 0.5)
+            return ratio >= need
+
+        order = sorted(range(n), key=lambda i: -(ev[i].get('severity') or 0))
+        cls = []
+        for i in order:
+            for c in cls:
+                if all(_match(i, j) for j in c):
+                    c.append(i)
+                    break
+            else:
+                cls.append([i])
+        cls = [c for c in cls if len(c) > 1]
+        rep = {
+            'дата': datetime.now(timezone.utc).isoformat(),
+            'режим': 'тень, лента не тронута',
+            'записей в ленте': n,
+            'кластеров': len(cls),
+            'лишних записей': sum(len(c) - 1 for c in cls),
+            'кластеры': [[{'id': ev[i].get('id'), 'severity': ev[i].get('severity'), 'source': ev[i].get('source'),
+                           'country': cc[i], 'title': (ev[i].get('title') or '')[:120]} for i in c] for c in cls],
+        }
+        (OUTPUT_PATH.parent / '_cluster_shadow.json').write_text(json.dumps(rep, ensure_ascii=False, indent=1), encoding='utf-8')
+        print('  [CLUSTER-SHADOW] кластеров %d, лишних записей %d из %d' % (rep['кластеров'], rep['лишних записей'], n),
+              file=sys.stderr)
+    except Exception as _ce:
+        print('  [WARN] cluster shadow: %s' % _ce, file=sys.stderr)
 
 
 def _ndup_collapse(events):
