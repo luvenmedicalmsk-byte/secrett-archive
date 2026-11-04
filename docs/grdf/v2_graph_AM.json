@@ -2,7 +2,7 @@
   "country": "AM",
   "date": "2026-11-04",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-04T08:08:23.630713+00:00",
+  "generated_at": "2026-11-04T08:27:49.436303+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-AM-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 46,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -47,7 +47,7 @@
       "id": "DOMAIN-AM-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
+      "score": 54,
       "trend": "stable"
     },
     {
@@ -70,21 +70,14 @@
       "label": "technology"
     },
     {
+      "id": "DRIVER-AM-social",
+      "type": "Driver",
+      "label": "social"
+    },
+    {
       "id": "DRIVER-AM-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
-    },
-    {
-      "id": "DRIVER-AM-economic",
-      "type": "Driver",
-      "label": "economic"
-    },
-    {
-      "id": "SIGNAL-AM-Уровень_ин",
-      "type": "Signal",
-      "label": "Уровень инфляции в Армении",
-      "severity": 32,
-      "domain": "economic"
     },
     {
       "id": "SIGNAL-AM-Отключение",
@@ -99,6 +92,13 @@
       "label": "Санкционное давление — Армения",
       "severity": 52,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-AM-Эпидемиоло",
+      "type": "Signal",
+      "label": "Эпидемиологический надзор — Армения",
+      "severity": 54,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-AM",
       "to": "DOMAIN-AM-economic",
       "type": "CORRELATES",
-      "weight": 0.46
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-AM",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-AM",
       "to": "DOMAIN-AM-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.54
     },
     {
       "from": "COUNTRY-AM",
@@ -151,13 +151,13 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-AM-geopolitical",
+      "from": "DRIVER-AM-social",
       "to": "COUNTRY-AM",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-AM-economic",
+      "from": "DRIVER-AM-geopolitical",
       "to": "COUNTRY-AM",
       "type": "CAUSES",
       "weight": 0.8
@@ -184,12 +184,6 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-AM-Уровень_ин",
-      "to": "DOMAIN-AM-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.32
-    },
-    {
       "from": "SIGNAL-AM-Отключение",
       "to": "DOMAIN-AM-technology",
       "type": "AMPLIFIES",
@@ -200,6 +194,12 @@
       "to": "DOMAIN-AM-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.52
+    },
+    {
+      "from": "SIGNAL-AM-Эпидемиоло",
+      "to": "DOMAIN-AM-social",
+      "type": "AMPLIFIES",
+      "weight": 0.54
     }
   ]
 }
