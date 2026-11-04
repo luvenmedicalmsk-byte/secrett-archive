@@ -2,7 +2,7 @@
   "country": "CN",
   "date": "2026-11-04",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-04T23:08:27.341743+00:00",
+  "generated_at": "2026-11-04T23:28:40.795044+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 74,
+      "score": 78,
       "props": {
-        "risk_score": 74
+        "risk_score": 78
       }
     },
     {
@@ -20,14 +20,14 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 5,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-climate",
@@ -48,21 +48,21 @@
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-CN-Geopolitical",
@@ -80,9 +80,16 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CN-Туман:_Уез",
+      "id": "SIGNAL-CN-Туман:_Окр",
       "type": "Signal",
-      "label": "Туман: Уезд Цзишань, Округ Салин-Лейк, Ц",
+      "label": "Туман: Округ Салин-Лейк, Дамин, Уезд Уцз",
+      "severity": 74,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-CN-Метель:_Хэ",
+      "type": "Signal",
+      "label": "Метель: Хэган, Город Шуаньяшань, Китай",
       "severity": 74,
       "domain": "climate"
     },
@@ -92,13 +99,6 @@
       "label": "Падение интернет-связи: Китай",
       "severity": 64,
       "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-CN-Снегопад:_",
-      "type": "Signal",
-      "label": "Снегопад: Бэйань, Суйленг, Уезд Ганнан и",
-      "severity": 56,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -205,7 +205,13 @@
       "lag_days": 90
     },
     {
-      "from": "SIGNAL-CN-Туман:_Уез",
+      "from": "SIGNAL-CN-Туман:_Окр",
+      "to": "DOMAIN-CN-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.74
+    },
+    {
+      "from": "SIGNAL-CN-Метель:_Хэ",
       "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
       "weight": 0.74
@@ -215,12 +221,6 @@
       "to": "DOMAIN-CN-technology",
       "type": "AMPLIFIES",
       "weight": 0.64
-    },
-    {
-      "from": "SIGNAL-CN-Снегопад:_",
-      "to": "DOMAIN-CN-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.56
     }
   ]
 }
