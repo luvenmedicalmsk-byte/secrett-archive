@@ -2,77 +2,67 @@
   "country": "ME",
   "date": "2026-11-04",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-04T20:07:10.686751+00:00",
+  "generated_at": "2026-11-04T20:29:35.313219+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-ME",
       "type": "Country",
       "label": "ME",
-      "score": 72,
+      "score": 45,
       "props": {
-        "risk_score": 72
+        "risk_score": 45
       }
     },
     {
       "id": "DOMAIN-ME-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 22,
-      "trend": "stable"
+      "score": 45,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ME-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ME-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 72,
-      "trend": "stable"
+      "score": 5,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ME-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ME-social",
       "type": "Domain",
       "label": "social",
       "score": 35,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ME-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ME-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
-    },
-    {
-      "id": "DRIVER-ME-climate",
-      "type": "Driver",
-      "label": "climate"
-    },
-    {
-      "id": "DRIVER-ME-social",
-      "type": "Driver",
-      "label": "social"
+      "trend": "down"
     },
     {
       "id": "DRIVER-ME-geopolitical",
@@ -80,11 +70,14 @@
       "label": "geopolitical"
     },
     {
-      "id": "SIGNAL-ME-Ветер:_Адр",
-      "type": "Signal",
-      "label": "Ветер: Адриатическое побережье, Континен",
-      "severity": 72,
-      "domain": "climate"
+      "id": "DRIVER-ME-social",
+      "type": "Driver",
+      "label": "social"
+    },
+    {
+      "id": "DRIVER-ME-economic",
+      "type": "Driver",
+      "label": "economic"
     },
     {
       "id": "SIGNAL-ME-Еврокомисс",
@@ -99,6 +92,13 @@
       "label": "Социальный процесс — Балканы",
       "severity": 47,
       "domain": "social"
+    },
+    {
+      "id": "SIGNAL-ME-Геополитич",
+      "type": "Signal",
+      "label": "Геополитический процесс — Балканы",
+      "severity": 60,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-ME",
       "to": "DOMAIN-ME-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.22
+      "weight": 0.45
     },
     {
       "from": "COUNTRY-ME",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-ME",
       "to": "DOMAIN-ME-climate",
       "type": "CORRELATES",
-      "weight": 0.72
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-ME",
@@ -145,7 +145,7 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-ME-climate",
+      "from": "DRIVER-ME-geopolitical",
       "to": "COUNTRY-ME",
       "type": "CAUSES",
       "weight": 0.8
@@ -157,58 +157,31 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-ME-geopolitical",
+      "from": "DRIVER-ME-economic",
       "to": "COUNTRY-ME",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-ME-climate",
-      "to": "DOMAIN-ME-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-ME-economic",
-      "to": "DOMAIN-ME-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-ME-social",
-      "to": "DOMAIN-ME-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-ME-climate",
+      "from": "DOMAIN-ME-geopolitical",
       "to": "DOMAIN-ME-infrastructure",
       "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
+      "weight": 0.8,
+      "lag_days": 3
     },
     {
       "from": "DOMAIN-ME-infrastructure",
       "to": "DOMAIN-ME-economic",
       "type": "AMPLIFIES",
-      "weight": 0.68,
+      "weight": 0.72,
       "lag_days": 14
     },
     {
       "from": "DOMAIN-ME-economic",
-      "to": "DOMAIN-ME-economic",
+      "to": "DOMAIN-ME-social",
       "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "SIGNAL-ME-Ветер:_Адр",
-      "to": "DOMAIN-ME-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.72
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-ME-Еврокомисс",
@@ -221,6 +194,12 @@
       "to": "DOMAIN-ME-social",
       "type": "AMPLIFIES",
       "weight": 0.47
+    },
+    {
+      "from": "SIGNAL-ME-Геополитич",
+      "to": "DOMAIN-ME-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.6
     }
   ]
 }
