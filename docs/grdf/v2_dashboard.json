@@ -1,36 +1,55 @@
 {
   "grdf_version": "2.0",
   "date": "2026-11-04",
-  "generated_at": "2026-11-04T14:09:27.927255+00:00",
+  "generated_at": "2026-11-04T14:29:02.476222+00:00",
   "critical_cascades": [],
   "critical_cascades_n": 0,
   "fastest_escalating": [
     {
-      "country": "SA",
-      "country_name": "Саудовская Аравия",
-      "velocity": 10,
-      "risk_score": 80
-    },
-    {
       "country": "CA",
       "country_name": "Канада",
-      "velocity": 6,
-      "risk_score": 86
+      "velocity": 30,
+      "risk_score": 56
+    },
+    {
+      "country": "CN",
+      "country_name": "Китай",
+      "velocity": 18,
+      "risk_score": 74
+    },
+    {
+      "country": "PT",
+      "country_name": "Португалия",
+      "velocity": 5,
+      "risk_score": 50
+    },
+    {
+      "country": "JP",
+      "country_name": "Япония",
+      "velocity": 4,
+      "risk_score": 81
     },
     {
       "country": "GB",
       "country_name": "Великобритания",
       "velocity": 2,
-      "risk_score": 70
+      "risk_score": 68
+    }
+  ],
+  "emerging_threats": [
+    {
+      "country": "CA",
+      "country_name": "Канада",
+      "risk_score": 56,
+      "delta": -30
     },
     {
       "country": "PT",
       "country_name": "Португалия",
-      "velocity": 1,
-      "risk_score": 55
+      "risk_score": 50,
+      "delta": -5
     }
   ],
-  "emerging_threats": [],
   "global_top_drivers": [
     {
       "domain": "climate",
@@ -42,18 +61,25 @@
     },
     {
       "domain": "economic",
-      "count": 17
+      "count": 16
+    },
+    {
+      "domain": "technology",
+      "count": 15
     },
     {
       "domain": "social",
       "count": 14
-    },
-    {
-      "domain": "technology",
-      "count": 14
     }
   ],
   "warning_feed": [
+    {
+      "country": "CA",
+      "rule": "A",
+      "warning_level": "CRITICAL",
+      "trigger": "velocity=30.0 pts/day",
+      "confidence": 0.95
+    },
     {
       "country": "RU",
       "rule": "B",
@@ -70,16 +96,23 @@
     },
     {
       "country": "CN",
+      "rule": "A",
+      "warning_level": "WARNING",
+      "trigger": "velocity=18.0 pts/day",
+      "confidence": 0.88
+    },
+    {
+      "country": "CN",
       "rule": "B",
       "warning_level": "WARNING",
-      "trigger": "economic +1380% in 30d",
+      "trigger": "climate +362% in 30d",
       "confidence": 0.82
     },
     {
       "country": "CN",
       "rule": "B",
       "warning_level": "WARNING",
-      "trigger": "climate +56% in 30d",
+      "trigger": "technology +1180% in 30d",
       "confidence": 0.82
     },
     {
@@ -107,7 +140,21 @@
       "country": "GB",
       "rule": "B",
       "warning_level": "WARNING",
-      "trigger": "technology +1260% in 30d",
+      "trigger": "economic +540% in 30d",
+      "confidence": 0.82
+    },
+    {
+      "country": "GB",
+      "rule": "B",
+      "warning_level": "WARNING",
+      "trigger": "climate +540% in 30d",
+      "confidence": 0.82
+    },
+    {
+      "country": "GB",
+      "rule": "B",
+      "warning_level": "WARNING",
+      "trigger": "technology +106% in 30d",
       "confidence": 0.82
     },
     {
@@ -165,39 +212,11 @@
       "warning_level": "WARNING",
       "trigger": "social +900% in 30d",
       "confidence": 0.82
-    },
-    {
-      "country": "IN",
-      "rule": "B",
-      "warning_level": "WARNING",
-      "trigger": "economic +1140% in 30d",
-      "confidence": 0.82
-    },
-    {
-      "country": "IN",
-      "rule": "B",
-      "warning_level": "WARNING",
-      "trigger": "climate +48% in 30d",
-      "confidence": 0.82
-    },
-    {
-      "country": "JP",
-      "rule": "B",
-      "warning_level": "WARNING",
-      "trigger": "climate +1380% in 30d",
-      "confidence": 0.82
-    },
-    {
-      "country": "JP",
-      "rule": "B",
-      "warning_level": "WARNING",
-      "trigger": "technology +1140% in 30d",
-      "confidence": 0.82
     }
   ],
-  "warning_feed_n": 87,
-  "warning_critical_n": 0,
-  "warning_warning_n": 72,
+  "warning_feed_n": 89,
+  "warning_critical_n": 1,
+  "warning_warning_n": 74,
   "top_correlations": [
     {
       "pair": "geopolitical:social",
@@ -218,15 +237,6 @@
       "n_countries": 4
     },
     {
-      "pair": "climate:technology",
-      "domain_a": "climate",
-      "domain_b": "technology",
-      "strength": 0.851,
-      "confidence": 0.26,
-      "lag_days": 0,
-      "n_countries": 7
-    },
-    {
       "pair": "climate:social",
       "domain_a": "climate",
       "domain_b": "social",
@@ -236,16 +246,33 @@
       "n_countries": 8
     },
     {
-      "pair": "economic:geopolitical",
-      "domain_a": "economic",
-      "domain_b": "geopolitical",
+      "pair": "climate:technology",
+      "domain_a": "climate",
+      "domain_b": "technology",
       "strength": 0.809,
-      "confidence": 0.59,
+      "confidence": 0.26,
       "lag_days": 0,
-      "n_countries": 16
+      "n_countries": 7
+    },
+    {
+      "pair": "geopolitical:technology",
+      "domain_a": "geopolitical",
+      "domain_b": "technology",
+      "strength": 0.805,
+      "confidence": 0.4,
+      "lag_days": 0,
+      "n_countries": 11
     }
   ],
   "forecast_consensus": [
+    {
+      "country": "CA",
+      "country_name": "Канада",
+      "now": 56,
+      "forecast_30d": 75,
+      "delta_30d": 19,
+      "trend": "up"
+    },
     {
       "country": "BG",
       "country_name": "Болгария",
@@ -271,12 +298,12 @@
       "trend": "down"
     },
     {
-      "country": "CN",
-      "country_name": "Китай",
-      "now": 92,
-      "forecast_30d": 83,
-      "delta_30d": -9,
-      "trend": "down"
+      "country": "PT",
+      "country_name": "Португалия",
+      "now": 50,
+      "forecast_30d": 60,
+      "delta_30d": 10,
+      "trend": "up"
     },
     {
       "country": "CH",
@@ -303,14 +330,6 @@
       "trend": "down"
     },
     {
-      "country": "GB",
-      "country_name": "Великобритания",
-      "now": 70,
-      "forecast_30d": 62,
-      "delta_30d": -8,
-      "trend": "down"
-    },
-    {
       "country": "AE",
       "country_name": "ОАЭ",
       "now": 45,
@@ -319,20 +338,20 @@
       "trend": "up"
     },
     {
-      "country": "PT",
-      "country_name": "Португалия",
-      "now": 55,
-      "forecast_30d": 62,
-      "delta_30d": 7,
-      "trend": "up"
+      "country": "GB",
+      "country_name": "Великобритания",
+      "now": 68,
+      "forecast_30d": 61,
+      "delta_30d": -7,
+      "trend": "down"
     }
   ],
   "summary": {
-    "critical": 9,
+    "critical": 8,
     "high": 14,
-    "elevated": 16,
-    "moderate": 8,
-    "avg_gri": 65.0,
+    "elevated": 18,
+    "moderate": 7,
+    "avg_gri": 64.2,
     "highest_risk_country": "UA",
     "highest_risk_gri": 100
   },
@@ -340,14 +359,6 @@
     {
       "country": "UA",
       "gri": 100
-    },
-    {
-      "country": "SA",
-      "gri": 89
-    },
-    {
-      "country": "CN",
-      "gri": 88
     },
     {
       "country": "RU",
@@ -364,6 +375,10 @@
     {
       "country": "BG",
       "gri": 83
+    },
+    {
+      "country": "SA",
+      "gri": 82
     },
     {
       "country": "IN",
@@ -390,16 +405,16 @@
       "gri": 75
     },
     {
-      "country": "CA",
-      "gri": 73
+      "country": "CN",
+      "gri": 72
     },
     {
       "country": "RO",
       "gri": 72
     },
     {
-      "country": "JP",
-      "gri": 72
+      "country": "CA",
+      "gri": 71
     },
     {
       "country": "GR",
@@ -418,15 +433,15 @@
       "gri": 67
     },
     {
+      "country": "JP",
+      "gri": 66
+    },
+    {
       "country": "TR",
       "gri": 66
     },
     {
       "country": "BY",
-      "gri": 65
-    },
-    {
-      "country": "GB",
       "gri": 65
     },
     {
@@ -456,6 +471,10 @@
     {
       "country": "EE",
       "gri": 59
+    },
+    {
+      "country": "GB",
+      "gri": 58
     },
     {
       "country": "MY",
@@ -494,16 +513,16 @@
       "gri": 51
     },
     {
+      "country": "PT",
+      "gri": 50
+    },
+    {
       "country": "SK",
       "gri": 50
     },
     {
       "country": "UZ",
       "gri": 50
-    },
-    {
-      "country": "PT",
-      "gri": 49
     },
     {
       "country": "CY",
