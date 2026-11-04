@@ -15658,6 +15658,19 @@ def _save_quake_history():
         print(f"  [WARN] quake history failed: {_qe}", file=sys.stderr)
 
 
+# D-08b USGS_EVENT_DATE (04.11.2026). RCA D-08: землетрясения получали дату прогона,
+# а не толчка. _ndup_collapse сравнивает даты (±3 дня), поэтому толчки разных дней
+# с одинаковым заголовком склеивались. Откат: USGS_EVENT_DATE = False.
+USGS_EVENT_DATE = False
+
+
+def _usgs_event_day(ms):
+    try:
+        return datetime.fromtimestamp(int(ms) / 1000, timezone.utc).strftime('%Y-%m-%d') if ms else ''
+    except Exception:
+        return ''
+
+
 def fetch_usgs_earthquakes():
     items = []
     # Землетрясения магнитудой 5.0+ за последние 7 дней
@@ -15706,7 +15719,11 @@ def fetch_usgs_earthquakes():
                 _it = {
                     'title': title,
                     'desc': f"Магнитуда {mag}. {ru_place}{_tail}. Параметры очага: {_origin}.",
-                    'date': datetime.now(timezone.utc).strftime('%Y-%m-%d'),
+                    # D-08b USGS_EVENT_DATE: дата толчка (props.time, UTC) вместо даты прогона.
+                    # Под флагом; поле _usgs_event_date пишется всегда (тень).
+                    'date': ((_usgs_event_day(_tm) or datetime.now(timezone.utc).strftime('%Y-%m-%d'))
+                             if USGS_EVENT_DATE else datetime.now(timezone.utc).strftime('%Y-%m-%d')),
+                    '_usgs_event_date': _usgs_event_day(_tm),
                     'source': 'USGS',
                     '_force_severity': normalize_severity('earthquake', {'magnitude': mag, 'depth': _depth}),
                     '_lat': lat, '_lng': lng, '_coord_origin': 'source',
