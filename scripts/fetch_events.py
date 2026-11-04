@@ -28169,7 +28169,7 @@ def _sic_shadow_report(events, outdir):
 # снимается в контрольных точках save_enriched вместе с полными полями записи.
 # Только отчёт docs/_enrich_gap.json: lineage и состав ленты не меняются.
 # Откат: ENRICH_GAP_PROBE = False.
-ENRICH_GAP_PROBE = True
+ENRICH_GAP_PROBE = False
 _EGP_CK = []          # [(метка, set(_obs_tid))]
 _EGP_REC = {}         # _obs_tid -> поля записи при первом появлении
 
