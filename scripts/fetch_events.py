@@ -28140,6 +28140,63 @@ def _sic_shadow_report(events, outdir):
           file=sys.stderr)
 
 
+# ── D-08a-2 ENRICH_GAP_PROBE (04.11.2026) ─────────────────────────────────
+# Инвентаризация catch-all «enrich_merge»: трассы, которые дошли до BUILT и
+# пропали внутри save_enriched без собственной причины. Офлайн-повтор шагов
+# невозможен (в lineage нет summary и перевода), поэтому членство _obs_tid
+# снимается в контрольных точках save_enriched вместе с полными полями записи.
+# Только отчёт docs/_enrich_gap.json: lineage и состав ленты не меняются.
+# Откат: ENRICH_GAP_PROBE = False.
+ENRICH_GAP_PROBE = True
+_EGP_CK = []          # [(метка, set(_obs_tid))]
+_EGP_REC = {}         # _obs_tid -> поля записи при первом появлении
+
+
+def _egp(label, evs):
+    if not (LINEAGE and ENRICH_GAP_PROBE):
+        return
+    try:
+        _ids = set()
+        for _x in evs or []:
+            _t = _x.get('_obs_tid')
+            if not _t:
+                continue
+            _ids.add(_t)
+            if _t not in _EGP_REC:
+                _EGP_REC[_t] = {'title': (_x.get('title') or '')[:200], 'summary': (_x.get('summary') or '')[:300],
+                                'source': _x.get('source'), 'severity': _x.get('severity'),
+                                'domain': _x.get('domain'), 'date': _x.get('date'), 'id': _x.get('id'),
+                                'feed_visible': _x.get('feed_visible')}
+        _EGP_CK.append((label, _ids))
+    except Exception:
+        pass
+
+
+def _egp_report(lost_tids):
+    if not (LINEAGE and ENRICH_GAP_PROBE):
+        return
+    try:
+        rows = []
+        for _t in sorted(lost_tids):
+            _last, _next = 'k00_до_save_enriched', None
+            for _i, (_lab, _ids) in enumerate(_EGP_CK):
+                if _t in _ids:
+                    _last = _lab
+                    _next = _EGP_CK[_i + 1][0] if _i + 1 < len(_EGP_CK) else 'конец'
+            rows.append(dict(_EGP_REC.get(_t, {}), obs_tid=_t, last_ck=_last, removed_between=[_last, _next]))
+        import collections as _c
+        (OUTPUT_PATH.parent / '_enrich_gap.json').write_text(json.dumps({
+            'дата': datetime.now(timezone.utc).isoformat(),
+            'режим': 'диагностика, lineage и лента не тронуты',
+            'контрольные точки': [l for l, _ in _EGP_CK],
+            'enrich_merge': len(rows),
+            'по участкам': dict(_c.Counter(' -> '.join(str(x) for x in r['removed_between']) for r in rows)),
+            'записи': rows,
+        }, ensure_ascii=False, indent=1), encoding='utf-8')
+    except Exception as _ge:
+        print('  [WARN] enrich gap report: %s' % _ge, file=sys.stderr)
+
+
 def save_enriched(events, previous_snapshot=None):
     """
     Сохраняет events.json c signal taxonomy + escalation engine.
@@ -28287,7 +28344,9 @@ def save_enriched(events, previous_snapshot=None):
             from collections import Counter
 
             # Шаг 1: signal taxonomy (phase / vectors / fingerprint / delta)
+            _egp('k01_вход', raw_snapshot.get('events'))
             enriched = _enrich_snapshot(raw_snapshot, previous_snapshot)
+            _egp('k02_enrich_snapshot', enriched.get('events'))
 
             # Шаг 2 + 3: history aggregation + escalation scoring
             if _ESCALATION_AVAILABLE:
@@ -28295,6 +28354,7 @@ def save_enriched(events, previous_snapshot=None):
                 history_map = _build_history_map(cache) if cache else {}
                 _HISTORY_MAP_SIZE[0] = len(history_map or {})
                 enriched = _enrich_escalation(enriched, history_map, cache)
+                _egp('k03_enrich_escalation', enriched.get('events'))
 
             for _e in enriched["events"]:
                 try:
@@ -28304,19 +28364,28 @@ def save_enriched(events, previous_snapshot=None):
                 except Exception: pass
             for _e in enriched["events"]:
                 _fix_trivia_title(_e)
+            _egp('k04_до_domain_fix', enriched["events"])
             enriched["events"] = _domain_fix(enriched["events"])
+            _egp('k05_domain_fix', enriched["events"])
             enriched["events"] = _infra_anchor(enriched["events"])
+            _egp('k06_infra_anchor', enriched["events"])
             enriched["events"] = _ndup_collapse(enriched["events"])
+            _egp('k07_ndup', enriched["events"])
             enriched["events"] = _drop_noise_cards(_p10_drop_quake_cards(enriched["events"]))
+            _egp('k08_p10_noise_cards', enriched["events"])
             enriched["events"] = _signal_quality_pass(enriched["events"])
+            _egp('k09_signal_quality', enriched["events"])
             enriched["events"] = _retain_critical(enriched["events"], previous_snapshot)
+            _egp('k10_retain_critical', enriched["events"])
             enriched["count"] = len(enriched["events"])
             if LINEAGE: _se_pre = {e.get('_obs_tid') for e in enriched["events"] if e.get('_obs_tid')}
             enriched["events"] = _aggregate_series(_editorial_gate(enriched["events"]))   # аудит качества: шум/PR/ретро + серии
+            _egp('k11_editorial_series', enriched["events"])
             if LINEAGE:
                 _se_post = {e.get('_obs_tid') for e in enriched["events"] if e.get('_obs_tid')}
                 for _set in (_se_pre - _se_post): _trace(_set,'TOPIC_CAP','removed',reason='series_or_editorial')
             _apply_geo_contract(enriched["events"])   # GEO CONTRACT Phase 2 — единственный источник географии
+            _egp('k12_geo_contract', enriched["events"])
             _role_shadow_report(enriched["events"])   # TASK-092 · ROLE SHADOW · read-only
             _delatinize_titles(enriched["events"])    # чистка недопереведённых title ПОСЛЕ гео (0 churn)
             _normalize_units(enriched["events"])      # lakh/crore → русские числа (0 churn)
@@ -28718,6 +28787,7 @@ def save_enriched(events, previous_snapshot=None):
                     if _hme.get('canon_domain')=='geopolitics': _hme['canon_domain']='social'
             # ═══ IDR-011 · DOMAIN ARBITER: последний, кто трогает domain до записи ═══
             try:
+                _egp('k13_до_арбитра', enriched["events"])
                 _dom_trace(enriched["events"], 'PRE_ARBITER')   # TASK-278 · точка 5
                 _domain_arbiter(enriched["events"])
                 _dom_trace(enriched["events"], 'ARBITER')       # TASK-278 · точка 6
@@ -28730,6 +28800,12 @@ def save_enriched(events, previous_snapshot=None):
             # I.1 LINEAGE: enrich-merge — события, потерянные при слиянии снапшотов
             if LINEAGE:
                 _em_fin={x.get('_obs_tid') for x in enriched["events"] if x.get('_obs_tid')}
+                _egp('k14_финал', enriched["events"])
+                _egp_lost = set()
+                for _tid3,_rec3 in list(_LINEAGE_LOG.items()):
+                    if _tid3 not in _em_fin and '_finals' not in _rec3 and any(s.get('stage')=='BUILT' for s in _rec3.get('route',[])):
+                        _egp_lost.add(_tid3)
+                _egp_report(_egp_lost)
                 for _tid3,_rec3 in list(_LINEAGE_LOG.items()):
                     if _tid3 not in _em_fin and '_finals' not in _rec3 and any(s.get('stage')=='BUILT' for s in _rec3.get('route',[])):
                         _trace(_tid3,'TOPIC_CAP','removed',reason='enrich_merge')
