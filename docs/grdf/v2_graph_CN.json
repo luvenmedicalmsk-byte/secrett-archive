@@ -2,9 +2,9 @@
   "country": "CN",
   "date": "2026-11-04",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-04T15:48:29.662984+00:00",
+  "generated_at": "2026-11-04T16:26:57.777719+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-CN",
@@ -19,8 +19,8 @@
       "id": "DOMAIN-CN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 45,
-      "trend": "down"
+      "score": 5,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-economic",
@@ -34,14 +34,14 @@
       "type": "Domain",
       "label": "climate",
       "score": 74,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-technology",
       "type": "Domain",
       "label": "technology",
       "score": 64,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-social",
@@ -80,9 +80,9 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CN-Туман:_Мэн",
+      "id": "SIGNAL-CN-Туман:_Уез",
       "type": "Signal",
-      "label": "Туман: Мэнъинь, Юпинь-Дунгский автономны",
+      "label": "Туман: Уезд Дэцзян, Уезд Шицян, Уезд Цзи",
       "severity": 74,
       "domain": "climate"
     },
@@ -94,11 +94,11 @@
       "domain": "technology"
     },
     {
-      "id": "SIGNAL-CN-Ограничени",
+      "id": "SIGNAL-CN-Метель:_Го",
       "type": "Signal",
-      "label": "Ограничения самодостаточности Китая",
-      "severity": 45,
-      "domain": "geopolitical"
+      "label": "Метель: Город Тунцзян, Уезд Цзисян, Кита",
+      "severity": 56,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.45
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CN",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-CN-climate",
-      "to": "DOMAIN-CN-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-CN-economic",
-      "to": "DOMAIN-CN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-CN-social",
-      "to": "DOMAIN-CN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-CN-climate",
       "to": "DOMAIN-CN-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -205,28 +184,28 @@
       "lag_days": 30
     },
     {
-      "from": "DOMAIN-CN-geopolitical",
-      "to": "DOMAIN-CN-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-CN-infrastructure",
+      "from": "DOMAIN-CN-climate",
       "to": "DOMAIN-CN-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-CN-economic",
       "to": "DOMAIN-CN-social",
       "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
+      "weight": 0.7,
+      "lag_days": 60
     },
     {
-      "from": "SIGNAL-CN-Туман:_Мэн",
+      "from": "DOMAIN-CN-social",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "SIGNAL-CN-Туман:_Уез",
       "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
       "weight": 0.74
@@ -238,10 +217,10 @@
       "weight": 0.64
     },
     {
-      "from": "SIGNAL-CN-Ограничени",
-      "to": "DOMAIN-CN-geopolitical",
+      "from": "SIGNAL-CN-Метель:_Го",
+      "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
-      "weight": 0.45
+      "weight": 0.56
     }
   ]
 }
