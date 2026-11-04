@@ -2,7 +2,7 @@
   "country": "MY",
   "date": "2026-11-04",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-04T11:08:24.295658+00:00",
+  "generated_at": "2026-11-04T11:28:21.997742+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -40,7 +40,7 @@
       "id": "DOMAIN-MY-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 56,
+      "score": 34,
       "trend": "stable"
     },
     {
@@ -70,14 +70,21 @@
       "label": "economic"
     },
     {
+      "id": "DRIVER-MY-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
+    },
+    {
       "id": "DRIVER-MY-technology",
       "type": "Driver",
       "label": "technology"
     },
     {
-      "id": "DRIVER-MY-geopolitical",
-      "type": "Driver",
-      "label": "geopolitical"
+      "id": "SIGNAL-MY-Отрасль_це",
+      "type": "Signal",
+      "label": "Отрасль центров обработки данных Малайзи",
+      "severity": 32,
+      "domain": "technology"
     },
     {
       "id": "SIGNAL-MY-Инфляция_—",
@@ -92,13 +99,6 @@
       "label": "Геополитический процесс — Юго-Восточная ",
       "severity": 62,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-MY-Отключение",
-      "type": "Signal",
-      "label": "Отключение интернета — Малайзия",
-      "severity": 56,
-      "domain": "technology"
     }
   ],
   "edges": [
@@ -124,7 +124,7 @@
       "from": "COUNTRY-MY",
       "to": "DOMAIN-MY-technology",
       "type": "CORRELATES",
-      "weight": 0.56
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-MY",
@@ -151,13 +151,13 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-MY-technology",
+      "from": "DRIVER-MY-geopolitical",
       "to": "COUNTRY-MY",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-MY-geopolitical",
+      "from": "DRIVER-MY-technology",
       "to": "COUNTRY-MY",
       "type": "CAUSES",
       "weight": 0.8
@@ -184,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-MY-Отрасль_це",
+      "to": "DOMAIN-MY-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.32
+    },
+    {
       "from": "SIGNAL-MY-Инфляция_—",
       "to": "DOMAIN-MY-economic",
       "type": "AMPLIFIES",
@@ -194,12 +200,6 @@
       "to": "DOMAIN-MY-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.62
-    },
-    {
-      "from": "SIGNAL-MY-Отключение",
-      "to": "DOMAIN-MY-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.56
     }
   ]
 }
