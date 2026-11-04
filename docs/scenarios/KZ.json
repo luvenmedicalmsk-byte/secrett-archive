@@ -2,17 +2,17 @@
   "country": "KZ",
   "country_name": "Казахстан",
   "date": "2026-11-04",
-  "generated_at": "2026-11-04T19:48:18.561322+00:00",
+  "generated_at": "2026-11-04T20:07:06.155762+00:00",
   "risk_score": 92,
-  "scenario_score": 56,
-  "instability": 63,
+  "scenario_score": 40,
+  "instability": 27,
   "instability_v2": true,
   "scenarios": [
     {
       "type": "best",
       "name": "Best Case",
       "name_ru": "Лучший сценарий",
-      "probability": 24,
+      "probability": 30,
       "score": 67,
       "delta_from_current": -25,
       "state": "escalating",
@@ -24,7 +24,7 @@
       "recovery_days": 380,
       "future_pressure": 51,
       "future_resilience": 40,
-      "future_probability": 24,
+      "future_probability": 30,
       "drivers": [
         {
           "driver": "Деэскалация",
@@ -44,26 +44,26 @@
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 58,
+          "score": 59,
           "state": "escalating",
           "state_ru": "Эскалация",
-          "delta_from_current": -34
+          "delta_from_current": -33
         },
         {
           "horizon": "180d",
           "label": "180 дней",
-          "score": 50,
-          "state": "escalating",
-          "state_ru": "Эскалация",
-          "delta_from_current": -42
+          "score": 52,
+          "state": "contained",
+          "state_ru": "Контролируемо",
+          "delta_from_current": -40
         },
         {
           "horizon": "365d",
           "label": "365 дней",
-          "score": 43,
-          "state": "escalating",
-          "state_ru": "Эскалация",
-          "delta_from_current": -49
+          "score": 46,
+          "state": "contained",
+          "state_ru": "Контролируемо",
+          "delta_from_current": -46
         }
       ]
     },
@@ -71,7 +71,7 @@
       "type": "base",
       "name": "Base Case",
       "name_ru": "Базовый сценарий",
-      "probability": 7,
+      "probability": 20,
       "score": 87,
       "delta_from_current": -5,
       "state": "critical",
@@ -83,7 +83,7 @@
       "recovery_days": 493,
       "future_pressure": 72,
       "future_resilience": 37,
-      "future_probability": 7,
+      "future_probability": 20,
       "drivers": [
         {
           "driver": "Пожарная опасность: Алматы (Алматинская облас",
@@ -107,26 +107,26 @@
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 95,
-          "state": "cascade",
-          "state_ru": "Каскадный кризис",
-          "delta_from_current": 3
+          "score": 87,
+          "state": "critical",
+          "state_ru": "Критическая эскалация",
+          "delta_from_current": -5
         },
         {
           "horizon": "180d",
           "label": "180 дней",
-          "score": 95,
-          "state": "cascade",
-          "state_ru": "Каскадный кризис",
-          "delta_from_current": 3
+          "score": 87,
+          "state": "critical",
+          "state_ru": "Критическая эскалация",
+          "delta_from_current": -5
         },
         {
           "horizon": "365d",
           "label": "365 дней",
-          "score": 95,
-          "state": "cascade",
-          "state_ru": "Каскадный кризис",
-          "delta_from_current": 3
+          "score": 87,
+          "state": "critical",
+          "state_ru": "Критическая эскалация",
+          "delta_from_current": -5
         }
       ]
     },
@@ -134,19 +134,19 @@
       "type": "stress",
       "name": "Stress Case",
       "name_ru": "Стресс-сценарий",
-      "probability": 29,
+      "probability": 24,
       "score": 94,
       "delta_from_current": 2,
       "state": "cascade",
       "state_ru": "Каскадный кризис",
       "impact": "catastrophic",
       "impact_ru": "Катастрофический",
-      "velocity": "explosive",
-      "velocity_ru": "Взрывной",
+      "velocity": "moderate",
+      "velocity_ru": "Умеренный",
       "recovery_days": 533,
       "future_pressure": 80,
       "future_resilience": 34,
-      "future_probability": 29,
+      "future_probability": 24,
       "drivers": [
         {
           "driver": "Пожарная опасность: Алматы (Алматинская облас",
@@ -201,19 +201,19 @@
       "type": "worst",
       "name": "Worst Case",
       "name_ru": "Худший сценарий",
-      "probability": 40,
+      "probability": 26,
       "score": 95,
       "delta_from_current": 3,
       "state": "cascade",
       "state_ru": "Каскадный кризис",
       "impact": "catastrophic",
       "impact_ru": "Катастрофический",
-      "velocity": "explosive",
-      "velocity_ru": "Взрывной",
+      "velocity": "fast",
+      "velocity_ru": "Быстрый",
       "recovery_days": 539,
       "future_pressure": 84,
       "future_resilience": 28,
-      "future_probability": 40,
+      "future_probability": 26,
       "drivers": [
         {
           "driver": "Пожарная опасность: Алматы (Алматинская облас",
@@ -271,25 +271,25 @@
   ],
   "transition_triggers": [
     {
-      "condition": "delta ≥ 11 за 24ч",
+      "condition": "delta ≥ 3 за 24ч",
       "leads_to": "worst",
-      "probability": 40
+      "probability": 26
     },
     {
       "condition": "Драйвер severity ≥ 85 в economy",
       "leads_to": "stress",
-      "probability": 29
+      "probability": 24
     },
     {
       "condition": "Деэскалация ключевого кризиса",
       "leads_to": "best",
-      "probability": 24
+      "probability": 30
     },
     {
       "condition": "Цепочка распространения → 3+ страны",
       "leads_to": "worst",
-      "probability": 22
+      "probability": 9
     }
   ],
-  "dominant_scenario": "worst"
+  "dominant_scenario": "best"
 }
