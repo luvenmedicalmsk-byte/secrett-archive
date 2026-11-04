@@ -23862,7 +23862,15 @@ def _retain_critical(evs, prev):
             if RETAIN_RECOMPUTE:
                 try:
                     _old_sev = int(e.get('severity') or 0)
-                    _new_sev = _recompute_severity(dict(e))
+                    _rs_in = dict(e)
+                    # SEV_CAPS_0411: пол disaster_scale, поставленный прежними правилами,
+                    # пересчитывается от веса ДО него, иначе он держит сам себя.
+                    if SEV_CAPS_0411:
+                        _pvd = [a for a in ((e.get('severity_decision') or {}).get('applied') or [])
+                                if a.get('rule') == 'disaster_scale' and isinstance(a.get('from'), (int, float))]
+                        if _pvd and _old_sev == _pvd[-1].get('to'):
+                            _rs_in['severity'] = int(_pvd[0]['from'])
+                    _new_sev = _recompute_severity(_rs_in)
                     _new_sev = int(_new_sev) if _new_sev else _old_sev
                     if _new_sev != _old_sev:
                         e['severity'] = _new_sev
@@ -26033,12 +26041,24 @@ def _sev_caps_0411(events):
                 if hurt >= edge:
                     fl = max(fl, v); break
             if fl > cur:
+                _cf_dedup(e)
                 e['severity'] = _sev_log(e, 'casualty_floor', cur, fl,
                                          'массовая стрельба: погибших %d, пострадавших %d' % (dead, hurt), 'boost')
                 n += 1
     if n:
         print('  [SEV-CAPS-0411] изменено %d' % n, file=sys.stderr)
     return n
+
+
+def _cf_dedup(e):
+    """Пол ставится заново каждый прогон (strike_weight пересчитывает вес от базы):
+    прежние записи правила в журнале убираются, чтобы журнал не рос от прогона к прогону."""
+    try:
+        _d = e.get('severity_decision') or {}
+        if _d.get('applied'):
+            _d['applied'] = [a for a in _d['applied'] if a.get('rule') != 'casualty_floor']
+    except Exception:
+        pass
 
 
 def _casualty_floor(events):
@@ -26065,6 +26085,7 @@ def _casualty_floor(events):
                 fl = max(fl, v); break
         cur = e.get('severity') or 0
         if fl > cur:
+            _cf_dedup(e)
             e['severity'] = _sev_log(e, 'casualty_floor', cur, fl,
                                      'пол по числу жертв удара в заголовке: погибших %d, пострадавших %d' % (dead, hurt),
                                      'boost')
