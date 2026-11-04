@@ -2,39 +2,39 @@
   "country": "TR",
   "date": "2026-11-04",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-04T03:26:30.837680+00:00",
+  "generated_at": "2026-11-04T03:47:39.526008+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-TR",
       "type": "Country",
       "label": "TR",
-      "score": 68,
+      "score": 70,
       "props": {
-        "risk_score": 68
+        "risk_score": 70
       }
     },
     {
       "id": "DOMAIN-TR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 63,
-      "trend": "stable"
+      "score": 66,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 50,
-      "trend": "stable"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "stable"
+      "score": 70,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-technology",
@@ -80,25 +80,25 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-TR-Гроза:_Осм",
+      "type": "Signal",
+      "label": "Гроза: Османие, Хатай, Турция",
+      "severity": 70,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-TR-Гроза:_Ста",
+      "type": "Signal",
+      "label": "Гроза: Стамбул, Измир, Бурса и ещё 20 пр",
+      "severity": 50,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-TR-Инфляция_в",
       "type": "Signal",
       "label": "Инфляция в турции: Ppi не падает, а слаб",
       "severity": 48,
       "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-TR-Геополитич",
-      "type": "Signal",
-      "label": "Геополитический процесс — Ближний Восток",
-      "severity": 84,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-TR-Геополитич",
-      "type": "Signal",
-      "label": "Геополитический процесс — Ближний Восток",
-      "severity": 84,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,19 +106,19 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.63
+      "weight": 0.66
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-economic",
       "type": "CORRELATES",
-      "weight": 0.5
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.7
     },
     {
       "from": "COUNTRY-TR",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-TR-climate",
+      "to": "DOMAIN-TR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-TR-infrastructure",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-TR-climate",
+      "to": "DOMAIN-TR-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-TR-social",
+      "to": "DOMAIN-TR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-TR-geopolitical",
       "to": "DOMAIN-TR-infrastructure",
       "type": "ESCALATES",
@@ -184,22 +226,22 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-TR-Гроза:_Осм",
+      "to": "DOMAIN-TR-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.7
+    },
+    {
+      "from": "SIGNAL-TR-Гроза:_Ста",
+      "to": "DOMAIN-TR-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
       "from": "SIGNAL-TR-Инфляция_в",
       "to": "DOMAIN-TR-economic",
       "type": "AMPLIFIES",
       "weight": 0.48
-    },
-    {
-      "from": "SIGNAL-TR-Геополитич",
-      "to": "DOMAIN-TR-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.84
-    },
-    {
-      "from": "SIGNAL-TR-Геополитич",
-      "to": "DOMAIN-TR-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.84
     }
   ]
 }
