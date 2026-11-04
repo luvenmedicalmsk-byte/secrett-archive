@@ -9667,7 +9667,7 @@ EVENT_CLUSTER_SHADOW = True
 _ECS_STOP = ('россия', 'россий', 'украин', 'сша', 'китай', 'иран', 'израил', 'европ', 'мир', 'презид',
              'правит', 'трамп', 'путин', 'зеленс', 'нетань', 'минобо', 'монито', 'сегодн', 'ночью', 'кроме', 'также')
 _ECS_MACHINE = {'GPSJam', 'IODA', 'Cloudflare Radar', 'EUROCONTROL NOTAM', 'JTWC', 'USGS', 'GDACS',
-                'NASA FIRMS', 'МЧС России'}
+                'NASA FIRMS', 'МЧС России', 'CISA KEV', 'CISA Advisory', 'CISA ICS'}
 _ECS_SERIES = re.compile(r'^\s*(?:мониторинг ракетной войны|война россии и украины)\s*:\s*', re.I)
 _ECS_STOPPH = re.compile(r'приостанов|остановлен|прекращ', re.I)
 _ECS_RESUME = re.compile(r'восстановлен|возобновл', re.I)
@@ -9684,6 +9684,9 @@ def _ecs_anchors(text, src):
             continue
         if st in srcw or st.startswith(_ECS_STOP):
             continue
+        # служебные аббревиатуры (БПЛА, ПВО, НПЗ, ФСБ, NASA) не указывают на событие
+        if re.fullmatch(r'[А-ЯЁ]{2,6}', m.group(0)) or m.group(0) in ('NASA', 'CEO', 'API'):
+            continue
         adj = bool(re.search(r'(?:ск|цк)(?:ой|ая|ий|ое|ого|их|ую)$', w))
         out[st] = out.get(st, True) and adj
     return out
@@ -9693,9 +9696,15 @@ def _event_cluster_shadow(events):
     if not EVENT_CLUSTER_SHADOW:
         return
     try:
-        ev = [e for e in events if e.get('feed_visible', True)]
+        ev = [e for e in events if e.get('feed_visible', True) and not e.get('alerts_only')
+              and (e.get('meta') or {}).get('kind') not in ('cap', 'cap_hub', 'mgm', 'rosgidromet_cap')
+              and not str(e.get('source') or '').startswith(('NASA EONET', 'MeteoAlarm'))
+              and not str(e.get('source') or '').endswith(' CAP')]
         n = len(ev)
-        A = [_ecs_anchors((e.get('title') or '') + ' ' + (e.get('summary') or '')[:220], e.get('source')) for e in ev]
+        # v2 (первый прогон тени: 10 ложных склеек из 33 через якоря из текста):
+        # якорь только из заголовка, порог основ 0.3, конфликт любых чисел в заголовке.
+        A = [_ecs_anchors(_ECS_SERIES.sub('', e.get('title') or ''), e.get('source')) for e in ev]
+        NUMS = [set(int(x) for x in re.findall(r'(?<![\d.,$])(\d{2,6})(?![\d.,%])', e.get('title') or '')) for e in ev]
         import collections as _col
         df = _col.Counter(a for x in A for a in x)
         lim = max(3, n * 0.03)
@@ -9723,11 +9732,13 @@ def _event_cluster_shadow(events):
                 return False
             if _conf(C[i][0], C[j][0]) or _conf(C[i][1], C[j][1]):
                 return False
+            if NUMS[i] and NUMS[j] and not any(abs(x - y) <= max(x, y) * 0.35 for x in NUMS[i] for y in NUMS[j]):
+                return False
             if (_ECS_STOPPH.search(T[i]) and _ECS_RESUME.search(T[j])) or (_ECS_RESUME.search(T[i]) and _ECS_STOPPH.search(T[j])):
                 return False
             noun = [x for x in rare if not (A[i].get(x) and A[j].get(x))]
             _, ratio = _ndup_ovl(W[i], W[j])
-            need = 0.25 if noun else 0.4
+            need = 0.3 if noun else 0.45
             if a.get('source') == b.get('source'):
                 need = max(need, 0.5)
             return ratio >= need
