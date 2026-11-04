@@ -1,26 +1,26 @@
 {
   "country": "ID",
-  "date": "2026-11-03",
+  "date": "2026-11-04",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-03T23:47:55.223278+00:00",
+  "generated_at": "2026-11-04T00:07:48.640970+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-ID",
       "type": "Country",
       "label": "ID",
-      "score": 86,
+      "score": 85,
       "props": {
-        "risk_score": 86
+        "risk_score": 85
       }
     },
     {
       "id": "DOMAIN-ID-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
-      "trend": "stable"
+      "score": 45,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ID-economic",
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 84,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ID-technology",
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-ID-Гроза:_Цен",
-      "type": "Signal",
-      "label": "Гроза: Центральный Калимантан, Кеп. Банг",
-      "severity": 56,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-ID-Извержение",
       "type": "Signal",
       "label": "Извержение горы Марапи выбрасывает пепел",
       "severity": 55,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-ID-Индонезия_",
+      "type": "Signal",
+      "label": "Индонезия призывает Россию прекратить ве",
+      "severity": 45,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.45
     },
     {
       "from": "COUNTRY-ID",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-ID-climate",
-      "to": "DOMAIN-ID-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-ID-infrastructure",
-      "to": "DOMAIN-ID-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-ID-economic",
-      "to": "DOMAIN-ID-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-ID-climate",
       "to": "DOMAIN-ID-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,22 +184,64 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-ID-climate",
+      "to": "DOMAIN-ID-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-ID-infrastructure",
+      "to": "DOMAIN-ID-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ID-economic",
+      "to": "DOMAIN-ID-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ID-geopolitical",
+      "to": "DOMAIN-ID-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-ID-infrastructure",
+      "to": "DOMAIN-ID-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ID-economic",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-ID-Более_3,50",
       "to": "DOMAIN-ID-climate",
       "type": "AMPLIFIES",
       "weight": 0.84
     },
     {
-      "from": "SIGNAL-ID-Гроза:_Цен",
-      "to": "DOMAIN-ID-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.56
-    },
-    {
       "from": "SIGNAL-ID-Извержение",
       "to": "DOMAIN-ID-climate",
       "type": "AMPLIFIES",
       "weight": 0.55
+    },
+    {
+      "from": "SIGNAL-ID-Индонезия_",
+      "to": "DOMAIN-ID-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.45
     }
   ]
 }
