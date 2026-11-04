@@ -2,7 +2,7 @@
   "country": "ES",
   "date": "2026-11-04",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-04T05:07:50.059529+00:00",
+  "generated_at": "2026-11-04T05:28:35.597549+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -19,14 +19,14 @@
       "id": "DOMAIN-ES-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 74,
+      "score": 60,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-ES-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 59,
       "trend": "stable"
     },
     {
@@ -87,18 +87,18 @@
       "domain": "technology"
     },
     {
-      "id": "SIGNAL-ES-Опрос:_Тра",
-      "type": "Signal",
-      "label": "Опрос: Трагедия поезда Урда подрывает ша",
-      "severity": 74,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-ES-Ливень:_Юж",
       "type": "Signal",
       "label": "Ливень: Южное побережье Валенсии, Южное ",
       "severity": 72,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-ES-Солнечные_",
+      "type": "Signal",
+      "label": "Солнечные фотоэлектрические системы сниз",
+      "severity": 59,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.74
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.59
     },
     {
       "from": "COUNTRY-ES",
@@ -164,6 +164,27 @@
     },
     {
       "from": "DOMAIN-ES-climate",
+      "to": "DOMAIN-ES-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-ES-infrastructure",
+      "to": "DOMAIN-ES-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ES-economic",
+      "to": "DOMAIN-ES-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ES-climate",
       "to": "DOMAIN-ES-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,43 +226,22 @@
       "lag_days": 45
     },
     {
-      "from": "DOMAIN-ES-climate",
-      "to": "DOMAIN-ES-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-ES-infrastructure",
-      "to": "DOMAIN-ES-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-ES-economic",
-      "to": "DOMAIN-ES-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "SIGNAL-ES-Министр_тр",
       "to": "DOMAIN-ES-technology",
       "type": "AMPLIFIES",
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-ES-Опрос:_Тра",
-      "to": "DOMAIN-ES-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.74
-    },
-    {
       "from": "SIGNAL-ES-Ливень:_Юж",
       "to": "DOMAIN-ES-climate",
       "type": "AMPLIFIES",
       "weight": 0.72
+    },
+    {
+      "from": "SIGNAL-ES-Солнечные_",
+      "to": "DOMAIN-ES-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.59
     }
   ]
 }
