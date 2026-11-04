@@ -23572,6 +23572,15 @@ def _signal_quality_pass(events):
                             # количественному масштабу бедствия (жертвы, эвакуация,
                             # площадь, интенсивность). Читать такой журнал было нельзя.
                             e['severity'] = _sev_log(e, 'disaster_scale', e.get('severity'), _fl, 'пол по количественному масштабу бедствия', 'boost')
+                        elif SEV_CAPS_0411:
+                            # Пол, поставленный по старым правилам, снимается, если по текущим он не держится.
+                            _pv = [a for a in ((e.get('severity_decision') or {}).get('applied') or [])
+                                   if a.get('rule') == 'disaster_scale']
+                            if _pv and e.get('severity') == _pv[-1].get('to') and (_fl or 0) < _pv[-1]['to'] \
+                                    and isinstance(_pv[-1].get('from'), (int, float)):
+                                _nv = max(int(_pv[-1]['from']), int(_fl or 0))
+                                e['severity'] = _sev_log(e, 'disaster_scale_revert', e.get('severity'), _nv,
+                                                         'пол масштаба бедствия больше не держится по текущим правилам', 'cut')
                 except Exception:
                     pass
                 # ретро-override приоритетного гео (Монако/микрогос./штаты США) — фикс уже сохранённых событий
@@ -25857,6 +25866,72 @@ def _cf_counts(title):
         else:
             hurt = max(hurt, n)
     return dead, hurt
+
+
+# ── SEV_CAPS_0411 (аудит индексов 04.11.2026) ───────────────────────────────
+# Потолки для записей, у которых вес пришёл базой без правил:
+#  - цитата или речь от первого лица («Я не хочу, чтобы погибло много людей…» 81);
+#  - смертность, приписанная загрязнению, дыму, жаре (статистика, а не гибель в событии):
+#    «Более 3500 человек погибли из-за загрязнения воздуха от лесных пожаров» 84;
+#  - последствия прошлой катастрофы: отставка, годовщина («Министр… подаст в отставку
+#    после крушения поезда, в котором погибли 69» 80).
+# Плюс пол по числу жертв для массовой стрельбы (117 раненых, 16 погибших стояло на 61).
+# Откат: SEV_CAPS_0411 = False.
+SEV_CAPS_0411 = True
+_C4_FP = re.compile(r'(?<![а-яё])(?:я|мы|мне|нам|нас)(?![а-яё])', re.I)
+_C4_QOPEN = re.compile(r'^\s*[«"„“\']([^»"”\']{3,200})')
+
+
+def _c4_is_quote(t):
+    """Речь от первого лица: заголовок с неё начинается или открывается цитатой с ней."""
+    if re.match(r'^\s*(?:я|мы|мне|нам|нас)\s', t, re.I):
+        return True
+    m = _C4_QOPEN.match(t)
+    return bool(m and _C4_FP.search(m.group(1)))
+_C4_STATMORT = re.compile(r'(?:погиб\w*|умер\w*|умира\w*|смерт\w*|убил\w*|убива\w*)[^.]{0,50}'
+                          r'(?:загрязнени|смог|(?<![а-яё])дым|качеств\w*\s+воздух|(?<![а-яё])жар[аы]|(?<![а-яё])зно[яй])|'
+                          r'(?:загрязнени\w*|смог|дым)[^.]{0,40}(?:убил|унес|погуби)', re.I)
+_C4_AFTER = re.compile(r'(?:подаст|подал|уйд[её]т|ушёл|ушел|уходит)\s+в\s+отставку|годовщин|'
+                       r'(?<![а-яё])(?:суд|приговор|компенсаци\w*)\s+(?:по\s+делу\s+)?(?:о|об|после)(?![а-яё])', re.I)
+_C4_SHOOT = re.compile(r'стрельб|под\s+пули|расстрел|открыл\w*\s+огонь|вооруж\w+\s+нападени|массов\w+\s+убийств', re.I)
+
+
+def _sev_caps_0411(events):
+    if not SEV_CAPS_0411:
+        return 0
+    n = 0
+    for e in events:
+        t = e.get('title') or ''
+        cur = e.get('severity') or 0
+        cap, why = None, ''
+        if _c4_is_quote(t) and cur > 60:
+            cap, why = 60, 'цитата или речь от первого лица, не событие'
+        elif _C4_STATMORT.search(t) and cur > 66:
+            cap, why = 66, 'смертность, приписанная загрязнению или жаре: оценка, не гибель в событии'
+        elif _C4_AFTER.search(t) and cur > 62:
+            cap, why = 62, 'последствия прошлой катастрофы (отставка, годовщина, суд)'
+        if cap is not None:
+            e['severity'] = _sev_log(e, 'sev_caps_0411', cur, cap, why, 'cap')
+            n += 1
+            continue
+        # массовая стрельба: пол по числу жертв в заголовке
+        if e.get('domain') in ('social', 'geopolitics') and _C4_SHOOT.search(t) and _SW_ACTED.search(t) \
+                and not _HS_FCAST.search(t):
+            dead, hurt = _cf_counts(t)
+            fl = 0
+            for edge, v in _CF_DEATH_BANDS:
+                if dead >= edge:
+                    fl = v; break
+            for edge, v in _CF_HURT_BANDS:
+                if hurt >= edge:
+                    fl = max(fl, v); break
+            if fl > cur:
+                e['severity'] = _sev_log(e, 'casualty_floor', cur, fl,
+                                         'массовая стрельба: погибших %d, пострадавших %d' % (dead, hurt), 'boost')
+                n += 1
+    if n:
+        print('  [SEV-CAPS-0411] изменено %d' % n, file=sys.stderr)
+    return n
 
 
 def _casualty_floor(events):
@@ -28199,6 +28274,7 @@ def save_enriched(events, previous_snapshot=None):
                 _mil_escalation(enriched["events"])
                 _human_scale(enriched["events"])
                 _casualty_floor(enriched["events"])
+                _sev_caps_0411(enriched["events"])
                 # Экономический масштаб после человеческого: запись, где вес
                 # уже поставлен по числу пострадавших, второй надбавки не
                 # получает (проверка severity_hs_shadow внутри).
