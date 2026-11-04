@@ -7595,7 +7595,7 @@ LINEAGE_GAP_PROBE = True
 LINEAGE_EXACT_REASONS = False  # D-08a-2: точные причины вместо post_build_filter / enrich_merge
 # Причины включаются по отдельности: в canary только подтверждённые реальными
 # удалениями (инвентаризация 04.11: infra_anchor 23, signal_quality 7 из 30).
-LINEAGE_EXACT_ON = {'infra_anchor': False, 'signal_quality': False, 'noise_card': False,
+LINEAGE_EXACT_ON = {'infra_anchor': True, 'signal_quality': True, 'noise_card': False,
                     's43_news_not_signal': False, 'kev_cap': False}
 LINEAGE_RISK_GATE = True    # D-08a-2C: причина risk_gate вместо gate_unattributed
 _GAP_CK = {}
