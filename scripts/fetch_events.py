@@ -5957,8 +5957,33 @@ _N4_EVENT_T = re.compile(r'погиб|жертв|эвакуир|разруш|з�
                          r'циклон|наводнен|извержен|пожар\w*\s+(?:уничтож|охватил|бушу)|чрезвычайн|взлом|утечк|атак', re.I)
 
 
+# NOISE_0511 (аудит 05.11.2026). Откат: NOISE_0511 = False.
+NOISE_0511 = True
+# Бытовой прогноз с температурой: «Бабье лето не закончилось: в Казахстан вернутся +25°С».
+_N5_WX = re.compile(r'бабье\s+лето|вернутся\s+[+−-]?\d|(?:потеплеет|похолодает|потепление|похолодание)\s+(?:до|на)\s+[+−-]?\d|'
+                    r'(?:до|около)\s+[+−-]\d{1,2}\s*°', re.I)
+_N5_WX_KEEP = re.compile(r'рекорд|аномал|жар[аы]|зно[йя]|опасн|штормов|чрезвычайн|эвакуац|погиб', re.I)
+# Единичное возгорание машины.
+_N5_CARFIRE = re.compile(r'(?:возгорани|загорел|сгорел|пожар)\w*\s+(?:\w+\s+){0,2}(?:легков\w*\s+)?(?:авто|автомоб|машин)', re.I)
+# Протокол: кто прилетит, анонс саммита, меморандумы и «будут сотрудничать».
+_N5_PROTO = re.compile(r'кто\s+прилетит|(?:пройд[её]т|состоится)\s+(?:\S+\s+){0,3}саммит|саммит\w*[^.]{0,40}(?:пройд[её]т|состоится)|'
+                       r'подписал\w*\s+меморандум|будут\s+сотрудничать', re.I)
+_N5_PROTO_KEEP = re.compile(r'оборон|военн|ядерн|санкци|атак|удар|войн|украин|зеленск|путин|трамп', re.I)
+# Ежемесячные дайджесты инфосека.
+_N5_DIGEST = re.compile(r'MEGANews|самые\s+важные\s+события[^.]{0,40}за\s+(?:месяц|неделю|январ|феврал|март|апрел|ма[йя]|июн|июл|август|сентябр|октябр|ноябр|декабр)', re.I)
+
+
 def _n4_noise(title, b, source=None):
     t = title or ''
+    if NOISE_0511:
+        if _N5_WX.search(t) and not _N5_WX_KEEP.search(t):
+            return True
+        if _N5_CARFIRE.search(t) and not re.search(r'погиб|пострадал|жертв|взрыв|теракт|поджог\w*\s+(?:машин|авто)\w*\s+(?:военн|полиц)', t, re.I):
+            return True
+        if _N5_PROTO.search(t) and not _N5_PROTO_KEEP.search(t):
+            return True
+        if _N5_DIGEST.search(t):
+            return True
     # погодные предупреждения приходят официальными лентами (CAP); здесь судит только заголовок
     if _N4_WX.search(t) and not _N4_WX_SEV.search(t):
         return True
@@ -9611,6 +9636,31 @@ def _domain_integrity_report(events, docs_dir):
     return _rep
 
 
+# DOMAIN_NAT_GUARD_0511 (05.11.2026). W3 переводил в climate по природному слову
+# в ТЕКСТЕ: «синяя волна стала цунами» (итоги выборов в США), «Blue Tsunami»,
+# «Жителя Ленобласти задержали за подготовку диверсии». Если природного слова нет
+# в заголовке, а заголовок про выборы, силовые дела, религию или аналитику -
+# домен не переводится. Метафоры «синяя волна / цунами» вырезаются всегда.
+# Откат: DOMAIN_NAT_GUARD_0511 = False.
+DOMAIN_NAT_GUARD_0511 = True
+_DF_METAPHOR = re.compile(r'(?:син\w+|красн\w+|blue|red)\s+(?:волн\w*|wave|цунами|tsunami)|(?:стал\w*|станет|was|became)\s+(?:цунами|tsunami)|'
+                          r'политическ\w+\s+(?:цунами|землетрясени\w*|ураган\w*)', re.I)
+_DF_POLSEC = re.compile(r'выбор|республикан|демократ|конгресс|сенат|парламент|партии|диверси|задержал|задержан|фсб|религи|'
+                        r'геополитик|санкци|election|senate|congress', re.I)
+
+
+def _df_nat_guard(e):
+    if not DOMAIN_NAT_GUARD_0511:
+        return False
+    tt = e.get('title') or ''
+    if _NAT_RE.search(_DF_METAPHOR.sub(' ', _strip_natdis_analogy(tt))):
+        return False
+    body = _DF_METAPHOR.sub(' ', _strip_natdis_analogy(((tt) + ' ' + (e.get('summary') or '')).lower()))
+    if not _NAT_RE.search(body):
+        return True
+    return bool(_DF_POLSEC.search(tt))
+
+
 def _domain_fix(events):
     """S46.2 точечные доменные корректировки: VPN/цифр.регулирование -> technology;
     немилитаризированные протесты -> social. severity/индексы не трогает."""
@@ -9618,7 +9668,8 @@ def _domain_fix(events):
         t = ((e.get('title') or '') + ' ' + (e.get('summary') or '')).lower()
         # Природные события (землетрясения, цунами, наводнения и т.п.) -> climate,
         # даже если LLM ошибочно отнёс их к geopolitics/economy («ударили по...»).
-        if e.get('domain') in ('geopolitics', 'economy', 'social') and _NAT_RE.search(_strip_natdis_analogy(t)):
+        if e.get('domain') in ('geopolitics', 'economy', 'social') and _NAT_RE.search(_strip_natdis_analogy(t)) \
+                and not _df_nat_guard(e):
             # IDR-010 · F1: прежний домен сохраняется. Канонизация ещё не
             # выполнена, тип неизвестен, поэтому решение откладывается до
             # _domain_integrity_restore — там оно принимается по типу.
