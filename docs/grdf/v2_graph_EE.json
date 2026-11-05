@@ -2,7 +2,7 @@
   "country": "EE",
   "date": "2026-11-05",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-05T02:08:22.008983+00:00",
+  "generated_at": "2026-11-05T02:29:14.531380+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -26,14 +26,14 @@
       "id": "DOMAIN-EE-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 48,
+      "score": 5,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-EE-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 46,
+      "score": 50,
       "trend": "stable"
     },
     {
@@ -75,9 +75,16 @@
       "label": "social"
     },
     {
-      "id": "DRIVER-EE-economic",
+      "id": "DRIVER-EE-climate",
       "type": "Driver",
-      "label": "economic"
+      "label": "climate"
+    },
+    {
+      "id": "SIGNAL-EE-Ветер:_Чуд",
+      "type": "Signal",
+      "label": "Ветер: Чудское озеро, Восточная часть Фи",
+      "severity": 50,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-EE-Миграционн",
@@ -92,13 +99,6 @@
       "label": "Военные удары — Эстония",
       "severity": 63,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-EE-Пожарная_а",
-      "type": "Signal",
-      "label": "Пожарная активность — Эстония",
-      "severity": 46,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -112,13 +112,13 @@
       "from": "COUNTRY-EE",
       "to": "DOMAIN-EE-economic",
       "type": "CORRELATES",
-      "weight": 0.48
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-EE",
       "to": "DOMAIN-EE-climate",
       "type": "CORRELATES",
-      "weight": 0.46
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-EE",
@@ -157,7 +157,7 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-EE-economic",
+      "from": "DRIVER-EE-climate",
       "to": "COUNTRY-EE",
       "type": "CAUSES",
       "weight": 0.8
@@ -226,6 +226,12 @@
       "lag_days": 30
     },
     {
+      "from": "SIGNAL-EE-Ветер:_Чуд",
+      "to": "DOMAIN-EE-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
       "from": "SIGNAL-EE-Миграционн",
       "to": "DOMAIN-EE-social",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-EE-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.63
-    },
-    {
-      "from": "SIGNAL-EE-Пожарная_а",
-      "to": "DOMAIN-EE-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.46
     }
   ]
 }
