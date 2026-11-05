@@ -195,6 +195,15 @@ jobs:
         run: |
           python scripts/infra_detection_shadow.py || true
 
+      # WMO_CAP_SHADOW 05.11.2026: замер официальных CAP-предупреждений из
+      # Alert Hub ВМО (Early Warnings for All). Только отчёт, лента не меняется.
+      # Сам пропускает прогон, если отчёт свежее 6 часов.
+      - name: WMO Alert Hub CAP (Shadow)
+        continue-on-error: true
+        timeout-minutes: 4
+        run: |
+          python scripts/wmo_cap_shadow.py || true
+
       # Мини-разборы зон риска. Отдельный шаг: скрипту нужен ADMIN_KEY
       # для чтения зон с visibility signal_pro из KV. Внутри чужого шага
       # переменная недоступна — она объявлена в его собственном env.
@@ -290,6 +299,7 @@ jobs:
           # было нечем.
           _add docs/_identity_shadow.json
           _add docs/_enrich_gap.json   # D-08a-2 ENRICH_GAP_PROBE 04.11.2026
+          _add docs/_wmo_cap_shadow.json   # WMO_CAP_SHADOW 05.11.2026
           _add docs/_cluster_shadow.json   # EVENT_CLUSTER_SHADOW 04.11.2026: замер склейки дублей
           _add docs/_crypto_archive.json   # PROC_CRYPTO_ARCHIVE 31.10.2026: хроника крипто-процесса
 
