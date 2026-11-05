@@ -26276,6 +26276,48 @@ _F5_RULES = (
     ('воздушная тревога в стране НАТО',
      re.compile(r'воздушн\w+\s+тревог\w*[^.]{0,80}(?:латви|литв|эстон|польш|румын|финлянд)|(?:латви|литв|эстон|польш|румын|финлянд)\w*[^.]{0,80}воздушн\w+\s+тревог', re.I), 60),
 )
+# SEV_MARITIME_0511 (05.11.2026): атаки на суда и минирование морских путей, обвалы рынков.
+# «Иран сообщает, что 5 танкеров загорелись после подрыва на морских минах - Ормузский
+# пролив» стояло на 66 без единого правила. Откат: SEV_MARITIME_0511 = False.
+SEV_MARITIME_0511 = True
+_M5_SHIP = re.compile(r'танкер|судн[оаеау]|суд[ао]в|сухогруз|контейнеровоз|газовоз|балкер|паром|tanker|vessel|cargo\s+ship|merchant\s+ship', re.I)
+_M5_HIT = re.compile(r'подрыв|подорвал|морск\w+\s+мин|на\s+мин[аеу]|минирова|атак|удар|поражен|загорел|горит|взрыв|обстрел|захват|задержал\w*\s+(?:танкер|судн)|'
+                     r'hit\s+by|struck|attack|seiz|explosion|mine', re.I)
+_M5_CHOKE = re.compile(r'ормуз|hormuz|баб[- ]эль[- ]мандеб|bab[- ]el[- ]mandeb|красн\w+\s+мор|red\s+sea|суэц|suez|малакк|malacca|босфор|bosporus|'
+                       r'персидск\w+\s+залив|persian\s+gulf|оманск\w+\s+залив|gulf\s+of\s+oman|аденск\w+\s+залив|gulf\s+of\s+aden', re.I)
+_M5_SAFE = re.compile(r'учени|drill|exercise|сопровожд|escort|страхов|insurance|ставк|rates?\b|открывает|reopen|возобновл', re.I)
+_M5_MKT = re.compile(r'(?:обвал|рухнул|упал|обрушил|стёр|стер|потерял|wiped|lost)\w*[^.]{0,60}?\$\s?(\d+(?:[.,]\d+)?)\s*(?:трлн|триллион|trillion|tn\b)', re.I)
+_M5_MKT_SLOW = re.compile(r'\bс\s+(?:начала|январ|феврал|март|апрел|ма[яй]|июн|июл|август|сентябр|октябр|ноябр|декабр)|за\s+(?:год|месяц|квартал|полгода)|since|year[- ]to[- ]date', re.I)
+_M5_BTC = re.compile(r'(?:биткоин|bitcoin|крипт)\w*[^.]{0,30}(?:упал|обрушил|рухнул|подешевел)\w*[^.]{0,20}?на\s+(\d+(?:[.,]\d+)?)\s*%', re.I)
+
+
+def _m5_floor(t):
+    if not SEV_MARITIME_0511:
+        return 0, ''
+    _ts = re.sub(r'воздушн\w+\s+суд\w*', ' ', t, flags=re.I)   # «воздушные суда» - не морские
+    if _M5_SHIP.search(_ts) and _M5_HIT.search(_ts) and not _M5_SAFE.search(_ts):
+        if _M5_CHOKE.search(t):
+            return 80, 'атака на суда / минирование в ключевом морском проходе'
+        return 70, 'атака на суда'
+    if re.search(r'минирован\w*|морск\w+\s+мин', t, re.I) and _M5_CHOKE.search(t) and not _M5_SAFE.search(t):
+        return 80, 'минирование ключевого морского прохода'
+    m = _M5_MKT.search(t)
+    if m and not _M5_MKT_SLOW.search(t):
+        try:
+            if float(m.group(1).replace(',', '.')) >= 1:
+                return 72, 'обвал рынков на триллион и более'
+        except ValueError:
+            pass
+    m = _M5_BTC.search(t)
+    if m:
+        try:
+            if float(m.group(1).replace(',', '.')) >= 10:
+                return 66, 'обвал криптовалют на 10% и более'
+        except ValueError:
+            pass
+    return 0, ''
+
+
 _F5_OIL = re.compile(r'нефть[^.]{0,20}(?:обрушил|подешевел|рухнул|упал|подорожал|взлетел)\w*\s+(?:на|более\s+чем\s+на)\s+(\d+(?:[.,]\d+)?)\s*%', re.I)
 _F5_DONATE = re.compile(r'жертвует|пожертвова|пожертвуют|donat', re.I)
 
@@ -26302,6 +26344,9 @@ def _sev_post_hyg_0511(events):
                 continue
             if _v > fl and _rx.search(t):
                 fl, why = _v, _nm
+        _mf, _mw = _m5_floor(t)
+        if _mf > fl:
+            fl, why = _mf, _mw
         _mo = _F5_OIL.search(t)
         if _mo:
             try:
