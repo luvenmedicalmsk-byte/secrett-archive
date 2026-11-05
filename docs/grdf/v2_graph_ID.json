@@ -2,67 +2,67 @@
   "country": "ID",
   "date": "2026-11-05",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-05T12:50:09.399291+00:00",
+  "generated_at": "2026-11-05T13:09:07.869951+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-ID",
       "type": "Country",
       "label": "ID",
-      "score": 62,
+      "score": 73,
       "props": {
-        "risk_score": 62
+        "risk_score": 73
       }
     },
     {
       "id": "DOMAIN-ID-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 62,
-      "trend": "down"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 35,
-      "trend": "down"
+      "score": 66,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-technology",
       "type": "Domain",
       "label": "technology",
       "score": 62,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DRIVER-ID-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-ID-Более_3,50",
+      "type": "Signal",
+      "label": "Более 3,500 человек погибли из-за загряз",
+      "severity": 66,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-ID-Американск",
       "type": "Signal",
       "label": "Американский космический телескоп SWIFT ",
@@ -87,18 +94,11 @@
       "domain": "technology"
     },
     {
-      "id": "SIGNAL-ID-Что_стало_",
+      "id": "SIGNAL-ID-Граждане_п",
       "type": "Signal",
-      "label": "Что стало причиной худшего сезона лесных",
-      "severity": 35,
+      "label": "Граждане помогают гражданам! Финансирова",
+      "severity": 60,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-ID-Военные_уд",
-      "type": "Signal",
-      "label": "Военные удары — Индонезия",
-      "severity": 62,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.62
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-ID",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-climate",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.66
     },
     {
       "from": "COUNTRY-ID",
@@ -163,25 +163,52 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-ID-geopolitical",
+      "from": "DOMAIN-ID-climate",
       "to": "DOMAIN-ID-infrastructure",
       "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
+      "weight": 0.82,
+      "lag_days": 7
     },
     {
       "from": "DOMAIN-ID-infrastructure",
       "to": "DOMAIN-ID-economic",
       "type": "AMPLIFIES",
-      "weight": 0.72,
+      "weight": 0.68,
       "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ID-economic",
+      "to": "DOMAIN-ID-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ID-climate",
+      "to": "DOMAIN-ID-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-ID-economic",
       "to": "DOMAIN-ID-social",
       "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-ID-social",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "SIGNAL-ID-Более_3,50",
+      "to": "DOMAIN-ID-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.66
     },
     {
       "from": "SIGNAL-ID-Американск",
@@ -190,16 +217,10 @@
       "weight": 0.62
     },
     {
-      "from": "SIGNAL-ID-Что_стало_",
+      "from": "SIGNAL-ID-Граждане_п",
       "to": "DOMAIN-ID-climate",
       "type": "AMPLIFIES",
-      "weight": 0.35
-    },
-    {
-      "from": "SIGNAL-ID-Военные_уд",
-      "to": "DOMAIN-ID-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.62
+      "weight": 0.6
     }
   ]
 }
