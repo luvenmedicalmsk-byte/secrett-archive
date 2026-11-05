@@ -2,9 +2,9 @@
   "country": "EE",
   "date": "2026-11-05",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-05T12:29:15.681338+00:00",
+  "generated_at": "2026-11-05T12:50:09.389898+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-EE",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-EE-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
+      "score": 63,
       "trend": "stable"
     },
     {
@@ -47,7 +47,7 @@
       "id": "DOMAIN-EE-social",
       "type": "Domain",
       "label": "social",
-      "score": 51,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -70,9 +70,9 @@
       "label": "technology"
     },
     {
-      "id": "DRIVER-EE-social",
+      "id": "DRIVER-EE-geopolitical",
       "type": "Driver",
-      "label": "social"
+      "label": "geopolitical"
     },
     {
       "id": "DRIVER-EE-climate",
@@ -94,11 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-EE-Миграционн",
+      "id": "SIGNAL-EE-Военные_уд",
       "type": "Signal",
-      "label": "Миграционная политика — Эстония",
-      "severity": 51,
-      "domain": "social"
+      "label": "Военные удары — Эстония",
+      "severity": 63,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-EE",
       "to": "DOMAIN-EE-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.63
     },
     {
       "from": "COUNTRY-EE",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-EE",
       "to": "DOMAIN-EE-social",
       "type": "CORRELATES",
-      "weight": 0.51
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-EE",
@@ -151,7 +151,7 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-EE-social",
+      "from": "DRIVER-EE-geopolitical",
       "to": "COUNTRY-EE",
       "type": "CAUSES",
       "weight": 0.8
@@ -205,6 +205,27 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-EE-geopolitical",
+      "to": "DOMAIN-EE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-EE-infrastructure",
+      "to": "DOMAIN-EE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-EE-economic",
+      "to": "DOMAIN-EE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-EE-Хакеры_из_",
       "to": "DOMAIN-EE-technology",
       "type": "AMPLIFIES",
@@ -217,10 +238,10 @@
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-EE-Миграционн",
-      "to": "DOMAIN-EE-social",
+      "from": "SIGNAL-EE-Военные_уд",
+      "to": "DOMAIN-EE-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.51
+      "weight": 0.63
     }
   ]
 }
