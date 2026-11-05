@@ -2,7 +2,7 @@
   "country": "CA",
   "date": "2026-11-05",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-05T23:07:41.443248+00:00",
+  "generated_at": "2026-11-05T23:28:05.106334+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -47,7 +47,7 @@
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
+      "score": 56,
       "trend": "stable"
     },
     {
@@ -80,9 +80,9 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CA-Дождь:_Зал",
+      "id": "SIGNAL-CA-Дождь:_Цен",
       "type": "Signal",
-      "label": "Дождь: Залив Хау, Центральное побережье ",
+      "label": "Дождь: Центральное побережье - внутренни",
       "severity": 74,
       "domain": "climate"
     },
@@ -94,11 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-CA-Сильный_ве",
+      "id": "SIGNAL-CA-Air_qualit",
       "type": "Signal",
-      "label": "Сильный ветер: Саллуит, Чилкотин, Хайда ",
+      "label": "Air quality: Граница, Канада",
       "severity": 56,
-      "domain": "climate"
+      "domain": "social"
     }
   ],
   "edges": [
@@ -130,7 +130,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-CA",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-CA-climate",
-      "to": "DOMAIN-CA-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-CA-infrastructure",
-      "to": "DOMAIN-CA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-CA-economic",
-      "to": "DOMAIN-CA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-CA-climate",
       "to": "DOMAIN-CA-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,7 +184,28 @@
       "lag_days": 90
     },
     {
-      "from": "SIGNAL-CA-Дождь:_Зал",
+      "from": "DOMAIN-CA-climate",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-CA-Дождь:_Цен",
       "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
       "weight": 0.74
@@ -217,8 +217,8 @@
       "weight": 0.74
     },
     {
-      "from": "SIGNAL-CA-Сильный_ве",
-      "to": "DOMAIN-CA-climate",
+      "from": "SIGNAL-CA-Air_qualit",
+      "to": "DOMAIN-CA-social",
       "type": "AMPLIFIES",
       "weight": 0.56
     }
