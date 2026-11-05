@@ -2,7 +2,7 @@
   "country": "SG",
   "date": "2026-11-05",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-05T14:29:07.436535+00:00",
+  "generated_at": "2026-11-05T14:47:35.074436+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -26,14 +26,14 @@
       "id": "DOMAIN-SG-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 31,
+      "score": 42,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-SG-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 39,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -70,14 +70,21 @@
       "label": "geopolitical"
     },
     {
+      "id": "DRIVER-SG-economic",
+      "type": "Driver",
+      "label": "economic"
+    },
+    {
       "id": "DRIVER-SG-social",
       "type": "Driver",
       "label": "social"
     },
     {
-      "id": "DRIVER-SG-climate",
-      "type": "Driver",
-      "label": "climate"
+      "id": "SIGNAL-SG-Валютный_р",
+      "type": "Signal",
+      "label": "Валютный рынок — Юго-Восточная Азия",
+      "severity": 56,
+      "domain": "economic"
     },
     {
       "id": "SIGNAL-SG-Геополитич",
@@ -92,13 +99,6 @@
       "label": "Миграционная политика — Сингапур",
       "severity": 40,
       "domain": "social"
-    },
-    {
-      "id": "SIGNAL-SG-Наводнение",
-      "type": "Signal",
-      "label": "Наводнение — Юго-Восточная Азия",
-      "severity": 52,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -112,13 +112,13 @@
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-economic",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-climate",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-SG",
@@ -151,13 +151,13 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-SG-social",
+      "from": "DRIVER-SG-economic",
       "to": "COUNTRY-SG",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-SG-climate",
+      "from": "DRIVER-SG-social",
       "to": "COUNTRY-SG",
       "type": "CAUSES",
       "weight": 0.8
@@ -184,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-SG-Валютный_р",
+      "to": "DOMAIN-SG-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.56
+    },
+    {
       "from": "SIGNAL-SG-Геополитич",
       "to": "DOMAIN-SG-geopolitical",
       "type": "AMPLIFIES",
@@ -194,12 +200,6 @@
       "to": "DOMAIN-SG-social",
       "type": "AMPLIFIES",
       "weight": 0.4
-    },
-    {
-      "from": "SIGNAL-SG-Наводнение",
-      "to": "DOMAIN-SG-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.52
     }
   ]
 }
