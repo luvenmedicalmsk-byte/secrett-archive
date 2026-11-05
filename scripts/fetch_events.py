@@ -7779,7 +7779,8 @@ def process_events(raw_items):
         # Сдвиг даты на todate не помог — у длящегося события и она давняя.
         # Для таких источников окно 120 дней. Это не отмена проверки:
         # событие старше четырёх месяцев по-прежнему уходит.
-        _cut = _cutoff_long if str(item.get('source','')) in _LONG_LIVED_SOURCES else cutoff
+        _cut = _cutoff_long if (str(item.get('source','')) in _LONG_LIVED_SOURCES
+                                or (USGS_EVENT_DATE and item.get('source') == 'USGS')) else cutoff
         if item.get('date','') < _cut: _trace(_tid,'OLD','removed',reason='old'); _lost('old', item); continue
         # --- Ingestion Cleanup (VNext L0): нормализуем desc ДО классификации ---
         # HTML-теги/entities/пробелы чистятся один раз здесь, чтобы detect_domain,
@@ -15680,6 +15681,23 @@ def _save_quake_history():
         print(f"  [WARN] quake history failed: {_qe}", file=sys.stderr)
 
 
+# D-08b USGS_EVENT_DATE (05.11.2026). RCA D-08: карточка USGS получала дату прогона,
+# а не толчка. _ndup_collapse сравнивает даты (±3 дня) и шаблонные заголовки, поэтому
+# разные толчки серии (Вануату, 6 толчков M6+ за 2 недели) склеивались в одну карточку.
+# С флагом: дата = props.time (UTC). Политика OLD - вариант A: USGS считается
+# длящимся источником (окно _cutoff_long), иначе фид 4.5_month терял бы всё старше
+# 14 дней ещё до P10. Что из этого видно в ленте - решают P10 и D-08c, не OLD.
+# Поле _usgs_event_date пишется всегда (тень). Откат: USGS_EVENT_DATE = False.
+USGS_EVENT_DATE = False
+
+
+def _usgs_event_day(ms):
+    try:
+        return datetime.fromtimestamp(int(ms) / 1000, timezone.utc).strftime('%Y-%m-%d') if ms else ''
+    except Exception:
+        return ''
+
+
 def fetch_usgs_earthquakes():
     items = []
     # Землетрясения магнитудой 5.0+ за последние 7 дней
@@ -15728,7 +15746,9 @@ def fetch_usgs_earthquakes():
                 _it = {
                     'title': title,
                     'desc': f"Магнитуда {mag}. {ru_place}{_tail}. Параметры очага: {_origin}.",
-                    'date': datetime.now(timezone.utc).strftime('%Y-%m-%d'),
+                    'date': ((_usgs_event_day(_tm) or datetime.now(timezone.utc).strftime('%Y-%m-%d'))
+                             if USGS_EVENT_DATE else datetime.now(timezone.utc).strftime('%Y-%m-%d')),
+                    '_usgs_event_date': _usgs_event_day(_tm),
                     'source': 'USGS',
                     '_force_severity': normalize_severity('earthquake', {'magnitude': mag, 'depth': _depth}),
                     '_lat': lat, '_lng': lng, '_coord_origin': 'source',
