@@ -9955,7 +9955,7 @@ def _softcap_firm_bankruptcy(events, cap=48):
 # не проходил: ведущие эмодзи, кавычки, тире. С флагом они снимаются перед
 # проверкой; критерии P10 (технический заголовок без последствий) не меняются.
 # Откат: P10_PREFIX_NORM = False.
-P10_PREFIX_NORM = False
+P10_PREFIX_NORM = True
 _P10_PREFIX = re.compile(r'^[\W_]+', re.U)
 
 
