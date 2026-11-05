@@ -9801,6 +9801,13 @@ def _event_cluster_shadow(events):
 # (версии pt/us одного толчка, как Бонин 24.10). Откат: USGS_NDUP_BY_EVENT = False.
 USGS_NDUP_BY_EVENT = False
 _NDUP_MAG = re.compile(r'\bM\s?(\d+(?:[.,]\d)?)')
+# v2 (05.11, негативный тест): в один день и в одном районе бывают разные толчки
+# серии с близкой магнитудой (Срединно-Атлантический хребет 13.10: M6.7 в 05:44 и
+# M6.8 в 12:23). Признак одного физического толчка - время очага: версии pt/us
+# расходятся на секунды. Время берётся из _quake_origin; без него - прежнее
+# правило «один день».
+_NDUP_ORIGIN_T = re.compile(r'(\d{4}-\d{2}-\d{2}) (\d{2}):(\d{2}):(\d{2}) UTC')
+_NDUP_SAME_QUAKE_SEC = 120
 
 
 def _ndup_usgs_key(e):
@@ -9808,13 +9815,20 @@ def _ndup_usgs_key(e):
         return None
     try:
         m = _NDUP_MAG.search(e.get('title') or '')
-        return (float(e.get('lat')), float(e.get('lng')), float(m.group(1).replace(',', '.')) if m else None)
+        _ot = None
+        _mo = _NDUP_ORIGIN_T.search(e.get('_quake_origin') or e.get('quake_origin') or '')
+        if _mo:
+            _ot = datetime.strptime('%s %s:%s:%s' % _mo.groups(), '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc).timestamp()
+        return (float(e.get('lat')), float(e.get('lng')), float(m.group(1).replace(',', '.')) if m else None, _ot)
     except Exception:
         return None
 
 
 def _ndup_same_quake(a, b, ta, tb):
-    if ta is not None and tb is not None and ta != tb:
+    if a[3] is not None and b[3] is not None:
+        if abs(a[3] - b[3]) > _NDUP_SAME_QUAKE_SEC:
+            return False
+    elif ta is not None and tb is not None and ta != tb:
         return False
     if abs(a[0] - b[0]) >= 0.7 or abs(a[1] - b[1]) >= 0.7:
         return False
