@@ -9799,7 +9799,7 @@ def _event_cluster_shadow(events):
 # (24-25.10) уходили в ndup_collapse. Две карточки USGS - дубль только при одном
 # физическом событии: один день, расстояние < 0.7°, разница магнитуд ≤ 0.5
 # (версии pt/us одного толчка, как Бонин 24.10). Откат: USGS_NDUP_BY_EVENT = False.
-USGS_NDUP_BY_EVENT = False
+USGS_NDUP_BY_EVENT = True
 _NDUP_MAG = re.compile(r'\bM\s?(\d+(?:[.,]\d)?)')
 # v2 (05.11, негативный тест): в один день и в одном районе бывают разные толчки
 # серии с близкой магнитудой (Срединно-Атлантический хребет 13.10: M6.7 в 05:44 и
@@ -15737,7 +15737,7 @@ def _save_quake_history():
 # длящимся источником (окно _cutoff_long), иначе фид 4.5_month терял бы всё старше
 # 14 дней ещё до P10. Что из этого видно в ленте - решают P10 и D-08c, не OLD.
 # Поле _usgs_event_date пишется всегда (тень). Откат: USGS_EVENT_DATE = False.
-USGS_EVENT_DATE = False
+USGS_EVENT_DATE = True
 
 
 def _usgs_event_day(ms):
