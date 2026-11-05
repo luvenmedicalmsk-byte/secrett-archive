@@ -9950,6 +9950,20 @@ def _softcap_firm_bankruptcy(events, cap=48):
         print('  SOFTCAP: единичных банкротств понижено до %d: %d' % (cap, n), file=sys.stderr)
     return events
 
+# D-08d P10_PREFIX_NORM (05.11.2026, флаг выключен). Шаблон P10 привязан к началу
+# заголовка, и «⚡️Землетрясение магнитудой 6,1 произошло в Японии» (TN news) его
+# не проходил: ведущие эмодзи, кавычки, тире. С флагом они снимаются перед
+# проверкой; критерии P10 (технический заголовок без последствий) не меняются.
+# Откат: P10_PREFIX_NORM = False.
+P10_PREFIX_NORM = False
+_P10_PREFIX = re.compile(r'^[\W_]+', re.U)
+
+
+def _p10_title(e):
+    t = str(e.get('title') or '')
+    return _P10_PREFIX.sub('', t) if P10_PREFIX_NORM else t
+
+
 def _p10_drop_quake_cards(events):
     """P10: убирает технические карточки землетрясений (USGS/EMSC, «Землетрясение M5.4 — …»)
     из общей ленты «События». Сейсмика целиком в «Риски → Землетрясения» (живой USGS).
@@ -9970,7 +9984,7 @@ def _p10_drop_quake_cards(events):
             r'цунами|режим\s+чс|чрезвычайн\w*\s+положен|эвакуац|эвакуирован|'
             r'спасательн|под\s+завалам|обесточ|без\s+электр)', _re_q.I)
         _out = [e for e in events
-                if not (_rx.match(str(e.get('title') or ''))
+                if not (_rx.match(_p10_title(e))
                         and not _cons.search(str(e.get('title') or '')
                                              + ' ' + str(e.get('summary') or '')))]
         _n = len(events) - len(_out)
