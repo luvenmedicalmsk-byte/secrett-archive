@@ -24007,6 +24007,8 @@ def _retain_critical(evs, prev):
                         e['severity'] = _new_sev
                         _sd = dict(e.get('severity_decision') or {})
                         _ap = list(_sd.get('applied') or [])
+                        if SEV_POST_HYG_0511:   # одна строка правила, а не по строке за прогон
+                            _ap = [a for a in _ap if a.get('rule') != 'retain_recompute']
                         _ap.append({'rule': 'retain_recompute', 'type':
                                     'boost' if _new_sev > _old_sev else 'cut',
                                     'from': _old_sev, 'to': _new_sev,
@@ -26190,6 +26192,79 @@ def _cf_dedup(e):
             _d['applied'] = [a for a in _d['applied'] if a.get('rule') != 'casualty_floor']
     except Exception:
         pass
+
+
+# ── SEV_POST_HYG_0511 (аудит 05.11.2026) ───────────────────────────────────
+# 1. Потолки SEV_CAPS_0411 перебивались позже _feed_hygiene (пол по числу
+#    погибших без записи в журнал): «Более 3,500 человек погибли из-за загрязнения
+#    воздуха» 66 -> 84, «Министр транспорта Испании подаст в отставку…» 62 -> 80.
+#    Потолки применяются повторно после гигиены.
+# 2. Заниженные сигналы: вес пришёл базой без правил. Полы по заголовку.
+# 3. Потолок для новостей о пожертвованиях («Университет VIT жертвует 10 000 000
+#    рупий…» 84).
+# Откат: SEV_POST_HYG_0511 = False.
+SEV_POST_HYG_0511 = True
+_F5_RULES = (
+    # (имя, регулярное выражение по заголовку, пол)
+    ('инфраструктура: регион или столица без света/воды/транспорта',
+     re.compile(r'(?:вес[ьй]|вся|всё|целиком|полностью)\s+(?:\w+\s+)?(?:полуостров|город|регион|област|стран)\w*[^.]{0,40}(?:обесточ|без\s+(?:света|электр))|'
+                r'(?:обесточ)\w*\s+(?:вес[ьй]|вся|всё)\s+(?:полуостров|город|регион|област)|'
+                r'(?:киев|москв|минск|харьков|одесс|днепр|столиц)\w*[^.]{0,40}(?:без\s+(?:водоснабж|воды|света|электр|тепл)|остановил\w*\s+(?:трамва|троллейбус|метро))', re.I), 72),
+    ('уязвимость нулевого дня / активная эксплуатация',
+     re.compile(r'нулевого\s+дня|zero[- ]day|0-day|активно\s+эксплуатир|actively\s+exploited', re.I), 64),
+    ('атака ИИ-агентов',
+     re.compile(r'(?:ии|ai)[- ]агент\w*[^.]{0,60}(?:атак|взлом)|(?:атак|взлом)\w*[^.]{0,60}(?:ии|ai)[- ]агент|ai\s+agents?', re.I), 64),
+    ('имплант / бэкдор в устройствах',
+     re.compile(r'(?:вредоносн\w+\s+)?(?:имплант|бэкдор|backdoor)\w*[^.]{0,50}(?:кошел|прошивк|устройств|библиотек|пакет|wallet|firmware)|'
+                r'(?:кошел|прошивк|устройств|wallet|firmware)\w*[^.]{0,50}(?:вредоносн\w+\s+)?(?:имплант|бэкдор|backdoor)', re.I), 62),
+    ('дефицит топлива / запрет экспорта топлива',
+     re.compile(r'(?:отсутстви|нехватк|дефицит)\w*\s+(?:бензин|топлив|дизел)|(?:экстренно|срочно)\s+обеспечива\w*\s+заправк|'
+                r'запрет\w*\s+на\s+экспорт\s+(?:бензин|дизел|топлив)', re.I), 60),
+    ('наземное вторжение',
+     re.compile(r'наземн\w*\s+(?:вторжени|наступлени)\w*\s+(?:в|на)\s+[А-ЯЁA-Z]', re.I), 80),
+    ('воздушная тревога в стране НАТО',
+     re.compile(r'воздушн\w+\s+тревог\w*[^.]{0,80}(?:латви|литв|эстон|польш|румын|финлянд)|(?:латви|литв|эстон|польш|румын|финлянд)\w*[^.]{0,80}воздушн\w+\s+тревог', re.I), 60),
+)
+_F5_OIL = re.compile(r'нефть[^.]{0,20}(?:обрушил|подешевел|рухнул|упал|подорожал|взлетел)\w*\s+(?:на|более\s+чем\s+на)\s+(\d+(?:[.,]\d+)?)\s*%', re.I)
+_F5_DONATE = re.compile(r'жертвует|пожертвова|пожертвуют|donat', re.I)
+
+
+def _sev_post_hyg_0511(events):
+    if not SEV_POST_HYG_0511:
+        return 0
+    _sev_caps_0411(events)          # потолки побеждают поздние полы гигиены
+    n = 0
+    for e in events:
+        t = e.get('title') or ''
+        cur = e.get('severity') or 0
+        if _F5_DONATE.search(t) and cur > 50:
+            e['severity'] = _sev_log(e, 'sev_post_hyg_0511', cur, 50, 'пожертвование на помощь - не событие риска', 'cap')
+            n += 1
+            continue
+        if _c4_is_quote(t):
+            continue
+        fl, why = 0, ''
+        for _nm, _rx, _v in _F5_RULES:
+            # ежедневные сводки каталога CISA KEV - рутина, не отдельный сигнал
+            if _nm.startswith('уязвимость') and (e.get('source') == 'CISA KEV'
+                                                   or re.match(r'\s*(?:Активно эксплуатируемые уязвимости:|CISA\s+(?:добавляет|приказывает))', t)):
+                continue
+            if _v > fl and _rx.search(t):
+                fl, why = _v, _nm
+        _mo = _F5_OIL.search(t)
+        if _mo:
+            try:
+                _pc = float(_mo.group(1).replace(',', '.'))
+                if _pc >= 7 and 70 > fl:
+                    fl, why = 70, 'резкое движение нефти (%s%%)' % _mo.group(1)
+            except ValueError:
+                pass
+        if fl > cur:
+            e['severity'] = _sev_log(e, 'sev_post_hyg_0511', cur, fl, 'пол: ' + why, 'boost')
+            n += 1
+    if n:
+        print('  [SEV-POST-HYG-0511] изменено %d' % n, file=sys.stderr)
+    return n
 
 
 def _casualty_floor(events):
@@ -28628,6 +28703,7 @@ def save_enriched(events, previous_snapshot=None):
                 _context_feed_gate(enriched["events"])
                 _incident_collapse(enriched["events"])
                 _feed_hygiene(enriched["events"])
+                _sev_post_hyg_0511(enriched["events"])
                 _sic_shadow_report(enriched["events"], OUTPUT_PATH.parent)
                 _adr039a_shadow_report(enriched["events"], OUTPUT_PATH.parent)
             except Exception as _se:
