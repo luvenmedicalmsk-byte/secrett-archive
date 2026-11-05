@@ -2,17 +2,17 @@
   "country": "ID",
   "country_name": "Индонезия",
   "date": "2026-11-05",
-  "generated_at": "2026-11-05T08:59:24.085405+00:00",
+  "generated_at": "2026-11-05T09:28:54.773198+00:00",
   "risk_score": 91,
-  "scenario_score": 43,
-  "instability": 39,
+  "scenario_score": 39,
+  "instability": 30,
   "instability_v2": true,
   "scenarios": [
     {
       "type": "best",
       "name": "Best Case",
       "name_ru": "Лучший сценарий",
-      "probability": 28,
+      "probability": 30,
       "score": 58,
       "delta_from_current": -33,
       "state": "escalating",
@@ -24,7 +24,7 @@
       "recovery_days": 327,
       "future_pressure": 42,
       "future_resilience": 41,
-      "future_probability": 28,
+      "future_probability": 30,
       "drivers": [
         {
           "driver": "Деэскалация",
@@ -71,7 +71,7 @@
       "type": "base",
       "name": "Base Case",
       "name_ru": "Базовый сценарий",
-      "probability": 15,
+      "probability": 18,
       "score": 78,
       "delta_from_current": -13,
       "state": "critical",
@@ -83,7 +83,7 @@
       "recovery_days": 440,
       "future_pressure": 63,
       "future_resilience": 38,
-      "future_probability": 15,
+      "future_probability": 18,
       "drivers": [
         {
           "driver": "Более 3,500 человек погибли из-за загрязнения",
@@ -103,26 +103,26 @@
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 83,
+          "score": 78,
           "state": "critical",
           "state_ru": "Критическая эскалация",
-          "delta_from_current": -8
+          "delta_from_current": -13
         },
         {
           "horizon": "180d",
           "label": "180 дней",
-          "score": 88,
-          "state": "cascade",
-          "state_ru": "Каскадный кризис",
-          "delta_from_current": -3
+          "score": 78,
+          "state": "critical",
+          "state_ru": "Критическая эскалация",
+          "delta_from_current": -13
         },
         {
           "horizon": "365d",
           "label": "365 дней",
-          "score": 93,
-          "state": "cascade",
-          "state_ru": "Каскадный кризис",
-          "delta_from_current": 2
+          "score": 78,
+          "state": "critical",
+          "state_ru": "Критическая эскалация",
+          "delta_from_current": -13
         }
       ]
     },
@@ -130,19 +130,19 @@
       "type": "stress",
       "name": "Stress Case",
       "name_ru": "Стресс-сценарий",
-      "probability": 26,
+      "probability": 25,
       "score": 88,
       "delta_from_current": -3,
       "state": "cascade",
       "state_ru": "Каскадный кризис",
       "impact": "catastrophic",
       "impact_ru": "Катастрофический",
-      "velocity": "fast",
-      "velocity_ru": "Быстрый",
+      "velocity": "moderate",
+      "velocity_ru": "Умеренный",
       "recovery_days": 496,
       "future_pressure": 74,
       "future_resilience": 35,
-      "future_probability": 26,
+      "future_probability": 25,
       "drivers": [
         {
           "driver": "Более 3,500 человек погибли из-за загрязнения",
@@ -166,10 +166,10 @@
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 95,
+          "score": 94,
           "state": "cascade",
           "state_ru": "Каскадный кризис",
-          "delta_from_current": 4
+          "delta_from_current": 3
         },
         {
           "horizon": "180d",
@@ -193,7 +193,7 @@
       "type": "worst",
       "name": "Worst Case",
       "name_ru": "Худший сценарий",
-      "probability": 31,
+      "probability": 27,
       "score": 95,
       "delta_from_current": 4,
       "state": "cascade",
@@ -205,7 +205,7 @@
       "recovery_days": 535,
       "future_pressure": 83,
       "future_resilience": 29,
-      "future_probability": 31,
+      "future_probability": 27,
       "drivers": [
         {
           "driver": "Более 3,500 человек погибли из-за загрязнения",
@@ -255,25 +255,25 @@
   ],
   "transition_triggers": [
     {
-      "condition": "delta ≥ 5 за 24ч",
+      "condition": "delta ≥ 3 за 24ч",
       "leads_to": "worst",
-      "probability": 31
+      "probability": 27
     },
     {
       "condition": "Драйвер severity ≥ 85 в climate",
       "leads_to": "stress",
-      "probability": 26
+      "probability": 25
     },
     {
       "condition": "Деэскалация ключевого кризиса",
       "leads_to": "best",
-      "probability": 28
+      "probability": 30
     },
     {
       "condition": "Цепочка распространения → 3+ страны",
       "leads_to": "worst",
-      "probability": 14
+      "probability": 11
     }
   ],
-  "dominant_scenario": "worst"
+  "dominant_scenario": "best"
 }
