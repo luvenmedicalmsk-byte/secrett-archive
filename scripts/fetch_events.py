@@ -9793,19 +9793,54 @@ def _event_cluster_shadow(events):
         print('  [WARN] cluster shadow: %s' % _ce, file=sys.stderr)
 
 
+# D-08b-2 USGS_NDUP_BY_EVENT (05.11.2026, флаг выключен). Шаблонные заголовки USGS
+# («Землетрясение M6.x — N км к СЗ от Port-Olry») дают совпадение основ ≥0.6, и разные
+# толчки серии склеиваются. Тень D-08b: даже с датой толчка 3 разных толчка Вануату
+# (24-25.10) уходили в ndup_collapse. Две карточки USGS - дубль только при одном
+# физическом событии: один день, расстояние < 0.7°, разница магнитуд ≤ 0.5
+# (версии pt/us одного толчка, как Бонин 24.10). Откат: USGS_NDUP_BY_EVENT = False.
+USGS_NDUP_BY_EVENT = False
+_NDUP_MAG = re.compile(r'\bM\s?(\d+(?:[.,]\d)?)')
+
+
+def _ndup_usgs_key(e):
+    if not (USGS_NDUP_BY_EVENT and e.get('source') == 'USGS'):
+        return None
+    try:
+        m = _NDUP_MAG.search(e.get('title') or '')
+        return (float(e.get('lat')), float(e.get('lng')), float(m.group(1).replace(',', '.')) if m else None)
+    except Exception:
+        return None
+
+
+def _ndup_same_quake(a, b, ta, tb):
+    if ta is not None and tb is not None and ta != tb:
+        return False
+    if abs(a[0] - b[0]) >= 0.7 or abs(a[1] - b[1]) >= 0.7:
+        return False
+    if a[2] is not None and b[2] is not None and abs(a[2] - b[2]) > 0.5:
+        return False
+    return True
+
+
 def _ndup_collapse(events):
     """Near-dup collapse (паритет с C2 Событий): перефраз. репосты, тот же домен, дата +-3д, оставляем макс. риск."""
     kept=[]; out=[]; _grp={}
     for e in events:
         ew=_ndup_stems(e.get('title')); et=_ndup_day(e.get('date')); dup=-1
+        _uq=_ndup_usgs_key(e)
         for idx,k in enumerate(kept):
             if k['dom']!=(e.get('domain') or ''): continue
             if et is not None and k['t'] is not None and abs(et-k['t'])>3: continue
+            if _uq is not None and k.get('uq') is not None:
+                # две карточки USGS: дубль только если это один физический толчок
+                if _ndup_same_quake(_uq, k['uq'], et, k['t']): dup=idx; break
+                continue
             inter,ratio=_ndup_ovl(ew,k['words'])
             if inter>=4 and ratio>=0.6: dup=idx; break
         if dup<0:
             _grp[len(out)]=[e]
-            kept.append({'dom':(e.get('domain') or ''),'t':et,'words':ew,'idx':len(out)}); out.append(e)
+            kept.append({'dom':(e.get('domain') or ''),'t':et,'words':ew,'idx':len(out),'uq':_uq}); out.append(e)
         else:
             pi=kept[dup]['idx']
             _grp[pi].append(e)
