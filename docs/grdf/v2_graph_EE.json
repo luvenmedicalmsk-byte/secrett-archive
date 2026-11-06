@@ -2,9 +2,9 @@
   "country": "EE",
   "date": "2026-11-06",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-06T07:28:23.710595+00:00",
+  "generated_at": "2026-11-06T07:49:46.052623+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-EE",
@@ -33,7 +33,7 @@
       "id": "DOMAIN-EE-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 50,
       "trend": "stable"
     },
     {
@@ -70,14 +70,14 @@
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-EE-economic",
-      "type": "Driver",
-      "label": "economic"
-    },
-    {
       "id": "DRIVER-EE-climate",
       "type": "Driver",
       "label": "climate"
+    },
+    {
+      "id": "DRIVER-EE-economic",
+      "type": "Driver",
+      "label": "economic"
     },
     {
       "id": "SIGNAL-EE-Воздушное_",
@@ -87,17 +87,17 @@
       "domain": "geopolitical"
     },
     {
+      "id": "SIGNAL-EE-Ветер:_Чуд",
+      "type": "Signal",
+      "label": "Ветер: Чудское озеро, Порт Таллинна, Зап",
+      "severity": 50,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-EE-Ситуация_с",
       "type": "Signal",
       "label": "Ситуация с трудовыми спорами переполняет",
       "severity": 47,
-      "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-EE-Инфляция_в",
-      "type": "Signal",
-      "label": "Инфляция в Эстонии — октябрь пересмотрен",
-      "severity": 46,
       "domain": "economic"
     }
   ],
@@ -118,7 +118,7 @@
       "from": "COUNTRY-EE",
       "to": "DOMAIN-EE-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-EE",
@@ -151,16 +151,58 @@
       "weight": 0.8
     },
     {
+      "from": "DRIVER-EE-climate",
+      "to": "COUNTRY-EE",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-EE-economic",
       "to": "COUNTRY-EE",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-EE-climate",
-      "to": "COUNTRY-EE",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-EE-climate",
+      "to": "DOMAIN-EE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-EE-infrastructure",
+      "to": "DOMAIN-EE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-EE-economic",
+      "to": "DOMAIN-EE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-EE-climate",
+      "to": "DOMAIN-EE-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-EE-economic",
+      "to": "DOMAIN-EE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-EE-social",
+      "to": "DOMAIN-EE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "DOMAIN-EE-geopolitical",
@@ -190,16 +232,16 @@
       "weight": 0.55
     },
     {
+      "from": "SIGNAL-EE-Ветер:_Чуд",
+      "to": "DOMAIN-EE-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
       "from": "SIGNAL-EE-Ситуация_с",
       "to": "DOMAIN-EE-economic",
       "type": "AMPLIFIES",
       "weight": 0.47
-    },
-    {
-      "from": "SIGNAL-EE-Инфляция_в",
-      "to": "DOMAIN-EE-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.46
     }
   ]
 }
