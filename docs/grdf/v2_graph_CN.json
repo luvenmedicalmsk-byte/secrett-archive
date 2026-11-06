@@ -2,7 +2,7 @@
   "country": "CN",
   "date": "2026-11-06",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-06T13:48:24.622019+00:00",
+  "generated_at": "2026-11-06T14:09:54.286898+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 80,
+      "score": 81,
       "props": {
-        "risk_score": 80
+        "risk_score": 81
       }
     },
     {
@@ -34,13 +34,13 @@
       "type": "Domain",
       "label": "climate",
       "score": 74,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 72,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,9 +80,16 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CN-Туман:_Окр",
+      "id": "SIGNAL-CN-Туман:_гор",
       "type": "Signal",
-      "label": "Туман: Округ Маунт-Холиок, Уаньшаньцю, Н",
+      "label": "Туман: город Тачэн, Уезд Цинлун, Район С",
+      "severity": 74,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-CN-Снегопад:_",
+      "type": "Signal",
+      "label": "Снегопад: Город Ичунь, Уезд Фую, Китай",
       "severity": 74,
       "domain": "climate"
     },
@@ -92,13 +99,6 @@
       "label": "Сильный дождь: Автономный округ Цзиньпин",
       "severity": 74,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-CN-Падение_ин",
-      "type": "Signal",
-      "label": "Падение интернет-связи: Китай",
-      "severity": 72,
-      "domain": "technology"
     }
   ],
   "edges": [
@@ -124,7 +124,7 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-technology",
       "type": "CORRELATES",
-      "weight": 0.72
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CN",
@@ -205,7 +205,13 @@
       "lag_days": 90
     },
     {
-      "from": "SIGNAL-CN-Туман:_Окр",
+      "from": "SIGNAL-CN-Туман:_гор",
+      "to": "DOMAIN-CN-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.74
+    },
+    {
+      "from": "SIGNAL-CN-Снегопад:_",
       "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
       "weight": 0.74
@@ -215,12 +221,6 @@
       "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
       "weight": 0.74
-    },
-    {
-      "from": "SIGNAL-CN-Падение_ин",
-      "to": "DOMAIN-CN-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.72
     }
   ]
 }
