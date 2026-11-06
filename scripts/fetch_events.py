@@ -17195,6 +17195,7 @@ _WMO_CAT = [
     (re.compile(r'fire|incendi|\bfeu\b|inc[eê]ndio|queimad|forest\s+fire', re.I), 'fire'),
 ]
 _WMO_LOG = {'feeds': 0, 'ok': 0, 'skipped_budget': 0, 'rejected': {}}
+_WMO_NONLAT = re.compile(r'[\u0590-\u08FF\u0900-\u0DFF\u0E00-\u0FFF\u1000-\u109F\u1100-\u11FF\u3040-\u9FFF\uAC00-\uD7AF]')
 
 
 def _wmo_cat(event):
@@ -17255,19 +17256,33 @@ def fetch_wmo_alerthub():
         iso = so['authorityCountry'].upper()
         rec = _gc.by_iso(iso) or {}
         country = rec.get('name_ru') or so.get('authorityCountry')
-        svc = (so.get('sourceName') or so.get('authorityName') or so.get('sourceId') or 'NMHS').strip()[:60]
+        _sid = (so.get('sourceId') or '').split('-')
+        svc = (so.get('authorityAbbrev') or (_sid[1].upper() if len(_sid) > 2 else '')
+               or so.get('authorityName') or 'NMHS').strip()[:40]
         try:
-            got = _meteoinfo_cap(so['capAlertFeed'], country, svc, 'ВМО Alert Hub · ' + svc, 'cap_hub', limit=6,
+            got = _meteoinfo_cap(so['capAlertFeed'], country, svc, 'ВМО Alert Hub', 'cap_hub', limit=6,
                                  cc=iso, fallback=rec.get('center'), min_score=74, latin_only=True,
                                  aggregate=True, accept=_wmo_accept)
             _WMO_LOG['ok'] += 1
         except Exception as e:
             print(f"  [WARN] WMO Alert Hub {so.get('sourceId')}: {e}", file=sys.stderr)
             return []
+        keep = []
         for it in got:
-            it.setdefault('_meta', {})['via'] = 'wmo_alerthub'
-            it['_meta']['source_id'] = so.get('sourceId')
-        return got
+            # копия на языке без латиницы и кириллицы (тайская лента TMD рядом с английской):
+            # название явления бывает английским, а районы и текст - нет
+            if _WMO_NONLAT.search((it.get('title') or '') + ' ' + (it.get('desc') or '')):
+                _WMO_LOG['rejected']['копия на другом языке'] = _WMO_LOG['rejected'].get('копия на другом языке', 0) + 1
+                continue
+            m = it.setdefault('_meta', {})
+            m['via'] = 'wmo_alerthub'
+            m['source_id'] = so.get('sourceId')
+            # районы без разделителей (TMD: «Аюттхая Лопбури Чайнат …») - в заголовке только страна
+            if len(it.get('title') or '') > 90:
+                it['title'] = f"{m.get('event') or _cap_event_ru(m.get('event') or '')}: {country}"
+                m['place'] = country
+            keep.append(it)
+        return keep
 
     items = []
     with _TPE(max_workers=16) as ex:
