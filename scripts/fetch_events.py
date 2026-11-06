@@ -10015,6 +10015,132 @@ def _p10_title(e):
     return _P10_PREFIX.sub('', t) if P10_PREFIX_NORM else t
 
 
+# ── QUAKE_CATEGORY (D-08c, 06.11.2026) ─────────────────────────────────────
+# Единый классификатор записей о землетрясениях для signal_quality и P10.
+#   physical     - физическая карточка USGS/EMSC («Землетрясение M6.2 — …»)
+#   shock_news   - новость о толчке без последствий (дубль страницы «Землетрясения»)
+#   consequence  - последствия: жертвы, разрушения, эвакуация, угроза цунами, ЧС,
+#                  гуманитарная операция; маркер НЕ в отрицании
+#   preparedness - учения, призывы подготовиться, оценки вероятности, годовщины
+#   none         - не землетрясение (в т.ч. «политическое землетрясение»)
+# Классификатор определяет ТИП; решение о судьбе принимают фильтры.
+# Аудит 05.11: 6 из 6 сообщений о последствиях удалялись правилом «только USGS»;
+# P10 принимал «угрозы цунами нет» и «разрушений нет» за последствия.
+# QUAKE_CATEGORY_ON = False: поведение signal_quality и P10 прежнее.
+# QUAKE_CATEGORY_SHADOW = True: только отчёт docs/_quake_shadow.json - записи,
+# чьё решение изменилось бы при включении.
+# Откат: QUAKE_CATEGORY_ON = False (по умолчанию), QUAKE_CATEGORY_SHADOW = False.
+QUAKE_CATEGORY_ON = False
+QUAKE_CATEGORY_SHADOW = True
+_QC_SHADOW = {'p10': [], 'sq': [], 'cats': {}}
+_QC_SEEN = set()
+
+_QC_QUAKE = re.compile(r'землетряс|афтершок|подземн\w*\s+толч|сейсмическ\w*\s+толч|магнитуд\w*\s*\d|'
+                       r'earthquake|aftershock|\bquake', re.I)
+_QC_METAPHOR = re.compile(r'политическ\w*\s+землетряс|землетряс\w*\s+(?:на\s+рынк|на\s+бирж|в\s+политик|на\s+выбор)|'
+                          r'(?:political|electoral|market)\s+earthquake|felt\s+like\s+an?\s+earthquake|like\s+an?\s+earthquake|'
+                          r'(?:как|словно|будто|точно)\s+(?:при\s+)?землетряс\w*|похож\w*\s+на\s+землетряс\w*', re.I)
+_QC_PHYS_SRC = ('USGS', 'EMSC')
+_QC_PHYS_T = re.compile(r'^\s*землетрясение\s+M\s*\d', re.I)
+# Маркеры последствий. Каждый проверяется на отрицание отдельно.
+_QC_CONS = re.compile(
+    r'погиб\w*|жертв\w*|пострадавш\w*|пострадал\w*|ранен\w*|раненых|под\s+завалам\w*|'
+    r'разрушен\w*|разрушил\w*|обрушил\w*|обрушени\w*|повреждени\w*|повреждён\w*|поврежден\w*|'
+    r'эвакуир\w*|эвакуаци\w*|'
+    r'(?:угроз\w*|опасност\w*|предупреждени\w*|тревог\w*)\s+(?:о\s+|об\s+)?цунами|цунами\s+(?:обрушил|достиг|высотой)|волн\w*\s+цунами|'
+    r'режим\w*\s+ЧС|режим\w*\s+чрезвычайн\w*|чрезвычайн\w*\s+положени\w*|'
+    r'гуманитарн\w*|спасательн\w*|спасател\w*|operation\s+update|\bDREF\b|помощ\w*\s+пострадавш\w*|'
+    r'ситуационн\w*\s+(?:отч|доклад|сводк)\w*|situation\s+report|sitrep|flash\s+update|emergency\s+(?:appeal|response)|earthquake\s+response|'
+    r'реагировани\w*\s+на\s+землетряс\w*|health\s+emergency|чрезвычайн\w*\s+ситуаци\w*|'
+    r'обесточ\w*|без\s+электр\w*|'
+    r'\bkill(?:s|ed|ing)?\b|\bdead\b|\bdeaths?\b|\binjur\w*|collaps\w*|\bdamage[ds]?\b|evacuat\w*|tsunami\s+warning|humanitarian|rescue',
+    re.I)
+# Отрицание перед маркером (в пределах того же фрагмента фразы) или сразу после него.
+_QC_NEG_PRE = re.compile(r'(?:\bнет\b|\bбез\b|\bне\s+(?!менее|меньше|более|только)\w+|\bни\b|\bno\b|\bnot\b|\bwithout\b)'
+                         r'[^.;!?,]{0,35}$', re.I)
+_QC_NEG_POST = re.compile(r'^[^.;!?,]{0,20}?(?:\bнет\b|\bне\s+(?:поступ|зафикс|сообща|ожида|было|выявл|отмеч|последовал|угрожа|объявл|введ|зарегистр)\w*|'
+                          r'\bnot\s+(?:expected|reported)|\bnone\b)', re.I)
+_QC_UNCONF = re.compile(r'возможн\w*|предположительн\w*|могут\s+быть|может\s+быть|по\s+предварительн\w*|unconfirmed|possible|may\s+have', re.I)
+_QC_PREP_T = re.compile(r'учени\w*|тренировк\w*|\bdrills?\b|drop,?\s+cover|призыва\w*[^.]{0,40}подготов|подготов\w*\s+к\s+землетряс|'
+                        r'маловероятн\w*|вероятност\w*|прогноз\w*\s+(?:сильн\w+\s+)?землетряс|сейсмоопасн\w*|сейсмостойк\w*|'
+                        r'годовщин\w*|лет\s+назад|anniversary|preparedness|\bprepare\b|тревожн\w*\s+чемодан\w*|be\s+ready|ready\s+for\s+earthquake|'
+                        r'earthquake\s+risk|риск\w*\s+землетряс|marking\s+\d{4}|commemorat\w*|памят\w*\s+\d{4}|\b(?:in|в)\s+(?:\w+\s+)?1[89]\d\d\b|\b1[89]\d\d\s+(?:earthquake|году)', re.I)
+
+
+def _qc_cons_markers(text):
+    """Маркеры последствий без отрицания: [(маркер, подтверждён ли)]."""
+    out = []
+    for m in _QC_CONS.finditer(text):
+        pre = text[max(0, m.start() - 45):m.start()]
+        pre = re.split(r'[.;!?,:]', pre)[-1]
+        post = text[m.end():m.end() + 40]
+        if _QC_NEG_PRE.search(pre) or _QC_NEG_POST.search(post):
+            continue
+        ctx = text[max(0, m.start() - 30):m.end() + 10]
+        out.append((m.group(0).lower(), not _QC_UNCONF.search(ctx)))
+    return out
+
+
+def _quake_category(e):
+    """D-08c: (категория, признак) для записи. Признак: маркер последствий,
+    'unconfirmed' при неподтверждённом статусе, маркер готовности и т.п."""
+    t = str(e.get('title') or '')
+    s = str(e.get('summary') or '')
+    ts = t + ' . ' + s
+    if not _QC_QUAKE.search(ts):
+        return 'none', ''
+    if _QC_METAPHOR.search(ts) or ('политическ' in ts.lower() and not _QC_QUAKE.search(t)):
+        return 'none', 'метафора'
+    src = str(e.get('source') or '')
+    if src in _QC_PHYS_SRC or (src.startswith('USGS')):
+        return 'physical', src
+    _pt = _QC_PREP_T.search(t)
+    if _pt:
+        return 'preparedness', _pt.group(0).lower()
+    cm = _qc_cons_markers(ts)
+    if cm:
+        conf = [c for c in cm if c[1]]
+        return 'consequence', (conf[0][0] if conf else cm[0][0] + ' (unconfirmed)')
+    _ps = _QC_PREP_T.search(s)
+    if _ps:
+        return 'preparedness', _ps.group(0).lower()
+    if _QC_PHYS_T.match(t):
+        return 'physical', 'шаблон M'
+    return 'shock_news', ''
+
+
+def _qc_note(kind, e, old_drop, new_drop, cat, why):
+    if not QUAKE_CATEGORY_SHADOW:
+        return
+    try:
+        _k = (kind, (e.get('title') or '')[:200])
+        if _k in _QC_SEEN:
+            return
+        _QC_SEEN.add(_k)
+        _QC_SHADOW['cats'][kind + ':' + cat] = _QC_SHADOW['cats'].get(kind + ':' + cat, 0) + 1
+        if old_drop != new_drop:
+            _QC_SHADOW[kind].append({'source': e.get('source') or '', 'title': (e.get('title') or '')[:200],
+                                     'category': cat, 'marker': why,
+                                     'old': 'removed' if old_drop else 'kept',
+                                     'new': 'removed' if new_drop else 'kept'})
+    except Exception:
+        pass
+
+
+def _qc_write_shadow():
+    if not QUAKE_CATEGORY_SHADOW:
+        return
+    try:
+        rep = {'дата': datetime.now(timezone.utc).isoformat(timespec='seconds'),
+               'режим': 'ON' if QUAKE_CATEGORY_ON else 'shadow (production без изменений)',
+               'категории_проверенных': _QC_SHADOW['cats'],
+               'p10_изменили_решение': _QC_SHADOW['p10'],
+               'signal_quality_изменили_решение': _QC_SHADOW['sq']}
+        (OUTPUT_PATH.parent / '_quake_shadow.json').write_text(json.dumps(rep, ensure_ascii=False, indent=1), encoding='utf-8')
+    except Exception as _qe:
+        print('  [WARN] quake shadow write: %s' % _qe, file=sys.stderr)
+
+
 def _p10_drop_quake_cards(events):
     """P10: убирает технические карточки землетрясений (USGS/EMSC, «Землетрясение M5.4 — …»)
     из общей ленты «События». Сейсмика целиком в «Риски → Землетрясения» (живой USGS).
@@ -10034,15 +10160,30 @@ def _p10_drop_quake_cards(events):
             r'(погиб|жертв|пострадав|ранен|разрушен|повреждён|повреждено|'
             r'цунами|режим\s+чс|чрезвычайн\w*\s+положен|эвакуац|эвакуирован|'
             r'спасательн|под\s+завалам|обесточ|без\s+электр)', _re_q.I)
-        _out = [e for e in events
-                if not (_rx.match(_p10_title(e))
-                        and not _cons.search(str(e.get('title') or '')
-                                             + ' ' + str(e.get('summary') or '')))]
+        _out = []
+        _shock = []
+        for e in events:
+            _tech = bool(_rx.match(_p10_title(e)))
+            _old = _tech and not _cons.search(str(e.get('title') or '') + ' ' + str(e.get('summary') or ''))
+            _drop = _old
+            if _tech and (QUAKE_CATEGORY_ON or QUAKE_CATEGORY_SHADOW):
+                # D-08c: отрицание («угрозы цунами нет») больше не защищает техническую новость
+                _qcat, _qwhy = _quake_category(e)
+                _new = _qcat != 'consequence'
+                _qc_note('p10', e, _old, _new, _qcat, _qwhy)
+                if QUAKE_CATEGORY_ON:
+                    _drop = _new
+                    if _new and _qcat == 'shock_news':
+                        _shock.append(e)
+            if not _drop:
+                _out.append(e)
         _n = len(events) - len(_out)
         if _n:
             print('  P10: убрано технических карточек землетрясений: %d' % _n, file=sys.stderr)
             try:
                 _kept_ids = {id(x) for x in _out}
+                if _shock:
+                    _lin_removed(_shock, _out, 'P10_QUAKE_CARD', 'quake_shock_dup')
                 _lin_removed([x for x in events if id(x) not in _kept_ids], _out,
                              'P10_QUAKE_CARD', 'p10_quake_card')
             except Exception as _lq:
@@ -23819,7 +23960,19 @@ def _signal_quality_pass(events):
                 try:
                     _qb = ((e.get('title') or '') + ' ' + (e.get('summary') or '')).lower()
                     _is_quake = (('землетряс' in _qb or 'афтершок' in _qb or re.search(r'магнитуд\w*\s*\d', _qb)) and 'политическ' not in _qb)
-                    if _is_quake and (e.get('source') or '') != 'USGS':
+                    _q_drop = _is_quake and (e.get('source') or '') != 'USGS'
+                    if (QUAKE_CATEGORY_ON or QUAKE_CATEGORY_SHADOW) and (_is_quake or _QC_QUAKE.search(_qb)):
+                        # D-08c: последствия не удаляются только за то, что источник не USGS
+                        _qcat, _qwhy = _quake_category(e)
+                        # только сужение: удаляется не больше, чем удаляло старое правило
+                        _q_new = _q_drop and _qcat in ('shock_news', 'preparedness', 'physical')
+                        _qc_note('sq', e, _q_drop, _q_new, _qcat, _qwhy)
+                        if QUAKE_CATEGORY_ON:
+                            _q_drop = _q_new
+                            if _q_new and _qcat in ('shock_news', 'preparedness') and LINEAGE and e.get('_obs_tid'):
+                                _trace(e.get('_obs_tid'), 'SIGNAL_QUALITY', 'removed',
+                                       reason='quake_shock_dup' if _qcat == 'shock_news' else 'quake_preparedness')
+                    if _q_drop:
                         dropped += 1; continue
                 except Exception:
                     pass
@@ -28669,6 +28822,7 @@ def save_enriched(events, previous_snapshot=None):
             _lx0 = list(enriched["events"])
             enriched["events"] = _signal_quality_pass(enriched["events"])
             _lin_exact(_lx0, enriched["events"], 'SIGNAL_QUALITY', 'signal_quality')
+            _qc_write_shadow()
             _egp('k09_signal_quality', enriched["events"])
             enriched["events"] = _retain_critical(enriched["events"], previous_snapshot)
             _egp('k10_retain_critical', enriched["events"])
