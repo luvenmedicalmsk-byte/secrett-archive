@@ -10714,7 +10714,12 @@ def _signal_gate(events):
     kept, rej = [], _co.Counter()
     for e in events:
         if (e.get('structural') or e.get('_force_severity') is not None
-                or ((e.get('meta') or {}).get('kind') in _OFFICIAL_SIGNAL_KINDS and (e.get('meta') or {}).get('verified'))):
+                or ((e.get('meta') or {}).get('kind') in _OFFICIAL_SIGNAL_KINDS and (e.get('meta') or {}).get('verified'))
+                # WMO_ALERTHUB 06.11.2026: официальное предупреждение службы из реестра ВМО уже
+                # прошло фильтр источника (уровень, явление, тип сообщения); текстовый гейт
+                # для новостей его не оценивает («Сильный дождь: Таиланд» уходил как
+                # «новость без сигнала» после смены домена). Откат: WMO_ALERTHUB_ON = False.
+                or ((e.get('meta') or {}).get('via') == 'wmo_alerthub' and (e.get('meta') or {}).get('verified'))):
             kept.append(e); continue
         t = (e.get('title') or '')
         s = (e.get('summary') or '')[:300]
