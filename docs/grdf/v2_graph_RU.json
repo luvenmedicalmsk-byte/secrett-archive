@@ -2,7 +2,7 @@
   "country": "RU",
   "date": "2026-11-06",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-06T16:28:27.093729+00:00",
+  "generated_at": "2026-11-06T16:49:20.201958+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,59 +10,59 @@
       "id": "COUNTRY-RU",
       "type": "Country",
       "label": "RU",
-      "score": 89,
+      "score": 81,
       "props": {
-        "risk_score": 89
+        "risk_score": 81
       }
     },
     {
       "id": "DOMAIN-RU-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 93,
-      "trend": "stable"
+      "score": 87,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-RU-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-RU-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 58,
-      "trend": "stable"
+      "score": 74,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-RU-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-RU-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-RU-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-RU-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DRIVER-RU-Geopolitical",
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-RU-Число_поги",
-      "type": "Signal",
-      "label": "Число погибших при российском ударе по К",
-      "severity": 85,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-RU-Мониторинг",
       "type": "Signal",
       "label": "Мониторинг ракетной войны: Более 200 дро",
@@ -99,6 +92,13 @@
       "label": "Рязань подверглась атаке украинских БПЛА",
       "severity": 75,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-RU-Пожарная_о",
+      "type": "Signal",
+      "label": "Пожарная опасность: Оренбургская область",
+      "severity": 74,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.93
+      "weight": 0.87
     },
     {
       "from": "COUNTRY-RU",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-climate",
       "type": "CORRELATES",
-      "weight": 0.58
+      "weight": 0.74
     },
     {
       "from": "COUNTRY-RU",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-RU-geopolitical",
-      "to": "DOMAIN-RU-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-RU-infrastructure",
-      "to": "DOMAIN-RU-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-RU-economic",
-      "to": "DOMAIN-RU-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "DOMAIN-RU-climate",
       "to": "DOMAIN-RU-infrastructure",
       "type": "ESCALATES",
@@ -226,10 +205,25 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-RU-Число_поги",
-      "to": "DOMAIN-RU-geopolitical",
+      "from": "DOMAIN-RU-geopolitical",
+      "to": "DOMAIN-RU-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-RU-infrastructure",
+      "to": "DOMAIN-RU-economic",
       "type": "AMPLIFIES",
-      "weight": 0.85
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-RU-economic",
+      "to": "DOMAIN-RU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-RU-Мониторинг",
@@ -242,6 +236,12 @@
       "to": "DOMAIN-RU-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.75
+    },
+    {
+      "from": "SIGNAL-RU-Пожарная_о",
+      "to": "DOMAIN-RU-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.74
     }
   ]
 }
