@@ -17152,6 +17152,159 @@ def fetch_global_cap():
     return items
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# ИСТОЧНИК (06.11.2026): WMO Alert Hub - официальные CAP-предупреждения стран,
+# которых в Atlas ещё нет (инфраструктура Early Warnings for All ВМО).
+# Список лент: реестр Alert Hub (alert-hub-sources.s3.amazonaws.com/json),
+# только официальные работающие ленты. Страны, уже подключённые другими
+# фетчерами (_GLOBAL_CAP, NWS, MeteoAlarm, MGM, Росгидромет, СНГ, Залив),
+# исключены. Теневой замер 05-06.11: 154 ленты, 107 стран, 700-900
+# предупреждений в сутки, Extreme+Severe около 10-15%.
+# ФИЛЬТР (решение Мии 06.11):
+#   - только Alert/Update, без тестов, учений и не погодных сообщений;
+#   - Extreme - любое явление, кроме чисто морских;
+#   - Severe - только жара, паводки и ливни, циклоны и штормы, засуха, пожары, цунами;
+#   - языки без латиницы и кириллицы пропускаются (копии на других языках);
+#   - сводка по явлению, не больше 3 карточек на страну.
+# WMO_ALERTHUB_ON = False: только отчёт docs/_wmo_alerthub_shadow.json, лента не меняется.
+# Откат: WMO_ALERTHUB_ON = False, WMO_ALERTHUB_SHADOW = False.
+# ══════════════════════════════════════════════════════════════════════════════
+WMO_ALERTHUB_ON = False
+WMO_ALERTHUB_SHADOW = True
+_WMO_SOURCES_URL = 'https://alert-hub-sources.s3.amazonaws.com/json'
+_WMO_BUDGET_S = 100
+_WMO_PER_COUNTRY = 3
+_WMO_COVERED = {'cn', 'jp', 'kr', 'in', 'id', 'ph', 'ca', 'au', 'br', 'tr', 'ru', 'kz', 'us',
+                'by', 'uz', 'kg', 'sa', 'qa', 'kw', 'om', 'bh', 'ir', 'eg',
+                'at', 'be', 'bg', 'hr', 'cy', 'cz', 'dk', 'ee', 'fi', 'fr', 'de', 'gr', 'hu', 'is', 'ie',
+                'it', 'lv', 'lt', 'lu', 'mt', 'md', 'me', 'nl', 'mk', 'no', 'pl', 'pt', 'ro', 'rs', 'sk',
+                'si', 'es', 'se', 'ch', 'gb', 'ua', 'ba', 'il', 'ad'}
+_WMO_NONWX = re.compile(r'\btest|exercis|drill|simulac|\bblue\s+alert|amber|child|abduct|law\s+enforcement|missing|'
+                        r'endangered\s+person|administrative|telephone|911|shelter\s+in\s+place|civil\s+danger|'
+                        r'police|polic[ií]a|gendarm|alerta\s+de\s+prueba|essai', re.I)
+_WMO_MARINE = re.compile(r'at\s+sea|marine|small\s+craft|coastal\s+waters|offshore|high\s+seas|gale|en\s+mer|'
+                         r'mar[ií]tim|maritime|swell|oleaje|houle|rip\s+current|mar\s+agitad|ressaca|ondas?\s+altas', re.I)
+_WMO_CAT = [
+    (re.compile(r'heat|canicule|chaleur|calor|high\s+temperature|temp[ée]ratures?\s+[ée]lev|hot\s+day', re.I), 'heat'),
+    (re.compile(r'tsunami', re.I), 'tsunami'),
+    (re.compile(r'cyclon|hurricane|typhoon|tropical|ouragan|hurac[aá]n|furac[aã]o|storm\s+surge|'
+                r'tempête|tempestade|tormenta\s+tropical|depression|d[ée]pression', re.I), 'cyclone'),
+    (re.compile(r'flood|inond|crue|inunda|enchente|cheia|alag|heavy\s+rain|rainfall|torrential|pluie|lluvia|'
+                r'chuva|precipit|downpour|aguacero', re.I), 'flood'),
+    (re.compile(r'drought|s[ée]cheresse|sequ[ií]a|\bseca\b|estiagem', re.I), 'drought'),
+    (re.compile(r'fire|incendi|\bfeu\b|inc[eê]ndio|queimad|forest\s+fire', re.I), 'fire'),
+]
+_WMO_LOG = {'feeds': 0, 'ok': 0, 'skipped_budget': 0, 'rejected': {}}
+
+
+def _wmo_cat(event):
+    for rx, k in _WMO_CAT:
+        if rx.search(event or ''):
+            return k
+    return ''
+
+
+def _wmo_accept(event, sevkey, msgtype):
+    def _rej(why):
+        _WMO_LOG['rejected'][why] = _WMO_LOG['rejected'].get(why, 0) + 1
+        return False
+    if msgtype and msgtype.lower() not in ('alert', 'update'):
+        return _rej('тип сообщения %s' % msgtype)
+    if _WMO_NONWX.search(event or ''):
+        return _rej('не погода / тест')
+    marine = bool(_WMO_MARINE.search(event or ''))
+    if sevkey == 'extreme':
+        return True if not marine else _rej('морское Extreme')
+    if sevkey == 'severe':
+        if marine:
+            return _rej('морское Severe')
+        return True if _wmo_cat(event) else _rej('Severe вне списка явлений')
+    return _rej('уровень %s' % (sevkey or '-'))
+
+
+def fetch_wmo_alerthub():
+    """Официальные предупреждения из Alert Hub ВМО по странам вне текущего охвата Atlas."""
+    if not (WMO_ALERTHUB_ON or WMO_ALERTHUB_SHADOW):
+        return []
+    import geo_canon as _gc
+    from concurrent.futures import ThreadPoolExecutor as _TPE
+    t0 = time.time()
+    raw = fetch_url(_WMO_SOURCES_URL, timeout=20)
+    if not raw:
+        print('  [SKIP] WMO Alert Hub: список источников недоступен', file=sys.stderr)
+        return []
+    try:
+        srcs = json.loads(raw)
+        srcs = srcs if isinstance(srcs, list) else srcs.get('sources', [])
+    except Exception as e:
+        print(f'  [WARN] WMO Alert Hub: {e}', file=sys.stderr)
+        return []
+    sel = []
+    for x in srcs:
+        so = x.get('source') or {}
+        iso = (so.get('authorityCountry') or '').lower()
+        if (so.get('sourceIsOfficial') and (so.get('capAlertFeedStatus') or '') == 'operating'
+                and so.get('capAlertFeed') and iso and iso not in _WMO_COVERED):
+            sel.append(so)
+    _WMO_LOG['feeds'] = len(sel)
+
+    def _one(so):
+        if time.time() - t0 > _WMO_BUDGET_S:
+            _WMO_LOG['skipped_budget'] += 1
+            return []
+        iso = so['authorityCountry'].upper()
+        rec = _gc.by_iso(iso) or {}
+        country = rec.get('name_ru') or so.get('authorityCountry')
+        svc = (so.get('sourceName') or so.get('authorityName') or so.get('sourceId') or 'NMHS').strip()[:60]
+        try:
+            got = _meteoinfo_cap(so['capAlertFeed'], country, svc, 'ВМО Alert Hub · ' + svc, 'cap_hub', limit=6,
+                                 cc=iso, fallback=rec.get('center'), min_score=74, latin_only=True,
+                                 aggregate=True, accept=_wmo_accept)
+            _WMO_LOG['ok'] += 1
+        except Exception as e:
+            print(f"  [WARN] WMO Alert Hub {so.get('sourceId')}: {e}", file=sys.stderr)
+            return []
+        for it in got:
+            it.setdefault('_meta', {})['via'] = 'wmo_alerthub'
+            it['_meta']['source_id'] = so.get('sourceId')
+        return got
+
+    items = []
+    with _TPE(max_workers=16) as ex:
+        for got in ex.map(_one, sel):
+            items.extend(got)
+    # квота: не больше _WMO_PER_COUNTRY карточек на страну, сначала самые тяжёлые
+    by_cc = {}
+    for it in sorted(items, key=lambda x: -(x.get('_force_severity') or 0)):
+        by_cc.setdefault(it.get('_country_code'), []).append(it)
+    out, cut = [], 0
+    for cc_, lst in by_cc.items():
+        out.extend(lst[:_WMO_PER_COUNTRY])
+        cut += max(0, len(lst) - _WMO_PER_COUNTRY)
+    dt = round(time.time() - t0, 1)
+    print(f"  WMO Alert Hub: лент {len(sel)}, карточек {len(out)} (квота срезала {cut}), {dt} с, "
+          f"{'В ЛЕНТУ' if WMO_ALERTHUB_ON else 'тень'}", file=sys.stderr)
+    if WMO_ALERTHUB_SHADOW:
+        try:
+            rep = {'дата': datetime.now(timezone.utc).isoformat(timespec='seconds'),
+                   'режим': 'В ЛЕНТУ' if WMO_ALERTHUB_ON else 'тень, лента не меняется',
+                   'лент': len(sel), 'ответило': _WMO_LOG['ok'], 'пропущено по времени': _WMO_LOG['skipped_budget'],
+                   'время, с': dt, 'карточек': len(out), 'срезано квотой': cut,
+                   'отклонено фильтром': _WMO_LOG['rejected'],
+                   'стран': len({x.get('_country_code') for x in out}),
+                   'карточки': [{'страна': x.get('_country_code'), 'заголовок': x.get('title'),
+                                 'уровень': (x.get('_meta') or {}).get('severity'),
+                                 'балл': x.get('_force_severity'),
+                                 'предупреждений': (x.get('_meta') or {}).get('warnings'),
+                                 'служба': (x.get('_meta') or {}).get('service'),
+                                 'текст': (x.get('desc') or '')[:300]} for x in out]}
+            (OUTPUT_PATH.parent / '_wmo_alerthub_shadow.json').write_text(
+                json.dumps(rep, ensure_ascii=False, indent=1), encoding='utf-8')
+        except Exception as e:
+            print(f'  [WARN] WMO Alert Hub shadow: {e}', file=sys.stderr)
+    return out if WMO_ALERTHUB_ON else []
+
+
 _US_STATE_RU = {
     'AL': 'Алабама', 'AK': 'Аляска', 'AZ': 'Аризона', 'AR': 'Арканзас', 'CA': 'Калифорния',
     'CO': 'Колорадо', 'CT': 'Коннектикут', 'DE': 'Делавэр', 'DC': 'округ Колумбия', 'FL': 'Флорида',
@@ -17295,6 +17448,13 @@ _CAP_EVENT_KW = [
     (r'heat|calor', 'Жара'), (r'cold|frost|freeze|frio|geada', 'Холод'),
     (r'fire|bushfire|wildfire|incêndio', 'Пожароопасность'), (r'wave|surf|swell|ressaca|storm surge', 'Высокие волны'),
     (r'drought|seca', 'Засуха'), (r'avalanche', 'Лавины'), (r'tsunami', 'Цунами'), (r'storm|tempestade', 'Шторм'),
+    # WMO_ALERTHUB 06.11.2026: французские и испанские названия служб Африки и Латинской
+    # Америки. Стоят в конце: явления, которые узнавались раньше, не меняются.
+    (r'(?:pluie|lluvia).*(?:orage|tormenta)|(?:orage|tormenta).*(?:pluie|lluvia)', 'Ливень с грозой'),
+    (r'orage|tormenta', 'Гроза'), (r'pluie|lluvia|precipitaci', 'Сильный дождь'),
+    (r'canicule|chaleur', 'Жара'), (r'inond|crue', 'Наводнение'), (r's[ée]cheresse|sequ[ií]a', 'Засуха'),
+    (r'incendi|\bfeu\b', 'Пожароопасность'), (r'cyclon|ouragan|hurac', 'Тропический циклон'),
+    (r'\bvent\b|viento', 'Сильный ветер'),
 ]
 
 
@@ -17579,7 +17739,7 @@ def _cap_aggregate(items, country, svc, source):
 
 
 def _meteoinfo_cap(feed_url, country, svc, source, kind, limit=70, cc=None, fallback=None,
-                   min_score=0, latin_only=False, aggregate=False):
+                   min_score=0, latin_only=False, aggregate=False, accept=None):
     """Разбор Atom-ленты хаба Гидрометцентра и CAP-документов по ссылкам из неё."""
     items = []
     feed = fetch_url(feed_url, timeout=20)
@@ -17661,6 +17821,11 @@ def _meteoinfo_cap(feed_url, country, svc, source, kind, limit=70, cc=None, fall
             continue
         if latin_only and not re.search(r'[A-Za-zА-Яа-яЁё]', event):
             continue
+        if accept is not None:
+            # WMO_ALERTHUB 06.11.2026: фильтр источника (тип сообщения, явление, уровень)
+            _mt = _cap_find(a, "msgType")
+            if not accept(event, sevkey, (_mt.text or '').strip() if _mt is not None else ''):
+                continue
         area = _cap_find(info, "areaDesc")
         areaDesc = (area.text or "").strip() if area is not None else ""
         poly = _cap_find(info, "polygon")
@@ -29588,6 +29753,7 @@ if __name__ == '__main__':
             ('cis_cap',            fetch_cis_cap),
             ('mideast_cap',        fetch_mideast_cap),
             ('global_cap',         fetch_global_cap),
+            ('wmo_alerthub',       fetch_wmo_alerthub),   # WMO_ALERTHUB_ON=False -> пустой список, отчёт в тени
             ('notam',              fetch_notam),   # NOTAM_GATE=False -> пустой список
             ('mgm_turkey',         fetch_mgm_turkey),
             ('cbr_russia',         fetch_cbr_russia),
