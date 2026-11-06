@@ -2,17 +2,17 @@
   "country": "CN",
   "country_name": "Китай",
   "date": "2026-11-06",
-  "generated_at": "2026-11-06T13:28:50.178900+00:00",
+  "generated_at": "2026-11-06T13:48:18.154013+00:00",
   "risk_score": 80,
-  "scenario_score": 39,
-  "instability": 33,
+  "scenario_score": 33,
+  "instability": 19,
   "instability_v2": true,
   "scenarios": [
     {
       "type": "best",
       "name": "Best Case",
       "name_ru": "Лучший сценарий",
-      "probability": 30,
+      "probability": 32,
       "score": 61,
       "delta_from_current": -19,
       "state": "escalating",
@@ -24,7 +24,7 @@
       "recovery_days": 335,
       "future_pressure": 43,
       "future_resilience": 45,
-      "future_probability": 30,
+      "future_probability": 32,
       "drivers": [
         {
           "driver": "Деэскалация",
@@ -60,10 +60,10 @@
         {
           "horizon": "365d",
           "label": "365 дней",
-          "score": 42,
-          "state": "stabilization",
-          "state_ru": "Стабилизация",
-          "delta_from_current": -38
+          "score": 43,
+          "state": "contained",
+          "state_ru": "Контролируемо",
+          "delta_from_current": -37
         }
       ]
     },
@@ -71,7 +71,7 @@
       "type": "base",
       "name": "Base Case",
       "name_ru": "Базовый сценарий",
-      "probability": 17,
+      "probability": 23,
       "score": 78,
       "delta_from_current": -2,
       "state": "critical",
@@ -83,14 +83,14 @@
       "recovery_days": 429,
       "future_pressure": 61,
       "future_resilience": 42,
-      "future_probability": 17,
+      "future_probability": 23,
       "drivers": [
         {
-          "driver": "Сильный дождь: Город Хэшань, Уезд Болуо, Горо",
+          "driver": "Туман: Округ Маунт-Холиок, Уаньшаньцю, Найонг",
           "impact": 11
         },
         {
-          "driver": "Туман: Дафан, Цзинганшань, Шицзе Тун, Китай",
+          "driver": "Сильный дождь: Автономный округ Цзиньпин Мяо ",
           "impact": 11
         }
       ],
@@ -107,26 +107,26 @@
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 86,
+          "score": 78,
           "state": "critical",
           "state_ru": "Критическая эскалация",
-          "delta_from_current": 6
+          "delta_from_current": -2
         },
         {
           "horizon": "180d",
           "label": "180 дней",
-          "score": 94,
-          "state": "cascade",
-          "state_ru": "Каскадный кризис",
-          "delta_from_current": 14
+          "score": 78,
+          "state": "critical",
+          "state_ru": "Критическая эскалация",
+          "delta_from_current": -2
         },
         {
           "horizon": "365d",
           "label": "365 дней",
-          "score": 95,
-          "state": "cascade",
-          "state_ru": "Каскадный кризис",
-          "delta_from_current": 15
+          "score": 78,
+          "state": "critical",
+          "state_ru": "Критическая эскалация",
+          "delta_from_current": -2
         }
       ]
     },
@@ -134,7 +134,7 @@
       "type": "stress",
       "name": "Stress Case",
       "name_ru": "Стресс-сценарий",
-      "probability": 25,
+      "probability": 23,
       "score": 86,
       "delta_from_current": 6,
       "state": "critical",
@@ -146,14 +146,14 @@
       "recovery_days": 473,
       "future_pressure": 71,
       "future_resilience": 39,
-      "future_probability": 25,
+      "future_probability": 23,
       "drivers": [
         {
-          "driver": "Сильный дождь: Город Хэшань, Уезд Болуо, Горо",
+          "driver": "Туман: Округ Маунт-Холиок, Уаньшаньцю, Найонг",
           "impact": 15
         },
         {
-          "driver": "Туман: Дафан, Цзинганшань, Шицзе Тун, Китай",
+          "driver": "Сильный дождь: Автономный округ Цзиньпин Мяо ",
           "impact": 15
         },
         {
@@ -201,7 +201,7 @@
       "type": "worst",
       "name": "Worst Case",
       "name_ru": "Худший сценарий",
-      "probability": 28,
+      "probability": 22,
       "score": 95,
       "delta_from_current": 15,
       "state": "cascade",
@@ -213,14 +213,14 @@
       "recovery_days": 522,
       "future_pressure": 82,
       "future_resilience": 32,
-      "future_probability": 28,
+      "future_probability": 22,
       "drivers": [
         {
-          "driver": "Сильный дождь: Город Хэшань, Уезд Болуо, Горо",
+          "driver": "Туман: Округ Маунт-Холиок, Уаньшаньцю, Найонг",
           "impact": 21
         },
         {
-          "driver": "Туман: Дафан, Цзинганшань, Шицзе Тун, Китай",
+          "driver": "Сильный дождь: Автономный округ Цзиньпин Мяо ",
           "impact": 21
         },
         {
@@ -271,24 +271,24 @@
   ],
   "transition_triggers": [
     {
-      "condition": "delta ≥ 6 за 24ч",
+      "condition": "delta ≥ 3 за 24ч",
       "leads_to": "worst",
-      "probability": 28
+      "probability": 22
     },
     {
       "condition": "Драйвер severity ≥ 85 в climate",
       "leads_to": "stress",
-      "probability": 25
+      "probability": 23
     },
     {
       "condition": "Деэскалация ключевого кризиса",
       "leads_to": "best",
-      "probability": 30
+      "probability": 32
     },
     {
       "condition": "Цепочка распространения → 3+ страны",
       "leads_to": "worst",
-      "probability": 11
+      "probability": 7
     }
   ],
   "dominant_scenario": "best"
