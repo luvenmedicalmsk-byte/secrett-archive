@@ -2,7 +2,7 @@
   "country": "GB",
   "date": "2026-11-06",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-06T07:08:32.982132+00:00",
+  "generated_at": "2026-11-06T07:28:23.701316+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-GB",
       "type": "Country",
       "label": "GB",
-      "score": 70,
+      "score": 73,
       "props": {
-        "risk_score": 70
+        "risk_score": 73
       }
     },
     {
@@ -34,21 +34,21 @@
       "type": "Domain",
       "label": "climate",
       "score": 54,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-technology",
       "type": "Domain",
       "label": "technology",
       "score": 68,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
-      "trend": "stable"
+      "score": 58,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-infrastructure",
@@ -87,17 +87,17 @@
       "domain": "technology"
     },
     {
+      "id": "SIGNAL-GB-Эбола_в_Ло",
+      "type": "Signal",
+      "label": "Эбола в Лондоне: из Конго в Великобритан",
+      "severity": 58,
+      "domain": "social"
+    },
+    {
       "id": "SIGNAL-GB-Великобрит",
       "type": "Signal",
       "label": "Великобритания представляет план по борь",
       "severity": 54,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-GB-Сезон_лесн",
-      "type": "Signal",
-      "label": "Сезон лесных пожаров в Великобритании 20",
-      "severity": 44,
       "domain": "climate"
     }
   ],
@@ -130,7 +130,7 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-GB",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-GB-climate",
-      "to": "DOMAIN-GB-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-GB-infrastructure",
-      "to": "DOMAIN-GB-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-GB-economic",
-      "to": "DOMAIN-GB-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-GB-climate",
       "to": "DOMAIN-GB-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,22 +184,43 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-GB-climate",
+      "to": "DOMAIN-GB-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-GB-infrastructure",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GB-economic",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-GB-Годовой_об",
       "to": "DOMAIN-GB-technology",
       "type": "AMPLIFIES",
       "weight": 0.68
     },
     {
+      "from": "SIGNAL-GB-Эбола_в_Ло",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.58
+    },
+    {
       "from": "SIGNAL-GB-Великобрит",
       "to": "DOMAIN-GB-climate",
       "type": "AMPLIFIES",
       "weight": 0.54
-    },
-    {
-      "from": "SIGNAL-GB-Сезон_лесн",
-      "to": "DOMAIN-GB-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.44
     }
   ]
 }
