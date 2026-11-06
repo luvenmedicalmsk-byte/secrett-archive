@@ -17169,7 +17169,7 @@ def fetch_global_cap():
 # WMO_ALERTHUB_ON = False: только отчёт docs/_wmo_alerthub_shadow.json, лента не меняется.
 # Откат: WMO_ALERTHUB_ON = False, WMO_ALERTHUB_SHADOW = False.
 # ══════════════════════════════════════════════════════════════════════════════
-WMO_ALERTHUB_ON = False
+WMO_ALERTHUB_ON = True
 WMO_ALERTHUB_SHADOW = True
 _WMO_SOURCES_URL = 'https://alert-hub-sources.s3.amazonaws.com/json'
 _WMO_BUDGET_S = 100
