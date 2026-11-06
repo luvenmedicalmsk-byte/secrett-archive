@@ -2,39 +2,39 @@
   "country": "MY",
   "date": "2026-11-06",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-06T14:47:04.932099+00:00",
+  "generated_at": "2026-11-06T15:09:11.614640+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-MY",
       "type": "Country",
       "label": "MY",
-      "score": 45,
+      "score": 46,
       "props": {
-        "risk_score": 45
+        "risk_score": 46
       }
     },
     {
       "id": "DOMAIN-MY-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
-      "trend": "stable"
+      "score": 42,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MY-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 46,
-      "trend": "stable"
+      "score": 42,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MY-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "stable"
+      "score": 46,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MY-technology",
@@ -48,7 +48,7 @@
       "type": "Domain",
       "label": "social",
       "score": 36,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MY-infrastructure",
@@ -65,9 +65,9 @@
       "trend": "stable"
     },
     {
-      "id": "DRIVER-MY-economic",
+      "id": "DRIVER-MY-climate",
       "type": "Driver",
-      "label": "economic"
+      "label": "climate"
     },
     {
       "id": "DRIVER-MY-geopolitical",
@@ -75,9 +75,16 @@
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-MY-social",
+      "id": "DRIVER-MY-economic",
       "type": "Driver",
-      "label": "social"
+      "label": "economic"
+    },
+    {
+      "id": "SIGNAL-MY-Эль-Ниньо_",
+      "type": "Signal",
+      "label": "Эль-Ниньо углубляется в Азиатско-Тихооке",
+      "severity": 46,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-MY-Валютный_р",
@@ -92,13 +99,6 @@
       "label": "Эпидемиологический риск — Юго-Восточная ",
       "severity": 49,
       "domain": "social"
-    },
-    {
-      "id": "SIGNAL-MY-Финансовый",
-      "type": "Signal",
-      "label": "Финансовый рынок — Малайзия",
-      "severity": 46,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,19 +106,19 @@
       "from": "COUNTRY-MY",
       "to": "DOMAIN-MY-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-MY",
       "to": "DOMAIN-MY-economic",
       "type": "CORRELATES",
-      "weight": 0.46
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-MY",
       "to": "DOMAIN-MY-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-MY",
@@ -145,7 +145,7 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-MY-economic",
+      "from": "DRIVER-MY-climate",
       "to": "COUNTRY-MY",
       "type": "CAUSES",
       "weight": 0.8
@@ -157,10 +157,79 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-MY-social",
+      "from": "DRIVER-MY-economic",
       "to": "COUNTRY-MY",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-MY-climate",
+      "to": "DOMAIN-MY-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-MY-economic",
+      "to": "DOMAIN-MY-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-MY-social",
+      "to": "DOMAIN-MY-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-MY-climate",
+      "to": "DOMAIN-MY-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-MY-infrastructure",
+      "to": "DOMAIN-MY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-MY-economic",
+      "to": "DOMAIN-MY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-MY-geopolitical",
+      "to": "DOMAIN-MY-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-MY-infrastructure",
+      "to": "DOMAIN-MY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-MY-economic",
+      "to": "DOMAIN-MY-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-MY-Эль-Ниньо_",
+      "to": "DOMAIN-MY-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.46
     },
     {
       "from": "SIGNAL-MY-Валютный_р",
@@ -173,12 +242,6 @@
       "to": "DOMAIN-MY-social",
       "type": "AMPLIFIES",
       "weight": 0.49
-    },
-    {
-      "from": "SIGNAL-MY-Финансовый",
-      "to": "DOMAIN-MY-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.46
     }
   ]
 }
