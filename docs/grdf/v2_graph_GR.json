@@ -2,7 +2,7 @@
   "country": "GR",
   "date": "2026-11-06",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-06T11:24:35.185678+00:00",
+  "generated_at": "2026-11-06T11:34:46.982397+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -19,14 +19,14 @@
       "id": "DOMAIN-GR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 41,
+      "score": 64,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-GR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 36,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -65,14 +65,14 @@
       "trend": "stable"
     },
     {
-      "id": "DRIVER-GR-climate",
-      "type": "Driver",
-      "label": "climate"
-    },
-    {
       "id": "DRIVER-GR-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
+    },
+    {
+      "id": "DRIVER-GR-climate",
+      "type": "Driver",
+      "label": "climate"
     },
     {
       "id": "DRIVER-GR-economic",
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-GR-Экспорт_Гр",
+      "id": "SIGNAL-GR-Шторм_—_Гр",
       "type": "Signal",
-      "label": "Экспорт Греции",
-      "severity": 32,
-      "domain": "economic"
+      "label": "Шторм — Греция",
+      "severity": 50,
+      "domain": "climate"
     },
     {
-      "id": "SIGNAL-GR-Импорт_Гре",
+      "id": "SIGNAL-GR-Военные_уд",
       "type": "Signal",
-      "label": "Импорт Греции",
-      "severity": 32,
-      "domain": "economic"
+      "label": "Военные удары — Греция",
+      "severity": 64,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.41
+      "weight": 0.64
     },
     {
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-economic",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-GR",
@@ -145,13 +145,13 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-GR-climate",
+      "from": "DRIVER-GR-geopolitical",
       "to": "COUNTRY-GR",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-GR-geopolitical",
+      "from": "DRIVER-GR-climate",
       "to": "COUNTRY-GR",
       "type": "CAUSES",
       "weight": 0.8
@@ -161,27 +161,6 @@
       "to": "COUNTRY-GR",
       "type": "CAUSES",
       "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-GR-climate",
-      "to": "DOMAIN-GR-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-GR-infrastructure",
-      "to": "DOMAIN-GR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-GR-economic",
-      "to": "DOMAIN-GR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
     },
     {
       "from": "DOMAIN-GR-climate",
@@ -203,6 +182,27 @@
       "type": "AMPLIFIES",
       "weight": 0.65,
       "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-GR-climate",
+      "to": "DOMAIN-GR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-GR-infrastructure",
+      "to": "DOMAIN-GR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GR-economic",
+      "to": "DOMAIN-GR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-GR-geopolitical",
@@ -232,16 +232,16 @@
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-GR-Экспорт_Гр",
-      "to": "DOMAIN-GR-economic",
+      "from": "SIGNAL-GR-Шторм_—_Гр",
+      "to": "DOMAIN-GR-climate",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.5
     },
     {
-      "from": "SIGNAL-GR-Импорт_Гре",
-      "to": "DOMAIN-GR-economic",
+      "from": "SIGNAL-GR-Военные_уд",
+      "to": "DOMAIN-GR-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.64
     }
   ]
 }
