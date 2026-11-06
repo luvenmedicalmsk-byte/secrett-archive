@@ -10089,7 +10089,10 @@ def _quake_category(e):
     ts = t + ' . ' + s
     if not _QC_QUAKE.search(ts):
         return 'none', ''
-    if _QC_METAPHOR.search(ts) or ('политическ' in ts.lower() and not _QC_QUAKE.search(t)):
+    # метафора проверяется там, где стоит само слово: если землетрясение названо
+    # в заголовке буквально, сравнение «как землетрясение» в тексте его не отменяет
+    _mt = t if _QC_QUAKE.search(t) else ts
+    if _QC_METAPHOR.search(_mt) or ('политическ' in ts.lower() and not _QC_QUAKE.search(t)):
         return 'none', 'метафора'
     src = str(e.get('source') or '')
     if src in _QC_PHYS_SRC or (src.startswith('USGS')):
