@@ -2,67 +2,67 @@
   "country": "CN",
   "date": "2026-11-07",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-07T05:48:32.179383+00:00",
+  "generated_at": "2026-11-07T06:08:52.920122+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 72,
+      "score": 77,
       "props": {
-        "risk_score": 72
+        "risk_score": 77
       }
     },
     {
       "id": "DOMAIN-CN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 50,
-      "trend": "down"
+      "score": 5,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 41,
-      "trend": "down"
+      "score": 5,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 56,
-      "trend": "down"
+      "score": 74,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-technology",
       "type": "Domain",
       "label": "technology",
       "score": 72,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-CN-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-CN-Туман:_Уез",
+      "type": "Signal",
+      "label": "Туман: Уезд Кайян, Китай",
+      "severity": 74,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-CN-Падение_ин",
       "type": "Signal",
       "label": "Падение интернет-связи: Китай",
@@ -87,18 +94,11 @@
       "domain": "technology"
     },
     {
-      "id": "SIGNAL-CN-Холод:_Уез",
+      "id": "SIGNAL-CN-Сильный_ве",
       "type": "Signal",
-      "label": "Холод: Уезд Линьи, Китай",
+      "label": "Сильный ветер: Вейнин И, Автономный уезд",
       "severity": 56,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-CN-Пекин_обещ",
-      "type": "Signal",
-      "label": "Пекин обещает ответить на санкции США пр",
-      "severity": 50,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,19 +106,19 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.5
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-economic",
       "type": "CORRELATES",
-      "weight": 0.41
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-climate",
       "type": "CORRELATES",
-      "weight": 0.56
+      "weight": 0.74
     },
     {
       "from": "COUNTRY-CN",
@@ -205,25 +205,10 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-CN-geopolitical",
-      "to": "DOMAIN-CN-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-CN-infrastructure",
-      "to": "DOMAIN-CN-economic",
+      "from": "SIGNAL-CN-Туман:_Уез",
+      "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-CN-economic",
-      "to": "DOMAIN-CN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
+      "weight": 0.74
     },
     {
       "from": "SIGNAL-CN-Падение_ин",
@@ -232,16 +217,10 @@
       "weight": 0.72
     },
     {
-      "from": "SIGNAL-CN-Холод:_Уез",
+      "from": "SIGNAL-CN-Сильный_ве",
       "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
       "weight": 0.56
-    },
-    {
-      "from": "SIGNAL-CN-Пекин_обещ",
-      "to": "DOMAIN-CN-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.5
     }
   ]
 }

@@ -2,7 +2,7 @@
   "country": "UA",
   "date": "2026-11-07",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-07T05:48:32.184390+00:00",
+  "generated_at": "2026-11-07T06:08:52.926373+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -10,17 +10,17 @@
       "id": "COUNTRY-UA",
       "type": "Country",
       "label": "UA",
-      "score": 85,
+      "score": 92,
       "props": {
-        "risk_score": 85
+        "risk_score": 92
       }
     },
     {
       "id": "DOMAIN-UA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 83,
-      "trend": "stable"
+      "score": 100,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-economic",
@@ -41,7 +41,7 @@
       "type": "Domain",
       "label": "technology",
       "score": 72,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-social",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-UA-ВС_РФ_нане",
+      "type": "Signal",
+      "label": "ВС РФ нанесли массированный ракетный уда",
+      "severity": 95,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-UA-Мониторинг",
       "type": "Signal",
       "label": "Мониторинг ракетной войны: украинские др",
@@ -92,13 +99,6 @@
       "label": "Блэкаут в Киеве: сейчас в столице Украин",
       "severity": 72,
       "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-UA-Российские",
-      "type": "Signal",
-      "label": "Российские военные нанесли удары по энер",
-      "severity": 70,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.83
+      "weight": 1.0
     },
     {
       "from": "COUNTRY-UA",
@@ -184,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-UA-ВС_РФ_нане",
+      "to": "DOMAIN-UA-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.95
+    },
+    {
       "from": "SIGNAL-UA-Мониторинг",
       "to": "DOMAIN-UA-geopolitical",
       "type": "AMPLIFIES",
@@ -194,12 +200,6 @@
       "to": "DOMAIN-UA-technology",
       "type": "AMPLIFIES",
       "weight": 0.72
-    },
-    {
-      "from": "SIGNAL-UA-Российские",
-      "to": "DOMAIN-UA-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.7
     }
   ]
 }
