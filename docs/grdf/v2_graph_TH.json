@@ -2,7 +2,7 @@
   "country": "TH",
   "date": "2026-11-07",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-07T22:27:50.690680+00:00",
+  "generated_at": "2026-11-07T22:49:01.877216+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -47,7 +47,7 @@
       "id": "DOMAIN-TH-social",
       "type": "Domain",
       "label": "social",
-      "score": 36,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -70,14 +70,14 @@
       "label": "climate"
     },
     {
-      "id": "DRIVER-TH-social",
-      "type": "Driver",
-      "label": "social"
-    },
-    {
       "id": "DRIVER-TH-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
+    },
+    {
+      "id": "DRIVER-TH-economic",
+      "type": "Driver",
+      "label": "economic"
     },
     {
       "id": "SIGNAL-TH-Сильный_до",
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
+      "id": "SIGNAL-TH-Сотрясая_с",
+      "type": "Signal",
+      "label": "Сотрясая старую модель наводнений",
+      "severity": 43,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-TH-Шторм_—_Та",
       "type": "Signal",
       "label": "Шторм — Таиланд",
       "severity": 74,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-TH-Эпидемиоло",
-      "type": "Signal",
-      "label": "Эпидемиологический риск — Юго-Восточная ",
-      "severity": 49,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -130,7 +130,7 @@
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-social",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-TH",
@@ -151,37 +151,16 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-TH-social",
-      "to": "COUNTRY-TH",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
       "from": "DRIVER-TH-geopolitical",
       "to": "COUNTRY-TH",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-TH-climate",
-      "to": "DOMAIN-TH-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-TH-economic",
-      "to": "DOMAIN-TH-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-TH-social",
-      "to": "DOMAIN-TH-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
+      "from": "DRIVER-TH-economic",
+      "to": "COUNTRY-TH",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DOMAIN-TH-climate",
@@ -205,22 +184,43 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-TH-climate",
+      "to": "DOMAIN-TH-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-TH-economic",
+      "to": "DOMAIN-TH-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-TH-social",
+      "to": "DOMAIN-TH-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "SIGNAL-TH-Сильный_до",
       "to": "DOMAIN-TH-climate",
       "type": "AMPLIFIES",
       "weight": 0.74
     },
     {
+      "from": "SIGNAL-TH-Сотрясая_с",
+      "to": "DOMAIN-TH-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.43
+    },
+    {
       "from": "SIGNAL-TH-Шторм_—_Та",
       "to": "DOMAIN-TH-climate",
       "type": "AMPLIFIES",
       "weight": 0.74
-    },
-    {
-      "from": "SIGNAL-TH-Эпидемиоло",
-      "to": "DOMAIN-TH-social",
-      "type": "AMPLIFIES",
-      "weight": 0.49
     }
   ]
 }
