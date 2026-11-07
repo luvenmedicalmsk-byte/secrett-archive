@@ -26662,8 +26662,12 @@ _F5_RULES = (
 # пролив» стояло на 66 без единого правила. Откат: SEV_MARITIME_0511 = False.
 SEV_MARITIME_0511 = True
 _M5_SHIP = re.compile(r'танкер|судн[оаеау]|суд[ао]в|сухогруз|контейнеровоз|газовоз|балкер|паром|tanker|vessel|cargo\s+ship|merchant\s+ship', re.I)
+# SEV_UNDER_0711: «Моряк убит - Персидский залив, Иран сообщает о горящих кораблях - Ормуз» 52
+if True:
+    _M5_SHIP = re.compile(_M5_SHIP.pattern + r'|корабл\w*|моряк\w*|экипаж\w*|sailor|seafarer', re.I)
 _M5_HIT = re.compile(r'подрыв|подорвал|морск\w+\s+мин|на\s+мин[аеу]|минирова|атак|удар|поражен|загорел|горит|взрыв|обстрел|захват|задержал\w*\s+(?:танкер|судн)|'
                      r'hit\s+by|struck|attack|seiz|explosion|mine', re.I)
+_M5_HIT = re.compile(_M5_HIT.pattern + r'|горящ\w*|(?<![а-яё])убит\w*|погиб\w*|killed', re.I)   # SEV_UNDER_0711
 _M5_CHOKE = re.compile(r'ормуз|hormuz|баб[- ]эль[- ]мандеб|bab[- ]el[- ]mandeb|красн\w+\s+мор|red\s+sea|суэц|suez|малакк|malacca|босфор|bosporus|'
                        r'персидск\w+\s+залив|persian\s+gulf|оманск\w+\s+залив|gulf\s+of\s+oman|аденск\w+\s+залив|gulf\s+of\s+aden', re.I)
 _M5_SAFE = re.compile(r'учени|drill|exercise|сопровожд|escort|страхов|insurance|ставк|rates?\b|открывает|reopen|возобновл', re.I)
@@ -26703,6 +26707,61 @@ _F5_OIL = re.compile(r'нефть[^.]{0,20}(?:обрушил|подешевел|
 _F5_DONATE = re.compile(r'жертвует|пожертвова|пожертвуют|donat', re.I)
 
 
+# SEV_UNDER_0711 (07.11.2026, аудит ленты): три заниженных индекса.
+#  - «Вооружённые люди убили 34 православных христиан в Эфиопии, увеличив число жертв до 94» 71:
+#    пол по жертвам работал только для ударов (_casualty_floor), массовое убийство не читалось;
+#  - «Моряк убит - Персидский залив, Иран сообщает о горящих кораблях - Ормуз» 52: морской пол
+#    не знал «корабли/моряк/горящих», штраф «заявление» снимал рост при реальной гибели;
+#  - «Вспышка Эбола (Бундибугио) - ДРК, Кения и Нигерия» 70: нет правила для геморрагической
+#    лихорадки в нескольких странах.
+# Числа только из заголовка; цитаты, статистика смертности (_C4_STATMORT) и последствия прошлых
+# катастроф (_C4_AFTER) правило не поднимает. Откат: SEV_UNDER_0711 = False.
+SEV_UNDER_0711 = True
+_U7_KILL = re.compile(r'(?:убил\w*|убиты?\w*|расстрелял\w*|расстреля\w*|казнил\w*|погибл\w*|погиб\w*|жертв\w*|killed|massacre)', re.I)
+_U7_KILL_N = re.compile(r'(?:убил\w*|расстрелял\w*|казнил\w*|killed)\s+(?:не\s+менее\s+|по\s+меньшей\s+мере\s+|более\s+|около\s+|at\s+least\s+)?(\d{1,5})(?!\s*%)', re.I)
+_U7_VHF = re.compile(r'эбол|ebola|(?:вирус\w*|лихорадк\w*|болезн\w*)\s+марбург|marburg\s+virus|бундибуг|bundibug|лихорадк\w*\s+ласс|lassa\s+fever|геморрагическ\w+\s+лихорад|hemorrhagic', re.I)
+_U7_OUTBREAK = re.compile(r'вспышк|outbreak|распростран|расширил|заражен|заболевш|новы[йх]\s+случа|подтвержд|выявлен', re.I)
+_U7_SPEC = re.compile(r'(?<![а-яё])(?:может|могут|способн|риск|вакцин|испытани|опрос|врач\w*,|история|интервью)', re.I)
+_U7_VIOLENT = re.compile(r'убил\w*|убиты?\w*|расстрел\w*|казнил\w*|massacre|killed|атак\w*|удар\w*|обстрел\w*|вооруж[её]нн\w*|боевик\w*|теракт\w*|нападени\w*|взрыв\w*', re.I)
+_U7_NOT_NOW = re.compile(r'(?<![а-яё])(?:лет|года?)\s+назад|годовщин|в\s+(?:19|20)\d\d\s+году|исследовани|модел', re.I)
+_U7_COUNTRY_RX = None
+
+
+def _u7_countries(t):
+    global _U7_COUNTRY_RX
+    if _U7_COUNTRY_RX is None:
+        names = sorted({v for v in COUNTRY_RU.values() if isinstance(v, str) and len(v) > 3}, key=len, reverse=True)
+        stems = sorted({n[:-1] if n[-1] in 'аяиыь' and len(n) > 5 else n for n in names}, key=len, reverse=True)
+        _U7_COUNTRY_RX = re.compile(r'(?<![а-яёa-z])(' + '|'.join(re.escape(x) for x in stems) + r')', re.I)
+    return {m.group(1).lower() for m in _U7_COUNTRY_RX.finditer(t)} | (
+        {'дрк'} if re.search(r'(?<![а-яё])ДРК(?![а-яё])|Демократическ\w+\s+Республик\w+\s+Конго', t) else set())
+
+
+def _u7_floor(e, t):
+    """Пол SEV_UNDER_0711: (значение, причина) или (0, '')."""
+    if not SEV_UNDER_0711 or _U7_NOT_NOW.search(t):
+        return 0, ''
+    if _U7_VHF.search(t) and _U7_OUTBREAK.search(t) and not _U7_SPEC.search(t):
+        k = len(_u7_countries(t))
+        if k >= 2:
+            return 80, 'вспышка геморрагической лихорадки в нескольких странах'
+        return 74, 'вспышка геморрагической лихорадки'
+    if _U7_KILL.search(t) and _U7_VIOLENT.search(t) and not _C4_STATMORT.search(t) and not _C4_AFTER.search(t):
+        dead, _h = _cf_counts(t)
+        for m in _U7_KILL_N.finditer(t):
+            try:
+                n = int(m.group(1))
+            except ValueError:
+                continue
+            if not _HS_YEAR.match(str(n)):
+                dead = max(dead, n)
+        if dead >= 5:
+            for lim, val in _CF_DEATH_BANDS:
+                if dead >= lim:
+                    return val, 'гибель людей: %d по заголовку' % dead
+    return 0, ''
+
+
 def _sev_post_hyg_0511(events):
     if not SEV_POST_HYG_0511:
         return 0
@@ -26730,6 +26789,9 @@ def _sev_post_hyg_0511(events):
         _mf, _mw = _m5_floor(t)
         if _mf > fl:
             fl, why = _mf, _mw
+        _uf, _uw = _u7_floor(e, t)
+        if _uf > fl:
+            fl, why = _uf, _uw
         _mo = _F5_OIL.search(t)
         if _mo:
             try:
@@ -27017,7 +27079,8 @@ _STMT_ATTR = re.compile(r'\s[—–]\s*[А-ЯЁA-Z][\w.]+(?:\s+[А-ЯЁA-Z][\w.]
 _STMT_CARRIER = re.compile(_WMD_CARRIER, re.I)
 _STMT_DONE = re.compile(
     r'провел\w*|провёл|нанес\w*|нанёс|вв[её]л\w*|подписал\w*|утвердил\w*|запустил\w*|'
-    r'испытал\w*|атаковал\w*|уничтожил\w*|сбил\w*|погиб\w*|ранен\w*|задержал\w*', re.I)
+    r'испытал\w*|атаковал\w*|уничтожил\w*|сбил\w*|погиб\w*|ранен\w*|задержал\w*|'
+    r'(?<![а-яё])убит\w*|(?<![а-яё])убил\w*|загорел\w*|горящ\w*', re.I)   # SEV_UNDER_0711: «Моряк убит»
 
 
 def _scale_statement(events):
