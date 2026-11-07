@@ -6478,6 +6478,9 @@ def _cfm_grand(b):
     return False
 _TG_SRC = {'IT','AM Live','Cyber','Cybersecurity','Lab News','Engineering','R Osint','Cybersec','Xakep IT','Data D','A breaking','TN news','Economics RU','Downdetector','Dciber','Cyber Threat','THN','Cyber SN'}
 _RU_MONTHS = {'январ':1,'феврал':2,'март':3,'апрел':4,'мая':5,'май':5,'мае':5,'июн':6,'июл':7,'август':8,'сентябр':9,'октябр':10,'ноябр':11,'декабр':12}
+TG_FUTURE_DATE_0711 = True
+
+
 def _text_latest_date(text):
     """Самая поздняя явная дата (DD месяца) в тексте. None если дат нет. Для отсева TG-репостов о старье."""
     if not text: return None
@@ -6490,7 +6493,12 @@ def _text_latest_date(text):
         if not mo or not (1 <= dd <= 31): continue
         try:
             dt = _d(today.year, mo, dd)
-            if (dt - today).days > 2: dt = _d(today.year - 1, mo, dd)
+            # TG_FUTURE_DATE_0711: дата без года в ближайшие 60 дней - это анонс
+            # («переговоры состоятся 10 ноября», «с 17 ноября биржи…»), а не прошлый
+            # год. Раньше любой день позже послезавтра уходил в прошлый год, и пост
+            # отсекался как устаревший (OLD). Прошлым годом считается только дата
+            # дальше 60 дней вперёд (в январе «25 декабря»). Откат: флаг = False.
+            if (dt - today).days > (60 if TG_FUTURE_DATE_0711 else 2): dt = _d(today.year - 1, mo, dd)
             found.append(dt)
         except Exception: pass
     return max(found) if found else None
