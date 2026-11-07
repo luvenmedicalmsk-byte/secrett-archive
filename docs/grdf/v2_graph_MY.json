@@ -2,9 +2,9 @@
   "country": "MY",
   "date": "2026-11-07",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-07T16:33:48.581047+00:00",
+  "generated_at": "2026-11-07T16:49:13.732933+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-MY",
@@ -19,14 +19,14 @@
       "id": "DOMAIN-MY-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
+      "score": 46,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-MY-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 42,
+      "score": 34,
       "trend": "stable"
     },
     {
@@ -65,19 +65,19 @@
       "trend": "stable"
     },
     {
+      "id": "DRIVER-MY-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
+    },
+    {
       "id": "DRIVER-MY-climate",
       "type": "Driver",
       "label": "climate"
     },
     {
-      "id": "DRIVER-MY-economic",
+      "id": "DRIVER-MY-social",
       "type": "Driver",
-      "label": "economic"
-    },
-    {
-      "id": "DRIVER-MY-geopolitical",
-      "type": "Driver",
-      "label": "geopolitical"
+      "label": "social"
     },
     {
       "id": "SIGNAL-MY-Эпидемиоло",
@@ -94,11 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-MY-Валютный_р",
+      "id": "SIGNAL-MY-Геополитич",
       "type": "Signal",
-      "label": "Валютный рынок — Юго-Восточная Азия",
-      "severity": 56,
-      "domain": "economic"
+      "label": "Геополитический процесс — Юго-Восточная ",
+      "severity": 62,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-MY",
       "to": "DOMAIN-MY-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-MY",
       "to": "DOMAIN-MY-economic",
       "type": "CORRELATES",
-      "weight": 0.42
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-MY",
@@ -145,19 +145,19 @@
       "weight": 0.05
     },
     {
+      "from": "DRIVER-MY-geopolitical",
+      "to": "COUNTRY-MY",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-MY-climate",
       "to": "COUNTRY-MY",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-MY-economic",
-      "to": "COUNTRY-MY",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
-      "from": "DRIVER-MY-geopolitical",
+      "from": "DRIVER-MY-social",
       "to": "COUNTRY-MY",
       "type": "CAUSES",
       "weight": 0.8
@@ -182,6 +182,27 @@
       "type": "AMPLIFIES",
       "weight": 0.65,
       "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-MY-geopolitical",
+      "to": "DOMAIN-MY-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-MY-infrastructure",
+      "to": "DOMAIN-MY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-MY-economic",
+      "to": "DOMAIN-MY-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "DOMAIN-MY-climate",
@@ -217,10 +238,10 @@
       "weight": 0.46
     },
     {
-      "from": "SIGNAL-MY-Валютный_р",
-      "to": "DOMAIN-MY-economic",
+      "from": "SIGNAL-MY-Геополитич",
+      "to": "DOMAIN-MY-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.56
+      "weight": 0.62
     }
   ]
 }
