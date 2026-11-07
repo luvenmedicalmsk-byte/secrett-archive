@@ -2,9 +2,9 @@
   "country": "GB",
   "date": "2026-11-07",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-07T10:48:24.429941+00:00",
+  "generated_at": "2026-11-07T11:08:59.960035+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-GB",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-GB-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
+      "score": 40,
       "trend": "stable"
     },
     {
@@ -47,7 +47,7 @@
       "id": "DOMAIN-GB-social",
       "type": "Domain",
       "label": "social",
-      "score": 58,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -94,11 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-GB-Эпидемиоло",
+      "id": "SIGNAL-GB-Путина_не_",
       "type": "Signal",
-      "label": "Эпидемиологический риск — Великобритания",
-      "severity": 58,
-      "domain": "social"
+      "label": "Путина не пригласят на саммит G20 в Вели",
+      "severity": 40,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-GB",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-social",
       "type": "CORRELATES",
-      "weight": 0.58
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-GB",
@@ -205,6 +205,27 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-GB-geopolitical",
+      "to": "DOMAIN-GB-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-GB-infrastructure",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GB-economic",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-GB-Великобрит",
       "to": "DOMAIN-GB-climate",
       "type": "AMPLIFIES",
@@ -217,10 +238,10 @@
       "weight": 0.44
     },
     {
-      "from": "SIGNAL-GB-Эпидемиоло",
-      "to": "DOMAIN-GB-social",
+      "from": "SIGNAL-GB-Путина_не_",
+      "to": "DOMAIN-GB-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.58
+      "weight": 0.4
     }
   ]
 }
