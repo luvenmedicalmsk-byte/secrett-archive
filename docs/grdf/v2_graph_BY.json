@@ -2,7 +2,7 @@
   "country": "BY",
   "date": "2026-11-07",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-07T11:48:09.407709+00:00",
+  "generated_at": "2026-11-07T12:09:18.329731+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-BY-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 51,
       "trend": "stable"
     },
     {
@@ -40,7 +40,7 @@
       "id": "DOMAIN-BY-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 54,
+      "score": 56,
       "trend": "stable"
     },
     {
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-BY-Сайт_Росст",
-      "type": "Signal",
-      "label": "Сайт Росстата взломали хакеры",
-      "severity": 54,
-      "domain": "technology"
-    },
-    {
       "id": "SIGNAL-BY-Пожарная_а",
       "type": "Signal",
       "label": "Пожарная активность — Беларусь",
@@ -99,6 +92,13 @@
       "label": "Эпидемиологический риск — Беларусь",
       "severity": 50,
       "domain": "social"
+    },
+    {
+      "id": "SIGNAL-BY-Отключение",
+      "type": "Signal",
+      "label": "Отключение интернета — Беларусь",
+      "severity": 56,
+      "domain": "technology"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-BY",
       "to": "DOMAIN-BY-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.51
     },
     {
       "from": "COUNTRY-BY",
@@ -124,7 +124,7 @@
       "from": "COUNTRY-BY",
       "to": "DOMAIN-BY-technology",
       "type": "CORRELATES",
-      "weight": 0.54
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-BY",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-BY-geopolitical",
-      "to": "DOMAIN-BY-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-BY-infrastructure",
-      "to": "DOMAIN-BY-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-BY-economic",
-      "to": "DOMAIN-BY-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "DOMAIN-BY-climate",
       "to": "DOMAIN-BY-infrastructure",
       "type": "ESCALATES",
@@ -226,10 +205,25 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-BY-Сайт_Росст",
-      "to": "DOMAIN-BY-technology",
+      "from": "DOMAIN-BY-geopolitical",
+      "to": "DOMAIN-BY-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-BY-infrastructure",
+      "to": "DOMAIN-BY-economic",
       "type": "AMPLIFIES",
-      "weight": 0.54
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-BY-economic",
+      "to": "DOMAIN-BY-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-BY-Пожарная_а",
@@ -242,6 +236,12 @@
       "to": "DOMAIN-BY-social",
       "type": "AMPLIFIES",
       "weight": 0.5
+    },
+    {
+      "from": "SIGNAL-BY-Отключение",
+      "to": "DOMAIN-BY-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.56
     }
   ]
 }
