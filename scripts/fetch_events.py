@@ -10090,7 +10090,7 @@ def _p10_title(e):
 # QUAKE_CATEGORY_SHADOW = True: только отчёт docs/_quake_shadow.json - записи,
 # чьё решение изменилось бы при включении.
 # Откат: QUAKE_CATEGORY_ON = False (по умолчанию), QUAKE_CATEGORY_SHADOW = False.
-QUAKE_CATEGORY_ON = False
+QUAKE_CATEGORY_ON = True
 QUAKE_CATEGORY_SHADOW = True
 _QC_SHADOW = {'p10': [], 'sq': [], 'cats': {}}
 _QC_SEEN = set()
