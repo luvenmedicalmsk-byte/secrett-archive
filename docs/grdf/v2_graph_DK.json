@@ -2,39 +2,39 @@
   "country": "DK",
   "date": "2026-11-07",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-07T04:26:42.497609+00:00",
-  "node_count": 13,
-  "edge_count": 15,
+  "generated_at": "2026-11-07T04:49:40.121001+00:00",
+  "node_count": 14,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-DK",
       "type": "Country",
       "label": "DK",
-      "score": 48,
+      "score": 50,
       "props": {
-        "risk_score": 48
+        "risk_score": 50
       }
     },
     {
       "id": "DOMAIN-DK-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 40,
-      "trend": "stable"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DK-economic",
       "type": "Domain",
       "label": "economic",
       "score": 32,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DK-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "stable"
+      "score": 50,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DK-technology",
@@ -48,7 +48,7 @@
       "type": "Domain",
       "label": "social",
       "score": 58,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DK-infrastructure",
@@ -70,14 +70,21 @@
       "label": "social"
     },
     {
+      "id": "DRIVER-DK-climate",
+      "type": "Driver",
+      "label": "climate"
+    },
+    {
       "id": "DRIVER-DK-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-DK-economic",
-      "type": "Driver",
-      "label": "economic"
+      "id": "SIGNAL-DK-Туман:_Сев",
+      "type": "Signal",
+      "label": "Туман: Северная Ютландия, Центральная и ",
+      "severity": 50,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-DK-Социальный",
@@ -99,7 +106,7 @@
       "from": "COUNTRY-DK",
       "to": "DOMAIN-DK-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.4
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-DK",
@@ -111,7 +118,7 @@
       "from": "COUNTRY-DK",
       "to": "DOMAIN-DK-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-DK",
@@ -144,16 +151,37 @@
       "weight": 0.8
     },
     {
+      "from": "DRIVER-DK-climate",
+      "to": "COUNTRY-DK",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-DK-geopolitical",
       "to": "COUNTRY-DK",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-DK-economic",
-      "to": "COUNTRY-DK",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-DK-climate",
+      "to": "DOMAIN-DK-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-DK-economic",
+      "to": "DOMAIN-DK-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-DK-social",
+      "to": "DOMAIN-DK-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "DOMAIN-DK-geopolitical",
@@ -175,6 +203,33 @@
       "type": "AMPLIFIES",
       "weight": 0.6,
       "lag_days": 45
+    },
+    {
+      "from": "DOMAIN-DK-climate",
+      "to": "DOMAIN-DK-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-DK-infrastructure",
+      "to": "DOMAIN-DK-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-DK-economic",
+      "to": "DOMAIN-DK-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-DK-Туман:_Сев",
+      "to": "DOMAIN-DK-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
     },
     {
       "from": "SIGNAL-DK-Социальный",
