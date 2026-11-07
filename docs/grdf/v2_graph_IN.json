@@ -2,7 +2,7 @@
   "country": "IN",
   "date": "2026-11-07",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-07T07:28:27.729629+00:00",
+  "generated_at": "2026-11-07T07:47:44.852240+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-IN",
       "type": "Country",
       "label": "IN",
-      "score": 79,
+      "score": 92,
       "props": {
-        "risk_score": 79
+        "risk_score": 92
       }
     },
     {
@@ -20,49 +20,49 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 72,
-      "trend": "down"
+      "score": 86,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-social",
       "type": "Domain",
       "label": "social",
-      "score": 49,
-      "trend": "down"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DRIVER-IN-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IN-Красное_ув",
+      "type": "Signal",
+      "label": "Красное уведомление о тропический циклон",
+      "severity": 86,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-IN-2_человека",
       "type": "Signal",
       "label": "2 человека погибли после обрушения трехэ",
@@ -92,13 +99,6 @@
       "label": "Циклоны Арнаб и Мурасу - Андхра-Прадеш, ",
       "severity": 70,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-IN-Шарад_Пова",
-      "type": "Signal",
-      "label": "Шарад Повар выписан из больницы; врач де",
-      "severity": 49,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-climate",
       "type": "CORRELATES",
-      "weight": 0.72
+      "weight": 0.86
     },
     {
       "from": "COUNTRY-IN",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-social",
       "type": "CORRELATES",
-      "weight": 0.49
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-IN",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-IN-climate",
-      "to": "DOMAIN-IN-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-IN-economic",
-      "to": "DOMAIN-IN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-IN-social",
-      "to": "DOMAIN-IN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-IN-climate",
       "to": "DOMAIN-IN-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -205,6 +184,33 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-IN-climate",
+      "to": "DOMAIN-IN-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-IN-social",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "SIGNAL-IN-Красное_ув",
+      "to": "DOMAIN-IN-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.86
+    },
+    {
       "from": "SIGNAL-IN-2_человека",
       "to": "DOMAIN-IN-climate",
       "type": "AMPLIFIES",
@@ -215,12 +221,6 @@
       "to": "DOMAIN-IN-climate",
       "type": "AMPLIFIES",
       "weight": 0.7
-    },
-    {
-      "from": "SIGNAL-IN-Шарад_Пова",
-      "to": "DOMAIN-IN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.49
     }
   ]
 }
