@@ -2,46 +2,46 @@
   "country": "CN",
   "date": "2026-11-07",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-07T03:17:01.553052+00:00",
+  "generated_at": "2026-11-07T03:28:55.235774+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 72,
+      "score": 77,
       "props": {
-        "risk_score": 72
+        "risk_score": 77
       }
     },
     {
       "id": "DOMAIN-CN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 54,
+      "score": 5,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 51,
+      "score": 5,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 56,
-      "trend": "stable"
+      "score": 74,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-technology",
       "type": "Domain",
       "label": "technology",
       "score": 72,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-social",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-CN-Туман:_Шес",
+      "type": "Signal",
+      "label": "Туман: Шесть специальных зон, Уезд Фуюан",
+      "severity": 74,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-CN-Падение_ин",
       "type": "Signal",
       "label": "Падение интернет-связи: Китай",
@@ -87,18 +94,11 @@
       "domain": "technology"
     },
     {
-      "id": "SIGNAL-CN-Гроза:_Уез",
+      "id": "SIGNAL-CN-Сильный_ве",
       "type": "Signal",
-      "label": "Гроза: Уезд Хуанпин, Китай",
+      "label": "Сильный ветер: Район Пэнлай, Китай",
       "severity": 56,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-CN-Пекин_обещ",
-      "type": "Signal",
-      "label": "Пекин обещает ответить на санкции США пр",
-      "severity": 54,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,19 +106,19 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.54
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-economic",
       "type": "CORRELATES",
-      "weight": 0.51
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-climate",
       "type": "CORRELATES",
-      "weight": 0.56
+      "weight": 0.74
     },
     {
       "from": "COUNTRY-CN",
@@ -205,25 +205,10 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-CN-geopolitical",
-      "to": "DOMAIN-CN-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-CN-infrastructure",
-      "to": "DOMAIN-CN-economic",
+      "from": "SIGNAL-CN-Туман:_Шес",
+      "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-CN-economic",
-      "to": "DOMAIN-CN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
+      "weight": 0.74
     },
     {
       "from": "SIGNAL-CN-Падение_ин",
@@ -232,16 +217,10 @@
       "weight": 0.72
     },
     {
-      "from": "SIGNAL-CN-Гроза:_Уез",
+      "from": "SIGNAL-CN-Сильный_ве",
       "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
       "weight": 0.56
-    },
-    {
-      "from": "SIGNAL-CN-Пекин_обещ",
-      "to": "DOMAIN-CN-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.54
     }
   ]
 }
