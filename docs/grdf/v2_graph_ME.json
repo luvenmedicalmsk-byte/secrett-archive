@@ -2,7 +2,7 @@
   "country": "ME",
   "date": "2026-11-08",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-08T23:07:36.546742+00:00",
+  "generated_at": "2026-11-08T23:27:53.868845+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-ME",
       "type": "Country",
       "label": "ME",
-      "score": 50,
+      "score": 45,
       "props": {
-        "risk_score": 50
+        "risk_score": 45
       }
     },
     {
@@ -20,49 +20,49 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 33,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ME-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ME-climate",
       "type": "Domain",
       "label": "climate",
       "score": 50,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ME-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ME-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
-      "trend": "stable"
+      "score": 35,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ME-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ME-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DRIVER-ME-climate",
@@ -70,21 +70,14 @@
       "label": "climate"
     },
     {
+      "id": "DRIVER-ME-social",
+      "type": "Driver",
+      "label": "social"
+    },
+    {
       "id": "DRIVER-ME-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
-    },
-    {
-      "id": "DRIVER-ME-economic",
-      "type": "Driver",
-      "label": "economic"
-    },
-    {
-      "id": "SIGNAL-ME-Ветер:_Адр",
-      "type": "Signal",
-      "label": "Ветер: Адриатическое побережье, Черногор",
-      "severity": 50,
-      "domain": "climate"
     },
     {
       "id": "SIGNAL-ME-Геополитич",
@@ -99,6 +92,13 @@
       "label": "Шторм — Черногория",
       "severity": 50,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-ME-Социальный",
+      "type": "Signal",
+      "label": "Социальный процесс — Балканы",
+      "severity": 47,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -130,7 +130,7 @@
       "from": "COUNTRY-ME",
       "to": "DOMAIN-ME-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-ME",
@@ -151,13 +151,13 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-ME-geopolitical",
+      "from": "DRIVER-ME-social",
       "to": "COUNTRY-ME",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-ME-economic",
+      "from": "DRIVER-ME-geopolitical",
       "to": "COUNTRY-ME",
       "type": "CAUSES",
       "weight": 0.8
@@ -205,12 +205,6 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-ME-Ветер:_Адр",
-      "to": "DOMAIN-ME-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.5
-    },
-    {
       "from": "SIGNAL-ME-Геополитич",
       "to": "DOMAIN-ME-geopolitical",
       "type": "AMPLIFIES",
@@ -221,6 +215,12 @@
       "to": "DOMAIN-ME-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
+    },
+    {
+      "from": "SIGNAL-ME-Социальный",
+      "to": "DOMAIN-ME-social",
+      "type": "AMPLIFIES",
+      "weight": 0.47
     }
   ]
 }
