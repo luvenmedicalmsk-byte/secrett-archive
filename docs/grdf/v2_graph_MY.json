@@ -2,7 +2,7 @@
   "country": "MY",
   "date": "2026-11-08",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-08T22:47:44.773618+00:00",
+  "generated_at": "2026-11-08T23:07:36.548164+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-MY-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 34,
+      "score": 42,
       "trend": "stable"
     },
     {
@@ -47,7 +47,7 @@
       "id": "DOMAIN-MY-social",
       "type": "Domain",
       "label": "social",
-      "score": 36,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -75,9 +75,9 @@
       "label": "climate"
     },
     {
-      "id": "DRIVER-MY-social",
+      "id": "DRIVER-MY-economic",
       "type": "Driver",
-      "label": "social"
+      "label": "economic"
     },
     {
       "id": "SIGNAL-MY-Климатичес",
@@ -94,11 +94,11 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-MY-Эпидемиоло",
+      "id": "SIGNAL-MY-Валютный_р",
       "type": "Signal",
-      "label": "Эпидемиологический риск — Юго-Восточная ",
-      "severity": 49,
-      "domain": "social"
+      "label": "Валютный рынок — Юго-Восточная Азия",
+      "severity": 56,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-MY",
       "to": "DOMAIN-MY-economic",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-MY",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-MY",
       "to": "DOMAIN-MY-social",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-MY",
@@ -157,10 +157,31 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-MY-social",
+      "from": "DRIVER-MY-economic",
       "to": "COUNTRY-MY",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-MY-climate",
+      "to": "DOMAIN-MY-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-MY-infrastructure",
+      "to": "DOMAIN-MY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-MY-economic",
+      "to": "DOMAIN-MY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-MY-climate",
@@ -205,27 +226,6 @@
       "lag_days": 45
     },
     {
-      "from": "DOMAIN-MY-climate",
-      "to": "DOMAIN-MY-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-MY-infrastructure",
-      "to": "DOMAIN-MY-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-MY-economic",
-      "to": "DOMAIN-MY-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "SIGNAL-MY-Климатичес",
       "to": "DOMAIN-MY-climate",
       "type": "AMPLIFIES",
@@ -238,10 +238,10 @@
       "weight": 0.62
     },
     {
-      "from": "SIGNAL-MY-Эпидемиоло",
-      "to": "DOMAIN-MY-social",
+      "from": "SIGNAL-MY-Валютный_р",
+      "to": "DOMAIN-MY-economic",
       "type": "AMPLIFIES",
-      "weight": 0.49
+      "weight": 0.56
     }
   ]
 }
