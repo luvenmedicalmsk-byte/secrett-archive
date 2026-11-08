@@ -8971,12 +8971,76 @@ def save_tr_ledger(snapshots: list[dict]) -> None:
             })
             new_entries += 1
 
-    ledger["total_entries"]  = len(ledger["entries"])
+    if LEDGER_PARTITION:
+        _ledger_partition(ledger)
+    ledger["total_entries"]  = len(ledger["entries"]) + sum(a.get("entries", 0) for a in ledger.get("archives", []))
+    ledger["active_entries"] = len(ledger["entries"])
     ledger["last_appended"]  = datetime.now(timezone.utc).isoformat()
 
     with open(ledger_path, "w") as f:
-        json.dump(ledger, f, ensure_ascii=False, indent=2)
-    print(f"[TR] Ledger: {len(ledger['entries'])} total entries (+{new_entries} today)", file=sys.stderr)
+        if LEDGER_PARTITION:
+            json.dump(ledger, f, ensure_ascii=False, separators=(",", ":"))
+        else:
+            json.dump(ledger, f, ensure_ascii=False, indent=2)
+    print(f"[TR] Ledger: {ledger['total_entries']} total entries, active {len(ledger['entries'])} (+{new_entries} today)", file=sys.stderr)
+
+
+# LEDGER_PARTITION (08.11.2026): ledger.json достиг 68 МБ при лимите GitHub 100 МБ на файл
+# и рос примерно на 0,9 МБ в сутки (≈3 500 записей: каждый прогон × каждая страна).
+# Записи прошлых месяцев переносятся без изменений в docs/track-record/ledger/YYYY-MM.json
+# (компактный JSON, append-only, слияние по snapshot_id - ничего не удаляется и не правится).
+# В ledger.json остаётся текущий месяц и оглавление "archives"; total_entries считает всё.
+# Ни одна запись не теряется: перенос в архив пишется ДО того, как запись уходит из активного
+# файла, и проверяется по числу. Откат: LEDGER_PARTITION = False (архивы остаются читаемыми).
+LEDGER_PARTITION = True
+
+
+def _ledger_partition(ledger: dict) -> None:
+    cur_month = TODAY[:7]
+    old = [e for e in ledger["entries"] if (e.get("date") or "")[:7] < cur_month]
+    if not old:
+        ledger.setdefault("archives", [])
+        return
+    arch_dir = TR_DIR / "ledger"
+    arch_dir.mkdir(parents=True, exist_ok=True)
+    by_month: dict = {}
+    for e in old:
+        by_month.setdefault(e["date"][:7], []).append(e)
+    moved_ids = set()
+    for month, ents in sorted(by_month.items()):
+        p = arch_dir / f"{month}.json"
+        arch = {"version": "1.0", "month": month, "entries": []}
+        if p.exists():
+            try:
+                arch = json.loads(p.read_text(encoding="utf-8"))
+            except Exception as _e:
+                print(f"[TR] Ledger archive {p.name} unreadable ({_e}), month kept active", file=sys.stderr)
+                continue
+        have = {x["snapshot_id"] for x in arch["entries"]}
+        add = [e for e in ents if e["snapshot_id"] not in have]
+        arch["entries"].extend(add)
+        arch["total_entries"] = len(arch["entries"])
+        tmp = p.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps(arch, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+        # проверка перед заменой: архив читается и содержит все записи месяца
+        chk = json.loads(tmp.read_text(encoding="utf-8"))
+        chk_ids = {x["snapshot_id"] for x in chk["entries"]}
+        if not all(e["snapshot_id"] in chk_ids for e in ents):
+            print(f"[TR] Ledger archive {month}: verification failed, month kept active", file=sys.stderr)
+            tmp.unlink(missing_ok=True)
+            continue
+        tmp.replace(p)
+        moved_ids.update(e["snapshot_id"] for e in ents)
+        print(f"[TR] Ledger archive {month}: +{len(add)} -> {len(chk['entries'])} entries", file=sys.stderr)
+    ledger["entries"] = [e for e in ledger["entries"] if e["snapshot_id"] not in moved_ids]
+    idx = {a["month"]: a for a in ledger.get("archives", [])}
+    for f in sorted(arch_dir.glob("*.json")):
+        try:
+            n = json.loads(f.read_text(encoding="utf-8")).get("total_entries", 0)
+        except Exception:
+            continue
+        idx[f.stem] = {"month": f.stem, "file": f"ledger/{f.name}", "entries": n}
+    ledger["archives"] = [idx[k] for k in sorted(idx)]
 
 
 # ── STEP 5: Model version history ────────────────────────────────────────
