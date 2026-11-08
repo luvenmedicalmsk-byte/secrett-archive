@@ -252,10 +252,12 @@ jobs:
       - name: Публикация разборов в приватный репозиторий
         continue-on-error: true
         env:
-          PRIVATE_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
+          # 08.11.2026: PRIVATE_REPO_TOKEN недействителен с 20.08 (401); DATA_REPO_TOKEN
+          # пишет в тот же secrett-archive-data (sync-private-data.yml)
+          PRIVATE_TOKEN: ${{ secrets.DATA_REPO_TOKEN || secrets.PRIVATE_REPO_TOKEN }}
         run: |
           if [ -z "$PRIVATE_TOKEN" ]; then
-            echo "PRIVATE_REPO_TOKEN не задан, публикация пропущена"; exit 0
+            echo "DATA_REPO_TOKEN/PRIVATE_REPO_TOKEN не заданы, публикация пропущена"; exit 0
           fi
           python scripts/push_reports.py || true
 
