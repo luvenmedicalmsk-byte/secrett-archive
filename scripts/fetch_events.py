@@ -7703,6 +7703,90 @@ def _gck(tid, label):
         pass
 
 
+# ── SEV_SHADOW_1108 (08.11.2026) ───────────────────────────────────────────
+# Тень трёх правил недооценки (решение Мии 08.11: SHADOW APPROVED). Индекс НЕ меняется:
+# пишется raw_index и shadow_adjusted_index в docs/_sev_shadow_1108.json, с правилом и
+# причиной. Точка замера - до гейтов sev_nomarker / sev_low (Admission не меняется).
+#   R1 переговоры об урегулировании: конкретное событие (дата / место / делегации /
+#      состоялись), не «готовы к переговорам» - 62;
+#   R2 решение о поставках вооружений (Patriot, ПВО, пакеты помощи): решение, а не
+#      обсуждение или просьба - 62;
+#   R3 гибель людей от диких животных при масштабе (≥2 погибших, отстрел, режим ЧС) - 60.
+# Откат: SEV_SHADOW_1108 = False.
+SEV_SHADOW_1108 = True
+_S11_LOG = []
+_S11_SEEN = set()
+_S11_NEG = re.compile(r'(?<![а-яё])(?:переговор|делегаци|talks|negotiat)', re.I)
+_S11_WAR = re.compile(r'росси|рф(?![а-яё])|украин|киев|москв|кремл|сша|уиткофф|урегулирован|мирн\w*\s+(?:план|соглашен|процесс)|перемири|russia|ukrain|ceasefire|peace', re.I)
+_S11_CONCRETE = re.compile(
+    r'\d{1,2}\s*(?:[-–]\s*\d{1,2}\s*)?(?:январ|феврал|март|апрел|ма[яй]|июн|июл|август|сентябр|октябр|ноябр|декабр)|'
+    r'во?\s+(?:понедельник|вторник|среду|четверг|пятницу|субботу|воскресенье)|'
+    r'абу-?даби|стамбул|женев|эр-?рияд|джидд|доха|анкар|минск|белом\s+доме|abu\s+dhabi|istanbul|geneva|riyadh|'
+    r'делегаци\w*\s+(?:возглав|в\s+составе|составе)|возглавит|возглавил|в\s+составе\s+делегаци|состав\w*\s+(?:российской|украинской|делегаци)|'
+    r'мединск|умеров|буданов|рябков|галузин|уиткофф|кушнер|дмитриев|ермак|'
+    r'состоял\w*|прошл[иао]?\s|начал\w*ся|завершил\w*ся|стартовал', re.I)
+_S11_NEG_SOFT = re.compile(r'готов\w*\s+к\s+переговор|возможн\w*\s+переговор|призыва\w*\s+к\s+переговор|не\s+исключ|'
+                           r'(?<![а-яё])если(?![а-яё])|при\s+условии|отказ\w*\s+от\s+переговор|не\s+будет\s+переговор|бессмысленн|'
+                           r'рассматрива\w*|модел\w*|будущ\w*\s+переговор|^\W*что\s+произошло|главное\s+за\s+(?:ночь|день|неделю)', re.I)
+_S11_ARMS = re.compile(r'patriot|пэтриот|(?<![а-яё])пво(?![а-яё])|зрк|himars|atacms|taurus|f-16|tomahawk|томагавк|iris-t|nasams|'
+                       r'пакет\w*\s+(?:военной\s+)?помощ|военн\w*\s+помощ|поставк\w*\s+(?:вооружен|оружи|снаряд|ракет|зрк|пво|истребител)', re.I)
+_S11_DECIDE = re.compile(r'одобрил|утвердил|передаст|передал[аи]?(?![а-яё])|передаёт|поставит|выделил|выделит|согласовал|'
+                         r'объявил\w*\s+(?:о\s+)?(?:нов\w+\s+)?пакет|больше\s+нет\s+возможност|прекрат\w*|приостанов\w*|'
+                         r'отказал\w*\s+(?:в\s+)?постав|ограничил|подписал|approv|announc\w+\s+(?:a\s+)?(?:new\s+)?package|halt|suspend', re.I)
+_S11_DISCUSS = re.compile(r'(?<![а-яё])(?:может|могут|рассматрива\w*|обсужда\w*|обсудят|призвал\w*|просит|попросил\w*|надеется|'
+                          r'хотел\w*|планирует|(?<!нет\s)возможн\w*|не\s+исключ\w*|считает|заявил\w*,\s+что\s+(?:нужн|необходим))', re.I)
+_S11_ANIMAL = re.compile(r'медвед|волк(?:и|ов|а)?(?![а-яё])|тигр|леопард|акул|крокодил|слон|бегемот|кабан|бешен\w*\s+(?:лис|живот)', re.I)
+_S11_HARM = re.compile(r'погиб\w*|гибел\w*|убил\w*|загрыз\w*|растерзал\w*|нападени\w*|напал\w*', re.I)
+_S11_SCALE = re.compile(r'отстрел|ликвидир\w*|режим\w*\s+(?:чс|чрезвычайн|повышенной\s+готовности)|чрезвычайн|массов\w*\s+нападени|'
+                        r'(?<![а-яё\d])(?:[2-9]|\d{2,})\s+(?:человек|погибш|жертв|нападени)|двое|трое|четверо|пятеро|шестеро|семеро|восьмеро|девять|десять', re.I)
+
+
+def _s11_rule(t, d, domain):
+    tl = (t or '')
+    td = tl + ' ' + (d or '')[:400]
+    if domain in ('geopolitics', None, '') and _S11_NEG.search(tl) and _S11_WAR.search(td) \
+            and _S11_CONCRETE.search(td) and not _S11_NEG_SOFT.search(tl):
+        return 62, 'R1 переговоры', (_S11_CONCRETE.search(td).group(0))
+    if _S11_ARMS.search(tl) and _S11_DECIDE.search(tl) and not _S11_DISCUSS.search(tl):
+        return 62, 'R2 поставки вооружений', _S11_DECIDE.search(tl).group(0)
+    if _S11_ANIMAL.search(tl) and _S11_HARM.search(td) and _S11_SCALE.search(td):
+        return 60, 'R3 дикие животные', _S11_SCALE.search(td).group(0)
+    return 0, '', ''
+
+
+def _s11_note(item, domain, severity, tid):
+    if not SEV_SHADOW_1108:
+        return
+    try:
+        t = str(item.get('title') or ''); d = str(item.get('desc') or item.get('summary') or '')
+        fl, rule, why = _s11_rule(t, d, domain)
+        if not fl:
+            return
+        k = t[:150]
+        if k in _S11_SEEN:
+            return
+        _S11_SEEN.add(k)
+        raw = severity if isinstance(severity, (int, float)) else None
+        _S11_LOG.append({'tid': tid, 'source': str(item.get('source') or ''), 'title': t[:220], 'domain': domain,
+                         'rule': rule, 'why': why, 'raw_index': raw,
+                         'shadow_adjusted_index': max(raw or 0, fl), 'delta': max(raw or 0, fl) - (raw or 0)})
+    except Exception:
+        pass
+
+
+def _s11_write():
+    if not SEV_SHADOW_1108:
+        return
+    try:
+        rep = {'дата': datetime.now(timezone.utc).isoformat(timespec='seconds'),
+               'режим': 'тень: индекс не меняется', 'сработало': len(_S11_LOG),
+               'по правилам': {r: sum(1 for x in _S11_LOG if x['rule'] == r) for r in sorted({x['rule'] for x in _S11_LOG})},
+               'записи': _S11_LOG}
+        (OUTPUT_PATH.parent / '_sev_shadow_1108.json').write_text(json.dumps(rep, ensure_ascii=False, indent=1), encoding='utf-8')
+    except Exception as _e:
+        print('  [WARN] sev shadow 1108: %s' % _e, file=sys.stderr)
+
+
 def process_events(raw_items):
     events = []
     seen_ids = set()
@@ -8218,6 +8302,7 @@ def process_events(raw_items):
             # Это моя недоработка: добавила их, не сверившись с _OPED_SOURCES.
             'CSIS','Chatham House','CFR','Atlantic Council','ISW',
             'Carnegie Endowment','GLOBSEC','FPRI','Geopolitical Monitor'}
+        _s11_note(item, domain, severity, _tid)   # SEV_SHADOW_1108: только отчёт
         if (item.get('_force_severity') is None and not _sys
                 and domain in ('geopolitics','economy','social','technology')
                 and item.get('source') not in _TRUSTED_SOCIAL
@@ -29167,6 +29252,7 @@ def save_enriched(events, previous_snapshot=None):
             enriched["events"] = _signal_quality_pass(enriched["events"])
             _lin_exact(_lx0, enriched["events"], 'SIGNAL_QUALITY', 'signal_quality')
             _qc_write_shadow()
+            _s11_write()
             _egp('k09_signal_quality', enriched["events"])
             enriched["events"] = _retain_critical(enriched["events"], previous_snapshot)
             _egp('k10_retain_critical', enriched["events"])
