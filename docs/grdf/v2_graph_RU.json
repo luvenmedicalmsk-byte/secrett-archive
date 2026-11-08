@@ -2,7 +2,7 @@
   "country": "RU",
   "date": "2026-11-08",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-08T05:28:22.488700+00:00",
+  "generated_at": "2026-11-08T05:48:04.921862+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,17 +10,17 @@
       "id": "COUNTRY-RU",
       "type": "Country",
       "label": "RU",
-      "score": 75,
+      "score": 76,
       "props": {
-        "risk_score": 75
+        "risk_score": 76
       }
     },
     {
       "id": "DOMAIN-RU-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 58,
-      "trend": "down"
+      "score": 83,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-economic",
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 74,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-technology",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-RU-Рязань_под",
+      "type": "Signal",
+      "label": "Рязань подверглась атаке украинских БПЛА",
+      "severity": 75,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-RU-Маловодье:",
       "type": "Signal",
       "label": "Маловодье: Ханты-Мансийский автономный о",
@@ -92,13 +99,6 @@
       "label": "Пожарная опасность: Саратовская область,",
       "severity": 74,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-RU-Засуха:_Ре",
-      "type": "Signal",
-      "label": "Засуха: Республика Калмыкия, Россия",
-      "severity": 74,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.58
+      "weight": 0.83
     },
     {
       "from": "COUNTRY-RU",
@@ -226,6 +226,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-RU-Рязань_под",
+      "to": "DOMAIN-RU-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.75
+    },
+    {
       "from": "SIGNAL-RU-Маловодье:",
       "to": "DOMAIN-RU-climate",
       "type": "AMPLIFIES",
@@ -233,12 +239,6 @@
     },
     {
       "from": "SIGNAL-RU-Пожарная_о",
-      "to": "DOMAIN-RU-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.74
-    },
-    {
-      "from": "SIGNAL-RU-Засуха:_Ре",
       "to": "DOMAIN-RU-climate",
       "type": "AMPLIFIES",
       "weight": 0.74
