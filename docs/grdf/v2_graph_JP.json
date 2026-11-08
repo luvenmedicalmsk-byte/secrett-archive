@@ -2,17 +2,17 @@
   "country": "JP",
   "date": "2026-11-08",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-08T06:48:30.773086+00:00",
+  "generated_at": "2026-11-08T07:07:09.876231+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-JP",
       "type": "Country",
       "label": "JP",
-      "score": 75,
+      "score": 83,
       "props": {
-        "risk_score": 75
+        "risk_score": 83
       }
     },
     {
@@ -20,49 +20,49 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 71,
-      "trend": "stable"
+      "score": 72,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "stable"
+      "score": 68,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-technology",
       "type": "Domain",
       "label": "technology",
       "score": 58,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-JP-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-JP-20_человек",
+      "type": "Signal",
+      "label": "20 человек пострадали в результате земле",
+      "severity": 68,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-JP-Банк_япони",
       "type": "Signal",
       "label": "Банк японии: Ставка на месте, но ситуаци",
@@ -92,13 +99,6 @@
       "label": "Таким нишевым способом руководитель япон",
       "severity": 58,
       "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-JP-Инфляция_—",
-      "type": "Signal",
-      "label": "Инфляция — Япония",
-      "severity": 71,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,13 +112,13 @@
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-economic",
       "type": "CORRELATES",
-      "weight": 0.71
+      "weight": 0.72
     },
     {
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.68
     },
     {
       "from": "COUNTRY-JP",
@@ -163,6 +163,54 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-JP-climate",
+      "to": "DOMAIN-JP-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-JP-infrastructure",
+      "to": "DOMAIN-JP-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-JP-economic",
+      "to": "DOMAIN-JP-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-JP-climate",
+      "to": "DOMAIN-JP-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-JP-economic",
+      "to": "DOMAIN-JP-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-JP-social",
+      "to": "DOMAIN-JP-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "SIGNAL-JP-20_человек",
+      "to": "DOMAIN-JP-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.68
+    },
+    {
       "from": "SIGNAL-JP-Банк_япони",
       "to": "DOMAIN-JP-economic",
       "type": "AMPLIFIES",
@@ -173,12 +221,6 @@
       "to": "DOMAIN-JP-technology",
       "type": "AMPLIFIES",
       "weight": 0.58
-    },
-    {
-      "from": "SIGNAL-JP-Инфляция_—",
-      "to": "DOMAIN-JP-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.71
     }
   ]
 }

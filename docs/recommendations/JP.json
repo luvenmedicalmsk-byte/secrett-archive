@@ -2,18 +2,36 @@
   "country": "JP",
   "country_name": "Япония",
   "date": "2026-11-08",
-  "generated_at": "2026-11-08T06:48:28.108545+00:00",
-  "srs_score": 54,
-  "srs_grade": "D",
-  "srs_grade_ru": "Требует внимания",
+  "generated_at": "2026-11-08T07:07:08.165402+00:00",
+  "srs_score": 62,
+  "srs_grade": "C",
+  "srs_grade_ru": "Умеренная",
   "priority_risks": [
+    {
+      "id": "R-01",
+      "category": "CRITICAL",
+      "title": "Критический уровень риска: 83",
+      "detail": "Скор риска 83 превышает критический порог 80. Доминирующий домен: economy.",
+      "metric_value": 83,
+      "urgency": 95,
+      "source": "risk_score"
+    },
+    {
+      "id": "R-02",
+      "category": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+8/день",
+      "detail": "Скорость ухудшения 8 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "metric_value": 8,
+      "urgency": 90,
+      "source": "delta"
+    },
     {
       "id": "R-03",
       "category": "HIGH_PRIORITY",
-      "title": "Системное смещение прогнозов: +4.3pt",
-      "detail": "Систематическая ошибка прогнозов +4.3pt снижает достоверность сценарного анализа.",
-      "metric_value": 4.27,
-      "urgency": 61.349999999999994,
+      "title": "Системное смещение прогнозов: +4.2pt",
+      "detail": "Систематическая ошибка прогнозов +4.2pt снижает достоверность сценарного анализа.",
+      "metric_value": 4.19,
+      "urgency": 60.95,
       "source": "validation_bias"
     },
     {
@@ -26,7 +44,7 @@
       "source": "decision_bias"
     }
   ],
-  "risk_count": 2,
+  "risk_count": 4,
   "priority_opportunities": [
     {
       "id": "O-05",
@@ -58,11 +76,6 @@
       "type": "horizon_degradation",
       "horizon": "d30",
       "detail": "Худший горизонт прогноза: d30. Увеличить частоту переобучения на этом горизонте."
-    },
-    {
-      "type": "confidence_drift",
-      "horizon": "long",
-      "detail": "Дрейф уверенности +6.0pt указывает на деградацию долгосрочных прогнозов."
     }
   ],
   "forecast_improvement": [
@@ -73,6 +86,24 @@
     }
   ],
   "ranked_recommendations": [
+    {
+      "id": "R-01",
+      "type": "risk",
+      "priority": "CRITICAL",
+      "title": "Критический уровень риска: 83",
+      "rec_score": 63,
+      "metric_value": 83,
+      "source": "risk_score"
+    },
+    {
+      "id": "R-02",
+      "type": "risk",
+      "priority": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+8/день",
+      "rec_score": 60,
+      "metric_value": 8,
+      "source": "delta"
+    },
     {
       "id": "O-05",
       "type": "opportunity",
@@ -86,9 +117,9 @@
       "id": "R-03",
       "type": "risk",
       "priority": "HIGH_PRIORITY",
-      "title": "Системное смещение прогнозов: +4.3pt",
+      "title": "Системное смещение прогнозов: +4.2pt",
       "rec_score": 45,
-      "metric_value": 4.27,
+      "metric_value": 4.19,
       "source": "validation_bias"
     },
     {
@@ -103,20 +134,28 @@
   ],
   "action_plan": [
     {
-      "id": "ACT-R-03",
-      "priority": "STRATEGIC",
-      "action": "Реагировать: Системное смещение прогнозов: +4.3pt",
-      "rationale": "Систематическая ошибка прогнозов +4.3pt снижает достоверность сценарного анализа.",
-      "deadline": "72 часа",
-      "source": "validation_bias"
+      "id": "ACT-R-01",
+      "priority": "CRITICAL",
+      "action": "Реагировать: Критический уровень риска: 83",
+      "rationale": "Скор риска 83 превышает критический порог 80. Доминирующий домен: economy.",
+      "deadline": "немедленно",
+      "source": "risk_score"
     },
     {
-      "id": "ACT-R-05",
+      "id": "ACT-R-02",
+      "priority": "CRITICAL",
+      "action": "Реагировать: Быстрая эскалация: Δ=+8/день",
+      "rationale": "Скорость ухудшения 8 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "deadline": "немедленно",
+      "source": "delta"
+    },
+    {
+      "id": "ACT-R-03",
       "priority": "STRATEGIC",
-      "action": "Реагировать: Смещения в принятии решений (2)",
-      "rationale": "Выявлено 2 смещений: Гиперреакция, Недостаточная реакция. Рекомендуется рекалибровка стратегии.",
-      "deadline": "7 дней",
-      "source": "decision_bias"
+      "action": "Реагировать: Системное смещение прогнозов: +4.2pt",
+      "rationale": "Систематическая ошибка прогнозов +4.2pt снижает достоверность сценарного анализа.",
+      "deadline": "72 часа",
+      "source": "validation_bias"
     },
     {
       "id": "ACT-O-05",
@@ -127,11 +166,11 @@
       "source": "high_alpha"
     }
   ],
-  "action_count": 3,
+  "action_count": 4,
   "rec_diagnostics": [],
   "diagnostic_count": 0,
-  "risk_score": 75,
-  "delta": 0,
+  "risk_score": 83,
+  "delta": 8,
   "domain": "economy",
   "history_depth": 164
 }
