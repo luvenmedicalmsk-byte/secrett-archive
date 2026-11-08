@@ -2,7 +2,7 @@
   "country": "TR",
   "date": "2026-11-08",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-08T11:28:53.617710+00:00",
+  "generated_at": "2026-11-08T11:49:18.729266+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -47,7 +47,7 @@
       "id": "DOMAIN-TR-social",
       "type": "Domain",
       "label": "social",
-      "score": 57,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-TR-Турция_осу",
-      "type": "Signal",
-      "label": "Турция осуждает смертельный террористиче",
-      "severity": 57,
-      "domain": "social"
-    },
-    {
       "id": "SIGNAL-TR-Интерактив",
       "type": "Signal",
       "label": "Интерактив: Кто хочет чего на саммите CO",
@@ -98,6 +91,13 @@
       "type": "Signal",
       "label": "Иностранные инвесторы продают ценные бум",
       "severity": 51,
+      "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-TR-Инфляция_в",
+      "type": "Signal",
+      "label": "Инфляция в турции: Ppi не падает, а слаб",
+      "severity": 48,
       "domain": "economic"
     }
   ],
@@ -130,7 +130,7 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-social",
       "type": "CORRELATES",
-      "weight": 0.57
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-TR",
@@ -161,6 +161,27 @@
       "to": "COUNTRY-TR",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-TR-climate",
+      "to": "DOMAIN-TR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-TR-infrastructure",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-TR-climate",
@@ -205,33 +226,6 @@
       "lag_days": 45
     },
     {
-      "from": "DOMAIN-TR-climate",
-      "to": "DOMAIN-TR-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-TR-infrastructure",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-TR-economic",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "SIGNAL-TR-Турция_осу",
-      "to": "DOMAIN-TR-social",
-      "type": "AMPLIFIES",
-      "weight": 0.57
-    },
-    {
       "from": "SIGNAL-TR-Интерактив",
       "to": "DOMAIN-TR-climate",
       "type": "AMPLIFIES",
@@ -242,6 +236,12 @@
       "to": "DOMAIN-TR-economic",
       "type": "AMPLIFIES",
       "weight": 0.51
+    },
+    {
+      "from": "SIGNAL-TR-Инфляция_в",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.48
     }
   ]
 }
