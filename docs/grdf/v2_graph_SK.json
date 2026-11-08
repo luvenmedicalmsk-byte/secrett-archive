@@ -2,9 +2,9 @@
   "country": "SK",
   "date": "2026-11-08",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-08T15:48:10.543347+00:00",
+  "generated_at": "2026-11-08T16:08:08.978981+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-SK",
@@ -26,21 +26,21 @@
       "id": "DOMAIN-SK-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 35,
+      "score": 32,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-SK-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 50,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-SK-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 47,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -70,9 +70,9 @@
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-SK-technology",
+      "id": "DRIVER-SK-climate",
       "type": "Driver",
-      "label": "technology"
+      "label": "climate"
     },
     {
       "id": "DRIVER-SK-economic",
@@ -80,25 +80,25 @@
       "label": "economic"
     },
     {
+      "id": "SIGNAL-SK-Снег:_Леви",
+      "type": "Signal",
+      "label": "Снег: Левице, Римавская Собота, Великий ",
+      "severity": 50,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-SK-Вывод_запа",
+      "type": "Signal",
+      "label": "Вывод запасов природного газа Словакии",
+      "severity": 32,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-SK-Военные_уд",
       "type": "Signal",
       "label": "Военные удары — Словакия",
       "severity": 53,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-SK-Технологич",
-      "type": "Signal",
-      "label": "Технологический сигнал — Словакия",
-      "severity": 47,
-      "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-SK-Экономичес",
-      "type": "Signal",
-      "label": "Экономический сигнал — Словакия",
-      "severity": 35,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,19 +112,19 @@
       "from": "COUNTRY-SK",
       "to": "DOMAIN-SK-economic",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-SK",
       "to": "DOMAIN-SK-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-SK",
       "to": "DOMAIN-SK-technology",
       "type": "CORRELATES",
-      "weight": 0.47
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-SK",
@@ -151,7 +151,7 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-SK-technology",
+      "from": "DRIVER-SK-climate",
       "to": "COUNTRY-SK",
       "type": "CAUSES",
       "weight": 0.8
@@ -161,6 +161,48 @@
       "to": "COUNTRY-SK",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-SK-climate",
+      "to": "DOMAIN-SK-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-SK-economic",
+      "to": "DOMAIN-SK-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-SK-social",
+      "to": "DOMAIN-SK-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-SK-climate",
+      "to": "DOMAIN-SK-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-SK-infrastructure",
+      "to": "DOMAIN-SK-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-SK-economic",
+      "to": "DOMAIN-SK-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-SK-geopolitical",
@@ -184,22 +226,22 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-SK-Снег:_Леви",
+      "to": "DOMAIN-SK-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
+      "from": "SIGNAL-SK-Вывод_запа",
+      "to": "DOMAIN-SK-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.32
+    },
+    {
       "from": "SIGNAL-SK-Военные_уд",
       "to": "DOMAIN-SK-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.53
-    },
-    {
-      "from": "SIGNAL-SK-Технологич",
-      "to": "DOMAIN-SK-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.47
-    },
-    {
-      "from": "SIGNAL-SK-Экономичес",
-      "to": "DOMAIN-SK-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.35
     }
   ]
 }
