@@ -7724,10 +7724,12 @@ _S11_CONCRETE = re.compile(
     r'абу-?даби|стамбул|женев|эр-?рияд|джидд|доха|анкар|минск|белом\s+доме|abu\s+dhabi|istanbul|geneva|riyadh|'
     r'делегаци\w*\s+(?:возглав|в\s+составе|составе)|возглавит|возглавил|в\s+составе\s+делегаци|состав\w*\s+(?:российской|украинской|делегаци)|'
     r'мединск|умеров|буданов|рябков|галузин|уиткофф|кушнер|дмитриев|ермак|'
-    r'состоял\w*|прошл[иао]?\s|начал\w*ся|завершил\w*ся|стартовал', re.I)
+    r'состоял\w*|прошл[иао]?\s|начал\w*ся|завершил\w*ся|стартовал|трехсторонн\w*|трёхсторонн\w*|trilateral', re.I)
 _S11_NEG_SOFT = re.compile(r'готов\w*\s+к\s+переговор|возможн\w*\s+переговор|призыва\w*\s+к\s+переговор|не\s+исключ|'
                            r'(?<![а-яё])если(?![а-яё])|при\s+условии|отказ\w*\s+от\s+переговор|не\s+будет\s+переговор|бессмысленн|'
                            r'рассматрива\w*|модел\w*|будущ\w*\s+переговор|^\W*что\s+произошло|главное\s+за\s+(?:ночь|день|неделю)', re.I)
+_S11_INTENT = re.compile(r'(?<![а-яё])(?:хочет|не\s+хочет|хотят|намерен\w*|стремит\w*|блеф\w*|притворя\w*|'
+                         r'wants?|doesn.t\s+want|don.t\s+want|pretend\w*|bluff\w*|why\s|how\s|what\s)', re.I)
 _S11_ARMS = re.compile(r'patriot|пэтриот|(?<![а-яё])пво(?![а-яё])|зрк|himars|atacms|taurus|f-16|tomahawk|томагавк|iris-t|nasams|'
                        r'пакет\w*\s+(?:военной\s+)?помощ|военн\w*\s+помощ|поставк\w*\s+(?:вооружен|оружи|снаряд|ракет|зрк|пво|истребител)', re.I)
 _S11_DECIDE = re.compile(r'одобрил|утвердил|передаст|передал[аи]?(?![а-яё])|передаёт|поставит|выделил|выделит|согласовал|'
@@ -7744,9 +7746,12 @@ _S11_SCALE = re.compile(r'отстрел|ликвидир\w*|режим\w*\s+(?:
 def _s11_rule(t, d, domain):
     tl = (t or '')
     td = tl + ' ' + (d or '')[:400]
+    # 08.11 v2: признак конкретного события должен стоять в ЗАГОЛОВКЕ (текст лишь
+    # пересказывает контекст), суждения о намерениях не срабатывают: «Putin wants peace
+    # talks. He doesn't want peace.» (Atlantic Council) - аналитика, не встреча.
     if domain in ('geopolitics', None, '') and _S11_NEG.search(tl) and _S11_WAR.search(td) \
-            and _S11_CONCRETE.search(td) and not _S11_NEG_SOFT.search(tl):
-        return 62, 'R1 переговоры', (_S11_CONCRETE.search(td).group(0))
+            and _S11_CONCRETE.search(tl) and not _S11_NEG_SOFT.search(tl) and not _S11_INTENT.search(tl):
+        return 62, 'R1 переговоры', (_S11_CONCRETE.search(tl).group(0))
     if _S11_ARMS.search(tl) and _S11_DECIDE.search(tl) and not _S11_DISCUSS.search(tl):
         return 62, 'R2 поставки вооружений', _S11_DECIDE.search(tl).group(0)
     if _S11_ANIMAL.search(tl) and _S11_HARM.search(td) and _S11_SCALE.search(td):
