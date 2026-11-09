@@ -30153,7 +30153,6 @@ def save_enriched(events, previous_snapshot=None):
                 except Exception: pass
             for _e in enriched["events"]:
                 _fix_trivia_title(_e)
-                _fix_gaza_tail(_e)
             _egp('k04_до_domain_fix', enriched["events"])
             enriched["events"] = _domain_fix(enriched["events"])
             _egp('k05_domain_fix', enriched["events"])
@@ -30162,7 +30161,6 @@ def save_enriched(events, previous_snapshot=None):
             _lin_exact(_lx0, enriched["events"], 'INFRA_ANCHOR', 'infra_anchor')
             _egp('k06_infra_anchor', enriched["events"])
             enriched["events"] = _ndup_collapse(enriched["events"])
-            enriched["events"] = _event_dedup_0911(enriched["events"])   # EVENT_DEDUP_0911
             _egp('k07_ndup', enriched["events"])
             _lx0 = _p10_drop_quake_cards(enriched["events"])
             enriched["events"] = _drop_noise_cards(_lx0)
@@ -30317,6 +30315,11 @@ def save_enriched(events, previous_snapshot=None):
                 _cap_feed_gate(enriched["events"])
                 _context_feed_gate(enriched["events"])
                 _incident_collapse(enriched["events"])
+                # EVENT_DEDUP_0911 и TITLE_GAZA_0911 - на переведённом тексте (раньше стояли до
+                # перевода и в первой публикации не сработали: заголовки ещё английские)
+                for _e in enriched["events"]:
+                    _fix_gaza_tail(_e)
+                enriched["events"] = _event_dedup_0911(enriched["events"])
                 _feed_hygiene(enriched["events"])
                 _sev_post_hyg_0511(enriched["events"])
                 _sic_shadow_report(enriched["events"], OUTPUT_PATH.parent)
