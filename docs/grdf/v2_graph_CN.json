@@ -2,7 +2,7 @@
   "country": "CN",
   "date": "2026-11-09",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-09T03:27:38.199747+00:00",
+  "generated_at": "2026-11-09T03:48:58.747061+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 77,
+      "score": 80,
       "props": {
-        "risk_score": 77
+        "risk_score": 80
       }
     },
     {
@@ -80,9 +80,16 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-CN-Сильный_до",
+      "type": "Signal",
+      "label": "Сильный дождь: Юнсянь, Район Линсян, Фэн",
+      "severity": 74,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-CN-Туман:_Даф",
       "type": "Signal",
-      "label": "Туман: Дафан, Уезд Дунгуан, Китай",
+      "label": "Туман: Дафан, Китай",
       "severity": 74,
       "domain": "climate"
     },
@@ -92,13 +99,6 @@
       "label": "Падение интернет-связи: Китай",
       "severity": 72,
       "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-CN-Пожароопас",
-      "type": "Signal",
-      "label": "Пожароопасность: Район Хейлинг, Китай",
-      "severity": 56,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -205,6 +205,12 @@
       "lag_days": 90
     },
     {
+      "from": "SIGNAL-CN-Сильный_до",
+      "to": "DOMAIN-CN-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.74
+    },
+    {
       "from": "SIGNAL-CN-Туман:_Даф",
       "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
@@ -215,12 +221,6 @@
       "to": "DOMAIN-CN-technology",
       "type": "AMPLIFIES",
       "weight": 0.72
-    },
-    {
-      "from": "SIGNAL-CN-Пожароопас",
-      "to": "DOMAIN-CN-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.56
     }
   ]
 }
