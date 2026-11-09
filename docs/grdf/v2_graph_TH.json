@@ -2,7 +2,7 @@
   "country": "TH",
   "date": "2026-11-09",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-09T10:50:04.971954+00:00",
+  "generated_at": "2026-11-09T11:08:18.978158+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-TH-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -47,7 +47,7 @@
       "id": "DOMAIN-TH-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
+      "score": 48,
       "trend": "stable"
     },
     {
@@ -70,9 +70,9 @@
       "label": "climate"
     },
     {
-      "id": "DRIVER-TH-economic",
+      "id": "DRIVER-TH-social",
       "type": "Driver",
-      "label": "economic"
+      "label": "social"
     },
     {
       "id": "DRIVER-TH-geopolitical",
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-TH-Процентная",
-      "type": "Signal",
-      "label": "Процентная ставка по обратным репо в Таи",
-      "severity": 32,
-      "domain": "economic"
-    },
-    {
       "id": "SIGNAL-TH-Шторм_—_Та",
       "type": "Signal",
       "label": "Шторм — Таиланд",
       "severity": 92,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-TH-Миграционн",
+      "type": "Signal",
+      "label": "Миграционная политика — Таиланд",
+      "severity": 48,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-TH",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-TH",
@@ -151,7 +151,7 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-TH-economic",
+      "from": "DRIVER-TH-social",
       "to": "COUNTRY-TH",
       "type": "CAUSES",
       "weight": 0.8
@@ -161,27 +161,6 @@
       "to": "COUNTRY-TH",
       "type": "CAUSES",
       "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-TH-climate",
-      "to": "DOMAIN-TH-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-TH-infrastructure",
-      "to": "DOMAIN-TH-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-TH-economic",
-      "to": "DOMAIN-TH-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
     },
     {
       "from": "DOMAIN-TH-climate",
@@ -205,22 +184,43 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-TH-climate",
+      "to": "DOMAIN-TH-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-TH-infrastructure",
+      "to": "DOMAIN-TH-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TH-economic",
+      "to": "DOMAIN-TH-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-TH-Сильный_до",
       "to": "DOMAIN-TH-climate",
       "type": "AMPLIFIES",
       "weight": 0.92
     },
     {
-      "from": "SIGNAL-TH-Процентная",
-      "to": "DOMAIN-TH-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.32
-    },
-    {
       "from": "SIGNAL-TH-Шторм_—_Та",
       "to": "DOMAIN-TH-climate",
       "type": "AMPLIFIES",
       "weight": 0.92
+    },
+    {
+      "from": "SIGNAL-TH-Миграционн",
+      "to": "DOMAIN-TH-social",
+      "type": "AMPLIFIES",
+      "weight": 0.48
     }
   ]
 }
