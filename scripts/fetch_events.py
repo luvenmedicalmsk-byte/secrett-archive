@@ -10624,6 +10624,126 @@ def _ndup_same_quake(a, b, ta, tb):
     return True
 
 
+# EVENT_DEDUP_0911 (09.11.2026, аудит ленты): одно происшествие с жертвами из разных
+# агентств. «Мигрантское судно затонуло у берегов Сенегала» стояло в ленте трижды
+# (Hurriyet, France24, The Hindu - 35, 34 и 21 погибший): переводы разных агентств не
+# проходят _ndup_collapse (совпадение слов ниже 0.6), а склейка кластеров - только тень.
+# Узкое правило: обе карточки ленты о жертвах, общий тип происшествия (затонуло, стрельба,
+# взрыв, обстрел, крушение, землетрясение…), общий редкий топоним из заголовка, тот же
+# домен, даты ±1 день, не машинная лента. Остаётся карточка с наибольшим индексом.
+# Число жертв может расти между сообщениями - расхождение чисел склейку не запрещает.
+# Откат: EVENT_DEDUP_0911 = False.
+EVENT_DEDUP_0911 = True
+_ED9_CAS = re.compile(r'погиб|жертв|убит|утонул|ранен|пострада|раненых|тел[ао]?\s', re.I)
+_ED9_KIND = (('затонул', 'кораблекруш', 'перевернул', 'опрокинул'), ('стрельб', 'стрелок', 'стрелял'), ('взрыв',),
+             ('обстрел', 'авиаудар', 'удар'), ('крушени', 'авиакатастроф'), ('землетрясен',), ('наводнен', 'паводк'),
+             ('обрушен', 'обрушил'), ('теракт',), ('пожар',), ('давк',), ('оползен', 'оползн'))
+
+
+_ED9_GENERIC = {2, 3, 9}   # взрыв, обстрел/удар, пожар - в зоне конфликта таких несколько за сутки
+_ED9_CSTEMS = None
+
+
+def _ed9_is_country(anchor):
+    global _ED9_CSTEMS
+    if _ED9_CSTEMS is None:
+        try:
+            import geo_canon as _gc
+            _ED9_CSTEMS = tuple({a[:5] for v in _gc.GEO_CANON.values() for a in (getattr(v, 'aliases', None) or (v.get('aliases') if isinstance(v, dict) else []) or [])
+                                 if a and len(a) >= 4})
+        except Exception:
+            _ED9_CSTEMS = ()
+    return bool(_ED9_CSTEMS) and anchor[:5].startswith(_ED9_CSTEMS)
+
+
+_ED9_DEAD = re.compile(r'(\d{1,5})\s+(?:\S+\s+){0,2}?(?:погиб|убит|жертв|утонул)|'
+                       r'(?:погиб|убит|убил|жертв|утонул|унес\w*\s+жизни)\w*\s+(?:\S+\s+){0,3}?(\d{1,5})(?![\d%])', re.I)
+_ED9_HURT = re.compile(r'(\d{1,5})\s+(?:\S+\s+){0,2}?(?:ранен|пострада)|(?:ранен|ранил|пострада)\w*\s+(?:\S+\s+){0,3}?(\d{1,5})(?![\d%])', re.I)
+
+
+def _ed9_toll(t):
+    """(погибших, пострадавших) по заголовку - для выбора более свежей сводки."""
+    out = []
+    for rx in (_ED9_DEAD, _ED9_HURT):
+        n = 0
+        for m in rx.finditer(t or ''):
+            try:
+                v = int(m.group(1) or m.group(2))
+            except (TypeError, ValueError):
+                continue
+            if not (1900 <= v <= 2100):
+                n = max(n, v)
+        out.append(n)
+    return tuple(out)
+
+
+def _ed9_kinds(t):
+    tl = (t or '').lower()
+    return {i for i, ks in enumerate(_ED9_KIND) if any(k in tl for k in ks)}
+
+
+def _event_dedup_0911(events):
+    if not EVENT_DEDUP_0911:
+        return events
+    try:
+        idx = [i for i, e in enumerate(events) if e.get('feed_visible', True) and not e.get('alerts_only')
+               and e.get('source') not in _ECS_MACHINE and not str(e.get('source') or '').endswith(' CAP')
+               and _ED9_CAS.search(e.get('title') or '')]
+        A = {i: set(_ecs_anchors(events[i].get('title') or '', events[i].get('source'))) for i in idx}
+        import collections as _col
+        df = _col.Counter(a for i in idx for a in A[i])
+        allA = _col.Counter(a for e in events for a in _ecs_anchors(e.get('title') or '', e.get('source')))
+        K = {i: _ed9_kinds(events[i].get('title')) for i in idx}
+        D = {i: _ndup_day(events[i].get('date')) for i in idx}
+        drop = {}
+        order = sorted(idx, key=lambda i: -(events[i].get('severity') or 0))
+        for a_i, i in enumerate(order):
+            if i in drop:
+                continue
+            for j in order[a_i + 1:]:
+                if j in drop:
+                    continue
+                ei, ej = events[i], events[j]
+                if ei.get('domain') != ej.get('domain') or not (K[i] & K[j]):
+                    continue
+                if D[i] is not None and D[j] is not None and abs(D[i] - D[j]) > 1:
+                    continue
+                rare = [x for x in A[i] & A[j] if allA[x] <= 6]
+                if not rare:
+                    continue
+                # общий только топоним страны («Йемене», «Турции») - в стране бывает несколько
+                # происшествий за сутки: нужен особый тип (затонуло, стрельба, крушение…)
+                # и совпадение основ заголовка не ниже 0.4
+                if all(_ed9_is_country(x) for x in rare):
+                    if not ((K[i] & K[j]) - _ED9_GENERIC):
+                        _, _r = _ndup_ovl(_ndup_stems(ei.get('title')), _ndup_stems(ej.get('title')))
+                        if _r < 0.4:
+                            continue
+                drop[j] = i
+        # победитель: наибольший индекс; при разнице до 5 - карточка с большим числом жертв
+        # (более свежая сводка: «11 погибших» → «33 убиты»)
+        for j, i in list(drop.items()):
+            si, sj = events[i].get('severity') or 0, events[j].get('severity') or 0
+            if abs(si - sj) <= 5 and _ed9_toll(events[j].get('title')) > _ed9_toll(events[i].get('title')):
+                for k, w in list(drop.items()):
+                    if w == i:
+                        drop[k] = j
+                del drop[j]
+                drop[i] = j
+        if not drop:
+            return events
+        out = [e for k, e in enumerate(events) if k not in drop]
+        if LINEAGE and LINEAGE_NDUP_P10:
+            _lin_removed([events[k] for k in drop], out, 'EVENT_DEDUP', 'event_dup',
+                         winner_of=lambda _x: next((events[w] for k, w in drop.items() if events[k] is _x), None))
+        print('  [EVENT-DEDUP-0911] склеено %d: %s' % (len(drop), '; '.join(
+            (events[k].get('title') or '')[:50] for k in list(drop)[:5])), file=sys.stderr)
+        return out
+    except Exception as _e:
+        print('  [WARN] event dedup: %s' % _e, file=sys.stderr)
+        return events
+
+
 def _ndup_collapse(events):
     """Near-dup collapse (паритет с C2 Событий): перефраз. репосты, тот же домен, дата +-3д, оставляем макс. риск."""
     kept=[]; out=[]; _grp={}
@@ -29827,6 +29947,7 @@ def save_enriched(events, previous_snapshot=None):
             _lin_exact(_lx0, enriched["events"], 'INFRA_ANCHOR', 'infra_anchor')
             _egp('k06_infra_anchor', enriched["events"])
             enriched["events"] = _ndup_collapse(enriched["events"])
+            enriched["events"] = _event_dedup_0911(enriched["events"])   # EVENT_DEDUP_0911
             _egp('k07_ndup', enriched["events"])
             _lx0 = _p10_drop_quake_cards(enriched["events"])
             enriched["events"] = _drop_noise_cards(_lx0)
