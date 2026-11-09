@@ -27405,6 +27405,46 @@ _C4_SHOOT = re.compile(r'стрельб|под\s+пули|расстрел|от�
 SEV_OVER_0711 = True
 _O7_SPEC = re.compile(r'^\s*(?:интересн\w*\s+совпадени\w*|интересно,|любопытн\w*|забавн\w*|совпадение\?|кстати|напомним|вспомним|как\s+мы\s+писали)', re.I)
 _O7_PROBE = re.compile(r'прокурор\w*[^.]{0,40}расследовани|расследовани\w*\s+(?:по\s+делу|о\s+мошенничеств|в\s+связи\s+с)', re.I)
+# SEV_FIX_0911 (09.11.2026, аудит ленты, решение Мии «исправляй все»). Откат: SEV_FIX_0911 = False.
+#  1) накопленный итог из текста не задаёт индекс эпизода: «Израильские удары… ранили
+#     18 палестинцев» 92 - базу дал текст «…с октября 2025 года убили 1 613 человек»;
+#  2) 1-4 погибших и 20-99 пострадавших: потолок 78/72 поднимается на 4 (20-49) или 8
+#     (50-99), а не снимается: «Три человека погибли, еще 35 пострадали…» 95;
+#  3) кораблекрушение - своя ступень по числу погибших, а не пол «атака на суда».
+SEV_FIX_0911 = True
+_S9_CUMUL = re.compile(r'(?:с\s+(?:начала|октября|ноября|декабря|января|момента|тех\s+пор|\d{4}\s+года)|за\s+(?:время|весь\s+период|всё\s+время|все\s+время)|'
+                       r'в\s+общей\s+сложности|всего\s+с\s|since|in\s+total)[^.]{0,90}?(\d[\d\s,.]{2,})\s*(?:\S+\s+){0,2}?(?:человек|палестинц|погибш|убит|жертв|killed|dead)|'
+                       r'(?:убили|погибли|погибло|убито|killed)\s+(\d[\d\s,.]{2,})[^.]{0,40}?(?:с\s+(?:начала|октября|момента|\d{4}\s+года)|since)', re.I)
+_S9_WRECK = re.compile(r'затонул\w*|кораблекрушен\w*|(?:перевернул|опрокинул)\w*\s+(?:\S+\s+){0,2}?(?:лодк|судн|катер|паром)|'
+                       r'(?:лодк|судн|катер|паром)\w*\s+(?:\S+\s+){0,2}?(?:перевернул|опрокинул)\w*', re.I)
+_S9_WRECK_ATK = re.compile(r'атак|удар|обстрел|подрыв|подорвал|морск\w+\s+мин|на\s+мин[аеу]|взрыв|ракет|дрон|бпла|торпед', re.I)
+
+
+def _s9_num(x):
+    try:
+        return int(re.sub(r'[^\d]', '', x or '') or 0)
+    except ValueError:
+        return 0
+
+
+def _s9_cumul_cap(e, t, cur):
+    """Потолок для эпизода, индекс которого задал накопленный итог из текста."""
+    m = _S9_CUMUL.search(e.get('summary') or '')
+    if not m:
+        return None
+    n = _s9_num(m.group(1) or m.group(2))
+    if n < 100 or (1900 <= n <= 2100):
+        return None
+    if _ed9_toll(t)[0] >= 5 or re.search(r'тысяч|сотн', t, re.I):
+        return None
+    try:
+        own = _severity_for({'title': t, 'desc': '', 'summary': '', 'source': e.get('source') or ''}, 1.0)
+    except Exception:
+        return None
+    cap = max(own + 5, 60)
+    return cap if cur > cap + 4 else None
+
+
 _O7_LARGE = re.compile(r'тысяч|смертоносн|самы[хй]\s+(?:крупн|масштабн|кровав)|сотн|десятк|эвакуир|массов|ядерн|радиаци|химическ|блэкаут|обесточ|без\s+(?:света|воды|тепла)', re.I)
 
 
@@ -27431,6 +27471,14 @@ def _sev_caps_0411(events):
             _lim = 78 if e.get('domain') == 'geopolitics' else 72
             if 1 <= _d7 <= 4 and _h7 < 20 and not _O7_LARGE.search(t) and cur > _lim:
                 cap, why = _lim, 'погибших по заголовку %d: масштаб не выше %d' % (_d7, _lim)
+            elif SEV_FIX_0911 and 1 <= _d7 <= 4 and 20 <= _h7 < 100 and not _O7_LARGE.search(t) \
+                    and cur > _lim + (4 if _h7 < 50 else 8):
+                _lim2 = _lim + (4 if _h7 < 50 else 8)
+                cap, why = _lim2, 'погибших по заголовку %d, пострадавших %d: масштаб не выше %d' % (_d7, _h7, _lim2)
+        if cap is None and SEV_FIX_0911 and cur > 64:
+            _cc = _s9_cumul_cap(e, t, cur)
+            if _cc is not None:
+                cap, why = _cc, 'индекс задал накопленный итог из текста, не этот эпизод'
         if cap is not None:
             e['severity'] = _sev_log(e, 'sev_caps_0411', cur, cap, why, 'cap')
             n += 1
@@ -27532,6 +27580,14 @@ def _m5_floor(t):
     if not SEV_MARITIME_0511:
         return 0, ''
     _ts = re.sub(r'воздушн\w+\s+суд\w*', ' ', t, flags=re.I)   # «воздушные суда» - не морские
+    if SEV_FIX_0911 and _S9_WRECK.search(_ts) and not _S9_WRECK_ATK.search(_ts):
+        _dw = _ed9_toll(t)[0]
+        fl = 66
+        for edge, v in _CF_DEATH_BANDS:
+            if _dw >= edge:
+                fl = max(fl, v)
+                break
+        return fl, ('кораблекрушение: погибших %d' % _dw) if _dw else 'кораблекрушение'
     if _M5_SHIP.search(_ts) and _M5_HIT.search(_ts) and not _M5_SAFE.search(_ts):
         if _M5_CHOKE.search(t):
             return 80, 'атака на суда / минирование в ключевом морском проходе'
