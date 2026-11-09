@@ -8006,7 +8006,7 @@ def _r1b_simulate(quota_map, feed_all, survivors, analytic, prio_fn, exported):
             return {'title': c['title'], 'summary': c['desc'], 'severity': sev, 'domain': c['domain'],
                     'source': c['source'], '_r1b': c['story'], '_r1b_raw': c['raw_index'], '_r1b_tid': c['tid']}
 
-        def run(inj, frozen_df=None):
+        def run(inj, frozen_df=None, stop_ext=False):
             pool = [(k, 0, i, d, e) for i, (k, d, e) in enumerate(qpool)] + \
                    [(prio_fn(e), 1, i, e['domain'], e) for i, e in enumerate(inj)]
             pool.sort(key=lambda x: (-x[0], x[1], x[2]))             # инъекция после равных по ключу
@@ -8034,7 +8034,9 @@ def _r1b_simulate(quota_map, feed_all, survivors, analytic, prio_fn, exported):
                     rem[id(e)] = 'промежуточные стадии (факт A)'
             feed = [e for e in feed if not (id(e) in a_feed and id(e) not in surv)]
             copies = [dict(e, _r1b_src_id=id(e)) for e in feed] + [dict(e) for e in analytic]
-            if frozen_df is None:
+            if stop_ext:
+                df, tinfo, kept = _r1b_tc(copies, 6, None, stop_ext=True)
+            elif frozen_df is None:
                 with contextlib.redirect_stderr(io.StringIO()):
                     tc = _topic_cap(copies, 6)
                 kept = {x.get('_r1b_src_id') for x in tc if x.get('_r1b_src_id')}
@@ -8055,11 +8057,15 @@ def _r1b_simulate(quota_map, feed_all, survivors, analytic, prio_fn, exported):
         scen = {'A': [], 'B1': [mk(c, c['raw_index']) for c in allc],
                 'B2_без_лимита_сюжетов': [mk(c, max(c['raw_index'], R1B_FLOOR)) for c in allc],
                 'B2': [mk(c, max(c['raw_index'], R1B_FLOOR)) for c in winners],
-                'B2_темы_по_A': [mk(c, max(c['raw_index'], R1B_FLOOR)) for c in winners]}
+                'B2_темы_по_A': [mk(c, max(c['raw_index'], R1B_FLOOR)) for c in winners],
+                'A_стоп': [],
+                'B2_стоп': [mk(c, max(c['raw_index'], R1B_FLOOR)) for c in winners]}
         res = {}
         for k, v in scen.items():
             if k == 'B2_темы_по_A':     # диагностика: тематические счётчики по исходному составу A
                 res[k] = run(v, frozen_df=res['A'][2]['_df'])
+            elif k.endswith('_стоп'):    # R1-1: служебные слова не становятся темой (только тень)
+                res[k] = run(v, stop_ext=True)
             else:
                 res[k] = run(v)
         _R1B_SIM.update({'res': res, 'winners': winners, 'dups': dups, 'over': over, 'scen': scen, 'feed_all': list(feed_all),
@@ -8077,7 +8083,24 @@ def _r1b_simulate(quota_map, feed_all, survivors, analytic, prio_fn, exported):
         print('  [WARN] r1 bypass shadow sim: %s' % _e, file=sys.stderr)
 
 
-def _r1b_tc(events, N, df=None):
+# R1-1 (решение Мии 09.11, только тень): служебные и нетематические слова, которые
+# сейчас становятся «горячей темой» topic_cap («также», «ноября», «более», «время»...).
+# Отбор по 15 публикациям 08-09.11: слова, ставшие «темой» чаще всего. Названия стран,
+# «компании», «производство», «энергетика» оставлены темами. Лимиты 6/18 не меняются.
+_R1B_TC_STOP_EXACT = frozenset(('также', 'более', 'чтобы', 'могут', 'может', 'после', 'около', 'между', 'будет',
+                                'через', 'ранее', 'связи', 'против', 'время', 'времени', 'данным', 'данных', 'данные',
+                                'новые', 'новых', 'новый', 'новой', 'новое', 'марта', 'марте', 'сутки', 'суток'))
+_R1B_TC_STOP_PREF = ('котор', 'несколь', 'возможн', 'продолж', 'получил', 'произош', 'зафикси', 'официал', 'затрону',
+                     'действи', 'использ', 'подтвер', 'источни', 'предста', 'уровн', 'миллио', 'миллиа', 'тысяч',
+                     'январ', 'феврал', 'апрел', 'август', 'сентяб', 'октябр', 'ноябр', 'декабр', 'понеде', 'вторни',
+                     'четвер', 'пятниц', 'суббот', 'воскре', 'сегодн', 'недел', 'национ')
+
+
+def _r1b_tc_stop2(t):
+    return t in _R1B_TC_STOP_EXACT or any(t.startswith(p) for p in _R1B_TC_STOP_PREF)
+
+
+def _r1b_tc(events, N, df=None, stop_ext=False):
     """Копия логики _topic_cap ТОЛЬКО для диагностики тени: горячее слово и счётчик каждой
     карточки; df можно задать извне (счётчики по исходному составу A). Ничего не мутирует
     в production: работает на копиях. Возвращает (df, info по _r1b_src_id, kept src_ids)."""
@@ -8093,7 +8116,7 @@ def _r1b_tc(events, N, df=None):
         if e.get('alerts_only') or _CAP_SRC.search(str(e.get('source') or '')):
             kept.add(sid); continue
         toks = [t for t in _tc_toks((e.get('title', '') or '') + ' ' + (e.get('summary', '') or ''))
-                if not _tc_is_stop(t) and df.get(t, 0) >= 8]
+                if not _tc_is_stop(t) and not (stop_ext and _r1b_tc_stop2(t)) and df.get(t, 0) >= 8]
         if len(toks) < 2:
             kept.add(sid)
             if sid: info[sid] = 'без горячей темы'
@@ -8165,6 +8188,8 @@ def _r1b_write():
             dfA = res['A'][2]['_df']
             for k, (final, rem, info) in res.items():
                 ids = {id(e) for e in final}
+                fa_k = res['A_стоп'][0] if k == 'B2_стоп' else res['A'][0]   # B2_стоп сравнивается с A_стоп
+                ida_k = {id(e) for e in fa_k}
                 r1_in = [e for e in _R1B_SIM['scen'][k]]
                 dfK = info.get('_df') if k != 'B2_темы_по_A' else dfA
 
@@ -8185,13 +8210,14 @@ def _r1b_write():
                     return st or ''
 
                 inj = [e for e in final if e.get('_r1b')]
-                lost = [e for e in fa if id(e) not in ids]
-                gained = [e for e in final if id(e) not in ida and not e.get('_r1b')]
+                lost = [e for e in fa_k if id(e) not in ids]
+                gained = [e for e in final if id(e) not in ida_k and not e.get('_r1b')]
                 cut_inj = {}
                 for e in _R1B_SIM['scen'][k]:
                     if id(e) in rem:
                         cut_inj[rem[id(e)]] = cut_inj.get(rem[id(e)], 0) + 1
-                out[k] = {'лента после topic_cap': len(final),
+                out[k] = {'база сравнения': 'A_стоп' if k == 'B2_стоп' else 'A',
+                          'лента после topic_cap': len(final),
                           'R1-карточек в ленте': len(inj),
                           'R1 по сюжетам': {s: sum(1 for e in inj if e['_r1b'] == s) for s in sorted({e['_r1b'] for e in inj})},
                           'R1 отсечены на стадиях': cut_inj,
@@ -8220,10 +8246,12 @@ def _r1b_write():
                 wl.append(dict(_r1b_card(e), в_A=id(e) in ida, в_B2=id(e) in b2,
                                стадия_A=res['A'][1].get(id(e), 'в ленте' if id(e) in ida else 'до квоты / вне ленты'),
                                стадия_B2=res['B2'][1].get(id(e), 'в ленте' if id(e) in b2 else 'до квоты / вне ленты'),
-                               стадия_B2_темы_по_A=res['B2_темы_по_A'][1].get(id(e), 'в ленте' if id(e) in {id(x) for x in res['B2_темы_по_A'][0]} else 'до квоты / вне ленты')))
+                               стадия_B2_темы_по_A=res['B2_темы_по_A'][1].get(id(e), 'в ленте' if id(e) in {id(x) for x in res['B2_темы_по_A'][0]} else 'до квоты / вне ленты'),
+                               стадия_A_стоп=res['A_стоп'][1].get(id(e), 'в ленте' if id(e) in {id(x) for x in res['A_стоп'][0]} else 'до квоты / вне ленты'),
+                               стадия_B2_стоп=res['B2_стоп'][1].get(id(e), 'в ленте' if id(e) in {id(x) for x in res['B2_стоп'][0]} else 'до квоты / вне ленты')))
             # проверка модели: A-сценарий против фактического выхода _topic_cap
             rep['сверка модели'] = {'A_модель': len(fa),
-                                    'копия topic_cap совпадает с production': {k: v[2].get('_helper_match') for k, v in res.items() if k != 'B2_темы_по_A'},
+                                    'копия topic_cap совпадает с production': {k: v[2].get('_helper_match') for k, v in res.items() if k != 'B2_темы_по_A' and not k.endswith('_стоп')},
                                     'A_совпало_с_фактом': sum(1 for e in fa if id(e) in exp_ids) if exported is not None else None,
                                     'факт после topic_cap': len(exported) if exported is not None else None}
             b2l = {id(e) for e in res['B2_без_лимита_сюжетов'][0]}; b2 = {id(e) for e in res['B2'][0]}
