@@ -2,9 +2,9 @@
   "country": "TR",
   "date": "2026-11-09",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-09T10:09:42.183241+00:00",
+  "generated_at": "2026-11-09T10:29:53.976342+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-TR",
@@ -33,14 +33,14 @@
       "id": "DOMAIN-TR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 53,
+      "score": 5,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-TR-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
+      "score": 59,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-TR-Взрыв_прог",
+      "type": "Signal",
+      "label": "Взрыв прогремел на металлургическом заво",
+      "severity": 59,
+      "domain": "technology"
+    },
+    {
       "id": "SIGNAL-TR-Иностранны",
       "type": "Signal",
       "label": "Иностранные инвесторы продают ценные бум",
@@ -92,13 +99,6 @@
       "label": "Ведущий чиновник ООН похвалил роль Турци",
       "severity": 49,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-TR-Интерактив",
-      "type": "Signal",
-      "label": "Интерактив: Кто хочет чего на саммите CO",
-      "severity": 53,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -118,13 +118,13 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-climate",
       "type": "CORRELATES",
-      "weight": 0.53
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.59
     },
     {
       "from": "COUNTRY-TR",
@@ -163,48 +163,6 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-TR-climate",
-      "to": "DOMAIN-TR-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-TR-infrastructure",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-TR-economic",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-TR-climate",
-      "to": "DOMAIN-TR-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-TR-economic",
-      "to": "DOMAIN-TR-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-TR-social",
-      "to": "DOMAIN-TR-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
       "from": "DOMAIN-TR-geopolitical",
       "to": "DOMAIN-TR-infrastructure",
       "type": "ESCALATES",
@@ -226,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-TR-Взрыв_прог",
+      "to": "DOMAIN-TR-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.59
+    },
+    {
       "from": "SIGNAL-TR-Иностранны",
       "to": "DOMAIN-TR-economic",
       "type": "AMPLIFIES",
@@ -236,12 +200,6 @@
       "to": "DOMAIN-TR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.49
-    },
-    {
-      "from": "SIGNAL-TR-Интерактив",
-      "to": "DOMAIN-TR-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.53
     }
   ]
 }
