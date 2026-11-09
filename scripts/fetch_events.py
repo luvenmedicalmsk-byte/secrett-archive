@@ -9966,6 +9966,24 @@ def process_events(raw_items):
 _ACTOR_REGION = [('евросоюз','ЕС'),('еврокомисс','ЕС'),('еврокоми','ЕС'),('брюссель','ЕС'),('ес ','ЕС'),('ес,','ЕС'),
                  ('сша ','США'),('вашингтон','США'),('белый дом','США'),('нато ','НАТО'),('оон ','ООН'),('g7','G7'),('джи-7','G7')]
 _TRIVIA_TITLE_RE = re.compile(r'\u0437\u043d\u0430\u043c\u0435\u043d\u0438\u0442\w*\s+\u0444\u0438\u043b\u044c\u043c|\u043a\u0438\u043d\u043e\u0441\u0442\u0443\u0434\u0438\w*[^.]{0,60}(?:\u0441\u043d\u044f[\u043b\u0442]\w*|\u0444\u0438\u043b\u044c\u043c|\u043a\u0430\u0440\u0442\u0438\u043d)', re.IGNORECASE)
+# TITLE_GAZA_0911: перевод «… in Gaza» у Anadolu даёт хвост «… - Газу»
+# («Израильские удары дронов, стрельба ранили 18 палестинцев - Газу»). Откат: False.
+TITLE_GAZA_0911 = True
+_TG9_TAIL = re.compile(r'\s*[—–-]\s*(?:Газу|Газе|в\s+Газу)\s*\.?\s*$')
+
+
+def _fix_gaza_tail(e):
+    if not TITLE_GAZA_0911:
+        return e
+    try:
+        t = e.get('title') or ''
+        if _TG9_TAIL.search(t):
+            e['title'] = _TG9_TAIL.sub(' в секторе Газа', t)
+    except Exception:
+        pass
+    return e
+
+
 def _fix_trivia_title(e):
     """Если заголовок — киношная тривия из тела статьи, берём первое предложение саммари (реальный лид)."""
     try:
@@ -29800,6 +29818,7 @@ def save_enriched(events, previous_snapshot=None):
                 except Exception: pass
             for _e in enriched["events"]:
                 _fix_trivia_title(_e)
+                _fix_gaza_tail(_e)
             _egp('k04_до_domain_fix', enriched["events"])
             enriched["events"] = _domain_fix(enriched["events"])
             _egp('k05_domain_fix', enriched["events"])
