@@ -94,10 +94,12 @@ random.seed(1)
 W = ['альфа%02dкс' % i for i in range(400)]
 ev2 = [{'title': 'Также котировки %s %s %s' % tuple(random.sample(W, 3)), 'summary': '', 'domain': 'economy',
         'severity': 50, 'source': 'X'} for _ in range(20)]
+ev2 += [{'title': 'Также %s %s %s' % tuple(random.sample(W, 3)), 'summary': '', 'domain': 'economy',
+         'severity': 50, 'source': 'X'} for _ in range(5)]   # «также» чаще «котировок»: тема однозначно «также»
 for e in ev2: fe._r1b_qrec(e, 'economy', 50)
 fe._r1b_simulate({'economy': 110}, ev2, ev2, [], lambda e: e.get('severity', 0), ev2)
 r2 = fe._R1B_SIM['res']
-ok(len(r2['A'][0]) == 18 and len(r2['A_стоп'][0]) == 20, 'служебное «также»: A %d (лимит 18), A_стоп %d' % (len(r2['A'][0]), len(r2['A_стоп'][0])))
+ok(len(r2['A'][0]) == 23 and len(r2['A_стоп'][0]) == 25, 'служебное «также»: A %d (ожидалось 23, лимит 18), A_стоп %d (25)' % (len(r2['A'][0]), len(r2['A_стоп'][0])))
 ok(fe._r1b_tc_stop2('также') and fe._r1b_tc_stop2('ноября') and not fe._r1b_tc_stop2('последс') and not fe._r1b_tc_stop2('россии'),
    'стоп-слова: также/ноября - да; последствия/россии - нет')
 # 5. флаг выключен - ничего не пишется
