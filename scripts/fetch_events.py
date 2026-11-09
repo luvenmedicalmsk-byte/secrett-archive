@@ -10821,7 +10821,8 @@ _GR9_RU = {
 }
 # города, которых нет в словаре субъектов (основа - регион, точка - город)
 _GR9_RU_CITY = {'кириш': ('Ленинградская область', 59.45, 32.02), 'орле': ('Орловская область', 52.97, 36.06),
-                'орла': ('Орловская область', 52.97, 36.06), 'туапсе': ('Краснодарский край', 44.1, 39.08),
+                'орла': ('Орловская область', 52.97, 36.06), 'орёл': ('Орловская область', 52.97, 36.06),
+                'орел': ('Орловская область', 52.97, 36.06), 'туапсе': ('Краснодарский край', 44.1, 39.08),
                 'новороссийск': ('Краснодарский край', 44.72, 37.77), 'тюменск': ('Тюменская область', 57.15, 65.53)}
 _GR9_PL = {'краков': ('Малопольское воеводство', 50.06, 19.94), 'варшав': ('Мазовецкое воеводство', 52.23, 21.01),
            'гданьск': ('Поморское воеводство', 54.35, 18.65), 'вроцлав': ('Нижнесилезское воеводство', 51.11, 17.03),
@@ -10876,7 +10877,45 @@ def _geo_repair_0911(events):
                         n += 1
                         break
                 continue
+            if GEO_REPAIR2_0911 and not no_pt and not at_msk:
+                g0 = e.get('geo') if isinstance(e.get('geo'), dict) else {}
+                reg0 = e.get('region') or g0.get('region') or ''
+                # E) субъект европейской части РФ, точка дальше 400 км от центра субъекта
+                #    («Украинские дроны атакуют Кириши» - Ленинградская область в 61.0, 53.87, Коми)
+                # только если субъект назван в заголовке и в заголовке одно место РФ
+                # («Дроны ВСУ атаковали Орёл и Ростов-на-Дону» не трогается)
+                if reg0 in _GR9_RU and _GR9_RU[reg0][1] < 60 and (e.get('country_code') or 'RU') == 'RU' \
+                        and (ru_subject_in(t) == reg0 or any(r2 == reg0 and re.search(r'(?<![а-яё])' + k, low)
+                                                             for k, (r2, _a, _b) in _GR9_RU_CITY.items())) \
+                        and _gr9_ru_places(low) <= 1:
+                    la, lo = _GR9_RU[reg0]
+                    if _gr9_km(lat, lng, la, lo) > 400:
+                        for k, (r2, la2, lo2) in _GR9_RU_CITY.items():
+                            if r2 == reg0 and re.search(r'(?<![а-яё])' + k, low):
+                                la, lo = la2, lo2
+                                break
+                        _gr9_set(e, 'RU', reg0, la, lo, 'точка субъекта %s за 400+ км от него' % reg0)
+                        n += 1
+                        continue
+                # F) зона-континент или океан при одной стране события, названной в заголовке
+                #    («…судно затонуло у берегов Сенегала» - точка центра Африки 2.0, 20.0)
+                if g0.get('process_place_type') == 'zone' and g0.get('zone_type') in ('continent', 'ocean', 'sea') \
+                        and len(g0.get('impact_countries') or []) == 1 and e.get('source') not in _ECS_MACHINE \
+                        and g0.get('coord_origin') != 'source':
+                    iso = (g0['impact_countries'][0] or '').upper()
+                    cc = _gr9_countries().get(iso)
+                    st = _gr9_stem(cc[0]) if cc else ''
+                    # страна как место события: «у берегов Сенегала», «в Сенегале»
+                    if st and re.search(r'(?:у\s+берегов|в|во|на)\s+' + re.escape(st), low):
+                        _gr9_set(e, iso, cc[1], cc[2], cc[3], 'страна события в заголовке, а точка - центр зоны')
+                        n += 1
+                        continue
             if not (no_pt or at_msk):
+                continue
+            # G) сектор Газа без точки («2 палестинца ранены… в секторе Газа»)
+            if GEO_REPAIR2_0911 and no_pt and re.search(r'сектор\w*\s+газ|(?<![а-яё])газ[еы](?![а-яё])|в\s+газу', low):
+                _gr9_set(e, 'PS', 'Сектор Газа', 31.45, 34.39, 'сектор Газа в заголовке')
+                n += 1
                 continue
             subj = ru_subject_in(t)
             reg = e.get('region') or ''
@@ -10919,6 +10958,33 @@ def _geo_repair_0911(events):
 
 
 _GR9_CC = None
+# GEO_REPAIR2_0911 (09.11.2026, проверка первой публикации GEO_REPAIR_0911): точка субъекта
+# РФ далеко от него, зона-континент вместо страны из заголовка, сектор Газа без точки.
+# Откат: GEO_REPAIR2_0911 = False.
+GEO_REPAIR2_0911 = True
+
+
+def _gr9_km(a1, o1, a2, o2):
+    import math
+    p = math.pi / 180
+    d = 0.5 - math.cos((a2 - a1) * p) / 2 + math.cos(a1 * p) * math.cos(a2 * p) * (1 - math.cos((o2 - o1) * p)) / 2
+    return 12742 * math.asin(math.sqrt(max(0.0, d)))
+
+
+def _gr9_ru_places(low):
+    try:
+        from geo_resolver import RU_SUBJECTS as _RS, _RU_BARE_CITIES as _RB
+    except Exception:
+        return 0
+    found = {v for k, v in _RS.items() if k in low}
+    found |= {c for c in _RB if c in low}
+    found |= {r for k, (r, _a, _b) in _GR9_RU_CITY.items() if re.search(r'(?<![а-яё])' + k, low)}
+    return len(found)
+
+
+def _gr9_stem(name):
+    w = re.sub(r'[^а-яё -]', '', (name or '').lower()).strip()
+    return w[:max(4, len(w) - 2)] if len(w) >= 5 else ''
 
 
 def _gr9_countries():
