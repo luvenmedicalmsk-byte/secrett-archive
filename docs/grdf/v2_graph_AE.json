@@ -2,7 +2,7 @@
   "country": "AE",
   "date": "2026-11-09",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-09T17:50:19.247156+00:00",
+  "generated_at": "2026-11-09T18:13:25.903860+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-AE",
       "type": "Country",
       "label": "AE",
-      "score": 46,
+      "score": 50,
       "props": {
-        "risk_score": 46
+        "risk_score": 50
       }
     },
     {
@@ -20,13 +20,13 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 63,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AE-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 61,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-AE-Россия_нац",
+      "type": "Signal",
+      "label": "Россия нацеливается на энергетическую ин",
+      "severity": 50,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-AE-FlyArystan",
       "type": "Signal",
       "label": "FlyArystan с 21 ноября возобновляет прям",
@@ -92,13 +99,6 @@
       "label": "Геополитический процесс — Ближний Восток",
       "severity": 85,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-AE-Транспортн",
-      "type": "Signal",
-      "label": "Транспортный коридор — Ближний Восток (с",
-      "severity": 82,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-AE",
       "to": "DOMAIN-AE-economic",
       "type": "CORRELATES",
-      "weight": 0.61
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-AE",
@@ -184,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-AE-Россия_нац",
+      "to": "DOMAIN-AE-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
       "from": "SIGNAL-AE-FlyArystan",
       "to": "DOMAIN-AE-geopolitical",
       "type": "AMPLIFIES",
@@ -194,12 +200,6 @@
       "to": "DOMAIN-AE-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.85
-    },
-    {
-      "from": "SIGNAL-AE-Транспортн",
-      "to": "DOMAIN-AE-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.82
     }
   ]
 }
