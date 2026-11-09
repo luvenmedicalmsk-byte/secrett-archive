@@ -7952,18 +7952,24 @@ def _r1b_simulate(quota_map, feed_all, survivors, analytic, prio_fn, exported):
             return {'title': c['title'], 'summary': c['desc'], 'severity': sev, 'domain': c['domain'],
                     'source': c['source'], '_r1b': c['story'], '_r1b_raw': c['raw_index'], '_r1b_tid': c['tid']}
 
-        def run(inj):
+        def run(inj, frozen_df=None):
             pool = [(k, 0, i, d, e) for i, (k, d, e) in enumerate(qpool)] + \
                    [(prio_fn(e), 1, i, e['domain'], e) for i, e in enumerate(inj)]
             pool.sort(key=lambda x: (-x[0], x[1], x[2]))             # инъекция после равных по ключу
-            cnt = {}; acc = []; rem = {}
+            cnt = {}; acc = []; rem = {}; info = {}
             for _k, _f, _i, dd, e in pool:
-                if cnt.get(dd, 0) < quota_map.get(dd, MAX_EVENTS):
+                q = quota_map.get(dd, MAX_EVENTS)
+                if cnt.get(dd, 0) < q:
                     cnt[dd] = cnt.get(dd, 0) + 1; acc.append((_k, e))
+                    info[id(e)] = {'квота': '%s: место %d из %d' % (dd, cnt[dd], q), 'ключ': _k}
                 else:
                     rem[id(e)] = 'overflow'
+                    info[id(e)] = {'квота': '%s: сверх квоты %d' % (dd, q), 'ключ': _k}
             feed = base_feed + acc
             feed.sort(key=lambda x: -x[0])
+            for n, (_k, e) in enumerate(feed):
+                if id(e) in info:
+                    info[id(e)]['кап ленты'] = ('место %d из %d' % (n + 1, MAX_EVENTS)) if n < MAX_EVENTS else 'сверх %d' % MAX_EVENTS
             for _k, e in feed[MAX_EVENTS:]:
                 rem[id(e)] = 'feed_cap'
             feed = [e for _k, e in feed[:MAX_EVENTS]]
@@ -7974,20 +7980,34 @@ def _r1b_simulate(quota_map, feed_all, survivors, analytic, prio_fn, exported):
                     rem[id(e)] = 'промежуточные стадии (факт A)'
             feed = [e for e in feed if not (id(e) in a_feed and id(e) not in surv)]
             copies = [dict(e, _r1b_src_id=id(e)) for e in feed] + [dict(e) for e in analytic]
-            with contextlib.redirect_stderr(io.StringIO()):
-                tc = _topic_cap(copies, 6)
-            kept = {x.get('_r1b_src_id') for x in tc if x.get('_r1b_src_id')}
+            if frozen_df is None:
+                with contextlib.redirect_stderr(io.StringIO()):
+                    tc = _topic_cap(copies, 6)
+                kept = {x.get('_r1b_src_id') for x in tc if x.get('_r1b_src_id')}
+                df, tinfo, kept_h = _r1b_tc([dict(e) for e in copies], 6)
+                info['_helper_match'] = (kept_h == kept)
+            else:
+                df, tinfo, kept = _r1b_tc(copies, 6, frozen_df)
             for e in feed:
                 if id(e) not in kept:
                     rem[id(e)] = 'topic_cap'
+                if id(e) in tinfo:
+                    info.setdefault(id(e), {})['тема'] = tinfo[id(e)]
             final = [e for e in feed if id(e) in kept]
-            return final, rem
+            info['_df'] = df
+            return final, rem, info
 
         allc = [dict(c) for c in _R1B_CAND]
         scen = {'A': [], 'B1': [mk(c, c['raw_index']) for c in allc],
                 'B2_без_лимита_сюжетов': [mk(c, max(c['raw_index'], R1B_FLOOR)) for c in allc],
-                'B2': [mk(c, max(c['raw_index'], R1B_FLOOR)) for c in winners]}
-        res = {k: run(v) for k, v in scen.items()}
+                'B2': [mk(c, max(c['raw_index'], R1B_FLOOR)) for c in winners],
+                'B2_темы_по_A': [mk(c, max(c['raw_index'], R1B_FLOOR)) for c in winners]}
+        res = {}
+        for k, v in scen.items():
+            if k == 'B2_темы_по_A':     # диагностика: тематические счётчики по исходному составу A
+                res[k] = run(v, frozen_df=res['A'][2]['_df'])
+            else:
+                res[k] = run(v)
         _R1B_SIM.update({'res': res, 'winners': winners, 'dups': dups, 'over': over, 'scen': scen, 'feed_all': list(feed_all),
                          'exported': [e for e in exported if e.get('feed_visible') is not False]})
         if LINEAGE:
@@ -8001,6 +8021,40 @@ def _r1b_simulate(quota_map, feed_all, survivors, analytic, prio_fn, exported):
     except Exception as _e:
         _R1B_SIM['error'] = str(_e)[:300]
         print('  [WARN] r1 bypass shadow sim: %s' % _e, file=sys.stderr)
+
+
+def _r1b_tc(events, N, df=None):
+    """Копия логики _topic_cap ТОЛЬКО для диагностики тени: горячее слово и счётчик каждой
+    карточки; df можно задать извне (счётчики по исходному составу A). Ничего не мутирует
+    в production: работает на копиях. Возвращает (df, info по _r1b_src_id, kept src_ids)."""
+    if df is None:
+        df = {}
+        for e in events:
+            for t in _tc_toks((e.get('title', '') or '') + ' ' + (e.get('summary', '') or '')):
+                df[t] = df.get(t, 0) + 1
+    counts = {}; info = {}; kept = set()
+    _RSS_DOM = ('technology', 'economy', 'climate', 'social')
+    for e in sorted(events, key=lambda x: -(x.get('severity', 0) or 0)):
+        sid = e.get('_r1b_src_id')
+        if e.get('alerts_only') or _CAP_SRC.search(str(e.get('source') or '')):
+            kept.add(sid); continue
+        toks = [t for t in _tc_toks((e.get('title', '') or '') + ' ' + (e.get('summary', '') or ''))
+                if not _tc_is_stop(t) and df.get(t, 0) >= 8]
+        if len(toks) < 2:
+            kept.add(sid)
+            if sid: info[sid] = 'без горячей темы'
+            continue
+        hot = sorted(toks, key=lambda t: -df[t])[0]
+        counts[hot] = counts.get(hot, 0) + 1
+        cap = N * 3 if e.get('domain') in _RSS_DOM else N
+        ok = counts[hot] <= cap or (e.get('severity') or 0) >= TOPIC_CAP_EXEMPT_SEVERITY
+        if ok:
+            kept.add(sid)
+        if sid:
+            info[sid] = '«%s» (частота %d): %d-я при лимите %d%s' % (
+                hot, df[hot], counts[hot], cap, '' if counts[hot] <= cap else (', сохранена по весу' if ok else ', отсечена'))
+    kept.discard(None)
+    return df, info, kept
 
 
 def _r1b_toks(t):
@@ -8054,8 +8108,28 @@ def _r1b_write():
             fa = res['A'][0]; ida = {id(e) for e in fa}
             exp_ids = {id(e) for e in (exported or [])}
             out = {}
-            for k, (final, rem) in res.items():
+            dfA = res['A'][2]['_df']
+            for k, (final, rem, info) in res.items():
                 ids = {id(e) for e in final}
+                r1_in = [e for e in _R1B_SIM['scen'][k]]
+                dfK = info.get('_df') if k != 'B2_темы_по_A' else dfA
+
+                def why(e):
+                    st = rem.get(id(e))
+                    if st == 'overflow':
+                        dd = e.get('domain')
+                        occ = [x['title'][:70] for x in r1_in if x.get('domain') == dd and id(x) not in rem]
+                        return 'квота домена; места R1: ' + ('; '.join(occ) if occ else 'нет R1 в домене')
+                    if st == 'topic_cap':
+                        ti = str(info.get(id(e), {}).get('тема', ''))
+                        m = re.search(r'«([^»]+)»', ti)
+                        hot = m.group(1) if m else ''
+                        share = [x['title'][:70] for x in r1_in if hot and ('«%s»' % hot) in str(info.get(id(x), {}).get('тема', ''))]
+                        if share:
+                            return 'та же тема, что у R1: ' + '; '.join(share)
+                        return 'сдвиг частот слова «%s»: A %s → %s %s' % (hot, dfA.get(hot, 0), k, (dfK or {}).get(hot, 0))
+                    return st or ''
+
                 inj = [e for e in final if e.get('_r1b')]
                 lost = [e for e in fa if id(e) not in ids]
                 gained = [e for e in final if id(e) not in ida and not e.get('_r1b')]
@@ -8068,8 +8142,17 @@ def _r1b_write():
                           'R1 по сюжетам': {s: sum(1 for e in inj if e['_r1b'] == s) for s in sorted({e['_r1b'] for e in inj})},
                           'R1 отсечены на стадиях': cut_inj,
                           'вытеснено из ленты A': len(lost),
-                          'вытесненные': [dict(_r1b_card(e), стадия=rem.get(id(e), '?'),
+                          'вытесненные': [dict(_r1b_card(e), стадия=rem.get(id(e), '?'), причина=why(e),
+                                               тема=str(info.get(id(e), {}).get('тема', '')),
+                                               критическая=bool((e.get('severity') or 0) >= 55 or _r1b_card(e)['контроль']),
                                                копия_осталась_в_ленте=_r1b_twin(e, final)) for e in lost],
+                          'трассировка R1': [{'title': e['title'][:140], 'story': e['_r1b'], 'raw_index': e['_r1b_raw'],
+                                             'index': e['severity'], 'Admission': 'обход (только тень)',
+                                             'квота домена': info.get(id(e), {}).get('квота', '?'),
+                                             'кап ленты': info.get(id(e), {}).get('кап ленты', 'не дошла'),
+                                             'промежуточные стадии': 'не моделируются, считаются пройденными',
+                                             'topic_cap': info.get(id(e), {}).get('тема', 'не дошла'),
+                                             'итог': 'в ленте' if id(e) in ids else rem.get(id(e), '?')} for e in r1_in],
                           'вернулись относительно A': [_r1b_card(e) for e in gained],
                           'R1, дошедшие до ленты': [{'title': e['title'][:160], 'source': e['source'], 'story': e['_r1b'],
                                                     'raw_index': e['_r1b_raw'], 'index': e['severity']} for e in inj]}
@@ -8082,9 +8165,11 @@ def _r1b_write():
                 seen.add(id(e)); b2 = {id(x) for x in res['B2'][0]}
                 wl.append(dict(_r1b_card(e), в_A=id(e) in ida, в_B2=id(e) in b2,
                                стадия_A=res['A'][1].get(id(e), 'в ленте' if id(e) in ida else 'до квоты / вне ленты'),
-                               стадия_B2=res['B2'][1].get(id(e), 'в ленте' if id(e) in b2 else 'до квоты / вне ленты')))
+                               стадия_B2=res['B2'][1].get(id(e), 'в ленте' if id(e) in b2 else 'до квоты / вне ленты'),
+                               стадия_B2_темы_по_A=res['B2_темы_по_A'][1].get(id(e), 'в ленте' if id(e) in {id(x) for x in res['B2_темы_по_A'][0]} else 'до квоты / вне ленты')))
             # проверка модели: A-сценарий против фактического выхода _topic_cap
             rep['сверка модели'] = {'A_модель': len(fa),
+                                    'копия topic_cap совпадает с production': {k: v[2].get('_helper_match') for k, v in res.items() if k != 'B2_темы_по_A'},
                                     'A_совпало_с_фактом': sum(1 for e in fa if id(e) in exp_ids) if exported is not None else None,
                                     'факт после topic_cap': len(exported) if exported is not None else None}
             b2l = {id(e) for e in res['B2_без_лимита_сюжетов'][0]}; b2 = {id(e) for e in res['B2'][0]}
