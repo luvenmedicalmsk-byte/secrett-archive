@@ -6001,8 +6001,55 @@ def _n7_quote_frag(t):
     return not any(c in rest for c in '»"”“')
 
 
+# NOISE_0911 (09.11.2026, аудит ленты, решение Мии «исправляй все»). Откат: NOISE_0911 = False.
+#  - подборки: «ThreatsDay: … + 17 других новостей», «Неделя Мексики - обзор: …»;
+#  - кино и премии: «Корейцы сняли новый шедевр… выдвинули на "Оскар"» 49;
+#  - плановый запуск без аварии: «Ракету-носитель "Союз-2.1Б" успешно запустили» 48;
+#  - очерк «X: как …»: «Великая катастрофа: как супербогатые извлекают выгоду…» 48;
+#  - пустой заголовок из 1-3 слов без события и чисел: «Последствия от пламени», «Наземная война»;
+#  - жаргон канала: «Огонь про взлом Binance» 86.
+NOISE_0911 = True
+_N9_DIGEST = re.compile(r'\+\s*\d+\s+(?:других|другие|more)(?![а-яёa-z])|^\s*threatsday|обзор\s+недели|'
+                        r'(?:^|\s)неделя\s+[а-яёa-z-]+\s*[—–-]\s*обзор', re.I)
+_N9_FILM = re.compile(r'выдвинул\w*\s+на\s+«?оскар|номинаци\w*\s+на\s+«?(?:оскар|эмми|грэмми|золот)|metacritic|'
+                      r'кассов\w+\s+сбор|кинофестивал\w*|премьер[аыу]\s+(?:фильм|сериал)\w*|шедевр\w*\s+в\s+духе', re.I)
+_N9_LAUNCH = re.compile(r'успешно\s+(?:запустил\w*|запущен\w*|стартовал\w*|вывел\w*)', re.I)
+_N9_LAUNCH_OBJ = re.compile(r'ракет\w*-?\s*носител\w*|космодром\w*|спутник\w*', re.I)
+_N9_FAIL = re.compile(r'авари|неудач|взрыв|сбой|упал|крушен|потер|разруш|погиб|пострада', re.I)
+_N9_HOWTO = re.compile(r'^[^:]{3,40}:\s+как\s+(?!\d)', re.I)
+_N9_HOWTO_KEEP = re.compile(r'погиб|убит|жертв|ранен|пострада|взрыв|удар|атак|обстрел|землетрясен|эвакуац|теракт|сбит|взлом', re.I)
+_N9_SLANG = re.compile(r'^\s*(?:огонь|бомба|жиза|кринж|топчик)\s+про\s', re.I)
+_N9_HARD = re.compile(r'погиб|убит|жертв|ранен|пострада|взрыв|удар|атак|обстрел|землетрясен|цунами|наводнен|паводк|'
+                      r'эвакуац|теракт|ракет|дрон|бпла|катастроф|крушен|ураган|тайфун|циклон|извержен|эпидеми|вспышк|'
+                      r'отключен|блэкаут|санкци|переворот|протест|забастов|дефолт|банкрот|утечк|взлом|уязвим|арест|задержан', re.I)
+
+
+# короткие заголовки рядов данных и машинных лент («Инфляция на Кипре», «Сезон респираторных инфекций») - не шум
+_N9_DATASRC = re.compile(r'trading\s+economics|ecdc|eonet|(?<![a-z])eia(?![a-z])|fao|фао|imf|мвф|wto|world\s+bank|who|воз|оон|cap|usgs|gdacs|noaa|мчс|eurostat|oecd|оэср|росстат|цб', re.I)
+
+
+def _n9_noise(t, b, source=None):
+    if not NOISE_0911:
+        return False
+    if _N9_DIGEST.search(t) or _N9_SLANG.search(t):
+        return True
+    if _N9_FILM.search(t) and not _N9_HARD.search(t):
+        return True
+    if _N9_LAUNCH.search(t) and _N9_LAUNCH_OBJ.search(t) and not _N9_FAIL.search(t):
+        return True
+    if _N9_HOWTO.search(t) and not _N9_HOWTO_KEEP.search(t):
+        return True
+    w = re.findall(r'[а-яёa-z]+', t.lower())
+    if 1 <= len(w) <= 3 and not re.search(r'\d', t) and ':' not in t and not _N9_HARD.search(t) \
+            and not _N9_DATASRC.search(str(source or '')):
+        return True
+    return False
+
+
 def _n4_noise(title, b, source=None):
     t = title or ''
+    if _n9_noise(t, b, source):
+        return True
     if NOISE_0711:
         if _N7_RETRO.search(t) or _N7_PROTO.search(t) or _N7_TEASER.search(t) or _N7_VACC.search(t):
             return True
