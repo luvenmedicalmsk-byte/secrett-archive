@@ -7792,6 +7792,322 @@ def _s11_write():
         print('  [WARN] sev shadow 1108: %s' % _e, file=sys.stderr)
 
 
+# ── R1_BYPASS_SHADOW_0911 (09.11.2026) ─────────────────────────────────────
+# Тень B2 (решение Мии 09.11: «B2 · SHADOW APPROVED»). Production не меняется:
+# Admission, severity, квоты, topic_cap, feed_cap, география и домены прежние.
+# Что считается (только отчёт docs/_r1_bypass_shadow.json и shadow-шаги lineage):
+#   1) строгие R1 (тот же _s11_rule), срезанные на sev_nomarker / sev_low, -
+#      кандидаты на обход Admission; raw_index сохраняется, shadow_adjusted_index 62;
+#   2) один победитель на сюжет (дата и место / делегация РФ / делегация Украины /
+#      участие Европы; прочее - отдельный сюжет), не больше 4 на публикацию;
+#      порядок выбора: первичный источник с подтверждёнными сведениями, затем
+#      полнота сведений, затем самое раннее время; остальные - r1_story_dup;
+#   3) сценарии A (как есть), B1 (обход без изменения индекса), B2 (обход + 62 +
+#      один на сюжет) и B2 без лимита сюжетов - через ту же квоту домена, кап ленты
+#      и тот же _topic_cap, на копиях. _llm_dedup (LLM) не повторяется: его фактические
+#      удаления переносятся во все сценарии, кандидаты R1 его не проходят.
+# Откат: R1_BYPASS_SHADOW_0911 = False.
+R1_BYPASS_SHADOW_0911 = True
+R1B_FLOOR = 62
+R1B_MAX = 4
+_R1B_CAND = []          # строгие R1, срезанные Admission
+_R1B_SEEN = set()
+_R1B_NEG_SEEN = {}      # все переговорные записи, срезанные Admission (для контроля строгости)
+_R1B_QREC = []          # [(ev, key, domain, accepted)] на стадии квоты домена
+_R1B_SIM = {}
+_R1B_STORIES = ('дата и место переговоров', 'делегация РФ', 'делегация Украины', 'участие Европы')
+_R1B_EU = re.compile(r'европ|(?<![а-яё])ес(?![а-яё])|евросоюз|e3(?![0-9])|евротройк|еврочетв|europe|(?<![a-z])eu(?![a-z])', re.I)
+_R1B_UA = re.compile(r'украинск\w*\s+делегац|делегаци\w*\s+(?:киева|украин|зеленск)|киевск\w*\s+делегац|умеров|буданов|ермак|кислиц|'
+                     r'ukrainian\s+delegation|umerov|budanov', re.I)
+_R1B_RU = re.compile(r'российск\w*\s+делегац|делегаци\w*\s+(?:росси|рф(?![а-яё])|москв|кремл)|мединск|рябков|галузин|дмитриев|ушаков|'
+                     r'russian\s+delegation|medinsky|ryabkov|dmitriev', re.I)
+_R1B_WHEN = re.compile(r'\d{1,2}\s*(?:[-–]\s*\d{1,2}\s*)?(?:январ|феврал|март|апрел|ма[яй]|июн|июл|август|сентябр|октябр|ноябр|декабр)|'
+                       r'во?\s+(?:понедельник|вторник|среду|четверг|пятницу|субботу|воскресенье)|'
+                       r'абу-?даби|стамбул|женев|эр-?рияд|джидд|доха|анкар|минск|белом\s+доме|abu\s+dhabi|istanbul|geneva|riyadh', re.I)
+_R1B_PRIMARY = re.compile(r'тасс|риа|интерфакс|reuters|associated\s+press|(?<![a-z])ap(?![a-z])|afp|bloomberg|укринформ|ukrinform|'
+                          r'кремл|мид(?![а-яё])|офис\s+президента|white\s+house|tass|interfax', re.I)
+_R1B_HEDGE = re.compile(r'(?<![а-яё])сми(?![а-яё])|источник\w*|якобы|возможно|предположительно|по\s+(?:данным|информации)|пишет|'
+                        r'сообща\w*\s+(?:axios|издани)|cbs|axios|politico|nyt|new\s+york\s+times|wsj|financial\s+times|bloomberg\s+news|'
+                        r'reportedly|sources?\s+(?:say|said)|according\s+to|reports?(?![a-z])', re.I)
+# подтверждение официальной стороной в заголовке: «— подтвердил Путин», «— глава МИД Франции», «: France»
+_R1B_OFFICIAL = re.compile(r'путин|пескова?(?![а-яё])|ушаков|лавров|захаров|кремл|(?<![а-яё])мид(?![а-яё])|министр\w*\s+иностранн|'
+                           r'советник\w*\s+зел|офис\w*\s+президента|сибиг|белый\s+дом|госдеп|рубио|уиткофф|'
+                           r'kremlin|foreign\s+minist|white\s+house|state\s+department|:\s*(?:france|kremlin|kyiv|moscow|ukraine|russia)\s*$', re.I)
+_R1B_NATO7 = re.compile(r'(?:нато|nato)', re.I)
+_R1B_NATO7B = re.compile(r'(?:€|евро|eur)\s*7(?:\s|b|bn|$)|7\s*(?:млрд|миллиард|billion|bn|b(?![a-z]))', re.I)
+_R1B_NK = lambda t: re.sub(r'\s+', ' ', str(t or '')).strip()[:80].lower()
+
+
+def _r1b_story(t, d):
+    s = (t or '') + ' ' + (d or '')[:300]
+    if _R1B_EU.search(t or ''):
+        return 'участие Европы'
+    if _R1B_UA.search(s):
+        return 'делегация Украины'
+    if _R1B_RU.search(s):
+        return 'делегация РФ'
+    if _R1B_WHEN.search(t or ''):
+        return 'дата и место переговоров'
+    return 'другое'
+
+
+def _r1b_explain(t, d, domain):
+    """Почему переговорная запись НЕ строгая R1 (для контроля обычных заявлений и аналитики)."""
+    tl = t or ''
+    td = tl + ' ' + (d or '')[:400]
+    if domain not in ('geopolitics', None, ''):
+        return 'домен ' + str(domain)
+    if not _S11_WAR.search(td):
+        return 'нет признака войны / урегулирования'
+    if not _S11_CONCRETE.search(tl):
+        return 'нет конкретного события в заголовке'
+    if _S11_NEG_SOFT.search(tl):
+        return 'условие / готовность / рассуждение: «%s»' % _S11_NEG_SOFT.search(tl).group(0).strip()
+    if _S11_INTENT.search(tl):
+        return 'суждение о намерениях: «%s»' % _S11_INTENT.search(tl).group(0).strip()
+    return 'строгая R1'
+
+
+def _r1b_tier(src, t):
+    """2 - первичный источник (агентство / официальный канал) без оговорок; 1 - в заголовке
+    подтверждение официальной стороны без ссылки на СМИ; 0 - пересказ СМИ, «источники», без атрибуции."""
+    if _R1B_HEDGE.search(t or ''):
+        return 0
+    if _R1B_PRIMARY.search(src or ''):
+        return 2
+    if _R1B_OFFICIAL.search(t or ''):
+        return 1
+    return 0
+
+
+def _r1b_note(item, domain, severity, tid, gate):
+    """Вызывается ТОЛЬКО на пути удаления sev_nomarker / sev_low. Ничего не меняет."""
+    if not R1_BYPASS_SHADOW_0911:
+        return
+    try:
+        t = str(item.get('title') or ''); d = str(item.get('desc') or item.get('summary') or '')
+        if not _S11_NEG.search(t):
+            return
+        k = _R1B_NK(t)
+        fl, rule, why = _s11_rule(t, d, domain)
+        strict = bool(fl) and rule.startswith('R1')
+        if k not in _R1B_NEG_SEEN:
+            _R1B_NEG_SEEN[k] = {'title': t[:200], 'source': str(item.get('source') or ''), 'gate': gate,
+                                'raw_index': severity, 'strict_r1': strict,
+                                'verdict': 'строгая R1' if strict else _r1b_explain(t, d, domain)}
+        if not strict:
+            return
+        if k in _R1B_SEEN:      # повтор того же сообщения не раздувает число кандидатов
+            return
+        _R1B_SEEN.add(k)
+        src = str(item.get('source') or '')
+        blob = t + ' ' + d[:600]
+        conc = {re.sub(r'\s+', ' ', m.group(0).lower()).strip() for m in _S11_CONCRETE.finditer(blob)}
+        _R1B_CAND.append({'tid': tid, 'title': t[:220], 'desc': d[:600], 'source': src, 'gate': gate,
+                          'date': str(item.get('date') or ''), 'domain': domain or 'geopolitics',
+                          'raw_index': severity if isinstance(severity, (int, float)) else 0,
+                          'story': _r1b_story(t, d), 'why': why,
+                          'confirm_tier': _r1b_tier(src, t),
+                          'primary_confirmed': _r1b_tier(src, t) >= 1,
+                          'completeness': len(conc), 'concrete': sorted(conc)[:8]})
+    except Exception:
+        pass
+
+
+def _r1b_qrec(ev, d, key):
+    if not R1_BYPASS_SHADOW_0911:
+        return
+    _R1B_QREC.append((ev, d, key))
+
+
+def _r1b_pick():
+    """Победитель на сюжет и r1_story_dup. Возвращает (winners, dups)."""
+    by = {}
+    for c in _R1B_CAND:
+        by.setdefault(c['story'], []).append(c)
+    winners, dups = [], []
+    for st, cs in by.items():
+        cs = sorted(cs, key=lambda c: (-c['confirm_tier'], -c['completeness'], c['date'] or '9999'))
+        winners.append(cs[0]); dups.extend(cs[1:])
+    order = {s: i for i, s in enumerate(_R1B_STORIES)}
+    winners.sort(key=lambda c: (order.get(c['story'], 9), -c['confirm_tier'], -c['completeness']))
+    over = winners[R1B_MAX:]
+    return winners[:R1B_MAX], dups, over
+
+
+def _r1b_simulate(quota_map, feed_all, survivors, analytic, prio_fn, exported):
+    """Сценарии через квоту домена, кап ленты и _topic_cap на копиях. Production не трогается."""
+    if not R1_BYPASS_SHADOW_0911:
+        return
+    try:
+        winners, dups, over = _r1b_pick()
+        import io, contextlib
+        qids = {id(ev) for ev, _d, _k in _R1B_QREC}
+        a_feed = {id(e) for e in feed_all}
+        surv = {id(e) for e in survivors}                            # дошли до _topic_cap в production
+        base_feed = [(prio_fn(e), e) for e in feed_all if id(e) not in qids]   # вне квоты (официальные, крипто...)
+        qpool = [(k, d, ev) for ev, d, k in _R1B_QREC if ev.get('feed_visible') is not False]
+
+        def mk(c, sev):
+            return {'title': c['title'], 'summary': c['desc'], 'severity': sev, 'domain': c['domain'],
+                    'source': c['source'], '_r1b': c['story'], '_r1b_raw': c['raw_index'], '_r1b_tid': c['tid']}
+
+        def run(inj):
+            pool = [(k, 0, i, d, e) for i, (k, d, e) in enumerate(qpool)] + \
+                   [(prio_fn(e), 1, i, e['domain'], e) for i, e in enumerate(inj)]
+            pool.sort(key=lambda x: (-x[0], x[1], x[2]))             # инъекция после равных по ключу
+            cnt = {}; acc = []; rem = {}
+            for _k, _f, _i, dd, e in pool:
+                if cnt.get(dd, 0) < quota_map.get(dd, MAX_EVENTS):
+                    cnt[dd] = cnt.get(dd, 0) + 1; acc.append((_k, e))
+                else:
+                    rem[id(e)] = 'overflow'
+            feed = base_feed + acc
+            feed.sort(key=lambda x: -x[0])
+            for _k, e in feed[MAX_EVENTS:]:
+                rem[id(e)] = 'feed_cap'
+            feed = [e for _k, e in feed[:MAX_EVENTS]]
+            # стадии между капом ленты и _topic_cap (S43/44, S43b, _llm_dedup) не повторяются:
+            # их фактические удаления переносятся; записи, не доходившие до них в A, считаются прошедшими
+            for e in feed:
+                if id(e) in a_feed and id(e) not in surv:
+                    rem[id(e)] = 'промежуточные стадии (факт A)'
+            feed = [e for e in feed if not (id(e) in a_feed and id(e) not in surv)]
+            copies = [dict(e, _r1b_src_id=id(e)) for e in feed] + [dict(e) for e in analytic]
+            with contextlib.redirect_stderr(io.StringIO()):
+                tc = _topic_cap(copies, 6)
+            kept = {x.get('_r1b_src_id') for x in tc if x.get('_r1b_src_id')}
+            for e in feed:
+                if id(e) not in kept:
+                    rem[id(e)] = 'topic_cap'
+            final = [e for e in feed if id(e) in kept]
+            return final, rem
+
+        allc = [dict(c) for c in _R1B_CAND]
+        scen = {'A': [], 'B1': [mk(c, c['raw_index']) for c in allc],
+                'B2_без_лимита_сюжетов': [mk(c, max(c['raw_index'], R1B_FLOOR)) for c in allc],
+                'B2': [mk(c, max(c['raw_index'], R1B_FLOOR)) for c in winners]}
+        res = {k: run(v) for k, v in scen.items()}
+        _R1B_SIM.update({'res': res, 'winners': winners, 'dups': dups, 'over': over, 'scen': scen, 'feed_all': list(feed_all),
+                         'exported': [e for e in exported if e.get('feed_visible') is not False]})
+        if LINEAGE:
+            for c in winners:
+                _trace(c['tid'], 'R1_SHADOW', 'shadow', reason='r1_admission_bypass', story=c['story'],
+                       raw_index=c['raw_index'], shadow_adjusted_index=max(c['raw_index'], R1B_FLOOR))
+            for c in dups:
+                _trace(c['tid'], 'R1_SHADOW', 'shadow', reason='r1_story_dup', story=c['story'], raw_index=c['raw_index'])
+            for c in over:
+                _trace(c['tid'], 'R1_SHADOW', 'shadow', reason='r1_story_over_max', story=c['story'], raw_index=c['raw_index'])
+    except Exception as _e:
+        _R1B_SIM['error'] = str(_e)[:300]
+        print('  [WARN] r1 bypass shadow sim: %s' % _e, file=sys.stderr)
+
+
+def _r1b_toks(t):
+    return {w for w in re.findall(r'[а-яёa-z0-9]{4,}', str(t or '').lower())}
+
+
+def _r1b_twin(e, final):
+    """Заголовок близкой по словам карточки, оставшейся в ленте сценария (дубль сюжета), или ''."""
+    a = _r1b_toks(e.get('title'))
+    if len(a) < 3:
+        return ''
+    for x in final:
+        if x is e:
+            continue
+        b = _r1b_toks(x.get('title'))
+        if b and len(a & b) / max(1, min(len(a), len(b))) >= 0.6:
+            return str(x.get('title') or '')[:100]
+    return ''
+
+
+def _r1b_card(e):
+    fl, rule, _w = _s11_rule(str(e.get('title') or ''), str(e.get('summary') or ''), e.get('domain'))
+    t = str(e.get('title') or '')
+    tag = []
+    if rule.startswith('R3'):
+        tag.append('R3')
+    if _R1B_NATO7.search(t) and _R1B_NATO7B.search(t + ' ' + str(e.get('summary') or '')[:300]):
+        tag.append('NATO €7B')
+    return {'title': t[:160], 'source': str(e.get('source') or ''), 'domain': e.get('domain'),
+            'severity': e.get('severity'), 'контроль': tag}
+
+
+def _r1b_write():
+    if not R1_BYPASS_SHADOW_0911:
+        return
+    try:
+        exported = _R1B_SIM.get('exported')
+        rep = {'дата': datetime.now(timezone.utc).isoformat(timespec='seconds'),
+               'режим': 'тень B2: production Admission, severity, квоты, topic_cap, feed_cap, гео и домены не меняются',
+               'пол R1': R1B_FLOOR, 'максимум R1 на публикацию': R1B_MAX}
+        neg = list(_R1B_NEG_SEEN.values())
+        rep['контроль строгости'] = {
+            'переговорных записей срезано Admission': len(neg),
+            'строгих R1': sum(1 for x in neg if x['strict_r1']),
+            'не прошли (заявления, аналитика, намерения)': sum(1 for x in neg if not x['strict_r1']),
+            'записи': neg}
+        if 'error' in _R1B_SIM:
+            rep['ошибка'] = _R1B_SIM['error']
+        if 'res' in _R1B_SIM:
+            res = _R1B_SIM['res']; winners = _R1B_SIM['winners']; dups = _R1B_SIM['dups']; over = _R1B_SIM['over']
+            fa = res['A'][0]; ida = {id(e) for e in fa}
+            exp_ids = {id(e) for e in (exported or [])}
+            out = {}
+            for k, (final, rem) in res.items():
+                ids = {id(e) for e in final}
+                inj = [e for e in final if e.get('_r1b')]
+                lost = [e for e in fa if id(e) not in ids]
+                gained = [e for e in final if id(e) not in ida and not e.get('_r1b')]
+                cut_inj = {}
+                for e in _R1B_SIM['scen'][k]:
+                    if id(e) in rem:
+                        cut_inj[rem[id(e)]] = cut_inj.get(rem[id(e)], 0) + 1
+                out[k] = {'лента после topic_cap': len(final),
+                          'R1-карточек в ленте': len(inj),
+                          'R1 по сюжетам': {s: sum(1 for e in inj if e['_r1b'] == s) for s in sorted({e['_r1b'] for e in inj})},
+                          'R1 отсечены на стадиях': cut_inj,
+                          'вытеснено из ленты A': len(lost),
+                          'вытесненные': [dict(_r1b_card(e), стадия=rem.get(id(e), '?'),
+                                               копия_осталась_в_ленте=_r1b_twin(e, final)) for e in lost],
+                          'вернулись относительно A': [_r1b_card(e) for e in gained],
+                          'R1, дошедшие до ленты': [{'title': e['title'][:160], 'source': e['source'], 'story': e['_r1b'],
+                                                    'raw_index': e['_r1b_raw'], 'index': e['severity']} for e in inj]}
+            # контроль: R3 и NATO €7B в A и в B2
+            watch = [e for e in [ev for ev, _d, _k in _R1B_QREC] + list(_R1B_SIM.get('feed_all') or []) if _r1b_card(e)['контроль']]
+            seen = set(); wl = []
+            for e in watch:
+                if id(e) in seen:
+                    continue
+                seen.add(id(e)); b2 = {id(x) for x in res['B2'][0]}
+                wl.append(dict(_r1b_card(e), в_A=id(e) in ida, в_B2=id(e) in b2,
+                               стадия_A=res['A'][1].get(id(e), 'в ленте' if id(e) in ida else 'до квоты / вне ленты'),
+                               стадия_B2=res['B2'][1].get(id(e), 'в ленте' if id(e) in b2 else 'до квоты / вне ленты')))
+            # проверка модели: A-сценарий против фактического выхода _topic_cap
+            rep['сверка модели'] = {'A_модель': len(fa),
+                                    'A_совпало_с_фактом': sum(1 for e in fa if id(e) in exp_ids) if exported is not None else None,
+                                    'факт после topic_cap': len(exported) if exported is not None else None}
+            b2l = {id(e) for e in res['B2_без_лимита_сюжетов'][0]}; b2 = {id(e) for e in res['B2'][0]}
+            freed = [e for e in fa if id(e) in b2 and id(e) not in b2l]
+            rep['B2'] = {
+                'кандидатов строгих R1 (уникальных)': len(_R1B_CAND),
+                'уникальных сюжетов': len({c['story'] for c in _R1B_CAND}),
+                'победителей': len(winners), 'r1_story_dup': len(dups), 'сверх максимума 4': len(over),
+                'победители': [{'story': c['story'], 'title': c['title'][:160], 'source': c['source'],
+                                'подтверждение': c['confirm_tier'], 'completeness': c['completeness'], 'concrete': c['concrete'],
+                                'date': c['date'], 'raw_index': c['raw_index'],
+                                'shadow_adjusted_index': max(c['raw_index'], R1B_FLOOR), 'gate': c['gate']} for c in winners],
+                'дубли': [{'story': c['story'], 'title': c['title'][:160], 'source': c['source'], 'подтверждение': c['confirm_tier'],
+                           'completeness': c['completeness'], 'reason': 'r1_story_dup'} for c in dups],
+                'сверх максимума': [{'story': c['story'], 'title': c['title'][:160], 'reason': 'r1_story_over_max'} for c in over],
+                'лимит сюжетов сохранил в ленте (вытеснялись бы без него)': [_r1b_card(e) for e in freed],
+                'контроль R3 и NATO €7B': wl}
+            rep['сценарии'] = out
+        (OUTPUT_PATH.parent / '_r1_bypass_shadow.json').write_text(json.dumps(rep, ensure_ascii=False, indent=1), encoding='utf-8')
+    except Exception as _e:
+        print('  [WARN] r1 bypass shadow: %s' % _e, file=sys.stderr)
+
+
 def process_events(raw_items):
     events = []
     seen_ids = set()
@@ -8318,6 +8634,7 @@ def process_events(raw_items):
                 and not _is_judicial_event(_blob)
                 and not _is_digital_failure(_blob)
                 and not _is_crypto_theft(_blob)):
+            _r1b_note(item, domain, severity, _tid, 'sev_nomarker')   # R1_BYPASS_SHADOW_0911: только отчёт
             _trace(_tid,'SEVERITY','removed',reason='sev_nomarker'); _lost('sev', item); _lost('sev_nomarker', item); continue
 
         # ANALYTIC ADMISSION: слабый сигнал (ниже порога ленты) допускается в аналитический
@@ -8427,6 +8744,7 @@ def process_events(raw_items):
                     'score': round(_score, 1), 'score_b': round(_score_noproc, 1),
                     'why': _why, 'src': str(item.get('source',''))[:24]})
             if _adm == 'REJECT':
+                _r1b_note(item, domain, severity, _tid, 'sev_low')   # R1_BYPASS_SHADOW_0911: только отчёт
                 _trace(_tid,'SEVERITY','removed',reason='sev_low'); _lost('sev', item); _lost('sev_low', item); continue
             # сохранить объяснимость в само событие (для аналитики/UI)
             item['admission_reason'] = [_reason_map.get(w, w) for w in _why]
@@ -8584,6 +8902,7 @@ def process_events(raw_items):
     _DISASTER_SRC={'NASA EONET','GDACS','GDACS/Copernicus','USGS','Copernicus EMS','FloodList','The Watchers','Wildfire Today'}
     _RSS_PRIORITY={'NASA EONET','GDACS','USGS','Copernicus EMS','FloodList','The Watchers','Wildfire Today','Inside Climate News','Carbon Brief','Climate Home News','Mongabay','Yale Climate Connections','Canary Media','Grist','Phys.org Climate','ScienceDaily Climate','Yale E360','WFP','FAO News','FEWS NET','Pew Research','Brookings','Carnegie','Freedom House','CDC','ECDC','WHO Outbreaks','The Lancet','ProMED','Oxfam','UNHCR','IDMC','IEEE Spectrum','Hugging Face','OpenAI News','Google DeepMind','KrebsOnSecurity','CISA','Cisco Talos','ENISA','Semiconductor Engineering','EE Times','Data Center Dynamics','The Register','SpaceNews','Space.com','Utility Dive','PV Magazine','The Robot Report','Cloudflare Blog','RIPE NCC','New Scientist','MIT Technology Review','IEA','EIA','OilPrice','Mining.com','FreightWaves','Journal of Commerce','WTO','UNCTAD','Reuters Business','Trading Economics','IMF','World Bank','BIS','OECD'}
     events.sort(key=lambda e: (e.get('severity',0) or 0) + (30 if e.get('source') in _DISASTER_SRC else (25 if e.get('source') in _RSS_PRIORITY else 0)), reverse=True)
+    _r1b_prio = lambda e: (e.get('severity',0) or 0) + (30 if e.get('source') in _DISASTER_SRC else (25 if e.get('source') in _RSS_PRIORITY else 0))   # тот же ключ для тени R1
     
     # Квотирование по доменам (суммы дают ровно MAX_EVENTS=200)
     # КВОТЫ ПЕРЕРАСПРЕДЕЛЕНЫ (10.09.2026). Сумма квот 485 была МЕНЬШЕ
@@ -8776,6 +9095,7 @@ def process_events(raw_items):
             balanced.append(ev)
             continue
         quota = DOMAIN_QUOTA.get(d, MAX_EVENTS)
+        _r1b_qrec(ev, d, _r1b_prio(ev))   # R1_BYPASS_SHADOW_0911: только отчёт
         if domain_counts.get(d, 0) < quota:
             _trace(ev.get('_obs_tid'),'BUILT',domain=d, severity=ev.get('severity'),
                    canon_type=ev.get('canon_type'), source=ev.get('source'))
@@ -9200,6 +9520,8 @@ def process_events(raw_items):
     _tc_in = list(top_events)
     top_events = _topic_cap(top_events, 6)
     _post_lost('лимит_на_тему_6', _tc_in, top_events)
+    _r1b_simulate(DOMAIN_QUOTA, _feed_all, _tc_in, [e for e in _tc_in if e.get('feed_visible') is False],
+                  _r1b_prio, top_events)   # R1_BYPASS_SHADOW_0911: только отчёт, на копиях
     if LINEAGE:
         _tc_post={x.get('_obs_tid') for x in top_events if x.get('_obs_tid')}
         for _tcx in (_tc_pre - _tc_post): _trace(_tcx,'TOPIC_CAP','removed',reason='topic_cap')
@@ -29258,6 +29580,7 @@ def save_enriched(events, previous_snapshot=None):
             _lin_exact(_lx0, enriched["events"], 'SIGNAL_QUALITY', 'signal_quality')
             _qc_write_shadow()
             _s11_write()
+            _r1b_write()
             _egp('k09_signal_quality', enriched["events"])
             enriched["events"] = _retain_critical(enriched["events"], previous_snapshot)
             _egp('k10_retain_critical', enriched["events"])
