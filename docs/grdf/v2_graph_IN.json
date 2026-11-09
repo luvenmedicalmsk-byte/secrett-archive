@@ -2,9 +2,9 @@
   "country": "IN",
   "date": "2026-11-09",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-09T01:09:22.469800+00:00",
+  "generated_at": "2026-11-09T01:29:04.823018+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-IN",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-IN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
+      "score": 47,
       "trend": "stable"
     },
     {
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
+      "id": "SIGNAL-IN-Филиппины_",
+      "type": "Signal",
+      "label": "Филиппины запрашивают индивидуальные рак",
+      "severity": 47,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-IN-IT-специал",
       "type": "Signal",
       "label": "IT-специалисты возвращаются в Индию из С",
       "severity": 45,
       "domain": "social"
-    },
-    {
-      "id": "SIGNAL-IN-Наводнение",
-      "type": "Signal",
-      "label": "Наводнение — Индия",
-      "severity": 70,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.47
     },
     {
       "from": "COUNTRY-IN",
@@ -184,6 +184,27 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-IN-geopolitical",
+      "to": "DOMAIN-IN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IN-infrastructure",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "DOMAIN-IN-climate",
       "to": "DOMAIN-IN-infrastructure",
       "type": "ESCALATES",
@@ -211,16 +232,16 @@
       "weight": 0.7
     },
     {
+      "from": "SIGNAL-IN-Филиппины_",
+      "to": "DOMAIN-IN-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.47
+    },
+    {
       "from": "SIGNAL-IN-IT-специал",
       "to": "DOMAIN-IN-social",
       "type": "AMPLIFIES",
       "weight": 0.45
-    },
-    {
-      "from": "SIGNAL-IN-Наводнение",
-      "to": "DOMAIN-IN-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.7
     }
   ]
 }
