@@ -46,6 +46,18 @@ if hasattr(fe, '_event_dedup_0911'):
     ok(any('Харькову' in t for t in titles) and any('Одессе' in t for t in titles), 'разные города не склеиваются')
     fe.EVENT_DEDUP_0911 = False
     ok(len(fe._event_dedup_0911(list(ev))) == 7, 'флаг выключен - без склейки')
+if hasattr(fe, '_srcdup_1011'):
+    mk2 = lambda t, src, cc, d='2026-11-09', dom='social': {'title': t, 'severity': 76, 'source': src, 'date': d, 'domain': dom,
+                                                         'country_code': cc, 'feed_visible': True}
+    ev2 = [mk2('Домашние расходы в Японии упали больше всего с начала пандемии', 'Bloomberg Markets', 'JP'),
+           mk2('Расходы домохозяйств Японии упали наибольшее с момента пандемии', 'Bloomberg Markets', 'JP'),
+           mk2('В результате атаки БПЛА в Ростовской области поврежден мост через реку Миус', 'Telegram/novosti_efir', 'RU', dom='geopolitics'),
+           mk2('В результате атаки БПЛА в Саратовской области есть повреждения объектов', 'Telegram/novosti_efir', 'RU', dom='geopolitics'),
+           mk2('Мониторинг ракетной войны: Украина атакует завод по производству топлива для ракет «Искандер» под Санкт-Петербургом', 'bne IntelliNews', 'RU', dom='geopolitics'),
+           mk2('Мониторинг ракетной войны: Украинские дроны атакуют Кириши, дом второго по величине НПЗ в России', 'bne IntelliNews', 'RU', dom='geopolitics')]
+    with contextlib.redirect_stderr(io.StringIO()):
+        o2 = fe._srcdup_1011(list(ev2))
+    ok(len(o2) == 5 and o2[0]['title'].startswith('Домашние'), 'SRCDUP: склеен только перевод Bloomberg, осталось %d' % len(o2))
 print('NOISE_0911: %s' % ('OK' if not fails else 'ОШИБКИ'))
 for f in fails: print('  -', f)
 sys.exit(1 if fails else 0)

@@ -10682,7 +10682,67 @@ def _ed9_kinds(t):
     return {i for i, ks in enumerate(_ED9_KIND) if any(k in tl for k in ks)}
 
 
+# SRCDUP_1011 (10.11.2026, скриншот Мии): один источник дал два перевода одной новости.
+# Bloomberg Markets «Домашние расходы в Японии упали больше всего с начала пандемии» и
+# «Расходы домохозяйств Японии упали наибольшее с момента пандемии» - обе 76, обе в ленте:
+# совпадение основ 4 из 7 (0.57) ниже порога _ndup_collapse 0.6, а склейка по жертвам
+# (EVENT_DEDUP_0911) их не касается. Узкое правило: тот же источник, тот же день, тот же
+# домен и та же страна, совпадение основ заголовка от 4 и не ниже 0.5. Машинные ленты и
+# CAP не участвуют (у них однотипные заголовки по разным местам).
+# Откат: SRCDUP_1011 = False.
+SRCDUP_1011 = True
+
+
+def _srcdup_1011(events):
+    if not SRCDUP_1011:
+        return events
+    try:
+        idx = [i for i, e in enumerate(events) if e.get('feed_visible', True) and not e.get('alerts_only')
+               and e.get('source') and e.get('source') not in _ECS_MACHINE
+               and not str(e.get('source') or '').endswith('CAP') and not (e.get('meta') or {}).get('kind') in ('cap', 'cap_hub')]
+        # рубрика серии до двоеточия («Мониторинг ракетной войны: …») не считается совпадением
+        S = {i: _ndup_stems(re.sub(r'^[^:]{3,60}:\s+', '', events[i].get('title') or '', count=1)) for i in idx}
+        AN = {i: {a[:5] for a in _ecs_anchors(events[i].get('title') or '', events[i].get('source'))} for i in idx}
+        order = sorted(idx, key=lambda i: -(events[i].get('severity') or 0))
+        drop = {}
+        for a_i, i in enumerate(order):
+            if i in drop:
+                continue
+            ei = events[i]
+            for j in order[a_i + 1:]:
+                if j in drop:
+                    continue
+                ej = events[j]
+                if ei.get('source') != ej.get('source') or ei.get('domain') != ej.get('domain'):
+                    continue
+                if (ei.get('country_code') or ei.get('event_country')) != (ej.get('country_code') or ej.get('event_country')):
+                    continue
+                di, dj = _ndup_day(ei.get('date')), _ndup_day(ej.get('date'))
+                if di is None or dj is None or abs(di - dj) > 1:
+                    continue
+                # разные топонимы в заголовках («в Ростовской области» / «в Саратовской области»,
+                # «под Санкт-Петербургом» / «Кириши») - разные события
+                if AN[i] and AN[j] and not (AN[i] & AN[j]):
+                    continue
+                inter, ratio = _ndup_ovl(S[i], S[j])
+                if inter >= 4 and ratio >= 0.5:
+                    drop[j] = i
+        if not drop:
+            return events
+        out = [e for k, e in enumerate(events) if k not in drop]
+        if LINEAGE and LINEAGE_NDUP_P10:
+            _lin_removed([events[k] for k in drop], out, 'EVENT_DEDUP', 'source_dup',
+                         winner_of=lambda _x: next((events[w] for k, w in drop.items() if events[k] is _x), None))
+        print('  [SRCDUP-1011] склеено %d: %s' % (len(drop), '; '.join(
+            (events[k].get('title') or '')[:50] for k in list(drop)[:5])), file=sys.stderr)
+        return out
+    except Exception as _e:
+        print('  [WARN] srcdup: %s' % _e, file=sys.stderr)
+        return events
+
+
 def _event_dedup_0911(events):
+    events = _srcdup_1011(events)
     if not EVENT_DEDUP_0911:
         return events
     try:
