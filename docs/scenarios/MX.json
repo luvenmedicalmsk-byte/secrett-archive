@@ -2,17 +2,17 @@
   "country": "MX",
   "country_name": "Мексика",
   "date": "2026-11-10",
-  "generated_at": "2026-11-10T22:01:01.516237+00:00",
+  "generated_at": "2026-11-10T22:11:45.577195+00:00",
   "risk_score": 60,
   "scenario_score": 22,
-  "instability": 9,
+  "instability": 23,
   "instability_v2": true,
   "scenarios": [
     {
       "type": "best",
       "name": "Best Case",
       "name_ru": "Лучший сценарий",
-      "probability": 34,
+      "probability": 32,
       "score": 45,
       "delta_from_current": -15,
       "state": "contained",
@@ -24,7 +24,7 @@
       "recovery_days": 235,
       "future_pressure": 24,
       "future_resilience": 54,
-      "future_probability": 34,
+      "future_probability": 32,
       "drivers": [
         {
           "driver": "Деэскалация",
@@ -71,7 +71,7 @@
       "type": "base",
       "name": "Base Case",
       "name_ru": "Базовый сценарий",
-      "probability": 29,
+      "probability": 23,
       "score": 60,
       "delta_from_current": 0,
       "state": "escalating",
@@ -83,8 +83,13 @@
       "recovery_days": 313,
       "future_pressure": 40,
       "future_resilience": 50,
-      "future_probability": 29,
-      "drivers": [],
+      "future_probability": 23,
+      "drivers": [
+        {
+          "driver": "Наводнение — Мексика",
+          "impact": 12
+        }
+      ],
       "description": "Текущие тренды сохраняются, без значимых изменений",
       "horizons": [
         {
@@ -125,7 +130,7 @@
       "type": "stress",
       "name": "Stress Case",
       "name_ru": "Стресс-сценарий",
-      "probability": 21,
+      "probability": 23,
       "score": 68,
       "delta_from_current": 8,
       "state": "escalating",
@@ -137,8 +142,12 @@
       "recovery_days": 355,
       "future_pressure": 50,
       "future_resilience": 46,
-      "future_probability": 21,
+      "future_probability": 23,
       "drivers": [
+        {
+          "driver": "Наводнение — Мексика",
+          "impact": 16
+        },
         {
           "driver": "Негативный сдвиг",
           "impact": 8
@@ -157,26 +166,26 @@
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 72,
-          "state": "escalating",
-          "state_ru": "Эскалация",
-          "delta_from_current": 12
+          "score": 73,
+          "state": "critical",
+          "state_ru": "Критическая эскалация",
+          "delta_from_current": 13
         },
         {
           "horizon": "180d",
           "label": "180 дней",
-          "score": 77,
+          "score": 78,
           "state": "critical",
           "state_ru": "Критическая эскалация",
-          "delta_from_current": 17
+          "delta_from_current": 18
         },
         {
           "horizon": "365d",
           "label": "365 дней",
-          "score": 82,
+          "score": 84,
           "state": "critical",
           "state_ru": "Критическая эскалация",
-          "delta_from_current": 22
+          "delta_from_current": 24
         }
       ]
     },
@@ -184,7 +193,7 @@
       "type": "worst",
       "name": "Worst Case",
       "name_ru": "Худший сценарий",
-      "probability": 16,
+      "probability": 22,
       "score": 75,
       "delta_from_current": 15,
       "state": "critical",
@@ -196,8 +205,12 @@
       "recovery_days": 391,
       "future_pressure": 60,
       "future_resilience": 38,
-      "future_probability": 16,
+      "future_probability": 22,
       "drivers": [
+        {
+          "driver": "Наводнение — Мексика",
+          "impact": 23
+        },
         {
           "driver": "Каскадный эффект",
           "impact": 15
@@ -216,26 +229,26 @@
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 81,
+          "score": 82,
           "state": "critical",
           "state_ru": "Критическая эскалация",
-          "delta_from_current": 21
+          "delta_from_current": 22
         },
         {
           "horizon": "180d",
           "label": "180 дней",
-          "score": 87,
-          "state": "critical",
-          "state_ru": "Критическая эскалация",
-          "delta_from_current": 27
+          "score": 89,
+          "state": "cascade",
+          "state_ru": "Каскадный кризис",
+          "delta_from_current": 29
         },
         {
           "horizon": "365d",
           "label": "365 дней",
-          "score": 94,
+          "score": 95,
           "state": "cascade",
           "state_ru": "Каскадный кризис",
-          "delta_from_current": 34
+          "delta_from_current": 35
         }
       ]
     }
@@ -244,22 +257,22 @@
     {
       "condition": "delta ≥ 3 за 24ч",
       "leads_to": "worst",
-      "probability": 16
+      "probability": 22
     },
     {
-      "condition": "Драйвер severity ≥ 85 в economy",
+      "condition": "Драйвер severity ≥ 85 в climate",
       "leads_to": "stress",
-      "probability": 21
+      "probability": 23
     },
     {
       "condition": "Деэскалация ключевого кризиса",
       "leads_to": "best",
-      "probability": 34
+      "probability": 32
     },
     {
       "condition": "Цепочка распространения → 3+ страны",
       "leads_to": "worst",
-      "probability": 5
+      "probability": 8
     }
   ],
   "dominant_scenario": "best"

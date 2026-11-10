@@ -2,9 +2,9 @@
   "country": "MX",
   "date": "2026-11-10",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-10T22:01:05.196133+00:00",
+  "generated_at": "2026-11-10T22:11:48.701246+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-MX",
@@ -33,7 +33,7 @@
       "id": "DOMAIN-MX-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 81,
       "trend": "stable"
     },
     {
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-MX-Уровень_ин",
-      "type": "Signal",
-      "label": "Уровень инфляции в Мексике растет третий",
-      "severity": 60,
-      "domain": "economic"
-    },
-    {
       "id": "SIGNAL-MX-Инфляция_—",
       "type": "Signal",
       "label": "Инфляция — Мексика",
@@ -99,6 +92,13 @@
       "label": "Киберугроза — Латинская Америка",
       "severity": 60,
       "domain": "technology"
+    },
+    {
+      "id": "SIGNAL-MX-Наводнение",
+      "type": "Signal",
+      "label": "Наводнение — Мексика",
+      "severity": 81,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.81
     },
     {
       "from": "COUNTRY-MX",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-MX-climate",
+      "to": "DOMAIN-MX-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-MX-infrastructure",
+      "to": "DOMAIN-MX-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-MX-economic",
+      "to": "DOMAIN-MX-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-MX-climate",
+      "to": "DOMAIN-MX-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-MX-economic",
+      "to": "DOMAIN-MX-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-MX-social",
+      "to": "DOMAIN-MX-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-MX-geopolitical",
       "to": "DOMAIN-MX-infrastructure",
       "type": "ESCALATES",
@@ -184,12 +226,6 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-MX-Уровень_ин",
-      "to": "DOMAIN-MX-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.6
-    },
-    {
       "from": "SIGNAL-MX-Инфляция_—",
       "to": "DOMAIN-MX-economic",
       "type": "AMPLIFIES",
@@ -200,6 +236,12 @@
       "to": "DOMAIN-MX-technology",
       "type": "AMPLIFIES",
       "weight": 0.6
+    },
+    {
+      "from": "SIGNAL-MX-Наводнение",
+      "to": "DOMAIN-MX-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.81
     }
   ]
 }
