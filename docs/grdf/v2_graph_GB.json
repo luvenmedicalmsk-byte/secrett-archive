@@ -2,25 +2,25 @@
   "country": "GB",
   "date": "2026-11-10",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-10T10:50:03.533121+00:00",
+  "generated_at": "2026-11-10T11:11:25.353731+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-GB",
       "type": "Country",
       "label": "GB",
-      "score": 74,
+      "score": 72,
       "props": {
-        "risk_score": 74
+        "risk_score": 72
       }
     },
     {
       "id": "DOMAIN-GB-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 60,
-      "trend": "down"
+      "score": 5,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-GB-economic",
@@ -33,8 +33,8 @@
       "id": "DOMAIN-GB-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "stable"
+      "score": 44,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GB-technology",
@@ -94,11 +94,11 @@
       "domain": "technology"
     },
     {
-      "id": "SIGNAL-GB-Парад_вете",
+      "id": "SIGNAL-GB-Сезон_лесн",
       "type": "Signal",
-      "label": "Парад ветеранов 1982 года — Лондон, пока",
-      "severity": 60,
-      "domain": "geopolitical"
+      "label": "Сезон лесных пожаров в Великобритании 20",
+      "severity": 44,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.6
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-GB",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-GB",
@@ -163,25 +163,46 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-GB-geopolitical",
+      "from": "DOMAIN-GB-climate",
       "to": "DOMAIN-GB-infrastructure",
       "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
+      "weight": 0.82,
+      "lag_days": 7
     },
     {
       "from": "DOMAIN-GB-infrastructure",
       "to": "DOMAIN-GB-economic",
       "type": "AMPLIFIES",
-      "weight": 0.72,
+      "weight": 0.68,
       "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GB-economic",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-GB-climate",
+      "to": "DOMAIN-GB-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-GB-economic",
       "to": "DOMAIN-GB-social",
       "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-GB-social",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "SIGNAL-GB-Великобрит",
@@ -196,10 +217,10 @@
       "weight": 0.62
     },
     {
-      "from": "SIGNAL-GB-Парад_вете",
-      "to": "DOMAIN-GB-geopolitical",
+      "from": "SIGNAL-GB-Сезон_лесн",
+      "to": "DOMAIN-GB-climate",
       "type": "AMPLIFIES",
-      "weight": 0.6
+      "weight": 0.44
     }
   ]
 }
