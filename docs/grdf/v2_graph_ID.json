@@ -2,7 +2,7 @@
   "country": "ID",
   "date": "2026-11-10",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-10T23:30:57.401274+00:00",
+  "generated_at": "2026-11-10T23:50:23.969983+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-ID",
       "type": "Country",
       "label": "ID",
-      "score": 52,
+      "score": 68,
       "props": {
-        "risk_score": 52
+        "risk_score": 68
       }
     },
     {
@@ -20,49 +20,49 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-climate",
       "type": "Domain",
       "label": "climate",
       "score": 66,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-social",
       "type": "Domain",
       "label": "social",
-      "score": 43,
-      "trend": "down"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DRIVER-ID-Geopolitical",
@@ -80,24 +80,24 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-ID-Пожарная_а",
+      "id": "SIGNAL-ID-Более_3500",
       "type": "Signal",
-      "label": "Пожарная активность — Индонезия",
+      "label": "Более 3500 человек погибли от загрязнени",
       "severity": 66,
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-ID-Миграционн",
+      "id": "SIGNAL-ID-Гроза:_Лам",
       "type": "Signal",
-      "label": "Миграционная политика — Юго-Восточная Аз",
-      "severity": 58,
-      "domain": "social"
+      "label": "Гроза: Лампунг, Папуа, Папуа-Пегунунган ",
+      "severity": 56,
+      "domain": "climate"
     },
     {
-      "id": "SIGNAL-ID-Шторм_—_Ин",
+      "id": "SIGNAL-ID-Пожарная_а",
       "type": "Signal",
-      "label": "Шторм — Индонезия",
-      "severity": 56,
+      "label": "Пожарная активность — Индонезия",
+      "severity": 66,
       "domain": "climate"
     }
   ],
@@ -130,7 +130,7 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-social",
       "type": "CORRELATES",
-      "weight": 0.43
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-ID",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-ID-climate",
-      "to": "DOMAIN-ID-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-ID-economic",
-      "to": "DOMAIN-ID-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-ID-social",
-      "to": "DOMAIN-ID-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-ID-climate",
       "to": "DOMAIN-ID-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -205,22 +184,43 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-ID-Пожарная_а",
+      "from": "DOMAIN-ID-climate",
+      "to": "DOMAIN-ID-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ID-economic",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-ID-social",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "SIGNAL-ID-Более_3500",
       "to": "DOMAIN-ID-climate",
       "type": "AMPLIFIES",
       "weight": 0.66
     },
     {
-      "from": "SIGNAL-ID-Миграционн",
-      "to": "DOMAIN-ID-social",
-      "type": "AMPLIFIES",
-      "weight": 0.58
-    },
-    {
-      "from": "SIGNAL-ID-Шторм_—_Ин",
+      "from": "SIGNAL-ID-Гроза:_Лам",
       "to": "DOMAIN-ID-climate",
       "type": "AMPLIFIES",
       "weight": 0.56
+    },
+    {
+      "from": "SIGNAL-ID-Пожарная_а",
+      "to": "DOMAIN-ID-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.66
     }
   ]
 }
