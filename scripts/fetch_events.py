@@ -23489,9 +23489,23 @@ def fetch_regional():
         {"url": "https://www.inform.kz/rss/rus.xml", "source": "Kazinform", "bias": 6},
         {"url": "https://orda.kz/feed/", "source": "Orda.kz", "bias": 7},
         {"url": "https://kursiv.media/feed/", "source": "Kursiv", "bias": 6},
-        # Беларусь
-        {"url": "https://reforma.by/rss", "source": "Reforma BY", "bias": 7},
-        {"url": "https://spring96.org/rss", "source": "Viasna HR", "bias": 8},
+        # Беларусь. BY_SOURCES_1011 (10.11.2026, просьба Мии): прежние адреса
+        # reforma.by/rss и spring96.org/rss в sources_health не отдавали ни
+        # одной записи, лента по BY была пустой (одна запись Белгидромета).
+        # Сеть мастерской закрыта, адреса не проверить: по два варианта на
+        # источник, как у Казахстана 03.11; живые покажет журнал прогона,
+        # мёртвые убираются следующим коммитом. Только независимые издания:
+        # БелТА по решению Мии не подключается.
+        {"url": "https://reform.news/feed", "source": "Reform.news", "bias": 7},
+        {"url": "https://reform.news/rss", "source": "Reform.news", "bias": 7},
+        {"url": "https://news.zerkalo.io/rss/all.rss", "source": "Zerkalo", "bias": 7},
+        {"url": "https://news.zerkalo.io/rss/index.rss", "source": "Zerkalo", "bias": 7},
+        {"url": "https://nashaniva.com/rss/", "source": "Nasha Niva", "bias": 7},
+        {"url": "https://nashaniva.com/ru/rss/", "source": "Nasha Niva", "bias": 7},
+        {"url": "https://belsat.eu/ru/feed/", "source": "Belsat", "bias": 7},
+        {"url": "https://belsat.eu/ru/rss/", "source": "Belsat", "bias": 7},
+        {"url": "https://spring96.org/ru/rss", "source": "Viasna HR", "bias": 8},
+        {"url": "https://spring96.org/ru/news/rss", "source": "Viasna HR", "bias": 8},
         # Европа (дополнительно)
         {"url": "https://euobserver.com/feed/", "source": "EUobserver", "bias": 7},
         {"url": "https://www.politico.eu/feed/", "source": "Politico EU", "bias": 7},
