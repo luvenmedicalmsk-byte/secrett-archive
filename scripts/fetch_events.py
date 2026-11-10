@@ -243,6 +243,96 @@ def _entity_shadow_report(events, outdir):
         print(f"  [ENTITY-SHADOW] with_entity={rep['with_entity']}/{rep['total']} would_change={rep['would_domain_change']}")
     except Exception: pass
 # ═══ end entity layer shadow ═══
+# ═══ CLIM-LEX SHADOW (10.11.2026) · READ-ONLY ═══════════════════════════
+# Замечание Мии по вкладке «Контекст · Климат»: записи стоят на 32/100.
+# 32 это нижняя планка лексической оценки (маркеров риска не найдено), а не
+# оценка риска. Здесь только измерение, события не меняются:
+#   S2  долгосрочные климатические процессы (уровень моря, ледники, переломные
+#       точки) вне класса «необратимая деградация» -> порог 62 был бы применён;
+#       климатическое финансирование + долг в заголовке -> порог 45;
+#   S3  домен climate унаследован от источника (правило не сработало) и в тексте
+#       нет климатической лексики, кроме общего слова «климат»;
+#   S4  правило 'санкц' сработало только внутри «несанкционированн»;
+#   S5  обращение гражданина («Всем добрый день! Хочу сообщить…»).
+# Файл docs/_clim_lex_shadow.json накапливает записи между прогонами (по id).
+# Откат: CLIM_LEX_SHADOW = False.
+CLIM_LEX_SHADOW = True
+_CLS_IRREV_PLUS = re.compile(
+    r'уров\w*\s+(?:мирового\s+)?(?:океана|моря|морей)\s+(?:\w+\s+){0,3}(?:подним|повыс|выраст|рост)\w*'
+    r'|(?:подъ[её]м|повышени\w*|рост\w*)\s+уровня\s+(?:мирового\s+)?(?:океана|моря)'
+    r'|sea[- ]level\s+rise'
+    r'|ледник\w*\s+(?:\w+\s+){0,4}(?:под\s+угрозой|исчеза\w*|та[ея]\w*|сокраща\w*|разруша\w*)'
+    r'|(?:ледников\w*|ледяно\w*)\s+щит\w*'
+    r'|туэйтс|thwaites|ледник\w*\s+судного\s+дня'
+    r'|переломн\w*\s+точк\w*|tipping\s+point|\bamoc\b|атлантическ\w*\s+меридиональн\w*', re.I)
+_CLS_FIN = re.compile(r'климатическ\w*\s+финансирован\w*|climate\s+financ', re.I)
+_CLS_DEBT = re.compile(r'долг\w*|займ\w*|заём|debt|loan', re.I)
+_CLS_FIN_FLOOR = 45
+_CLS_GENERIC = {'климат', 'эколог', 'экологи', 'climate'}
+_CLS_APPEAL = re.compile(
+    r'всем\s+добрый\s+(?:день|вечер)|хочу\s+сообщить|прошу\s+(?:разобраться|принять\s+меры|помочь)'
+    r'|обращаюсь\s+к|уважаем\w*\s+(?:губернатор|глав)', re.I)
+def _clim_lex_shadow_report(events, outdir):
+    if not CLIM_LEX_SHADOW: return
+    ts = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+    cur = {'s2': [], 's3': [], 's4': [], 's5': []}
+    for e in events:
+        title = e.get('title') or ''
+        summ = e.get('summary') or ''
+        t = title + ' ' + summ[:200]
+        sev = int(e.get('severity') or 0)
+        base = {'id': e.get('id'), 't': title[:110], 'src': e.get('source'), 'dom': e.get('domain'),
+                'sic': e.get('sic_class'), 'sev': sev}
+        try:
+            old_irrev = ((((_IRREVERSIBLE_RE.search(t) and _NATURAL_SYSTEM_RE.search(t))
+                           or _IRREVERSIBLE_SOLO_RE.search(t))) and not _TECH_DEGRADATION_RE.search(t))
+            m = _CLS_IRREV_PLUS.search(t)
+            if not old_irrev and m and not _TECH_DEGRADATION_RE.search(t) and sev < _IRREVERSIBLE_FLOOR:
+                cur['s2'].append(dict(base, would=_IRREVERSIBLE_FLOOR, why='irreversible+: ' + m.group(0)[:40]))
+            elif _CLS_FIN.search(title) and _CLS_DEBT.search(title) and sev < _CLS_FIN_FLOOR:
+                cur['s2'].append(dict(base, would=_CLS_FIN_FLOOR, why='climate_finance_debt'))
+            bd = (e.get('basis') or {}).get('domain') or {}
+            if (e.get('domain') == 'climate' and not bd.get('rule')
+                    and not str(e.get('source') or '').endswith('CAP')):
+                blob = t.lower()
+                ch = [w for w in _DOMAIN_VOCAB['climate'] if w not in _CLS_GENERIC and _domvoc_hit(w, blob)]
+                if not ch:
+                    sc = {d: [w for w in _DOMAIN_VOCAB[d] if _domvoc_hit(w, blob)] for d in _DOMAIN_VOCAB if d != 'climate'}
+                    best = max(sc, key=lambda d: len(sc[d]))
+                    cur['s3'].append(dict(base, cand=best if sc[best] else None, words=sc[best][:4]))
+            full = (title + ' ' + summ).lower()
+            if bd.get('rule') == 'санкц' and not re.search(r'(?<!не)санкц', full):
+                cur['s4'].append(dict(base, canon=e.get('canon_type')))
+            if _CLS_APPEAL.search(title + ' ' + summ):
+                cur['s5'].append(dict(base, canon=e.get('canon_type'), map=e.get('map_visible')))
+        except Exception:
+            continue
+    path = outdir / '_clim_lex_shadow.json'
+    try:
+        prev = json.loads(path.read_text(encoding='utf-8'))
+    except Exception:
+        prev = {}
+    acc = prev.get('accumulated') or {}
+    for k, rows in cur.items():
+        bucket = acc.setdefault(k, {})
+        for r in rows:
+            x = bucket.get(r['id'])
+            if x: x['last_seen'] = ts; x['runs'] = x.get('runs', 1) + 1
+            else: bucket[r['id']] = dict(r, first_seen=ts, last_seen=ts, runs=1)
+        if len(bucket) > 400:
+            for kk in sorted(bucket, key=lambda i: bucket[i]['last_seen'])[:len(bucket) - 400]:
+                bucket.pop(kk, None)
+    runs = int(prev.get('runs') or 0) + 1
+    out = {'ts': ts, 'runs': runs, 'corpus': len(events),
+           'current': {k: len(v) for k, v in cur.items()},
+           'accumulated_counts': {k: len(v) for k, v in acc.items()},
+           'current_rows': cur, 'accumulated': acc}
+    try:
+        path.write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding='utf-8')
+        print('  [CLIM-LEX-SHADOW] run=%d S2=%d S3=%d S4=%d S5=%d' % (
+            runs, len(cur['s2']), len(cur['s3']), len(cur['s4']), len(cur['s5'])))
+    except Exception:
+        pass
 def _neutralize(t):
     if not t: return t
     for _rx, _r in _NEUTRALIZE: t = _rx.sub(_r, t)
@@ -30811,6 +30901,8 @@ def save_enriched(events, previous_snapshot=None):
                         _trace(_ftid2,'FEED_HIDDEN','removed',reason='feed_visible_false')
             try: _entity_shadow_report(enriched["events"], OUTPUT_PATH.parent)
             except Exception as _iee: print('  [WARN] entity shadow fail: %s' % _iee, file=sys.stderr)
+            try: _clim_lex_shadow_report(enriched["events"], OUTPUT_PATH.parent)
+            except Exception as _cle: print('  [WARN] clim-lex shadow fail: %s' % _cle, file=sys.stderr)
             for _ste in enriched["events"]: _ste.pop('_obs_tid', None)   # техполе наблюдаемости не пишем в файл
             # ═══ IDR-006 · МЕСТО ВЫЗОВА ВАЖНО ══════════════════════════════════
             # Первая версия ставила слой сразу после географии — до канонизации и
