@@ -20499,7 +20499,11 @@ def fetch_telegram():
                 # самим изданием; остальные адреса вероятные - несуществующий канал
                 # отрабатывает как пустой (исключение ловится по каналу), журнал покажет.
                 # Журнал 03.11: ordakz, kursivkz, kazinform_ru не существуют - убраны.
-                'tengrinews', 'zakonkz', 'vlastkz']
+                'tengrinews', 'zakonkz', 'vlastkz',
+                # BY_SOURCES_1011 (11.11.2026): у Нашай Нівы RSS не парсится (invalid
+                # token), Белсат рвёт соединение, «Вясна» отдаёт 403 - идут через
+                # Telegram. Адреса вероятные, несуществующий канал пуст, журнал покажет.
+                'nashaniva', 'belsat', 'viasna96']
     # 24.10.2026: агитационные каналы отключены — пропаганда и лозунги вместо
     # сигналов («Париж требует голову Макрона», «Эх, барин запретил нам
     # возмущаться»). Откат: TG_AGITPROP_OFF = ().
@@ -20514,7 +20518,7 @@ def fetch_telegram():
                   'f6_cybersecurity':'Cybersecurity','SecLabNews':'Lab News','Social_engineering':'Engineering',
                   'Russian_OSINT':'R Osint','alexmakus':'Cybersec','xakep_ru':'Xakep IT','sterngang':'Data D','Ateobreaking':'A breaking',
                   'alertasdowndetector':'Downdetector','dciber':'Dciber','ctinow':'Cyber Threat','thehackernews':'THN','Cyber_Security_Channel':'Cyber SN','ru_downdetector_su':'Downdetector RU',
-                  'tengrinews':'Tengri News','zakonkz':'Zakon.kz','ordakz':'Orda.kz','vlastkz':'Vlast.kz','kursivkz':'Kursiv','kazinform_ru':'Kazinform'}
+                  'tengrinews':'Tengri News','zakonkz':'Zakon.kz','ordakz':'Orda.kz','vlastkz':'Vlast.kz','kursivkz':'Kursiv','kazinform_ru':'Kazinform','nashaniva':'Nasha Niva','belsat':'Belsat','viasna96':'Viasna HR'}
     # соц-источники: пропускаем ТОЛЬКО риск-сигналы (пиар/нейтральное отсекаем)
     SOCIAL_SRC = {'minzdrav_ru', 'mintrudrf', 'zdravblog', 'readovkanews', 'bazabazon', 'mash',
                   'rospotrebnadzor_ru', 'mediamedics', 'rotfront_su', 'worldprotest', 'populationdemography', 'demografic', 'rakshademography', 'sterngang'}
@@ -23500,12 +23504,9 @@ def fetch_regional():
         {"url": "https://reform.news/rss", "source": "Reform.news", "bias": 7},
         {"url": "https://news.zerkalo.io/rss/all.rss", "source": "Zerkalo", "bias": 7},
         {"url": "https://news.zerkalo.io/rss/index.rss", "source": "Zerkalo", "bias": 7},
-        {"url": "https://nashaniva.com/rss/", "source": "Nasha Niva", "bias": 7},
-        {"url": "https://nashaniva.com/ru/rss/", "source": "Nasha Niva", "bias": 7},
-        {"url": "https://belsat.eu/ru/feed/", "source": "Belsat", "bias": 7},
-        {"url": "https://belsat.eu/ru/rss/", "source": "Belsat", "bias": 7},
-        {"url": "https://spring96.org/ru/rss", "source": "Viasna HR", "bias": 8},
-        {"url": "https://spring96.org/ru/news/rss", "source": "Viasna HR", "bias": 8},
+        # Журнал прогона 11.11 00:00: Reform.news и Зеркало живые (по 16 записей);
+        # Наша Ніва (invalid token), Белсат (обрыв соединения), «Вясна» (403)
+        # убраны из RSS и подключены через Telegram (fetch_telegram).
         # Европа (дополнительно)
         {"url": "https://euobserver.com/feed/", "source": "EUobserver", "bias": 7},
         {"url": "https://www.politico.eu/feed/", "source": "Politico EU", "bias": 7},
