@@ -2,67 +2,67 @@
   "country": "CH",
   "date": "2026-11-10",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-10T03:49:35.532835+00:00",
+  "generated_at": "2026-11-10T04:09:22.069030+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-CH",
       "type": "Country",
       "label": "CH",
-      "score": 50,
+      "score": 56,
       "props": {
-        "risk_score": 50
+        "risk_score": 56
       }
     },
     {
       "id": "DOMAIN-CH-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
-      "trend": "stable"
+      "score": 45,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 50,
-      "trend": "stable"
+      "score": 55,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-social",
       "type": "Domain",
       "label": "social",
-      "score": 54,
-      "trend": "stable"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-CH-Geopolitical",
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
+      "id": "SIGNAL-CH-Неизвестны",
+      "type": "Signal",
+      "label": "Неизвестные сожгли оружейный завод в Шве",
+      "severity": 45,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-CH-Климатичес",
       "type": "Signal",
       "label": "Климатический сигнал — Швейцария",
       "severity": 50,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-CH-Протесты_и",
-      "type": "Signal",
-      "label": "Протесты и беспорядки — Швейцария",
-      "severity": 54,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.45
     },
     {
       "from": "COUNTRY-CH",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-climate",
       "type": "CORRELATES",
-      "weight": 0.5
+      "weight": 0.55
     },
     {
       "from": "COUNTRY-CH",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-social",
       "type": "CORRELATES",
-      "weight": 0.54
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CH",
@@ -205,22 +205,43 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-CH-geopolitical",
+      "to": "DOMAIN-CH-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CH-infrastructure",
+      "to": "DOMAIN-CH-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CH-economic",
+      "to": "DOMAIN-CH-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-CH-Ливень:_Ли",
       "to": "DOMAIN-CH-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
     },
     {
+      "from": "SIGNAL-CH-Неизвестны",
+      "to": "DOMAIN-CH-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.45
+    },
+    {
       "from": "SIGNAL-CH-Климатичес",
       "to": "DOMAIN-CH-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-CH-Протесты_и",
-      "to": "DOMAIN-CH-social",
-      "type": "AMPLIFIES",
-      "weight": 0.54
     }
   ]
 }
