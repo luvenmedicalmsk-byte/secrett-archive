@@ -30502,9 +30502,12 @@ def save_enriched(events, previous_snapshot=None):
                 # перевода и в первой публикации не сработали: заголовки ещё английские)
                 for _e in enriched["events"]:
                     _fix_gaza_tail(_e)
-                enriched["events"] = _event_dedup_0911(enriched["events"])
                 _feed_hygiene(enriched["events"])
                 _sev_post_hyg_0511(enriched["events"])
+                # склейка дублей ПОСЛЕ _feed_hygiene: она меняет feed_visible, и карточка,
+                # скрытая на момент склейки, потом возвращалась в ленту дублем (Hurriyet,
+                # «кибератаки на холодильники», 10.11 13:51 UTC)
+                enriched["events"] = _event_dedup_0911(enriched["events"])
                 _sic_shadow_report(enriched["events"], OUTPUT_PATH.parent)
                 _adr039a_shadow_report(enriched["events"], OUTPUT_PATH.parent)
             except Exception as _se:
@@ -30834,6 +30837,14 @@ def save_enriched(events, previous_snapshot=None):
                 _quality_snapshot(enriched["events"], OUTPUT_PATH.parent)
             except Exception as _qe:
                 print(f'[QUALITY] skip: {_qe}', file=sys.stderr)
+            # SRCDUP_1011 / XDUP_1011: контрольный проход перед записью. В 13:51 UTC перевод
+            # «Франция заявляет, что Иран стоит за кибератаками на холодильники» (Hurriyet)
+            # остался в ленте рядом с Kursiv: к моменту основной склейки состав ленты
+            # был другим. Проход идемпотентен: повторно ничего не склеивает.
+            try:
+                enriched["events"] = _xdup_1011(_srcdup_1011(enriched["events"]))
+            except Exception as _xde:
+                print('  [WARN] final dedup: %s' % _xde, file=sys.stderr)
             OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
             _domain_lineage_finalize(enriched["events"], 'write_1')      # TASK-278
             with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
