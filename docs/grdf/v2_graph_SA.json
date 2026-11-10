@@ -2,7 +2,7 @@
   "country": "SA",
   "date": "2026-11-10",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-10T12:08:38.228576+00:00",
+  "generated_at": "2026-11-10T12:29:40.919593+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -19,7 +19,7 @@
       "id": "DOMAIN-SA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 83,
+      "score": 100,
       "trend": "stable"
     },
     {
@@ -33,7 +33,7 @@
       "id": "DOMAIN-SA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 92,
+      "score": 74,
       "trend": "stable"
     },
     {
@@ -82,9 +82,9 @@
     {
       "id": "SIGNAL-SA-Сильный_до",
       "type": "Signal",
-      "label": "Сильный дождь: Эль-Хафджи (Восточный), Х",
+      "label": "Сильный дождь: Аль Увайкила : (Северные ",
       "severity": 92,
-      "domain": "climate"
+      "domain": "geopolitical"
     },
     {
       "id": "SIGNAL-SA-Здание_кру",
@@ -98,7 +98,7 @@
       "type": "Signal",
       "label": "Дождь: Джазан (Джазан), Бадр (Мадина), Т",
       "severity": 74,
-      "domain": "geopolitical"
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.83
+      "weight": 1.0
     },
     {
       "from": "COUNTRY-SA",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-climate",
       "type": "CORRELATES",
-      "weight": 0.92
+      "weight": 0.74
     },
     {
       "from": "COUNTRY-SA",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-SA-climate",
-      "to": "DOMAIN-SA-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-SA-infrastructure",
-      "to": "DOMAIN-SA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-SA-economic",
-      "to": "DOMAIN-SA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-SA-geopolitical",
       "to": "DOMAIN-SA-infrastructure",
       "type": "ESCALATES",
@@ -226,8 +205,29 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-SA-climate",
+      "to": "DOMAIN-SA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-SA-infrastructure",
+      "to": "DOMAIN-SA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-SA-economic",
+      "to": "DOMAIN-SA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-SA-Сильный_до",
-      "to": "DOMAIN-SA-climate",
+      "to": "DOMAIN-SA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.92
     },
@@ -239,7 +239,7 @@
     },
     {
       "from": "SIGNAL-SA-Дождь:_Джа",
-      "to": "DOMAIN-SA-geopolitical",
+      "to": "DOMAIN-SA-climate",
       "type": "AMPLIFIES",
       "weight": 0.74
     }
