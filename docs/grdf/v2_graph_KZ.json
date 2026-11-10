@@ -2,17 +2,17 @@
   "country": "KZ",
   "date": "2026-11-10",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-10T10:10:28.944505+00:00",
+  "generated_at": "2026-11-10T10:30:01.776049+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-KZ",
       "type": "Country",
       "label": "KZ",
-      "score": 76,
+      "score": 62,
       "props": {
-        "risk_score": 76
+        "risk_score": 62
       }
     },
     {
@@ -20,49 +20,54 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 62,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-KZ-economic",
       "type": "Domain",
       "label": "economic",
       "score": 56,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-KZ-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 74,
-      "trend": "stable"
+      "score": 5,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-KZ-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-KZ-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-KZ-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-KZ-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
+    },
+    {
+      "id": "DRIVER-KZ-Economic",
+      "type": "Driver",
+      "label": "Economic"
     },
     {
       "id": "DRIVER-KZ-Geopolitical",
@@ -73,18 +78,6 @@
       "id": "DRIVER-KZ-Economic",
       "type": "Driver",
       "label": "Economic"
-    },
-    {
-      "id": "DRIVER-KZ-Economic",
-      "type": "Driver",
-      "label": "Economic"
-    },
-    {
-      "id": "SIGNAL-KZ-Дождь:_Кор",
-      "type": "Signal",
-      "label": "Дождь: Кордайский район (Жамбылская обла",
-      "severity": 74,
-      "domain": "climate"
     },
     {
       "id": "SIGNAL-KZ-Казахстан_",
@@ -98,6 +91,13 @@
       "type": "Signal",
       "label": "За последние 15 лет Китай изменил логику",
       "severity": 56,
+      "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-KZ-Что_там_с_",
+      "type": "Signal",
+      "label": "Что там с четвертым НПЗ? Новый нефтепере",
+      "severity": 54,
       "domain": "economic"
     }
   ],
@@ -118,7 +118,7 @@
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-climate",
       "type": "CORRELATES",
-      "weight": 0.74
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-KZ",
@@ -145,6 +145,12 @@
       "weight": 0.05
     },
     {
+      "from": "DRIVER-KZ-Economic",
+      "to": "COUNTRY-KZ",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-KZ-Geopolitical",
       "to": "COUNTRY-KZ",
       "type": "CAUSES",
@@ -155,54 +161,6 @@
       "to": "COUNTRY-KZ",
       "type": "CAUSES",
       "weight": 0.8
-    },
-    {
-      "from": "DRIVER-KZ-Economic",
-      "to": "COUNTRY-KZ",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-KZ-climate",
-      "to": "DOMAIN-KZ-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-KZ-infrastructure",
-      "to": "DOMAIN-KZ-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-KZ-economic",
-      "to": "DOMAIN-KZ-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-KZ-climate",
-      "to": "DOMAIN-KZ-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-KZ-economic",
-      "to": "DOMAIN-KZ-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-KZ-social",
-      "to": "DOMAIN-KZ-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
     },
     {
       "from": "DOMAIN-KZ-geopolitical",
@@ -226,12 +184,6 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-KZ-Дождь:_Кор",
-      "to": "DOMAIN-KZ-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.74
-    },
-    {
       "from": "SIGNAL-KZ-Казахстан_",
       "to": "DOMAIN-KZ-geopolitical",
       "type": "AMPLIFIES",
@@ -242,6 +194,12 @@
       "to": "DOMAIN-KZ-economic",
       "type": "AMPLIFIES",
       "weight": 0.56
+    },
+    {
+      "from": "SIGNAL-KZ-Что_там_с_",
+      "to": "DOMAIN-KZ-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.54
     }
   ]
 }
