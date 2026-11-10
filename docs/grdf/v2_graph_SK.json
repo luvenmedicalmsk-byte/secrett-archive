@@ -2,9 +2,9 @@
   "country": "SK",
   "date": "2026-11-10",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-10T23:10:04.032618+00:00",
+  "generated_at": "2026-11-10T23:30:57.392492+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-SK",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-SK-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 53,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -65,14 +65,14 @@
       "trend": "stable"
     },
     {
-      "id": "DRIVER-SK-geopolitical",
-      "type": "Driver",
-      "label": "geopolitical"
-    },
-    {
       "id": "DRIVER-SK-climate",
       "type": "Driver",
       "label": "climate"
+    },
+    {
+      "id": "DRIVER-SK-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
     },
     {
       "id": "DRIVER-SK-economic",
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
+      "id": "SIGNAL-SK-Ветер:_Поп",
+      "type": "Signal",
+      "label": "Ветер: Попрад, Липтовский Микулаш, Тврдо",
+      "severity": 50,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-SK-Снег:_Леви",
       "type": "Signal",
       "label": "Снег: Левице, Новые Замки, Великий Кртеш",
       "severity": 50,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-SK-Военные_уд",
-      "type": "Signal",
-      "label": "Военные удары — Словакия",
-      "severity": 53,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-SK",
       "to": "DOMAIN-SK-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.53
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-SK",
@@ -145,13 +145,13 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-SK-geopolitical",
+      "from": "DRIVER-SK-climate",
       "to": "COUNTRY-SK",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-SK-climate",
+      "from": "DRIVER-SK-geopolitical",
       "to": "COUNTRY-SK",
       "type": "CAUSES",
       "weight": 0.8
@@ -161,27 +161,6 @@
       "to": "COUNTRY-SK",
       "type": "CAUSES",
       "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-SK-climate",
-      "to": "DOMAIN-SK-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-SK-economic",
-      "to": "DOMAIN-SK-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-SK-social",
-      "to": "DOMAIN-SK-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
     },
     {
       "from": "DOMAIN-SK-climate",
@@ -205,28 +184,34 @@
       "lag_days": 30
     },
     {
-      "from": "DOMAIN-SK-geopolitical",
-      "to": "DOMAIN-SK-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-SK-infrastructure",
+      "from": "DOMAIN-SK-climate",
       "to": "DOMAIN-SK-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-SK-economic",
       "to": "DOMAIN-SK-social",
       "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-SK-social",
+      "to": "DOMAIN-SK-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "SIGNAL-SK-Туман:_Дун",
+      "to": "DOMAIN-SK-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
+      "from": "SIGNAL-SK-Ветер:_Поп",
       "to": "DOMAIN-SK-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
@@ -236,12 +221,6 @@
       "to": "DOMAIN-SK-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-SK-Военные_уд",
-      "to": "DOMAIN-SK-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.53
     }
   ]
 }
