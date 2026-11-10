@@ -10741,8 +10741,65 @@ def _srcdup_1011(events):
         return events
 
 
+# XDUP_1011 (10.11.2026, проверка дублей по запросу Мии): одна новость из разных источников
+# после перевода. «Глава МИД Франции обвинил КСИР в кибератаках на холодильники» стояла
+# четырьмя карточками (bbbreaking 66, A breaking 74, Kursiv 74, Hurriyet 62), «Взрывы в
+# Бендер-Аббасе» - двумя. _ndup_collapse работает до перевода, на разных английских
+# заголовках. Правило: разные источники, тот же домен, день ±1, совпадение основ
+# заголовка от 4 и не ниже 0.6 при общем топониме не уровня страны, либо не ниже 0.75,
+# если общий только топоним страны или топонимов нет. Разные топонимы - разные события.
+# Остаётся карточка с большим индексом. Откат: XDUP_1011 = False.
+XDUP_1011 = True
+
+
+def _xdup_1011(events):
+    if not XDUP_1011:
+        return events
+    try:
+        idx = [i for i, e in enumerate(events) if e.get('feed_visible', True) and not e.get('alerts_only')
+               and e.get('source') and e.get('source') not in _ECS_MACHINE
+               and not str(e.get('source') or '').endswith('CAP') and not (e.get('meta') or {}).get('kind') in ('cap', 'cap_hub')]
+        S = {i: _ndup_stems(re.sub(r'^[^:]{3,60}:\s+', '', events[i].get('title') or '', count=1)) for i in idx}
+        AN = {i: {a[:5] for a in _ecs_anchors(events[i].get('title') or '', events[i].get('source'))} for i in idx}
+        order = sorted(idx, key=lambda i: -(events[i].get('severity') or 0))
+        drop = {}
+        for a_i, i in enumerate(order):
+            if i in drop:
+                continue
+            ei = events[i]
+            for j in order[a_i + 1:]:
+                if j in drop:
+                    continue
+                ej = events[j]
+                if ei.get('source') == ej.get('source') or ei.get('domain') != ej.get('domain'):
+                    continue
+                di, dj = _ndup_day(ei.get('date')), _ndup_day(ej.get('date'))
+                if di is None or dj is None or abs(di - dj) > 1:
+                    continue
+                sh = AN[i] & AN[j]
+                if AN[i] and AN[j] and not sh:
+                    continue
+                inter, ratio = _ndup_ovl(S[i], S[j])
+                cty = (not sh) or all(_ed9_is_country(x) for x in sh)
+                if inter >= 4 and ratio >= (0.75 if cty else 0.6):
+                    drop[j] = i
+        if not drop:
+            return events
+        out = [e for k, e in enumerate(events) if k not in drop]
+        if LINEAGE and LINEAGE_NDUP_P10:
+            _lin_removed([events[k] for k in drop], out, 'EVENT_DEDUP', 'cross_source_dup',
+                         winner_of=lambda _x: next((events[w] for k, w in drop.items() if events[k] is _x), None))
+        print('  [XDUP-1011] склеено %d: %s' % (len(drop), '; '.join(
+            (events[k].get('title') or '')[:50] for k in list(drop)[:5])), file=sys.stderr)
+        return out
+    except Exception as _e:
+        print('  [WARN] xdup: %s' % _e, file=sys.stderr)
+        return events
+
+
 def _event_dedup_0911(events):
     events = _srcdup_1011(events)
+    events = _xdup_1011(events)
     if not EVENT_DEDUP_0911:
         return events
     try:

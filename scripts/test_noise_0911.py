@@ -45,7 +45,10 @@ if hasattr(fe, '_event_dedup_0911'):
     ok(any('Таизе' in t for t in titles) and any('столицей Йемена' in t for t in titles), 'разные удары в Йемене не склеиваются')
     ok(any('Харькову' in t for t in titles) and any('Одессе' in t for t in titles), 'разные города не склеиваются')
     fe.EVENT_DEDUP_0911 = False
+    _x, _s = getattr(fe, 'XDUP_1011', None), getattr(fe, 'SRCDUP_1011', None)
+    fe.XDUP_1011 = fe.SRCDUP_1011 = False
     ok(len(fe._event_dedup_0911(list(ev))) == 7, 'флаг выключен - без склейки')
+    fe.XDUP_1011, fe.SRCDUP_1011 = _x, _s
 if hasattr(fe, '_srcdup_1011'):
     mk2 = lambda t, src, cc, d='2026-11-09', dom='social': {'title': t, 'severity': 76, 'source': src, 'date': d, 'domain': dom,
                                                          'country_code': cc, 'feed_visible': True}
@@ -58,6 +61,24 @@ if hasattr(fe, '_srcdup_1011'):
     with contextlib.redirect_stderr(io.StringIO()):
         o2 = fe._srcdup_1011(list(ev2))
     ok(len(o2) == 5 and o2[0]['title'].startswith('Домашние'), 'SRCDUP: склеен только перевод Bloomberg, осталось %d' % len(o2))
+if hasattr(fe, '_xdup_1011'):
+    mk3 = lambda t, src, sev, dom='geopolitics': {'title': t, 'severity': sev, 'source': src, 'date': '2026-11-10', 'domain': dom, 'feed_visible': True}
+    ev3 = [mk3('Глава МИД Франции обвинил КСИР в кибератаках на холодильники в европейских магазинах', 'Telegram/bbbreaking', 66),
+           mk3('Франция обвинила Иран в кибератаках на холодильники', 'Kursiv', 74),
+           mk3('Франция заявляет, что Иран стоит за «беспрецедентными» кибератаками на холодильники', 'Hurriyet Daily News', 62),
+           mk3('Взрывы прогремели в городе Бендер-Аббас на юге Ирана', 'TN news', 62),
+           mk3('Взрывы в Бендер-Аббасе и Сирике связаны с действиями иранских сил в Ормузском проливе', 'A breaking', 60),
+           mk3('Импортный алкоголь в России резко подорожает — правительство повысило ввозные пошлины', 'Economics RU', 46, 'economy'),
+           mk3('Курица резко подорожала в России', 'Telegram/x', 48, 'economy'),
+           mk3('Канада вновь вводит санкции против 11 иранских организаций за содействие ядерной деятельности', 'Al-Monitor', 62),
+           mk3('Минфин США ввёл санкции против восьми канадских организаций, связанных с Ираном', 'A breaking', 62)]
+    with contextlib.redirect_stderr(io.StringIO()):
+        o3 = fe._xdup_1011(list(ev3))
+    t3 = [x['title'] for x in o3]
+    ok(len(o3) == 6, 'XDUP: склеено 3 из 9, осталось %d' % len(o3))
+    ok(sum('холодильник' in t for t in t3) == 1 and t3[0].startswith('Франция обвинила'), 'XDUP: холодильники - одна карточка, с большим индексом')
+    ok(any('алкоголь' in t for t in t3) and any('Курица' in t for t in t3), 'XDUP: разные товары не склеиваются')
+    ok(any('Канада вновь' in t for t in t3) and any('Минфин США' in t for t in t3), 'XDUP: разные санкции не склеиваются')
 print('NOISE_0911: %s' % ('OK' if not fails else 'ОШИБКИ'))
 for f in fails: print('  -', f)
 sys.exit(1 if fails else 0)
