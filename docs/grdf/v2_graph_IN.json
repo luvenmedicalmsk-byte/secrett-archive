@@ -2,9 +2,9 @@
   "country": "IN",
   "date": "2026-11-11",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-11T10:08:23.763437+00:00",
+  "generated_at": "2026-11-11T10:28:05.464670+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-IN",
@@ -19,21 +19,21 @@
       "id": "DOMAIN-IN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 49,
+      "score": 60,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-IN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 46,
+      "score": 5,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-IN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 64,
       "trend": "stable"
     },
     {
@@ -80,24 +80,24 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IN-Профилакти",
-      "type": "Signal",
-      "label": "Профилактика анемии — Индия: переход к л",
-      "severity": 49,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-IN-Потоки_инв",
-      "type": "Signal",
-      "label": "Потоки инвестиций в Индийский фонд акций",
-      "severity": 46,
-      "domain": "economic"
-    },
-    {
       "id": "SIGNAL-IN-Индия_пров",
       "type": "Signal",
       "label": "Индия провела серию переговоров с Россие",
       "severity": 34,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-IN-Шторм_—_Юж",
+      "type": "Signal",
+      "label": "Шторм — Южная Азия",
+      "severity": 86,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-IN-Военные_уд",
+      "type": "Signal",
+      "label": "Военные удары — Южная Азия",
+      "severity": 80,
       "domain": "geopolitical"
     }
   ],
@@ -106,19 +106,19 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.49
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-economic",
       "type": "CORRELATES",
-      "weight": 0.46
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.64
     },
     {
       "from": "COUNTRY-IN",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IN-climate",
+      "to": "DOMAIN-IN-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-IN-social",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-IN-climate",
+      "to": "DOMAIN-IN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-IN-infrastructure",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "DOMAIN-IN-geopolitical",
       "to": "DOMAIN-IN-infrastructure",
       "type": "ESCALATES",
@@ -184,22 +226,22 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-IN-Профилакти",
-      "to": "DOMAIN-IN-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.49
-    },
-    {
-      "from": "SIGNAL-IN-Потоки_инв",
-      "to": "DOMAIN-IN-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.46
-    },
-    {
       "from": "SIGNAL-IN-Индия_пров",
       "to": "DOMAIN-IN-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.34
+    },
+    {
+      "from": "SIGNAL-IN-Шторм_—_Юж",
+      "to": "DOMAIN-IN-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.86
+    },
+    {
+      "from": "SIGNAL-IN-Военные_уд",
+      "to": "DOMAIN-IN-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.8
     }
   ]
 }
