@@ -2,7 +2,7 @@
   "country": "BY",
   "date": "2026-11-11",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-11T08:30:05.877988+00:00",
+  "generated_at": "2026-11-11T08:48:16.253853+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -33,7 +33,7 @@
       "id": "DOMAIN-BY-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 70,
+      "score": 56,
       "trend": "stable"
     },
     {
@@ -80,9 +80,16 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-BY-Дождь:_Бре",
+      "id": "SIGNAL-BY-Ветер:_Вит",
       "type": "Signal",
-      "label": "Дождь: Брестская область, Витебская обла",
+      "label": "Ветер: Витебская область, Гродненская об",
+      "severity": 56,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-BY-Дождь:_Гом",
+      "type": "Signal",
+      "label": "Дождь: Гомельская область, Могилёвская о",
       "severity": 56,
       "domain": "climate"
     },
@@ -91,13 +98,6 @@
       "type": "Signal",
       "label": "Климатический сигнал — Беларусь",
       "severity": 56,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-BY-Пожарная_а",
-      "type": "Signal",
-      "label": "Пожарная активность — Беларусь",
-      "severity": 70,
       "domain": "climate"
     }
   ],
@@ -118,7 +118,7 @@
       "from": "COUNTRY-BY",
       "to": "DOMAIN-BY-climate",
       "type": "CORRELATES",
-      "weight": 0.7
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-BY",
@@ -226,7 +226,13 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-BY-Дождь:_Бре",
+      "from": "SIGNAL-BY-Ветер:_Вит",
+      "to": "DOMAIN-BY-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.56
+    },
+    {
+      "from": "SIGNAL-BY-Дождь:_Гом",
       "to": "DOMAIN-BY-climate",
       "type": "AMPLIFIES",
       "weight": 0.56
@@ -236,12 +242,6 @@
       "to": "DOMAIN-BY-climate",
       "type": "AMPLIFIES",
       "weight": 0.56
-    },
-    {
-      "from": "SIGNAL-BY-Пожарная_а",
-      "to": "DOMAIN-BY-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.7
     }
   ]
 }

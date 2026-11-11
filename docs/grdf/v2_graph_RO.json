@@ -2,9 +2,9 @@
   "country": "RO",
   "date": "2026-11-11",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-11T08:30:05.885680+00:00",
+  "generated_at": "2026-11-11T08:48:16.259025+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-RO",
@@ -33,7 +33,7 @@
       "id": "DOMAIN-RO-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 34,
+      "score": 50,
       "trend": "stable"
     },
     {
@@ -94,10 +94,10 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-RO-Пожарная_а",
+      "id": "SIGNAL-RO-Ливень:_Ху",
       "type": "Signal",
-      "label": "Пожарная активность — Румыния",
-      "severity": 34,
+      "label": "Ливень: Хунедоара, Горж, Клуж и ещё 5 ра",
+      "severity": 50,
       "domain": "climate"
     }
   ],
@@ -118,7 +118,7 @@
       "from": "COUNTRY-RO",
       "to": "DOMAIN-RO-climate",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-RO",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-RO-climate",
+      "to": "DOMAIN-RO-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-RO-economic",
+      "to": "DOMAIN-RO-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-RO-social",
+      "to": "DOMAIN-RO-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-RO-geopolitical",
       "to": "DOMAIN-RO-infrastructure",
       "type": "ESCALATES",
@@ -184,6 +205,27 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-RO-climate",
+      "to": "DOMAIN-RO-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-RO-infrastructure",
+      "to": "DOMAIN-RO-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-RO-economic",
+      "to": "DOMAIN-RO-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-RO-Воздушное_",
       "to": "DOMAIN-RO-geopolitical",
       "type": "AMPLIFIES",
@@ -196,10 +238,10 @@
       "weight": 0.64
     },
     {
-      "from": "SIGNAL-RO-Пожарная_а",
+      "from": "SIGNAL-RO-Ливень:_Ху",
       "to": "DOMAIN-RO-climate",
       "type": "AMPLIFIES",
-      "weight": 0.34
+      "weight": 0.5
     }
   ]
 }
