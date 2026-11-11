@@ -2,7 +2,7 @@
   "country": "ID",
   "date": "2026-11-11",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-11T04:09:09.962258+00:00",
+  "generated_at": "2026-11-11T04:29:07.935418+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-ID",
       "type": "Country",
       "label": "ID",
-      "score": 66,
+      "score": 68,
       "props": {
-        "risk_score": 66
+        "risk_score": 68
       }
     },
     {
@@ -20,14 +20,14 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 5,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-ID-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-ID-climate",
@@ -41,28 +41,28 @@
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-ID-social",
       "type": "Domain",
       "label": "social",
-      "score": 43,
-      "trend": "up"
+      "score": 5,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-ID-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-ID-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-ID-Geopolitical",
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
+      "id": "SIGNAL-ID-Гроза:_Ост",
+      "type": "Signal",
+      "label": "Гроза: Острова Риау, Северный Калимантан",
+      "severity": 56,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-ID-Пожарная_а",
       "type": "Signal",
       "label": "Пожарная активность — Индонезия",
       "severity": 66,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-ID-Миграционн",
-      "type": "Signal",
-      "label": "Миграционная политика — Юго-Восточная Аз",
-      "severity": 58,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -130,7 +130,7 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-social",
       "type": "CORRELATES",
-      "weight": 0.43
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-ID",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-ID-climate",
-      "to": "DOMAIN-ID-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-ID-economic",
-      "to": "DOMAIN-ID-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-ID-social",
-      "to": "DOMAIN-ID-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-ID-climate",
       "to": "DOMAIN-ID-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -205,22 +184,43 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-ID-climate",
+      "to": "DOMAIN-ID-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ID-economic",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-ID-social",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "SIGNAL-ID-Более_3500",
       "to": "DOMAIN-ID-climate",
       "type": "AMPLIFIES",
       "weight": 0.66
     },
     {
+      "from": "SIGNAL-ID-Гроза:_Ост",
+      "to": "DOMAIN-ID-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.56
+    },
+    {
       "from": "SIGNAL-ID-Пожарная_а",
       "to": "DOMAIN-ID-climate",
       "type": "AMPLIFIES",
       "weight": 0.66
-    },
-    {
-      "from": "SIGNAL-ID-Миграционн",
-      "to": "DOMAIN-ID-social",
-      "type": "AMPLIFIES",
-      "weight": 0.58
     }
   ]
 }

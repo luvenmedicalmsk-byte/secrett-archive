@@ -2,9 +2,9 @@
   "country": "SK",
   "date": "2026-11-11",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-11T04:09:09.954526+00:00",
+  "generated_at": "2026-11-11T04:29:07.927794+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-SK",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-SK-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
+      "score": 53,
       "trend": "stable"
     },
     {
@@ -65,26 +65,19 @@
       "trend": "stable"
     },
     {
-      "id": "DRIVER-SK-climate",
-      "type": "Driver",
-      "label": "climate"
-    },
-    {
       "id": "DRIVER-SK-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
     },
     {
+      "id": "DRIVER-SK-climate",
+      "type": "Driver",
+      "label": "climate"
+    },
+    {
       "id": "DRIVER-SK-economic",
       "type": "Driver",
       "label": "economic"
-    },
-    {
-      "id": "SIGNAL-SK-Туман:_Дун",
-      "type": "Signal",
-      "label": "Туман: Дунаецкая Стреда, Братислава, Лев",
-      "severity": 50,
-      "domain": "climate"
     },
     {
       "id": "SIGNAL-SK-Ветер:_Поп",
@@ -94,11 +87,18 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-SK-Снег:_Леви",
+      "id": "SIGNAL-SK-Словакия_п",
       "type": "Signal",
-      "label": "Снег: Левице, Новые Замки, Великий Кртеш",
-      "severity": 50,
-      "domain": "climate"
+      "label": "Словакия пригрозила заблокировать бюджет",
+      "severity": 20,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-SK-Военные_уд",
+      "type": "Signal",
+      "label": "Военные удары — Словакия",
+      "severity": 53,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-SK",
       "to": "DOMAIN-SK-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.53
     },
     {
       "from": "COUNTRY-SK",
@@ -145,13 +145,13 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-SK-climate",
+      "from": "DRIVER-SK-geopolitical",
       "to": "COUNTRY-SK",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-SK-geopolitical",
+      "from": "DRIVER-SK-climate",
       "to": "COUNTRY-SK",
       "type": "CAUSES",
       "weight": 0.8
@@ -161,27 +161,6 @@
       "to": "COUNTRY-SK",
       "type": "CAUSES",
       "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-SK-climate",
-      "to": "DOMAIN-SK-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-SK-infrastructure",
-      "to": "DOMAIN-SK-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-SK-economic",
-      "to": "DOMAIN-SK-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
     },
     {
       "from": "DOMAIN-SK-climate",
@@ -205,10 +184,46 @@
       "lag_days": 90
     },
     {
-      "from": "SIGNAL-SK-Туман:_Дун",
-      "to": "DOMAIN-SK-climate",
+      "from": "DOMAIN-SK-climate",
+      "to": "DOMAIN-SK-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-SK-infrastructure",
+      "to": "DOMAIN-SK-economic",
       "type": "AMPLIFIES",
-      "weight": 0.5
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-SK-economic",
+      "to": "DOMAIN-SK-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-SK-geopolitical",
+      "to": "DOMAIN-SK-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-SK-infrastructure",
+      "to": "DOMAIN-SK-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-SK-economic",
+      "to": "DOMAIN-SK-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-SK-Ветер:_Поп",
@@ -217,10 +232,16 @@
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-SK-Снег:_Леви",
-      "to": "DOMAIN-SK-climate",
+      "from": "SIGNAL-SK-Словакия_п",
+      "to": "DOMAIN-SK-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.5
+      "weight": 0.2
+    },
+    {
+      "from": "SIGNAL-SK-Военные_уд",
+      "to": "DOMAIN-SK-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.53
     }
   ]
 }
