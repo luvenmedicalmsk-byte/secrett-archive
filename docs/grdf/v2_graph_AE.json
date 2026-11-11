@@ -2,25 +2,25 @@
   "country": "AE",
   "date": "2026-11-11",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-11T22:29:38.173247+00:00",
+  "generated_at": "2026-11-11T22:51:02.185572+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-AE",
       "type": "Country",
       "label": "AE",
-      "score": 45,
+      "score": 46,
       "props": {
-        "risk_score": 45
+        "risk_score": 46
       }
     },
     {
       "id": "DOMAIN-AE-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 34,
-      "trend": "stable"
+      "score": 46,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AE-economic",
@@ -65,11 +65,6 @@
       "trend": "stable"
     },
     {
-      "id": "DRIVER-AE-Economic",
-      "type": "Driver",
-      "label": "Economic"
-    },
-    {
       "id": "DRIVER-AE-Geopolitical",
       "type": "Driver",
       "label": "Geopolitical"
@@ -78,6 +73,18 @@
       "id": "DRIVER-AE-Economic",
       "type": "Driver",
       "label": "Economic"
+    },
+    {
+      "id": "DRIVER-AE-Economic",
+      "type": "Driver",
+      "label": "Economic"
+    },
+    {
+      "id": "SIGNAL-AE-Умеров_соо",
+      "type": "Signal",
+      "label": "Умеров сообщил, что украинская делегация",
+      "severity": 46,
+      "domain": "geopolitical"
     },
     {
       "id": "SIGNAL-AE-Россия_и_У",
@@ -92,13 +99,6 @@
       "label": "Российская делегация примет решение о фо",
       "severity": 34,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-AE-На_перегов",
-      "type": "Signal",
-      "label": "На переговорах в ОАЭ будут обсуждаться г",
-      "severity": 34,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-AE",
       "to": "DOMAIN-AE-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-AE",
@@ -145,12 +145,6 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-AE-Economic",
-      "to": "COUNTRY-AE",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
       "from": "DRIVER-AE-Geopolitical",
       "to": "COUNTRY-AE",
       "type": "CAUSES",
@@ -163,6 +157,39 @@
       "weight": 0.8
     },
     {
+      "from": "DRIVER-AE-Economic",
+      "to": "COUNTRY-AE",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-AE-geopolitical",
+      "to": "DOMAIN-AE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-AE-infrastructure",
+      "to": "DOMAIN-AE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-AE-economic",
+      "to": "DOMAIN-AE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-AE-Умеров_соо",
+      "to": "DOMAIN-AE-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.46
+    },
+    {
       "from": "SIGNAL-AE-Россия_и_У",
       "to": "DOMAIN-AE-geopolitical",
       "type": "AMPLIFIES",
@@ -170,12 +197,6 @@
     },
     {
       "from": "SIGNAL-AE-Российская",
-      "to": "DOMAIN-AE-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.34
-    },
-    {
-      "from": "SIGNAL-AE-На_перегов",
       "to": "DOMAIN-AE-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.34
