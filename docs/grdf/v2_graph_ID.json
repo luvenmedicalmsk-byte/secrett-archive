@@ -2,7 +2,7 @@
   "country": "ID",
   "date": "2026-11-11",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-11T05:28:50.011792+00:00",
+  "generated_at": "2026-11-11T05:48:53.216426+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-ID",
       "type": "Country",
       "label": "ID",
-      "score": 68,
+      "score": 66,
       "props": {
-        "risk_score": 68
+        "risk_score": 66
       }
     },
     {
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 66,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ID-technology",
@@ -47,8 +47,8 @@
       "id": "DOMAIN-ID-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
-      "trend": "stable"
+      "score": 43,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ID-infrastructure",
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-ID-Гроза:_Сев",
-      "type": "Signal",
-      "label": "Гроза: Северная Суматра, Бенгкулу, Восто",
-      "severity": 56,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-ID-Пожарная_а",
       "type": "Signal",
       "label": "Пожарная активность — Индонезия",
       "severity": 66,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-ID-Миграционн",
+      "type": "Signal",
+      "label": "Миграционная политика — Юго-Восточная Аз",
+      "severity": 58,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -130,7 +130,7 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.43
     },
     {
       "from": "COUNTRY-ID",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-ID-climate",
-      "to": "DOMAIN-ID-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-ID-infrastructure",
-      "to": "DOMAIN-ID-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-ID-economic",
-      "to": "DOMAIN-ID-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-ID-climate",
       "to": "DOMAIN-ID-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,22 +184,43 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-ID-climate",
+      "to": "DOMAIN-ID-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-ID-infrastructure",
+      "to": "DOMAIN-ID-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ID-economic",
+      "to": "DOMAIN-ID-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-ID-Более_3500",
       "to": "DOMAIN-ID-climate",
       "type": "AMPLIFIES",
       "weight": 0.66
     },
     {
-      "from": "SIGNAL-ID-Гроза:_Сев",
-      "to": "DOMAIN-ID-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.56
-    },
-    {
       "from": "SIGNAL-ID-Пожарная_а",
       "to": "DOMAIN-ID-climate",
       "type": "AMPLIFIES",
       "weight": 0.66
+    },
+    {
+      "from": "SIGNAL-ID-Миграционн",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.58
     }
   ]
 }
