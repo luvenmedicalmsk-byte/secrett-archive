@@ -2,102 +2,113 @@
   "country": "ME",
   "country_name": "Черногория",
   "date": "2026-11-11",
-  "generated_at": "2026-11-11T14:30:55.749783+00:00",
-  "strategy_score": 13,
-  "strategy_confidence": 88,
-  "urgency_level": "low",
-  "urgency_level_ru": "Низкая",
-  "urgency_color": "#22c55e",
-  "preparedness_level": "routine",
-  "preparedness_level_ru": "Плановый режим",
-  "monitoring_priority": 1,
-  "monitoring_ru": "Ежедневно",
+  "generated_at": "2026-11-11T14:50:19.826276+00:00",
+  "strategy_score": 50,
+  "strategy_confidence": 89,
+  "urgency_level": "critical",
+  "urgency_level_ru": "Критическая",
+  "urgency_color": "#ef4444",
+  "preparedness_level": "emergency",
+  "preparedness_level_ru": "Чрезвычайная готовность",
+  "monitoring_priority": 4,
+  "monitoring_ru": "Ежечасно",
   "actions": [
     {
-      "id": "S-01",
+      "id": "CR-09",
       "priority": 1,
-      "action": "Мониторинговый режим",
-      "detail": "Поддерживать стандартный цикл наблюдения, отклонений не выявлено",
-      "trigger": "risk_score < 40 AND dominant = best",
-      "expiry": "risk_score > 45 OR delta > 3",
-      "confidence": 85,
+      "action": "МАКСИМАЛЬНЫЙ УРОВЕНЬ ТРЕВОГИ",
+      "detail": "Критический риск с worst-case dominant: системный кризис в высокой готовности",
+      "trigger": "critical + worst dominant",
+      "expiry": "state resolution",
+      "confidence": 75,
       "domain_context": "climate",
       "horizon_relevant": "30d"
     },
     {
-      "id": "S-02",
-      "priority": 2,
-      "action": "Обновить базовые прогнозы",
-      "detail": "Благоприятный период для актуализации долгосрочных прогнозов",
-      "trigger": "stabilization state > 7d",
-      "expiry": "state transition",
-      "confidence": 85,
+      "id": "CR-10",
+      "priority": 1,
+      "action": "Немедленная эвакуация уязвимых активов",
+      "detail": "Приоритетная защита критической инфраструктуры и цепочек поставок",
+      "trigger": "always",
+      "expiry": "assets secured",
+      "confidence": 75,
+      "domain_context": "climate",
+      "horizon_relevant": "30d"
+    },
+    {
+      "id": "CR-11",
+      "priority": 1,
+      "action": "Активировать высший уровень кризисного управления",
+      "detail": "Передать координацию реагирования на высший уровень принятия решений",
+      "trigger": "always",
+      "expiry": "crisis resolved",
+      "confidence": 75,
       "domain_context": "climate",
       "horizon_relevant": "30d"
     }
   ],
-  "action_count": 2,
-  "state": "stabilization",
-  "dominant_scenario": "best",
-  "scenario_score": 29,
-  "instability": 17,
+  "action_count": 3,
+  "state": "critical",
+  "dominant_scenario": "worst",
+  "scenario_score": 36,
+  "instability": 52,
   "calibration_grade": "excellent",
   "escalation_triggers": [
     {
-      "condition": "risk_score ≥ 80 (+8pt)",
-      "leads_to": "contained",
-      "probability": 17
+      "condition": "risk_score ≥ 58 (+8pt)",
+      "leads_to": "cascade",
+      "probability": 26
     },
     {
       "condition": "delta ≥ 6 за 24ч",
-      "leads_to": "contained",
-      "probability": 8
+      "leads_to": "cascade",
+      "probability": 26
     },
     {
-      "condition": "Worst-case 30d ≥ 83",
-      "leads_to": "contained",
-      "probability": 21
+      "condition": "Worst-case 30d ≥ 74",
+      "leads_to": "cascade",
+      "probability": 34
     },
     {
       "condition": "Новый критический драйвер в climate",
-      "leads_to": "contained",
-      "probability": 18
+      "leads_to": "cascade",
+      "probability": 22
     }
   ],
   "horizon_outlook": [
     {
       "horizon": "30 дней",
-      "score": 38,
-      "state": "stabilization",
-      "urgency": "low",
-      "preparedness": "routine"
+      "score": 69,
+      "state": "escalating",
+      "urgency": "high",
+      "preparedness": "active"
     },
     {
       "horizon": "90 дней",
-      "score": 34,
-      "state": "stabilization",
-      "urgency": "low",
-      "preparedness": "routine"
+      "score": 77,
+      "state": "critical",
+      "urgency": "critical",
+      "preparedness": "emergency"
     },
     {
       "horizon": "180 дней",
-      "score": 30,
-      "state": "stabilization",
-      "urgency": "low",
-      "preparedness": "routine"
+      "score": 86,
+      "state": "critical",
+      "urgency": "critical",
+      "preparedness": "emergency"
     },
     {
       "horizon": "365 дней",
-      "score": 27,
-      "state": "stabilization",
-      "urgency": "low",
-      "preparedness": "routine"
+      "score": 95,
+      "state": "cascade",
+      "urgency": "maximum",
+      "preparedness": "maximum"
     }
   ],
   "probabilities": {
-    "worst": 21,
-    "stress": 22,
-    "base": 24,
-    "best": 33
+    "worst": 34,
+    "stress": 27,
+    "base": 12,
+    "best": 27
   }
 }
