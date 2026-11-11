@@ -2,67 +2,67 @@
   "country": "SA",
   "date": "2026-11-11",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-11T16:10:38.691609+00:00",
+  "generated_at": "2026-11-11T16:31:39.242262+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-SA",
       "type": "Country",
       "label": "SA",
-      "score": 63,
+      "score": 77,
       "props": {
-        "risk_score": 63
+        "risk_score": 77
       }
     },
     {
       "id": "DOMAIN-SA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 71,
-      "trend": "down"
+      "score": 89,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
-      "trend": "down"
+      "score": 62,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "down"
+      "score": 74,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DRIVER-SA-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-SA-Дождь:_Эль",
+      "type": "Signal",
+      "label": "Дождь: Эль-Лит (Мекка), Аль-Джумум (Мекк",
+      "severity": 74,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-SA-Хуситы_нан",
       "type": "Signal",
       "label": "Хуситы нанесли удары по аэропорту Эр-Рия",
@@ -87,18 +94,11 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-SA-Силы_ПВО_С",
+      "id": "SIGNAL-SA-Нефтяное_п",
       "type": "Signal",
-      "label": "Силы ПВО Саудовской Аравии перехватили и",
-      "severity": 54,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-SA-Goldman,_F",
-      "type": "Signal",
-      "label": "Goldman, Fortress и HBSC поддерживают ре",
-      "severity": 53,
-      "domain": "geopolitical"
+      "label": "Нефтяное производство Саудовской Аравии ",
+      "severity": 62,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,19 +106,19 @@
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.71
+      "weight": 0.89
     },
     {
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.62
     },
     {
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.74
     },
     {
       "from": "COUNTRY-SA",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-SA-climate",
+      "to": "DOMAIN-SA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-SA-infrastructure",
+      "to": "DOMAIN-SA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-SA-economic",
+      "to": "DOMAIN-SA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-SA-climate",
+      "to": "DOMAIN-SA-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-SA-economic",
+      "to": "DOMAIN-SA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-SA-social",
+      "to": "DOMAIN-SA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-SA-geopolitical",
       "to": "DOMAIN-SA-infrastructure",
       "type": "ESCALATES",
@@ -184,22 +226,22 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-SA-Дождь:_Эль",
+      "to": "DOMAIN-SA-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.74
+    },
+    {
       "from": "SIGNAL-SA-Хуситы_нан",
       "to": "DOMAIN-SA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.63
     },
     {
-      "from": "SIGNAL-SA-Силы_ПВО_С",
-      "to": "DOMAIN-SA-geopolitical",
+      "from": "SIGNAL-SA-Нефтяное_п",
+      "to": "DOMAIN-SA-economic",
       "type": "AMPLIFIES",
-      "weight": 0.54
-    },
-    {
-      "from": "SIGNAL-SA-Goldman,_F",
-      "to": "DOMAIN-SA-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.53
+      "weight": 0.62
     }
   ]
 }
