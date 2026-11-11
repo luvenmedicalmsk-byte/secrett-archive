@@ -7952,6 +7952,35 @@ _S11_DECIDE = re.compile(r'одобрил|утвердил|передаст|пе
                          r'отказал\w*\s+(?:в\s+)?постав|ограничил|подписал|approv|announc\w+\s+(?:a\s+)?(?:new\s+)?package|halt|suspend', re.I)
 _S11_DISCUSS = re.compile(r'(?<![а-яё])(?:может|могут|рассматрива\w*|обсужда\w*|обсудят|призвал\w*|просит|попросил\w*|надеется|'
                           r'хотел\w*|планирует|(?<!нет\s)возможн\w*|не\s+исключ\w*|считает|заявил\w*,\s+что\s+(?:нужн|необходим))', re.I)
+# R2b: контекст военной помощи / ПВО / боеприпасов + признак дефицита (в заголовке) + масштаб
+# (сумма, процент или конкретная система; заголовок или начало текста).
+S11_R2B_FLOOR = 58
+S11_R2C_FLOOR = 58
+_S11_R2B_CTX = re.compile(r'patriot|пэтриот|(?<![а-яё])пво(?![а-яё])|зрк|himars|atacms|taurus|f-16|nasams|iris-t|'
+                          r'боеприпас|снаряд|перехватчик|interceptor|ammunition|munition|(?<![a-z])usai(?![a-z])|air\s+defen[cs]e|'
+                          r'военн\w*\s+помощ|military\s+(?:aid|assistance)|вооружени|оружи|weapons?(?![a-z])', re.I)
+_S11_R2B_SHORT = re.compile(r'не\s+хвата\w*|нехватк\w*|дефицит\w*|shortfall|shortage|недопостав\w*|не\s+получил\w*|'
+                            r'заканчива\w*|законч\w*ся|исчерпа\w*|run(?:s|ning)?\s+(?:out|low)|depleted', re.I)
+_S11_R2B_SCALE = re.compile(r'\d+(?:[.,]\d+)?\s*(?:%|процент|млрд|миллиард|млн|миллион|трлн|billion|bn|million|тыс|шт|единиц|систем|ракет|снаряд)|'
+                            r'[$€]\s*\d|patriot|пэтриот|pac-?3|nasams|iris-t|samp|himars|atacms|taurus|f-16|155\s*мм|155\s*mm|зрк', re.I)
+# R2c: Украина / Россия / ЕС + замороженные активы, репарационный кредит или общий долг +
+# конкретная сумма либо финансовое решение; намерения («готовят», «намерены обсудить») - нет.
+_S11_R2C_CTX = re.compile(r'украин|росси|(?<![а-яё])ес(?![а-яё])|евросоюз|еврокомисс|европейск\w*\s+(?:союз|совет|комисс)|'
+                          r'(?<![a-z])eu(?![a-z])|ukrain|russia|european\s+(?:union|commission|council)', re.I)
+_S11_R2C_LINK = re.compile(r'заморож\w*\s+(?:российск\w*\s+)?актив\w*|замороженн\w*|иммобилиз\w*|репарационн\w*\s+(?:кредит|за[её]м)\w*|'
+                           r'reparations?\s+loan|frozen\s+(?:russian\s+)?assets|immobili[sz]ed\s+assets|'
+                           r'общ\w*\s+(?:европейск\w*\s+)?долг\w*|совместн\w*\s+(?:долг|заимствован)\w*|joint\s+(?:debt|borrowing)|'
+                           r'common\s+(?:debt|borrowing)|eurobonds?|евробонд\w*', re.I)
+_S11_R2C_MONEY = re.compile(r'\d+(?:[.,]\d+)?\s*(?:млрд|миллиард|млн|миллион|трлн|billion|bn|million|trillion)|[$€]\s*\d|\d\s*(?:евро|долл)', re.I)
+_S11_R2C_DEC = re.compile(r'одобрил\w*|утвердил\w*|согласовал\w*|принял\w*|договорил\w*|выделил\w*|подписал\w*|'
+                          r'agreed|approv\w+|adopt\w+|signed', re.I)
+_S11_R2C_INTENT = re.compile(r'готов\w*|намерен\w*|обсуд\w*|предлага\w*|планиру\w*|рассматрива\w*|'
+                             r'(?<![a-z])(?:plans?|planning|consider\w*|mulls?|weighs?|discuss\w*|propos\w*)(?![a-z])', re.I)
+_S11_R2C_IRAN = re.compile(r'иран|iran', re.I)
+# R2b: прогноз и оговорка («может не хватить», «рискует») - не факт дефицита;
+# «не может поставить» - факт невозможности, проходит.
+_S11_R2B_HEDGE = re.compile(r'(?<![а-яё])(?<!не\s)(?:может|могут|могли|рискует|рискуют|грозит)(?![а-яё])|возможн\w*|не\s+исключ\w*|'
+                            r'прогноз\w*|рассматрива\w*|обсужда\w*|(?<![a-z])(?:could|may|might|risks?)(?![a-z])', re.I)
 _S11_ANIMAL = re.compile(r'медвед|волк(?:и|ов|а)?(?![а-яё])|тигр|леопард|акул|крокодил|слон|бегемот|кабан|бешен\w*\s+(?:лис|живот)', re.I)
 _S11_HARM = re.compile(r'погиб\w*|гибел\w*|убил\w*|загрыз\w*|растерзал\w*|нападени\w*|напал\w*', re.I)
 _S11_SCALE = re.compile(r'отстрел|ликвидир\w*|режим\w*\s+(?:чс|чрезвычайн|повышенной\s+готовности)|чрезвычайн|массов\w*\s+нападени|'
@@ -7969,6 +7998,16 @@ def _s11_rule(t, d, domain):
         return 62, 'R1 переговоры', (_S11_CONCRETE.search(tl).group(0))
     if _S11_ARMS.search(tl) and _S11_DECIDE.search(tl) and not _S11_DISCUSS.search(tl):
         return 62, 'R2 поставки вооружений', _S11_DECIDE.search(tl).group(0)
+    # R2b / R2c (решение Мии 11.11: SHADOW APPROVED, пол 58 - ниже TOPIC_CAP_EXEMPT_SEVERITY 60).
+    # Отдельные причины, не смешиваются с R2; R1 и R3 не меняются.
+    if _S11_R2B_CTX.search(tl) and _S11_R2B_SHORT.search(tl) and _S11_R2B_SCALE.search(td) \
+            and not _S11_R2B_HEDGE.search(tl):
+        return S11_R2B_FLOOR, 'R2b дефицит вооружений', _S11_R2B_SHORT.search(tl).group(0)
+    if _S11_R2C_CTX.search(tl) and _S11_R2C_LINK.search(tl) \
+            and (_S11_R2C_MONEY.search(tl) or _S11_R2C_DEC.search(tl)) \
+            and not _S11_R2C_INTENT.search(tl) and not _S11_DISCUSS.search(tl) \
+            and not (_S11_R2C_IRAN.search(tl) and not re.search(r'украин|ukrain', td, re.I)):
+        return S11_R2C_FLOOR, 'R2c финансирование помощи', _S11_R2C_LINK.search(tl).group(0)
     if _S11_ANIMAL.search(tl) and _S11_HARM.search(td) and _S11_SCALE.search(td):
         return 60, 'R3 дикие животные', _S11_SCALE.search(td).group(0)
     return 0, '', ''
@@ -8434,6 +8473,281 @@ def _r1b_write():
         (OUTPUT_PATH.parent / '_r1_bypass_shadow.json').write_text(json.dumps(rep, ensure_ascii=False, indent=1), encoding='utf-8')
     except Exception as _e:
         print('  [WARN] r1 bypass shadow: %s' % _e, file=sys.stderr)
+
+
+# ── SEV_SHADOW_R2 (11.11.2026) ─────────────────────────────────────────────
+# Отчёт вытеснения для R2 / R2b / R2c (решение Мии 11.11: R2b и R2c SHADOW APPROVED,
+# пол 58; production без изменений, canary не разрешён). Только docs/_sev_shadow_r2.json.
+# Сценарии на копиях: A (как есть), R2, R2+R2b, R2+R2b+R2c. В каждом сценарии индекс
+# победителя сюжета поднимается до пола правила; Admission НЕ обходится (записи,
+# срезанные до квоты, перечислены отдельно и в сценариях не участвуют). Дальше - та же
+# квота домена, кап ленты и _topic_cap, что в production. Один сюжет - один победитель:
+# первичный источник, полнота сведений, затем время. Причины раздельные (R2 / R2b / R2c).
+# Откат: SEV_SHADOW_R2 = False.
+SEV_SHADOW_R2 = True
+_R2S_SIM = {}
+_R2S_FLOORS = {'R2': 62, 'R2b': S11_R2B_FLOOR, 'R2c': S11_R2C_FLOOR}
+_R2S_SCEN = (('A', ()), ('R2', ('R2',)), ('R2+R2b', ('R2', 'R2b')), ('R2+R2b+R2c', ('R2', 'R2b', 'R2c')))
+_R2S_AMT = re.compile(r'(?:[$€]\s*)?\d+(?:[.,]\d+)?\s*(?:%|млрд|миллиард|млн|миллион|трлн|billion|bn|million|b(?![a-zа-яё]))', re.I)
+_R2S_ENT = re.compile(r'нато|nato|usai|patriot|пэтриот|nasams|iris-t|himars|atacms|taurus|f-16|ес(?![а-яё])|евросоюз|(?<![a-z])eu(?![a-z])|'
+                      r'репарацион|reparation|заморож|frozen|долг|debt|пентагон|pentagon|герман|germany|сша|(?<![a-z])us(?![a-z])', re.I)
+_R2S_HUM = re.compile(r'гуманитар|humanitarian|голод|famine|беженц|refugee|вынужденн\w*\s+переселен|displac', re.I)
+
+
+def _r2s_rule(e):
+    fl, rule, why = _s11_rule(str(e.get('title') or ''), str(e.get('summary') or e.get('desc') or ''), e.get('domain'))
+    r = rule.split()[0] if rule else ''
+    return (r, fl, why) if r in _R2S_FLOORS else ('', 0, '')
+
+
+def _r2s_norm_amt(t):
+    out = set()
+    for m in _R2S_AMT.finditer(t or ''):
+        x = re.sub(r'\s+', '', m.group(0).lower()).replace(',', '.')
+        x = re.sub(r'миллиард\w*|billion|bn|b$', 'млрд', x)
+        x = re.sub(r'миллион\w*|million', 'млн', x)
+        out.add(x.replace('$', '').replace('€', ''))
+    return out
+
+
+_R2S_ENT_NORM = {'nato': 'нато', 'eu': 'ес', 'евros': 'ес', 'еврос': 'ес', 'us': 'сша', 'penta': 'пента', 'germa': 'герма',
+                 'frozen': 'замор', 'froze': 'замор', 'debt': 'долг', 'repar': 'репар', 'пэтри': 'patri'}
+_R2S_GENERIC = frozenset(('помощи', 'помощь', 'помощью', 'украине', 'украины', 'украина', 'украину', 'млрд', 'млн', 'военной',
+                          'военную', 'заявил', 'заявила', 'сообщил', 'сообщила', 'ukraine', 'military', 'billion', 'million',
+                          'долларов', 'евро', 'более', 'около'))
+
+
+def _r2s_feat(e):
+    t = str(e.get('title') or ''); blob = t + ' ' + str(e.get('summary') or '')[:300]
+    return (_r2s_norm_amt(blob), {_R2S_ENT_NORM.get(m.group(0).lower()[:5], m.group(0).lower()[:5]) for m in _R2S_ENT.finditer(blob)},
+            {w for w in _r1b_toks(t) if w not in _R2S_GENERIC})
+
+
+def _r2s_same(a, b):
+    """Один сюжет: при суммах в обеих записях - общая сумма и общий объект (разные суммы -
+    разные сюжеты); без сумм - близость заголовков без общих слов («помощь», «Украина», «млрд»)."""
+    if a[0] and b[0]:
+        return bool(a[0] & b[0] and a[1] & b[1])
+    if not a[2] or not b[2]:
+        return False
+    sh = a[2] & b[2]
+    return len(sh) >= 3 and len(sh) / max(1, min(len(a[2]), len(b[2]))) >= 0.6
+
+
+def _r2s_stories(cands):
+    """Union-find по _r2s_same."""
+    n = len(cands); par = list(range(n))
+
+    def f(i):
+        while par[i] != i:
+            par[i] = par[par[i]]; i = par[i]
+        return i
+    feat = [_r2s_feat(e) for e in cands]
+    for i in range(n):
+        for j in range(i + 1, n):
+            if _r2s_same(feat[i], feat[j]):
+                par[f(i)] = f(j)
+    groups = {}
+    for i in range(n):
+        groups.setdefault(f(i), []).append(cands[i])
+    return list(groups.values())
+
+
+def _r2s_simulate(quota_map, feed_all, survivors, analytic, prio_fn, exported):
+    if not SEV_SHADOW_R2:
+        return
+    try:
+        import io, contextlib
+        qrec = list(_R1B_QREC)
+        if not qrec:
+            _R2S_SIM['error'] = 'нет записей стадии квоты (R1_BYPASS_SHADOW_0911 выключен?)'
+            return
+        qids = {id(ev) for ev, _d, _k in qrec}
+        a_feed = {id(e) for e in feed_all}
+        surv = {id(e) for e in survivors}
+        base = [e for e in feed_all if id(e) not in qids]
+        qpool = [(k, d, ev) for ev, d, k in qrec if ev.get('feed_visible') is not False]
+        # кандидаты: все записи, дошедшие до квоты или вне квоты
+        pool_events = [ev for _k, _d, ev in qpool] + base
+        cand = []
+        for e in pool_events:
+            r, fl, why = _r2s_rule(e)
+            if r:
+                cand.append(e); e_meta = {'rule': r, 'floor': fl, 'why': why}
+                _R2S_SIM.setdefault('meta', {})[id(e)] = e_meta
+        meta = _R2S_SIM.get('meta', {})
+        # те же сюжеты в других публикациях (правило не сработало, но событие то же) - тоже дубли
+        cf = [_r2s_feat(e) for e in cand]
+        cid = {id(e) for e in cand}
+        related = [e for e in pool_events if id(e) not in cid and any(_r2s_same(_r2s_feat(e), x) for x in cf)]
+        winners, dups, stories = {}, [], []
+        rank = lambda e: (-_r1b_tier(str(e.get('source') or ''), str(e.get('title') or '')),
+                          -len(_r2s_norm_amt(str(e.get('title') or '') + ' ' + str(e.get('summary') or '')[:300])),
+                          str(e.get('date') or e.get('published') or '9999'))
+        for g in _r2s_stories(cand + related):
+            gm = sorted([e for e in g if id(e) in meta], key=rank)
+            if not gm:
+                continue
+            w = gm[0]; winners[id(w)] = w
+            rest = [e for e in sorted(g, key=rank) if e is not w]
+            dups.extend(rest)
+            stories.append({'победитель': str(w.get('title') or '')[:160], 'источник': str(w.get('source') or ''),
+                            'правило': meta[id(w)]['rule'], 'записей в сюжете': len(g),
+                            'дубли': [{'title': str(x.get('title') or '')[:140], 'source': str(x.get('source') or ''),
+                                       'правило': meta.get(id(x), {}).get('rule', 'не сработало (та же новость)'),
+                                       'severity': x.get('severity'), 'reason': 'r2_story_dup'} for x in rest]})
+
+        def run(rules):
+            mod = {i: max(w.get('severity', 0) or 0, meta[i]['floor']) for i, w in winners.items() if meta[i]['rule'] in rules}
+
+            def eff(e):
+                if id(e) in mod:
+                    return dict(e, severity=mod[id(e)], _r2s_orig=id(e))
+                return e
+            oid = lambda e: e.get('_r2s_orig') or id(e)
+            pool = []
+            for i, (k, d, ev) in enumerate(qpool):
+                e2 = eff(ev)
+                pool.append((prio_fn(e2) if e2 is not ev else k, i, d, e2))
+            pool.sort(key=lambda x: (-x[0], x[1]))
+            cnt = {}; acc = []; rem = {}; info = {}
+            for _k, _i, dd, e in pool:
+                q = quota_map.get(dd, MAX_EVENTS)
+                if cnt.get(dd, 0) < q:
+                    cnt[dd] = cnt.get(dd, 0) + 1; acc.append((_k, e))
+                    info[oid(e)] = {'квота': '%s: место %d из %d' % (dd, cnt[dd], q)}
+                else:
+                    rem[oid(e)] = 'квота домена'
+                    info[oid(e)] = {'квота': '%s: сверх квоты %d' % (dd, q)}
+            feed = [(prio_fn(eff(e)), eff(e)) for e in base] + acc
+            feed.sort(key=lambda x: -x[0])
+            for n_, (_k, e) in enumerate(feed):
+                info.setdefault(oid(e), {})['кап ленты'] = ('место %d из %d' % (n_ + 1, MAX_EVENTS)) if n_ < MAX_EVENTS else 'сверх %d' % MAX_EVENTS
+            for _k, e in feed[MAX_EVENTS:]:
+                rem[oid(e)] = 'feed_cap'
+            feed = [e for _k, e in feed[:MAX_EVENTS]]
+            for e in feed:
+                if oid(e) in a_feed and oid(e) not in surv:
+                    rem[oid(e)] = 'промежуточные стадии (факт A)'
+            feed = [e for e in feed if not (oid(e) in a_feed and oid(e) not in surv)]
+            copies = [dict(e, _r1b_src_id=oid(e)) for e in feed] + [dict(e) for e in analytic]
+            with contextlib.redirect_stderr(io.StringIO()):
+                tc = _topic_cap([dict(c) for c in copies], 6)
+            kept = {x.get('_r1b_src_id') for x in tc if x.get('_r1b_src_id')}
+            _df, tinfo, kept_h = _r1b_tc([dict(c) for c in copies], 6)
+            for e in feed:
+                if oid(e) not in kept:
+                    rem[oid(e)] = 'topic_cap'
+                if oid(e) in tinfo:
+                    info.setdefault(oid(e), {})['тема'] = tinfo[oid(e)]
+            final = [e for e in feed if oid(e) in kept]
+            return {'final_ids': {oid(e) for e in final}, 'final': final, 'rem': rem, 'info': info,
+                    'mod': mod, 'helper_match': kept_h == kept, 'quota_used': cnt}
+        res = {name: run(rules) for name, rules in _R2S_SCEN}
+        orig = {id(e): e for e in pool_events}
+        _R2S_SIM.update({'res': res, 'winners': winners, 'dups': dups, 'stories': stories, 'cand': cand,
+                         'orig': orig, 'exported': len([e for e in exported if e.get('feed_visible') is not False])})
+        if LINEAGE:
+            for i, w in winners.items():
+                _trace(w.get('_obs_tid'), 'R2_SHADOW', 'shadow', reason='r2_family_' + meta[i]['rule'],
+                       raw_index=w.get('severity'), shadow_adjusted_index=max(w.get('severity', 0) or 0, meta[i]['floor']))
+            for e in dups:
+                _trace(e.get('_obs_tid'), 'R2_SHADOW', 'shadow', reason='r2_story_dup', raw_index=e.get('severity'))
+    except Exception as _e:
+        _R2S_SIM['error'] = str(_e)[:300]
+        print('  [WARN] r2 shadow sim: %s' % _e, file=sys.stderr)
+
+
+def _r2s_watch(e):
+    t = str(e.get('title') or ''); blob = t + ' ' + str(e.get('summary') or '')[:300]
+    tags = []
+    if _R1B_NATO7.search(t) and _R1B_NATO7B.search(blob):
+        tags.append('NATO €7B')
+    elif _R1B_NATO7.search(t) and re.search(r'помощ|aid|assist|пакет|package', t, re.I):
+        tags.append('NATO-помощь')
+    if _R2S_HUM.search(t):
+        tags.append('гуманитарный сигнал')
+    if 'CISA' in str(e.get('source') or ''):
+        tags.append('CISA')
+    fl, rule, _w = _s11_rule(t, str(e.get('summary') or ''), e.get('domain'))
+    if rule.startswith('R1'):
+        tags.append('R1 (контроль)')
+    if rule.startswith('R3'):
+        tags.append('R3 (контроль)')
+    return tags
+
+
+def _r2s_write():
+    if not SEV_SHADOW_R2:
+        return
+    try:
+        rep = {'дата': datetime.now(timezone.utc).isoformat(timespec='seconds'),
+               'режим': 'тень R2 / R2b / R2c: production Admission, severity, квоты, topic_cap, feed_cap, R1 и R3 не меняются',
+               'полы': _R2S_FLOORS, 'TOPIC_CAP_EXEMPT_SEVERITY': TOPIC_CAP_EXEMPT_SEVERITY,
+               'примечание': 'R2 (62) не ниже порога освобождения topic_cap (60) и проходит тематический лимит по весу; '
+                             'R2b и R2c (58) конкурируют за тематические места на общих условиях.'}
+        # совпадения в журнале SEV_SHADOW_1108 (до Admission)
+        logr = [x for x in _S11_LOG if x['rule'].split()[0] in _R2S_FLOORS]
+        rep['совпадения до Admission'] = {r: sum(1 for x in logr if x['rule'].startswith(r + ' ')) for r in _R2S_FLOORS}
+        if 'error' in _R2S_SIM:
+            rep['ошибка'] = _R2S_SIM['error']
+        if 'res' in _R2S_SIM:
+            res = _R2S_SIM['res']; meta = _R2S_SIM['meta']; winners = _R2S_SIM['winners']; orig = _R2S_SIM['orig']
+            in_pool = {str(e.get('title') or '')[:150] for e in orig.values()}
+            rep['срезаны до квоты (Admission и ранние стадии, без обхода)'] = [
+                {'title': x['title'], 'source': x['source'], 'правило': x['rule'].split()[0], 'raw_index': x['raw_index']}
+                for x in logr if x['title'][:150] not in in_pool]
+            rep['сюжеты'] = {'кандидатов в квоте и ленте': len(_R2S_SIM['cand']), 'уникальных сюжетов': len(_R2S_SIM['stories']),
+                             'победителей': len(winners), 'r2_story_dup': len(_R2S_SIM['dups']),
+                             'по правилам (победители)': {r: sum(1 for i in winners if meta[i]['rule'] == r) for r in _R2S_FLOORS},
+                             'список': _R2S_SIM['stories']}
+            A = res['A']
+            card = lambda e: {'title': str(e.get('title') or '')[:160], 'source': str(e.get('source') or ''),
+                              'domain': e.get('domain'), 'severity': e.get('severity')}
+            out = {}
+            for name, rules in _R2S_SCEN:
+                r = res[name]
+                fam = []
+                for i, w in winners.items():
+                    m = meta[i]
+                    fam.append({'title': str(w.get('title') or '')[:160], 'source': str(w.get('source') or ''),
+                                'правило': m['rule'], 'причина': m['why'], 'raw_index': w.get('severity'),
+                                'shadow_adjusted_index': r['mod'].get(i, w.get('severity')),
+                                'поднята в сценарии': i in r['mod'],
+                                'квота домена': r['info'].get(i, {}).get('квота', '?'),
+                                'кап ленты': r['info'].get(i, {}).get('кап ленты', 'не дошла'),
+                                'topic_cap': r['info'].get(i, {}).get('тема', 'не дошла'),
+                                'итог': 'в ленте' if i in r['final_ids'] else r['rem'].get(i, '?'),
+                                'в ленте A': i in A['final_ids']})
+                lost = [i for i in A['final_ids'] if i not in r['final_ids']]
+                gained = [i for i in r['final_ids'] if i not in A['final_ids']]
+                out[name] = {
+                    'правила': list(rules),
+                    'лента после topic_cap': len(r['final']),
+                    'карточек R2-семейства в ленте': sum(1 for i in winners if i in r['final_ids']),
+                    'занятость квот': r['quota_used'],
+                    'копия topic_cap совпадает с production': r['helper_match'],
+                    'R2-семейство': fam,
+                    'вытеснено из ленты A': len(lost),
+                    'вытесненные': [dict(card(orig[i]) if i in orig else {'id': i}, стадия=r['rem'].get(i, '?'),
+                                         тема=str(r['info'].get(i, {}).get('тема', '')),
+                                         контроль=_r2s_watch(orig[i]) if i in orig else [],
+                                         стратегическая=bool(i in orig and ((orig[i].get('severity') or 0) >= 55 or _r2s_watch(orig[i]))))
+                                    for i in lost],
+                    'вернулись относительно A': [dict(card(orig[i]), правило=meta.get(i, {}).get('rule', '')) for i in gained if i in orig]}
+            rep['сценарии'] = out
+            # отдельное отслеживание стратегических карточек
+            watch = []
+            for i, e in orig.items():
+                tg = _r2s_watch(e)
+                if tg:
+                    watch.append(dict(card(e), контроль=tg, **{n: ('в ленте' if i in res[n]['final_ids'] else res[n]['rem'].get(i, 'вне ленты'))
+                                                              for n, _r in _R2S_SCEN}))
+            rep['контроль стратегических карточек'] = watch
+            rep['сверка модели'] = {'A_модель': len(A['final']), 'факт после topic_cap': _R2S_SIM.get('exported')}
+        (OUTPUT_PATH.parent / '_sev_shadow_r2.json').write_text(json.dumps(rep, ensure_ascii=False, indent=1), encoding='utf-8')
+    except Exception as _e:
+        print('  [WARN] r2 shadow: %s' % _e, file=sys.stderr)
 
 
 def process_events(raw_items):
@@ -9850,6 +10164,8 @@ def process_events(raw_items):
     _post_lost('лимит_на_тему_6', _tc_in, top_events)
     _r1b_simulate(DOMAIN_QUOTA, _feed_all, _tc_in, [e for e in _tc_in if e.get('feed_visible') is False],
                   _r1b_prio, top_events)   # R1_BYPASS_SHADOW_0911: только отчёт, на копиях
+    _r2s_simulate(DOMAIN_QUOTA, _feed_all, _tc_in, [e for e in _tc_in if e.get('feed_visible') is False],
+                  _r1b_prio, top_events)   # SEV_SHADOW_R2: только отчёт, на копиях
     if LINEAGE:
         _tc_post={x.get('_obs_tid') for x in top_events if x.get('_obs_tid')}
         for _tcx in (_tc_pre - _tc_post): _trace(_tcx,'TOPIC_CAP','removed',reason='topic_cap')
@@ -30460,6 +30776,7 @@ def save_enriched(events, previous_snapshot=None):
             _qc_write_shadow()
             _s11_write()
             _r1b_write()
+            _r2s_write()
             _egp('k09_signal_quality', enriched["events"])
             enriched["events"] = _retain_critical(enriched["events"], previous_snapshot)
             _egp('k10_retain_critical', enriched["events"])
