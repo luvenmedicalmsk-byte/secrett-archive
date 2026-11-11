@@ -2,9 +2,9 @@
   "country": "SK",
   "date": "2026-11-11",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-11T08:08:48.830591+00:00",
+  "generated_at": "2026-11-11T08:30:05.882785+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-SK",
@@ -19,14 +19,14 @@
       "id": "DOMAIN-SK-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 20,
+      "score": 53,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-SK-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -65,6 +65,11 @@
       "trend": "stable"
     },
     {
+      "id": "DRIVER-SK-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
+    },
+    {
       "id": "DRIVER-SK-climate",
       "type": "Driver",
       "label": "climate"
@@ -75,11 +80,6 @@
       "label": "economic"
     },
     {
-      "id": "DRIVER-SK-geopolitical",
-      "type": "Driver",
-      "label": "geopolitical"
-    },
-    {
       "id": "SIGNAL-SK-Ветер:_Поп",
       "type": "Signal",
       "label": "Ветер: Попрад, Липтовский Микулаш, Тврдо",
@@ -87,17 +87,17 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-SK-Строительн",
-      "type": "Signal",
-      "label": "Строительное производство Словакии",
-      "severity": 32,
-      "domain": "economic"
-    },
-    {
       "id": "SIGNAL-SK-Словакия_п",
       "type": "Signal",
       "label": "Словакия пригрозила заблокировать бюджет",
       "severity": 20,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-SK-Военные_уд",
+      "type": "Signal",
+      "label": "Военные удары — Словакия",
+      "severity": 53,
       "domain": "geopolitical"
     }
   ],
@@ -106,13 +106,13 @@
       "from": "COUNTRY-SK",
       "to": "DOMAIN-SK-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.53
     },
     {
       "from": "COUNTRY-SK",
       "to": "DOMAIN-SK-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-SK",
@@ -145,6 +145,12 @@
       "weight": 0.05
     },
     {
+      "from": "DRIVER-SK-geopolitical",
+      "to": "COUNTRY-SK",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-SK-climate",
       "to": "COUNTRY-SK",
       "type": "CAUSES",
@@ -155,33 +161,6 @@
       "to": "COUNTRY-SK",
       "type": "CAUSES",
       "weight": 0.8
-    },
-    {
-      "from": "DRIVER-SK-geopolitical",
-      "to": "COUNTRY-SK",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-SK-climate",
-      "to": "DOMAIN-SK-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-SK-infrastructure",
-      "to": "DOMAIN-SK-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-SK-economic",
-      "to": "DOMAIN-SK-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
     },
     {
       "from": "DOMAIN-SK-climate",
@@ -205,22 +184,64 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-SK-climate",
+      "to": "DOMAIN-SK-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-SK-infrastructure",
+      "to": "DOMAIN-SK-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-SK-economic",
+      "to": "DOMAIN-SK-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-SK-geopolitical",
+      "to": "DOMAIN-SK-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-SK-infrastructure",
+      "to": "DOMAIN-SK-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-SK-economic",
+      "to": "DOMAIN-SK-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-SK-Ветер:_Поп",
       "to": "DOMAIN-SK-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-SK-Строительн",
-      "to": "DOMAIN-SK-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.32
-    },
-    {
       "from": "SIGNAL-SK-Словакия_п",
       "to": "DOMAIN-SK-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.2
+    },
+    {
+      "from": "SIGNAL-SK-Военные_уд",
+      "to": "DOMAIN-SK-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.53
     }
   ]
 }
