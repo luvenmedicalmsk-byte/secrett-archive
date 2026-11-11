@@ -2,67 +2,67 @@
   "country": "CH",
   "date": "2026-11-11",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-11T02:28:11.071956+00:00",
+  "generated_at": "2026-11-11T02:48:57.424368+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-CH",
       "type": "Country",
       "label": "CH",
-      "score": 50,
+      "score": 59,
       "props": {
-        "risk_score": 50
+        "risk_score": 59
       }
     },
     {
       "id": "DOMAIN-CH-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 45,
-      "trend": "stable"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 50,
-      "trend": "stable"
+      "score": 58,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-CH-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-CH-Новый_мето",
+      "type": "Signal",
+      "label": "Новый метод отслеживания изменения клима",
+      "severity": 50,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-CH-Ливень:_Ли",
       "type": "Signal",
       "label": "Ливень: Лимматталь, Верхний Базельбит, Ф",
@@ -87,18 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-CH-Климатичес",
+      "id": "SIGNAL-CH-Экологичес",
       "type": "Signal",
-      "label": "Климатический сигнал — Швейцария",
+      "label": "Экологический инцидент — Швейцария",
       "severity": 50,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-CH-Инфраструк",
-      "type": "Signal",
-      "label": "Инфраструктурный инцидент — Швейцария",
-      "severity": 45,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.45
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CH",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-climate",
       "type": "CORRELATES",
-      "weight": 0.5
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-CH",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-CH-climate",
-      "to": "DOMAIN-CH-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-CH-economic",
-      "to": "DOMAIN-CH-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-CH-social",
-      "to": "DOMAIN-CH-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-CH-climate",
       "to": "DOMAIN-CH-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -205,25 +184,31 @@
       "lag_days": 30
     },
     {
-      "from": "DOMAIN-CH-geopolitical",
-      "to": "DOMAIN-CH-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-CH-infrastructure",
+      "from": "DOMAIN-CH-climate",
       "to": "DOMAIN-CH-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-CH-economic",
       "to": "DOMAIN-CH-social",
       "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-CH-social",
+      "to": "DOMAIN-CH-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "SIGNAL-CH-Новый_мето",
+      "to": "DOMAIN-CH-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
     },
     {
       "from": "SIGNAL-CH-Ливень:_Ли",
@@ -232,16 +217,10 @@
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-CH-Климатичес",
+      "from": "SIGNAL-CH-Экологичес",
       "to": "DOMAIN-CH-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-CH-Инфраструк",
-      "to": "DOMAIN-CH-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.45
     }
   ]
 }
