@@ -212,6 +212,15 @@ jobs:
         run: |
           python scripts/maritime_shadow.py || true
 
+      # GDELT_SHADOW 11.11.2026: доступность GDELT DOC API с раннеров и его
+      # добавочная ценность (доля уже читаемых изданий, дубли, темы).
+      # Только отчёт, лента не меняется. Сам пропускает прогон, если отчёт свежее 6 часов.
+      - name: GDELT DOC API (Shadow)
+        continue-on-error: true
+        timeout-minutes: 2
+        run: |
+          python scripts/gdelt_shadow.py || true
+
       # Мини-разборы зон риска. Отдельный шаг: скрипту нужен ADMIN_KEY
       # для чтения зон с visibility signal_pro из KV. Внутри чужого шага
       # переменная недоступна — она объявлена в его собственном env.
@@ -311,6 +320,7 @@ jobs:
           _add docs/_enrich_gap.json   # D-08a-2 ENRICH_GAP_PROBE 04.11.2026
           _add docs/_wmo_cap_shadow.json   # WMO_CAP_SHADOW 05.11.2026
           _add docs/_maritime_shadow.json   # MARITIME_SHADOW 06.11.2026
+          _add docs/_gdelt_shadow.json   # GDELT_SHADOW 11.11.2026
           _add docs/_quake_shadow.json   # D-08c QUAKE_CATEGORY_SHADOW 06.11.2026
           _add docs/_wmo_alerthub_shadow.json   # WMO_ALERTHUB 06.11.2026
           _add docs/_sev_shadow_1108.json   # SEV_SHADOW_1108 08.11.2026
