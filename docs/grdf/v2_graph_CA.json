@@ -2,32 +2,32 @@
   "country": "CA",
   "date": "2026-11-11",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-11T20:10:46.107992+00:00",
+  "generated_at": "2026-11-11T21:13:14.768336+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-CA",
       "type": "Country",
       "label": "CA",
-      "score": 89,
+      "score": 83,
       "props": {
-        "risk_score": 89
+        "risk_score": 83
       }
     },
     {
       "id": "DOMAIN-CA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
-      "trend": "stable"
+      "score": 56,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-climate",
@@ -41,28 +41,28 @@
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DRIVER-CA-Geopolitical",
@@ -80,24 +80,24 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CA-Дождь:_Мет",
-      "type": "Signal",
-      "label": "Дождь: Метро Ванкувер - Северный берег, ",
-      "severity": 74,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-CA-Сильный_ве",
       "type": "Signal",
-      "label": "Сильный ветер: Стюарт - Нечако, Восточны",
+      "label": "Сильный ветер: Восточный Ванкуверский ос",
       "severity": 74,
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-CA-Наводнение",
+      "id": "SIGNAL-CA-Военный_му",
       "type": "Signal",
-      "label": "Наводнение — Северная Америка",
-      "severity": 77,
+      "label": "Военный музей на Ванкувере закрывается и",
+      "severity": 56,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-CA-Метель:_Та",
+      "type": "Signal",
+      "label": "Метель: Талойоак, Канада",
+      "severity": 56,
       "domain": "climate"
     }
   ],
@@ -106,7 +106,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-CA",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-CA-climate",
-      "to": "DOMAIN-CA-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-CA-infrastructure",
-      "to": "DOMAIN-CA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-CA-economic",
-      "to": "DOMAIN-CA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-CA-climate",
       "to": "DOMAIN-CA-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,10 +184,46 @@
       "lag_days": 90
     },
     {
-      "from": "SIGNAL-CA-Дождь:_Мет",
-      "to": "DOMAIN-CA-climate",
+      "from": "DOMAIN-CA-climate",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
       "type": "AMPLIFIES",
-      "weight": 0.74
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-CA-geopolitical",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-CA-Сильный_ве",
@@ -217,10 +232,16 @@
       "weight": 0.74
     },
     {
-      "from": "SIGNAL-CA-Наводнение",
+      "from": "SIGNAL-CA-Военный_му",
+      "to": "DOMAIN-CA-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.56
+    },
+    {
+      "from": "SIGNAL-CA-Метель:_Та",
       "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
-      "weight": 0.77
+      "weight": 0.56
     }
   ]
 }
