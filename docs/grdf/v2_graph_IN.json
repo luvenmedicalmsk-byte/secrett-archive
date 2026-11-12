@@ -2,67 +2,67 @@
   "country": "IN",
   "date": "2026-11-12",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-12T14:10:05.728608+00:00",
+  "generated_at": "2026-11-12T14:51:55.431253+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-IN",
       "type": "Country",
       "label": "IN",
-      "score": 55,
+      "score": 64,
       "props": {
-        "risk_score": 55
+        "risk_score": 64
       }
     },
     {
       "id": "DOMAIN-IN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 60,
-      "trend": "stable"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 64,
-      "trend": "stable"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
-      "trend": "stable"
+      "score": 69,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-IN-Geopolitical",
@@ -80,25 +80,25 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IN-Индия_пров",
+      "id": "SIGNAL-IN-Падение_ин",
       "type": "Signal",
-      "label": "Индия провела серию переговоров с Россие",
-      "severity": 34,
-      "domain": "geopolitical"
+      "label": "Падение интернет-связи: Индия",
+      "severity": 64,
+      "domain": "technology"
     },
     {
-      "id": "SIGNAL-IN-Шторм_—_Юж",
+      "id": "SIGNAL-IN-Глава_IEEE",
       "type": "Signal",
-      "label": "Шторм — Южная Азия",
-      "severity": 86,
-      "domain": "climate"
+      "label": "Глава IEEE Computer Society предлагает в",
+      "severity": 32,
+      "domain": "technology"
     },
     {
-      "id": "SIGNAL-IN-Военные_уд",
+      "id": "SIGNAL-IN-Отключение",
       "type": "Signal",
-      "label": "Военные удары — Южная Азия",
-      "severity": 80,
-      "domain": "geopolitical"
+      "label": "Отключение интернета — Индия",
+      "severity": 64,
+      "domain": "technology"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.6
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-IN",
@@ -118,13 +118,13 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-climate",
       "type": "CORRELATES",
-      "weight": 0.64
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.69
     },
     {
       "from": "COUNTRY-IN",
@@ -163,85 +163,22 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-IN-climate",
-      "to": "DOMAIN-IN-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-IN-economic",
-      "to": "DOMAIN-IN-social",
+      "from": "SIGNAL-IN-Падение_ин",
+      "to": "DOMAIN-IN-technology",
       "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
+      "weight": 0.64
     },
     {
-      "from": "DOMAIN-IN-social",
-      "to": "DOMAIN-IN-social",
+      "from": "SIGNAL-IN-Глава_IEEE",
+      "to": "DOMAIN-IN-technology",
       "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
+      "weight": 0.32
     },
     {
-      "from": "DOMAIN-IN-climate",
-      "to": "DOMAIN-IN-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-IN-infrastructure",
-      "to": "DOMAIN-IN-economic",
+      "from": "SIGNAL-IN-Отключение",
+      "to": "DOMAIN-IN-technology",
       "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-IN-economic",
-      "to": "DOMAIN-IN-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-IN-geopolitical",
-      "to": "DOMAIN-IN-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-IN-infrastructure",
-      "to": "DOMAIN-IN-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-IN-economic",
-      "to": "DOMAIN-IN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
-      "from": "SIGNAL-IN-Индия_пров",
-      "to": "DOMAIN-IN-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.34
-    },
-    {
-      "from": "SIGNAL-IN-Шторм_—_Юж",
-      "to": "DOMAIN-IN-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.86
-    },
-    {
-      "from": "SIGNAL-IN-Военные_уд",
-      "to": "DOMAIN-IN-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.8
+      "weight": 0.64
     }
   ]
 }
