@@ -230,6 +230,15 @@ jobs:
         run: |
           python scripts/story_shadow.py || true
 
+      # NOISE_SHADOW_1211 12.11.2026: шум ленты (инвестиции, вендорские разборы,
+      # очерки, бытовые ДТП, вульгарные заголовки) и потолок 55 для деэскалации
+      # и мер поддержки. Только отчёт: docs/_noise_shadow.json.
+      - name: Фильтры шума 12.11 (Shadow)
+        continue-on-error: true
+        timeout-minutes: 1
+        run: |
+          python scripts/noise_shadow.py || true
+
       # Мини-разборы зон риска. Отдельный шаг: скрипту нужен ADMIN_KEY
       # для чтения зон с visibility signal_pro из KV. Внутри чужого шага
       # переменная недоступна — она объявлена в его собственном env.
@@ -332,6 +341,7 @@ jobs:
           _add docs/_gdelt_shadow.json   # GDELT_SHADOW 11.11.2026
           _add docs/_story_shadow.json   # STORY_SHADOW_1211 12.11.2026
           _add docs/_sw_toll_shadow.json   # SW_TOLL_CAP_1211 12.11.2026
+          _add docs/_noise_shadow.json   # NOISE_SHADOW_1211 12.11.2026
           _add docs/_quake_shadow.json   # D-08c QUAKE_CATEGORY_SHADOW 06.11.2026
           _add docs/_wmo_alerthub_shadow.json   # WMO_ALERTHUB 06.11.2026
           _add docs/_sev_shadow_1108.json   # SEV_SHADOW_1108 08.11.2026
