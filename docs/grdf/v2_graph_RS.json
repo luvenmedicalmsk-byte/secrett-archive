@@ -2,7 +2,7 @@
   "country": "RS",
   "date": "2026-11-12",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-12T20:08:50.577925+00:00",
+  "generated_at": "2026-11-12T20:23:56.852596+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,64 +10,59 @@
       "id": "COUNTRY-RS",
       "type": "Country",
       "label": "RS",
-      "score": 55,
+      "score": 72,
       "props": {
-        "risk_score": 55
+        "risk_score": 72
       }
     },
     {
       "id": "DOMAIN-RS-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 59,
-      "trend": "stable"
+      "score": 80,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RS-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RS-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 50,
-      "trend": "stable"
+      "score": 72,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RS-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RS-social",
       "type": "Domain",
       "label": "social",
-      "score": 62,
-      "trend": "stable"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RS-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RS-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
-    },
-    {
-      "id": "DRIVER-RS-social",
-      "type": "Driver",
-      "label": "social"
+      "trend": "up"
     },
     {
       "id": "DRIVER-RS-geopolitical",
@@ -80,25 +75,30 @@
       "label": "climate"
     },
     {
-      "id": "SIGNAL-RS-Ветер:_Юго",
+      "id": "DRIVER-RS-economic",
+      "type": "Driver",
+      "label": "economic"
+    },
+    {
+      "id": "SIGNAL-RS-Ливень:_Юг",
       "type": "Signal",
-      "label": "Ветер: Юго-западная Сербия, Косово и Мет",
+      "label": "Ливень: Юго-западная Сербия, Юго-восточн",
+      "severity": 72,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-RS-Аномальная",
+      "type": "Signal",
+      "label": "Аномальная жара: Юго-восточная Сербия, П",
       "severity": 50,
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-RS-Протесты_и",
+      "id": "SIGNAL-RS-Тепловая_в",
       "type": "Signal",
-      "label": "Протесты и беспорядки — Сербия",
-      "severity": 62,
-      "domain": "social"
-    },
-    {
-      "id": "SIGNAL-RS-Военные_уд",
-      "type": "Signal",
-      "label": "Военные удары — Сербия",
-      "severity": 59,
-      "domain": "geopolitical"
+      "label": "Тепловая волна — Сербия",
+      "severity": 50,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-RS",
       "to": "DOMAIN-RS-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.59
+      "weight": 0.8
     },
     {
       "from": "COUNTRY-RS",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-RS",
       "to": "DOMAIN-RS-climate",
       "type": "CORRELATES",
-      "weight": 0.5
+      "weight": 0.72
     },
     {
       "from": "COUNTRY-RS",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-RS",
       "to": "DOMAIN-RS-social",
       "type": "CORRELATES",
-      "weight": 0.62
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-RS",
@@ -145,12 +145,6 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-RS-social",
-      "to": "COUNTRY-RS",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
       "from": "DRIVER-RS-geopolitical",
       "to": "COUNTRY-RS",
       "type": "CAUSES",
@@ -158,6 +152,12 @@
     },
     {
       "from": "DRIVER-RS-climate",
+      "to": "COUNTRY-RS",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DRIVER-RS-economic",
       "to": "COUNTRY-RS",
       "type": "CAUSES",
       "weight": 0.8
@@ -226,22 +226,22 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-RS-Ветер:_Юго",
+      "from": "SIGNAL-RS-Ливень:_Юг",
+      "to": "DOMAIN-RS-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.72
+    },
+    {
+      "from": "SIGNAL-RS-Аномальная",
       "to": "DOMAIN-RS-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-RS-Протесты_и",
-      "to": "DOMAIN-RS-social",
+      "from": "SIGNAL-RS-Тепловая_в",
+      "to": "DOMAIN-RS-climate",
       "type": "AMPLIFIES",
-      "weight": 0.62
-    },
-    {
-      "from": "SIGNAL-RS-Военные_уд",
-      "to": "DOMAIN-RS-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.59
+      "weight": 0.5
     }
   ]
 }
