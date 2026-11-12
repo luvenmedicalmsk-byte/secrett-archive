@@ -2,9 +2,9 @@
   "country": "LT",
   "date": "2026-11-12",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-12T10:49:10.171819+00:00",
+  "generated_at": "2026-11-12T11:08:34.639860+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-LT",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-LT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 66,
+      "score": 62,
       "trend": "stable"
     },
     {
@@ -33,7 +33,7 @@
       "id": "DOMAIN-LT-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 50,
       "trend": "stable"
     },
     {
@@ -70,21 +70,14 @@
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-LT-economic",
-      "type": "Driver",
-      "label": "economic"
-    },
-    {
       "id": "DRIVER-LT-climate",
       "type": "Driver",
       "label": "climate"
     },
     {
-      "id": "SIGNAL-LT-Истребител",
-      "type": "Signal",
-      "label": "Истребители НАТО дважды пытались сбить б",
-      "severity": 58,
-      "domain": "geopolitical"
+      "id": "DRIVER-LT-economic",
+      "type": "Driver",
+      "label": "economic"
     },
     {
       "id": "SIGNAL-LT-Истребител",
@@ -99,6 +92,13 @@
       "label": "В Литве осудили пограничников, которые п",
       "severity": 53,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-LT-Ветер:_Кла",
+      "type": "Signal",
+      "label": "Ветер: Клайпедский уезд, Юго-восточная Б",
+      "severity": 50,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-LT",
       "to": "DOMAIN-LT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.66
+      "weight": 0.62
     },
     {
       "from": "COUNTRY-LT",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-LT",
       "to": "DOMAIN-LT-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-LT",
@@ -151,16 +151,58 @@
       "weight": 0.8
     },
     {
+      "from": "DRIVER-LT-climate",
+      "to": "COUNTRY-LT",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-LT-economic",
       "to": "COUNTRY-LT",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-LT-climate",
-      "to": "COUNTRY-LT",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-LT-climate",
+      "to": "DOMAIN-LT-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-LT-economic",
+      "to": "DOMAIN-LT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-LT-social",
+      "to": "DOMAIN-LT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-LT-climate",
+      "to": "DOMAIN-LT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-LT-infrastructure",
+      "to": "DOMAIN-LT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-LT-economic",
+      "to": "DOMAIN-LT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-LT-geopolitical",
@@ -187,12 +229,6 @@
       "from": "SIGNAL-LT-Истребител",
       "to": "DOMAIN-LT-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.58
-    },
-    {
-      "from": "SIGNAL-LT-Истребител",
-      "to": "DOMAIN-LT-geopolitical",
-      "type": "AMPLIFIES",
       "weight": 0.54
     },
     {
@@ -200,6 +236,12 @@
       "to": "DOMAIN-LT-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.53
+    },
+    {
+      "from": "SIGNAL-LT-Ветер:_Кла",
+      "to": "DOMAIN-LT-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
     }
   ]
 }
