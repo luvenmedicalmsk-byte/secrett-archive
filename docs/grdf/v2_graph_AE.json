@@ -2,9 +2,9 @@
   "country": "AE",
   "date": "2026-11-12",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-12T08:48:24.732096+00:00",
+  "generated_at": "2026-11-12T09:10:07.166002+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-AE",
@@ -19,8 +19,8 @@
       "id": "DOMAIN-AE-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 34,
-      "trend": "down"
+      "score": 63,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-AE-economic",
@@ -65,14 +65,14 @@
       "trend": "stable"
     },
     {
-      "id": "DRIVER-AE-Economic",
-      "type": "Driver",
-      "label": "Economic"
-    },
-    {
       "id": "DRIVER-AE-Geopolitical",
       "type": "Driver",
       "label": "Geopolitical"
+    },
+    {
+      "id": "DRIVER-AE-Economic",
+      "type": "Driver",
+      "label": "Economic"
     },
     {
       "id": "DRIVER-AE-Economic",
@@ -87,17 +87,17 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-AE-Российская",
-      "type": "Signal",
-      "label": "Российская делегация примет решение о фо",
-      "severity": 34,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-AE-Во_второй_",
       "type": "Signal",
       "label": "Во второй день переговоров в Абу-Даби ро",
       "severity": 34,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-AE-Военный_ко",
+      "type": "Signal",
+      "label": "Военный конфликт — Ближний Восток (систе",
+      "severity": 84,
       "domain": "geopolitical"
     }
   ],
@@ -106,7 +106,7 @@
       "from": "COUNTRY-AE",
       "to": "DOMAIN-AE-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.63
     },
     {
       "from": "COUNTRY-AE",
@@ -145,12 +145,6 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-AE-Economic",
-      "to": "COUNTRY-AE",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
       "from": "DRIVER-AE-Geopolitical",
       "to": "COUNTRY-AE",
       "type": "CAUSES",
@@ -163,13 +157,34 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-AE-Россия_и_У",
-      "to": "DOMAIN-AE-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.34
+      "from": "DRIVER-AE-Economic",
+      "to": "COUNTRY-AE",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
-      "from": "SIGNAL-AE-Российская",
+      "from": "DOMAIN-AE-geopolitical",
+      "to": "DOMAIN-AE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-AE-infrastructure",
+      "to": "DOMAIN-AE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-AE-economic",
+      "to": "DOMAIN-AE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-AE-Россия_и_У",
       "to": "DOMAIN-AE-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.34
@@ -179,6 +194,12 @@
       "to": "DOMAIN-AE-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.34
+    },
+    {
+      "from": "SIGNAL-AE-Военный_ко",
+      "to": "DOMAIN-AE-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.84
     }
   ]
 }
