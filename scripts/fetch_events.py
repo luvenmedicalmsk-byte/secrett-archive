@@ -27387,6 +27387,19 @@ _SW_CAP = 25        # потолок прибавки: правило не до�
 _SW_NOFATAL_MAX = 85   # SEV_AUDIT_0311: потолок прибавки для удара без погибших
 _SW_FATAL = re.compile(r'погиб|убит|убил|уничтожил\w*\s+\d+\s+человек|скончал|смертельн|тела\s+\d|жертвами\s+стали', re.I)
 _SW_MAX = 95        # верх шкалы остаётся за критическим уровнем
+# SW_TOLL_CAP_1211 (12.11.2026, аудит ленты): признак «жертвы» весит одинаково при 2 и при 200
+# погибших. «2 убиты - атака дронов на Смоленскую область…» 77 -> 95 (жизнеобеспечение +
+# массированность + жертвы), то есть «Критический» уровень при двух погибших, выше ударов с
+# десятками жертв. Критический уровень (выше 85) через strike_weight - только если в заголовке
+# от 10 погибших либо массированный удар по столице или с числом дронов/ракет от 50.
+# Замер на 80 прогонах: из 28 записей strike_weight меняются 2 (Смоленск 95 -> 85, МАГАТЭ 92 -> 85),
+# массированный удар по Киеву 95 и 44 погибших у Саны 95 не меняются.
+# Сейчас ТЕНЬ: боевой вес не меняется, отчёт docs/_sw_toll_shadow.json. Включение - SW_TOLL_CAP_APPLY.
+SW_TOLL_CAP_SHADOW = True
+SW_TOLL_CAP_APPLY = False
+_SW_TOLL_MAX = 85
+_SW_TOLL_MIN_DEAD = 10
+_SW_TOLL_ROWS = []
 
 
 # ── МАСШТАБ ЧЕЛОВЕЧЕСКИХ ПОТЕРЬ (HUMAN_SCALE) ───────────────────────────────
@@ -28577,6 +28590,26 @@ def _human_scale(events):
     return n
 
 
+def _sw_toll_write():
+    """Отчёт SW_TOLL_CAP_1211 пишется при любом исходе, копится по прогонам (последние 60)."""
+    if not (SW_TOLL_CAP_SHADOW or SW_TOLL_CAP_APPLY):
+        return
+    try:
+        p = OUTPUT_PATH.parent / '_sw_toll_shadow.json'
+        try:
+            runs = json.loads(p.read_text(encoding='utf-8')).get('runs', [])
+        except Exception:
+            runs = []
+        now = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+        runs.append({'at': now, 'capped': len(_SW_TOLL_ROWS)})
+        p.write_text(json.dumps({'rule': 'SW_TOLL_CAP_1211',
+                                 'mode': 'применено' if SW_TOLL_CAP_APPLY else 'тень, боевой вес не тронут',
+                                 'generated': now, 'rows': _SW_TOLL_ROWS, 'runs': runs[-60:]},
+                                ensure_ascii=False, indent=1), encoding='utf-8')
+    except Exception as _te:
+        print('  [WARN] sw toll report: %s' % _te, file=sys.stderr)
+
+
 def _strike_weight(events):
     """Вес военного события по измеримым признакам масштаба. По умолчанию тень."""
     if not (STRIKE_WEIGHT_SHADOW or STRIKE_WEIGHT_APPLY):
@@ -28642,6 +28675,19 @@ def _strike_weight(events):
         if SEV_AUDIT_0311 and not _SW_FATAL.search(blob) \
                 and 'массированность' not in hits and 'масштаб числом' not in hits:
             new = min(new, max(base, _SW_NOFATAL_MAX))
+        if (SW_TOLL_CAP_SHADOW or SW_TOLL_CAP_APPLY) and new > _SW_TOLL_MAX:
+            try:
+                _tdead, _ = _cf_counts(head)
+            except Exception:
+                _tdead = 0
+            _talw = _tdead >= _SW_TOLL_MIN_DEAD or ('массированность' in hits and
+                                                   ('столица' in hits or 'масштаб числом' in hits))
+            if not _talw:
+                _tnew = max(_SW_TOLL_MAX, min(base, new))
+                _SW_TOLL_ROWS.append({'было': new, 'стало': _tnew, 'база': base, 'погибших': _tdead,
+                                      'признаки': hits, 'заголовок': head[:140]})
+                if SW_TOLL_CAP_APPLY:
+                    new = _tnew
         e['severity_shadow'] = new
         e['severity_shadow_why'] = hits
         if new != base:
@@ -28655,6 +28701,7 @@ def _strike_weight(events):
             e['severity'] = _sev_log(e, 'strike_weight', base, new,
                                      'масштаб удара по тексту: ' + ', '.join(hits),
                                      'boost')
+    _sw_toll_write()
     if n:
         avg = sum(x[0] for x in moved) / len(moved)
         print('  [STRIKE-WEIGHT] %s: затронуто %d, средняя прибавка %.1f'
