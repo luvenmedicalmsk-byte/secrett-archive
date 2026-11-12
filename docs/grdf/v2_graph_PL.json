@@ -2,9 +2,9 @@
   "country": "PL",
   "date": "2026-11-12",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-12T07:30:43.452477+00:00",
+  "generated_at": "2026-11-12T07:50:14.618071+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-PL",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-PL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 51,
+      "score": 45,
       "trend": "stable"
     },
     {
@@ -33,7 +33,7 @@
       "id": "DOMAIN-PL-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 50,
       "trend": "stable"
     },
     {
@@ -94,11 +94,11 @@
       "domain": "social"
     },
     {
-      "id": "SIGNAL-PL-Стрелок_в_",
+      "id": "SIGNAL-PL-Снег:_Писк",
       "type": "Signal",
-      "label": "Стрелок в Кракове использовал самозарядн",
-      "severity": 51,
-      "domain": "geopolitical"
+      "label": "Снег: Пиский повят, Элкский повят, Олецк",
+      "severity": 50,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.51
+      "weight": 0.45
     },
     {
       "from": "COUNTRY-PL",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-PL",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-PL-climate",
+      "to": "DOMAIN-PL-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-PL-economic",
+      "to": "DOMAIN-PL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-PL-social",
+      "to": "DOMAIN-PL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-PL-geopolitical",
       "to": "DOMAIN-PL-infrastructure",
       "type": "ESCALATES",
@@ -184,6 +205,27 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-PL-climate",
+      "to": "DOMAIN-PL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-PL-infrastructure",
+      "to": "DOMAIN-PL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-PL-economic",
+      "to": "DOMAIN-PL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-PL-Стрелку_в_",
       "to": "DOMAIN-PL-social",
       "type": "AMPLIFIES",
@@ -196,10 +238,10 @@
       "weight": 0.54
     },
     {
-      "from": "SIGNAL-PL-Стрелок_в_",
-      "to": "DOMAIN-PL-geopolitical",
+      "from": "SIGNAL-PL-Снег:_Писк",
+      "to": "DOMAIN-PL-climate",
       "type": "AMPLIFIES",
-      "weight": 0.51
+      "weight": 0.5
     }
   ]
 }
