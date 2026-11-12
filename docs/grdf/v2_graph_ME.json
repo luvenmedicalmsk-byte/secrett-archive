@@ -2,7 +2,7 @@
   "country": "ME",
   "date": "2026-11-12",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-12T23:11:51.269978+00:00",
+  "generated_at": "2026-11-12T23:29:08.739459+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-ME",
       "type": "Country",
       "label": "ME",
-      "score": 85,
+      "score": 72,
       "props": {
-        "risk_score": 85
+        "risk_score": 72
       }
     },
     {
@@ -20,49 +20,49 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ME-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ME-climate",
       "type": "Domain",
       "label": "climate",
       "score": 72,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ME-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ME-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
-      "trend": "stable"
+      "score": 35,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ME-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ME-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DRIVER-ME-climate",
@@ -70,14 +70,14 @@
       "label": "climate"
     },
     {
+      "id": "DRIVER-ME-social",
+      "type": "Driver",
+      "label": "social"
+    },
+    {
       "id": "DRIVER-ME-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
-    },
-    {
-      "id": "DRIVER-ME-economic",
-      "type": "Driver",
-      "label": "economic"
     },
     {
       "id": "SIGNAL-ME-Метеопреду",
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-ME-Ливень:_Ад",
-      "type": "Signal",
-      "label": "Ливень: Адриатическое побережье, Контине",
-      "severity": 72,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-ME-Шторм_—_Че",
       "type": "Signal",
       "label": "Шторм — Черногория",
       "severity": 50,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-ME-Социальный",
+      "type": "Signal",
+      "label": "Социальный процесс — Балканы",
+      "severity": 47,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -130,7 +130,7 @@
       "from": "COUNTRY-ME",
       "to": "DOMAIN-ME-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-ME",
@@ -151,37 +151,16 @@
       "weight": 0.8
     },
     {
+      "from": "DRIVER-ME-social",
+      "to": "COUNTRY-ME",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-ME-geopolitical",
       "to": "COUNTRY-ME",
       "type": "CAUSES",
       "weight": 0.8
-    },
-    {
-      "from": "DRIVER-ME-economic",
-      "to": "COUNTRY-ME",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-ME-climate",
-      "to": "DOMAIN-ME-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-ME-infrastructure",
-      "to": "DOMAIN-ME-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-ME-economic",
-      "to": "DOMAIN-ME-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
     },
     {
       "from": "DOMAIN-ME-climate",
@@ -205,13 +184,28 @@
       "lag_days": 90
     },
     {
-      "from": "SIGNAL-ME-Метеопреду",
-      "to": "DOMAIN-ME-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.72
+      "from": "DOMAIN-ME-climate",
+      "to": "DOMAIN-ME-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
     },
     {
-      "from": "SIGNAL-ME-Ливень:_Ад",
+      "from": "DOMAIN-ME-infrastructure",
+      "to": "DOMAIN-ME-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ME-economic",
+      "to": "DOMAIN-ME-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-ME-Метеопреду",
       "to": "DOMAIN-ME-climate",
       "type": "AMPLIFIES",
       "weight": 0.72
@@ -221,6 +215,12 @@
       "to": "DOMAIN-ME-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
+    },
+    {
+      "from": "SIGNAL-ME-Социальный",
+      "to": "DOMAIN-ME-social",
+      "type": "AMPLIFIES",
+      "weight": 0.47
     }
   ]
 }

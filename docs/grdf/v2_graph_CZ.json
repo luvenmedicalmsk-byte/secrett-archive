@@ -2,67 +2,67 @@
   "country": "CZ",
   "date": "2026-11-12",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-12T23:11:51.257303+00:00",
+  "generated_at": "2026-11-12T23:29:08.731030+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-CZ",
       "type": "Country",
       "label": "CZ",
-      "score": 72,
+      "score": 48,
       "props": {
-        "risk_score": 72
+        "risk_score": 48
       }
     },
     {
       "id": "DOMAIN-CZ-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 53,
-      "trend": "stable"
+      "score": -8,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CZ-economic",
       "type": "Domain",
       "label": "economic",
       "score": 60,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CZ-climate",
       "type": "Domain",
       "label": "climate",
       "score": 72,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CZ-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CZ-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
-      "trend": "stable"
+      "score": 55,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CZ-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CZ-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DRIVER-CZ-climate",
@@ -75,16 +75,9 @@
       "label": "economic"
     },
     {
-      "id": "DRIVER-CZ-geopolitical",
+      "id": "DRIVER-CZ-social",
       "type": "Driver",
-      "label": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-CZ-Снег:_Край",
-      "type": "Signal",
-      "label": "Снег: Край Высочина (Моравские Будеёвице",
-      "severity": 72,
-      "domain": "climate"
+      "label": "social"
     },
     {
       "id": "SIGNAL-CZ-Тепловая_в",
@@ -99,6 +92,13 @@
       "label": "Государственные финансы — Чехия",
       "severity": 60,
       "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-CZ-Социальный",
+      "type": "Signal",
+      "label": "Социальный процесс — Чехия",
+      "severity": 55,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-CZ",
       "to": "DOMAIN-CZ-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.53
+      "weight": -0.08
     },
     {
       "from": "COUNTRY-CZ",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-CZ",
       "to": "DOMAIN-CZ-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.55
     },
     {
       "from": "COUNTRY-CZ",
@@ -157,31 +157,10 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-CZ-geopolitical",
+      "from": "DRIVER-CZ-social",
       "to": "COUNTRY-CZ",
       "type": "CAUSES",
       "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-CZ-climate",
-      "to": "DOMAIN-CZ-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-CZ-infrastructure",
-      "to": "DOMAIN-CZ-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-CZ-economic",
-      "to": "DOMAIN-CZ-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
     },
     {
       "from": "DOMAIN-CZ-climate",
@@ -205,31 +184,25 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-CZ-geopolitical",
+      "from": "DOMAIN-CZ-climate",
       "to": "DOMAIN-CZ-infrastructure",
       "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
+      "weight": 0.82,
+      "lag_days": 7
     },
     {
       "from": "DOMAIN-CZ-infrastructure",
       "to": "DOMAIN-CZ-economic",
       "type": "AMPLIFIES",
-      "weight": 0.72,
+      "weight": 0.68,
       "lag_days": 14
     },
     {
       "from": "DOMAIN-CZ-economic",
-      "to": "DOMAIN-CZ-social",
+      "to": "DOMAIN-CZ-economic",
       "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
-      "from": "SIGNAL-CZ-Снег:_Край",
-      "to": "DOMAIN-CZ-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.72
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "SIGNAL-CZ-Тепловая_в",
@@ -242,6 +215,12 @@
       "to": "DOMAIN-CZ-economic",
       "type": "AMPLIFIES",
       "weight": 0.6
+    },
+    {
+      "from": "SIGNAL-CZ-Социальный",
+      "to": "DOMAIN-CZ-social",
+      "type": "AMPLIFIES",
+      "weight": 0.55
     }
   ]
 }
