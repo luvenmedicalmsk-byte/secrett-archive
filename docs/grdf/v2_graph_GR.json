@@ -2,7 +2,7 @@
   "country": "GR",
   "date": "2026-11-12",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-12T13:29:12.081490+00:00",
+  "generated_at": "2026-11-12T13:49:28.454099+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,31 +10,31 @@
       "id": "COUNTRY-GR",
       "type": "Country",
       "label": "GR",
-      "score": 75,
+      "score": 76,
       "props": {
-        "risk_score": 75
+        "risk_score": 76
       }
     },
     {
       "id": "DOMAIN-GR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 54,
-      "trend": "stable"
+      "score": 57,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
-      "trend": "stable"
+      "score": 54,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-climate",
       "type": "Domain",
       "label": "climate",
       "score": 72,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-technology",
@@ -48,7 +48,7 @@
       "type": "Domain",
       "label": "social",
       "score": 53,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-infrastructure",
@@ -75,9 +75,9 @@
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-GR-social",
+      "id": "DRIVER-GR-economic",
       "type": "Driver",
-      "label": "social"
+      "label": "economic"
     },
     {
       "id": "SIGNAL-GR-Ливень:_Ио",
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
+      "id": "SIGNAL-GR-Неравенств",
+      "type": "Signal",
+      "label": "Неравенство в богатстве — Греция продолж",
+      "severity": 54,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-GR-В_Греции_в",
       "type": "Signal",
       "label": "В Греции восемь мигрантов погибли в резу",
       "severity": 53,
       "domain": "social"
-    },
-    {
-      "id": "SIGNAL-GR-Ветер:_Сев",
-      "type": "Signal",
-      "label": "Ветер: Северо-восточные Эгейские острова",
-      "severity": 50,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.54
+      "weight": 0.57
     },
     {
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.54
     },
     {
       "from": "COUNTRY-GR",
@@ -157,7 +157,7 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-GR-social",
+      "from": "DRIVER-GR-economic",
       "to": "COUNTRY-GR",
       "type": "CAUSES",
       "weight": 0.8
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-GR-geopolitical",
-      "to": "DOMAIN-GR-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-GR-infrastructure",
-      "to": "DOMAIN-GR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-GR-economic",
-      "to": "DOMAIN-GR-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "DOMAIN-GR-climate",
       "to": "DOMAIN-GR-infrastructure",
       "type": "ESCALATES",
@@ -226,22 +205,43 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-GR-geopolitical",
+      "to": "DOMAIN-GR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-GR-infrastructure",
+      "to": "DOMAIN-GR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GR-economic",
+      "to": "DOMAIN-GR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-GR-Ливень:_Ио",
       "to": "DOMAIN-GR-climate",
       "type": "AMPLIFIES",
       "weight": 0.72
     },
     {
+      "from": "SIGNAL-GR-Неравенств",
+      "to": "DOMAIN-GR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.54
+    },
+    {
       "from": "SIGNAL-GR-В_Греции_в",
       "to": "DOMAIN-GR-social",
       "type": "AMPLIFIES",
       "weight": 0.53
-    },
-    {
-      "from": "SIGNAL-GR-Ветер:_Сев",
-      "to": "DOMAIN-GR-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.5
     }
   ]
 }

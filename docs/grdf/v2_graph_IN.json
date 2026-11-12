@@ -2,9 +2,9 @@
   "country": "IN",
   "date": "2026-11-12",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-12T13:29:12.068369+00:00",
+  "generated_at": "2026-11-12T13:49:28.434416+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-IN",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-IN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 34,
+      "score": 44,
       "trend": "stable"
     },
     {
@@ -40,7 +40,7 @@
       "id": "DOMAIN-IN-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
+      "score": 32,
       "trend": "stable"
     },
     {
@@ -80,18 +80,18 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IN-Мониторы_з",
-      "type": "Signal",
-      "label": "Мониторы загрязнения в Индии перегружены",
-      "severity": 48,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-IN-Индия_пров",
       "type": "Signal",
       "label": "Индия провела серию переговоров с Россие",
       "severity": 34,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-IN-Глава_IEEE",
+      "type": "Signal",
+      "label": "Глава IEEE Computer Society предлагает в",
+      "severity": 32,
+      "domain": "technology"
     },
     {
       "id": "SIGNAL-IN-Шторм_—_Юж",
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-IN",
@@ -124,7 +124,7 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-IN",
@@ -205,16 +205,37 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-IN-Мониторы_з",
-      "to": "DOMAIN-IN-climate",
+      "from": "DOMAIN-IN-geopolitical",
+      "to": "DOMAIN-IN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IN-infrastructure",
+      "to": "DOMAIN-IN-economic",
       "type": "AMPLIFIES",
-      "weight": 0.48
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-IN-Индия_пров",
       "to": "DOMAIN-IN-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.34
+    },
+    {
+      "from": "SIGNAL-IN-Глава_IEEE",
+      "to": "DOMAIN-IN-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.32
     },
     {
       "from": "SIGNAL-IN-Шторм_—_Юж",
