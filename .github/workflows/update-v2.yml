@@ -239,6 +239,15 @@ jobs:
         run: |
           python scripts/noise_shadow.py || true
 
+      # GEO_PLACE_SHADOW_1211 12.11.2026: страна карточки против места события
+      # из заголовка (Ленобласть как TR, Усть-Луга как UA, Славянка без страны).
+      # Только отчёт: docs/_geo_place_shadow.json. Geo Contract не меняется.
+      - name: Место события (Shadow)
+        continue-on-error: true
+        timeout-minutes: 1
+        run: |
+          python scripts/geo_place_shadow.py || true
+
       # Мини-разборы зон риска. Отдельный шаг: скрипту нужен ADMIN_KEY
       # для чтения зон с visibility signal_pro из KV. Внутри чужого шага
       # переменная недоступна — она объявлена в его собственном env.
@@ -342,6 +351,7 @@ jobs:
           _add docs/_story_shadow.json   # STORY_SHADOW_1211 12.11.2026
           _add docs/_sw_toll_shadow.json   # SW_TOLL_CAP_1211 12.11.2026
           _add docs/_noise_shadow.json   # NOISE_SHADOW_1211 12.11.2026
+          _add docs/_geo_place_shadow.json   # GEO_PLACE_SHADOW_1211 12.11.2026
           _add docs/_quake_shadow.json   # D-08c QUAKE_CATEGORY_SHADOW 06.11.2026
           _add docs/_wmo_alerthub_shadow.json   # WMO_ALERTHUB 06.11.2026
           _add docs/_sev_shadow_1108.json   # SEV_SHADOW_1108 08.11.2026
