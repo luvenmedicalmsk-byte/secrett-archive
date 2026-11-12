@@ -2,7 +2,7 @@
   "country": "IL",
   "date": "2026-11-12",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-12T21:50:50.829153+00:00",
+  "generated_at": "2026-11-12T22:10:26.418768+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -47,7 +47,7 @@
       "id": "DOMAIN-IL-social",
       "type": "Domain",
       "label": "social",
-      "score": 59,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IL-Удар_Израи",
-      "type": "Signal",
-      "label": "Удар Израиля по больнице подчеркивает ра",
-      "severity": 59,
-      "domain": "social"
-    },
-    {
       "id": "SIGNAL-IL-Тепловая_в",
       "type": "Signal",
       "label": "Тепловая волна — Ближний Восток (системн",
@@ -98,6 +91,13 @@
       "type": "Signal",
       "label": "Военный конфликт — Ближний Восток (систе",
       "severity": 84,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-IL-Санкционно",
+      "type": "Signal",
+      "label": "Санкционное давление — Ближний Восток (с",
+      "severity": 76,
       "domain": "geopolitical"
     }
   ],
@@ -130,7 +130,7 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-social",
       "type": "CORRELATES",
-      "weight": 0.59
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-IL",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-IL-geopolitical",
-      "to": "DOMAIN-IL-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-IL-infrastructure",
-      "to": "DOMAIN-IL-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-IL-economic",
-      "to": "DOMAIN-IL-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "DOMAIN-IL-climate",
       "to": "DOMAIN-IL-infrastructure",
       "type": "ESCALATES",
@@ -226,10 +205,25 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-IL-Удар_Израи",
+      "from": "DOMAIN-IL-geopolitical",
+      "to": "DOMAIN-IL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IL-infrastructure",
+      "to": "DOMAIN-IL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IL-economic",
       "to": "DOMAIN-IL-social",
       "type": "AMPLIFIES",
-      "weight": 0.59
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-IL-Тепловая_в",
@@ -242,6 +236,12 @@
       "to": "DOMAIN-IL-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.84
+    },
+    {
+      "from": "SIGNAL-IL-Санкционно",
+      "to": "DOMAIN-IL-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.76
     }
   ]
 }
