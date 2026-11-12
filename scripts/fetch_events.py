@@ -8570,6 +8570,7 @@ def _r2s_simulate(quota_map, feed_all, survivors, analytic, prio_fn, exported):
         # кандидаты: все записи, дошедшие до квоты или вне квоты
         pool_events = [ev for _k, _d, ev in qpool] + base
         cand = []
+        _R2S_SIM['meta'] = {}
         for e in pool_events:
             r, fl, why = _r2s_rule(e)
             if r:
@@ -8692,7 +8693,7 @@ def _r2s_write():
         if 'error' in _R2S_SIM:
             rep['ошибка'] = _R2S_SIM['error']
         if 'res' in _R2S_SIM:
-            res = _R2S_SIM['res']; meta = _R2S_SIM['meta']; winners = _R2S_SIM['winners']; orig = _R2S_SIM['orig']
+            res = _R2S_SIM['res']; meta = _R2S_SIM.get('meta', {}); winners = _R2S_SIM['winners']; orig = _R2S_SIM['orig']
             in_pool = {str(e.get('title') or '')[:150] for e in orig.values()}
             rep['срезаны до квоты (Admission и ранние стадии, без обхода)'] = [
                 {'title': x['title'], 'source': x['source'], 'правило': x['rule'].split()[0], 'raw_index': x['raw_index']}
