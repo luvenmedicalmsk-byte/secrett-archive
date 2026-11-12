@@ -2,7 +2,7 @@
   "country": "CN",
   "date": "2026-11-12",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-12T01:49:32.890776+00:00",
+  "generated_at": "2026-11-12T02:10:52.426805+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 77,
+      "score": 80,
       "props": {
-        "risk_score": 77
+        "risk_score": 80
       }
     },
     {
@@ -27,21 +27,21 @@
       "type": "Domain",
       "label": "economic",
       "score": 74,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 53,
-      "trend": "stable"
+      "score": 74,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-technology",
       "type": "Domain",
       "label": "technology",
       "score": 72,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-social",
@@ -80,9 +80,16 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CN-Туман:_Рай",
+      "id": "SIGNAL-CN-Пожароопас",
       "type": "Signal",
-      "label": "Туман: Район Пингу, Фэнтайский район, Чж",
+      "label": "Пожароопасность: Район Хуаду, Китай",
+      "severity": 74,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-CN-Туман:_Шэн",
+      "type": "Signal",
+      "label": "Туман: Шэньцзе, Суйленг, Уезд Сянхэ и ещ",
       "severity": 74,
       "domain": "economic"
     },
@@ -91,13 +98,6 @@
       "type": "Signal",
       "label": "Падение интернет-связи: Китай",
       "severity": 72,
-      "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-CN-В_Китае_бо",
-      "type": "Signal",
-      "label": "В Китае более 20 стартапов по малым ядер",
-      "severity": 64,
       "domain": "technology"
     }
   ],
@@ -118,7 +118,7 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-climate",
       "type": "CORRELATES",
-      "weight": 0.53
+      "weight": 0.74
     },
     {
       "from": "COUNTRY-CN",
@@ -205,7 +205,13 @@
       "lag_days": 90
     },
     {
-      "from": "SIGNAL-CN-Туман:_Рай",
+      "from": "SIGNAL-CN-Пожароопас",
+      "to": "DOMAIN-CN-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.74
+    },
+    {
+      "from": "SIGNAL-CN-Туман:_Шэн",
       "to": "DOMAIN-CN-economic",
       "type": "AMPLIFIES",
       "weight": 0.74
@@ -215,12 +221,6 @@
       "to": "DOMAIN-CN-technology",
       "type": "AMPLIFIES",
       "weight": 0.72
-    },
-    {
-      "from": "SIGNAL-CN-В_Китае_бо",
-      "to": "DOMAIN-CN-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.64
     }
   ]
 }
