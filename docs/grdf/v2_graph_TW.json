@@ -2,9 +2,9 @@
   "country": "TW",
   "date": "2026-11-12",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-12T09:50:10.300772+00:00",
+  "generated_at": "2026-11-12T10:09:04.083389+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-TW",
@@ -19,14 +19,14 @@
       "id": "DOMAIN-TW-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
+      "score": 46,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-TW-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 51,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -75,9 +75,9 @@
       "label": "climate"
     },
     {
-      "id": "DRIVER-TW-economic",
+      "id": "DRIVER-TW-geopolitical",
       "type": "Driver",
-      "label": "economic"
+      "label": "geopolitical"
     },
     {
       "id": "SIGNAL-TW-Эпидемиоло",
@@ -94,11 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-TW-Инфляция_—",
+      "id": "SIGNAL-TW-Санкционно",
       "type": "Signal",
-      "label": "Инфляция — Восточная Азия",
-      "severity": 68,
-      "domain": "economic"
+      "label": "Санкционное давление — Восточная Азия",
+      "severity": 62,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-TW",
       "to": "DOMAIN-TW-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-TW",
       "to": "DOMAIN-TW-economic",
       "type": "CORRELATES",
-      "weight": 0.51
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-TW",
@@ -157,7 +157,7 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-TW-economic",
+      "from": "DRIVER-TW-geopolitical",
       "to": "COUNTRY-TW",
       "type": "CAUSES",
       "weight": 0.8
@@ -182,6 +182,27 @@
       "type": "AMPLIFIES",
       "weight": 0.65,
       "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-TW-geopolitical",
+      "to": "DOMAIN-TW-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-TW-infrastructure",
+      "to": "DOMAIN-TW-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TW-economic",
+      "to": "DOMAIN-TW-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "DOMAIN-TW-climate",
@@ -217,10 +238,10 @@
       "weight": 0.73
     },
     {
-      "from": "SIGNAL-TW-Инфляция_—",
-      "to": "DOMAIN-TW-economic",
+      "from": "SIGNAL-TW-Санкционно",
+      "to": "DOMAIN-TW-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.68
+      "weight": 0.62
     }
   ]
 }
