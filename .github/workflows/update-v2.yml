@@ -221,6 +221,15 @@ jobs:
         run: |
           python scripts/gdelt_shadow.py || true
 
+      # STORY_SHADOW_1211 12.11.2026: склейка одного сюжета из разных источников
+      # (Омск 6 карточек, Петербург 4, Эбола 4, Усть-Луга 4). Только отчёт,
+      # лента не меняется: docs/_story_shadow.json.
+      - name: Склейка сюжетов (Shadow)
+        continue-on-error: true
+        timeout-minutes: 1
+        run: |
+          python scripts/story_shadow.py || true
+
       # Мини-разборы зон риска. Отдельный шаг: скрипту нужен ADMIN_KEY
       # для чтения зон с visibility signal_pro из KV. Внутри чужого шага
       # переменная недоступна — она объявлена в его собственном env.
@@ -321,6 +330,7 @@ jobs:
           _add docs/_wmo_cap_shadow.json   # WMO_CAP_SHADOW 05.11.2026
           _add docs/_maritime_shadow.json   # MARITIME_SHADOW 06.11.2026
           _add docs/_gdelt_shadow.json   # GDELT_SHADOW 11.11.2026
+          _add docs/_story_shadow.json   # STORY_SHADOW_1211 12.11.2026
           _add docs/_quake_shadow.json   # D-08c QUAKE_CATEGORY_SHADOW 06.11.2026
           _add docs/_wmo_alerthub_shadow.json   # WMO_ALERTHUB 06.11.2026
           _add docs/_sev_shadow_1108.json   # SEV_SHADOW_1108 08.11.2026
