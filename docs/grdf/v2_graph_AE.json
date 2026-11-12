@@ -1,26 +1,26 @@
 {
   "country": "AE",
-  "date": "2026-11-11",
+  "date": "2026-11-12",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-11T23:49:39.001258+00:00",
+  "generated_at": "2026-11-12T00:09:15.707749+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-AE",
       "type": "Country",
       "label": "AE",
-      "score": 45,
+      "score": 46,
       "props": {
-        "risk_score": 45
+        "risk_score": 46
       }
     },
     {
       "id": "DOMAIN-AE-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 34,
-      "trend": "stable"
+      "score": 63,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AE-economic",
@@ -33,7 +33,7 @@
       "id": "DOMAIN-AE-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 69,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-AE-Умеров_соо",
+      "type": "Signal",
+      "label": "Умеров сообщил, что украинская делегация",
+      "severity": 46,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-AE-Россия_и_У",
       "type": "Signal",
       "label": "Россия и Украина добились важного прорыв",
@@ -87,18 +94,11 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-AE-Российская",
+      "id": "SIGNAL-AE-Военный_ко",
       "type": "Signal",
-      "label": "Российская делегация примет решение о фо",
-      "severity": 34,
+      "label": "Военный конфликт — Ближний Восток (систе",
+      "severity": 84,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-AE-Тепловая_в",
-      "type": "Signal",
-      "label": "Тепловая волна — Ближний Восток (системн",
-      "severity": 92,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-AE",
       "to": "DOMAIN-AE-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.63
     },
     {
       "from": "COUNTRY-AE",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-AE",
       "to": "DOMAIN-AE-climate",
       "type": "CORRELATES",
-      "weight": 0.69
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-AE",
@@ -163,46 +163,31 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-AE-climate",
-      "to": "DOMAIN-AE-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-AE-economic",
-      "to": "DOMAIN-AE-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-AE-social",
-      "to": "DOMAIN-AE-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-AE-climate",
+      "from": "DOMAIN-AE-geopolitical",
       "to": "DOMAIN-AE-infrastructure",
       "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
+      "weight": 0.8,
+      "lag_days": 3
     },
     {
       "from": "DOMAIN-AE-infrastructure",
       "to": "DOMAIN-AE-economic",
       "type": "AMPLIFIES",
-      "weight": 0.68,
+      "weight": 0.72,
       "lag_days": 14
     },
     {
       "from": "DOMAIN-AE-economic",
-      "to": "DOMAIN-AE-economic",
+      "to": "DOMAIN-AE-social",
       "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-AE-Умеров_соо",
+      "to": "DOMAIN-AE-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.46
     },
     {
       "from": "SIGNAL-AE-Россия_и_У",
@@ -211,16 +196,10 @@
       "weight": 0.34
     },
     {
-      "from": "SIGNAL-AE-Российская",
+      "from": "SIGNAL-AE-Военный_ко",
       "to": "DOMAIN-AE-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.34
-    },
-    {
-      "from": "SIGNAL-AE-Тепловая_в",
-      "to": "DOMAIN-AE-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.92
+      "weight": 0.84
     }
   ]
 }
