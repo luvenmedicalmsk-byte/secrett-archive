@@ -2,7 +2,7 @@
   "country": "TW",
   "date": "2026-11-13",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-13T18:51:39.459879+00:00",
+  "generated_at": "2026-11-13T19:12:09.098019+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -47,7 +47,7 @@
       "id": "DOMAIN-TW-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
+      "score": 62,
       "trend": "stable"
     },
     {
@@ -65,6 +65,11 @@
       "trend": "stable"
     },
     {
+      "id": "DRIVER-TW-social",
+      "type": "Driver",
+      "label": "social"
+    },
+    {
       "id": "DRIVER-TW-climate",
       "type": "Driver",
       "label": "climate"
@@ -73,18 +78,6 @@
       "id": "DRIVER-TW-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
-    },
-    {
-      "id": "DRIVER-TW-economic",
-      "type": "Driver",
-      "label": "economic"
-    },
-    {
-      "id": "SIGNAL-TW-Тайваньски",
-      "type": "Signal",
-      "label": "Тайваньские чайные производители адаптир",
-      "severity": 37,
-      "domain": "climate"
     },
     {
       "id": "SIGNAL-TW-Сейсмическ",
@@ -99,6 +92,13 @@
       "label": "Санкционное давление — Восточная Азия",
       "severity": 62,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-TW-Эпидемиоло",
+      "type": "Signal",
+      "label": "Эпидемиологический риск — Восточная Азия",
+      "severity": 83,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -130,7 +130,7 @@
       "from": "COUNTRY-TW",
       "to": "DOMAIN-TW-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.62
     },
     {
       "from": "COUNTRY-TW",
@@ -145,6 +145,12 @@
       "weight": 0.05
     },
     {
+      "from": "DRIVER-TW-social",
+      "to": "COUNTRY-TW",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-TW-climate",
       "to": "COUNTRY-TW",
       "type": "CAUSES",
@@ -152,12 +158,6 @@
     },
     {
       "from": "DRIVER-TW-geopolitical",
-      "to": "COUNTRY-TW",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
-      "from": "DRIVER-TW-economic",
       "to": "COUNTRY-TW",
       "type": "CAUSES",
       "weight": 0.8
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-TW-climate",
-      "to": "DOMAIN-TW-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-TW-infrastructure",
-      "to": "DOMAIN-TW-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-TW-economic",
-      "to": "DOMAIN-TW-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-TW-geopolitical",
       "to": "DOMAIN-TW-infrastructure",
       "type": "ESCALATES",
@@ -226,10 +205,25 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-TW-Тайваньски",
-      "to": "DOMAIN-TW-climate",
+      "from": "DOMAIN-TW-climate",
+      "to": "DOMAIN-TW-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-TW-infrastructure",
+      "to": "DOMAIN-TW-economic",
       "type": "AMPLIFIES",
-      "weight": 0.37
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TW-economic",
+      "to": "DOMAIN-TW-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "SIGNAL-TW-Сейсмическ",
@@ -242,6 +236,12 @@
       "to": "DOMAIN-TW-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.62
+    },
+    {
+      "from": "SIGNAL-TW-Эпидемиоло",
+      "to": "DOMAIN-TW-social",
+      "type": "AMPLIFIES",
+      "weight": 0.83
     }
   ]
 }

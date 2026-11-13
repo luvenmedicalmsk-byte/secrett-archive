@@ -2,9 +2,9 @@
   "country": "BY",
   "date": "2026-11-13",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-13T18:51:39.466424+00:00",
+  "generated_at": "2026-11-13T19:12:09.103643+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-BY",
@@ -33,14 +33,14 @@
       "id": "DOMAIN-BY-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 56,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-BY-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 58,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -87,16 +87,16 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-BY-Атака_прог",
+      "id": "SIGNAL-BY-Климатичес",
       "type": "Signal",
-      "label": "Атака программ-вымогателей на белорусску",
-      "severity": 58,
-      "domain": "technology"
+      "label": "Климатический сигнал — Беларусь",
+      "severity": 56,
+      "domain": "climate"
     },
     {
-      "id": "SIGNAL-BY-В_Минске_5",
+      "id": "SIGNAL-BY-Социальный",
       "type": "Signal",
-      "label": "В Минске 55-летний водитель, которому ст",
+      "label": "Социальный процесс — Беларусь",
       "severity": 55,
       "domain": "social"
     }
@@ -118,13 +118,13 @@
       "from": "COUNTRY-BY",
       "to": "DOMAIN-BY-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-BY",
       "to": "DOMAIN-BY-technology",
       "type": "CORRELATES",
-      "weight": 0.58
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-BY",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-BY-climate",
+      "to": "DOMAIN-BY-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-BY-economic",
+      "to": "DOMAIN-BY-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-BY-social",
+      "to": "DOMAIN-BY-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-BY-geopolitical",
       "to": "DOMAIN-BY-infrastructure",
       "type": "ESCALATES",
@@ -184,19 +205,40 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-BY-climate",
+      "to": "DOMAIN-BY-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-BY-infrastructure",
+      "to": "DOMAIN-BY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-BY-economic",
+      "to": "DOMAIN-BY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-BY-Пострадавш",
       "to": "DOMAIN-BY-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.79
     },
     {
-      "from": "SIGNAL-BY-Атака_прог",
-      "to": "DOMAIN-BY-technology",
+      "from": "SIGNAL-BY-Климатичес",
+      "to": "DOMAIN-BY-climate",
       "type": "AMPLIFIES",
-      "weight": 0.58
+      "weight": 0.56
     },
     {
-      "from": "SIGNAL-BY-В_Минске_5",
+      "from": "SIGNAL-BY-Социальный",
       "to": "DOMAIN-BY-social",
       "type": "AMPLIFIES",
       "weight": 0.55
