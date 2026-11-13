@@ -2,7 +2,7 @@
   "country": "HU",
   "date": "2026-11-13",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-13T09:11:17.025391+00:00",
+  "generated_at": "2026-11-13T09:30:17.098573+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -40,7 +40,7 @@
       "id": "DOMAIN-HU-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
+      "score": 64,
       "trend": "stable"
     },
     {
@@ -70,26 +70,19 @@
       "label": "economic"
     },
     {
+      "id": "DRIVER-HU-technology",
+      "type": "Driver",
+      "label": "technology"
+    },
+    {
       "id": "DRIVER-HU-climate",
       "type": "Driver",
       "label": "climate"
     },
     {
-      "id": "DRIVER-HU-geopolitical",
-      "type": "Driver",
-      "label": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-HU-Ветер:_Цен",
+      "id": "SIGNAL-HU-Ливень:_Се",
       "type": "Signal",
-      "label": "Ветер: Центральная Венгрия, Западный Тра",
-      "severity": 50,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-HU-Гроза:_Южн",
-      "type": "Signal",
-      "label": "Гроза: Южный Трансданубийский регион, Юж",
+      "label": "Ливень: Северная Венгрия, Центральный Тр",
       "severity": 50,
       "domain": "climate"
     },
@@ -99,6 +92,13 @@
       "label": "Инфляция — Венгрия",
       "severity": 68,
       "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-HU-Технологич",
+      "type": "Signal",
+      "label": "Технологический сигнал — Венгрия",
+      "severity": 64,
+      "domain": "technology"
     }
   ],
   "edges": [
@@ -124,7 +124,7 @@
       "from": "COUNTRY-HU",
       "to": "DOMAIN-HU-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.64
     },
     {
       "from": "COUNTRY-HU",
@@ -151,13 +151,13 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-HU-climate",
+      "from": "DRIVER-HU-technology",
       "to": "COUNTRY-HU",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-HU-geopolitical",
+      "from": "DRIVER-HU-climate",
       "to": "COUNTRY-HU",
       "type": "CAUSES",
       "weight": 0.8
@@ -226,13 +226,7 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-HU-Ветер:_Цен",
-      "to": "DOMAIN-HU-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-HU-Гроза:_Южн",
+      "from": "SIGNAL-HU-Ливень:_Се",
       "to": "DOMAIN-HU-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
@@ -242,6 +236,12 @@
       "to": "DOMAIN-HU-economic",
       "type": "AMPLIFIES",
       "weight": 0.68
+    },
+    {
+      "from": "SIGNAL-HU-Технологич",
+      "to": "DOMAIN-HU-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.64
     }
   ]
 }
