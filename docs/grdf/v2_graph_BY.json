@@ -2,7 +2,7 @@
   "country": "BY",
   "date": "2026-11-13",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-13T16:10:12.552959+00:00",
+  "generated_at": "2026-11-13T16:30:31.883077+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-BY",
       "type": "Country",
       "label": "BY",
-      "score": 80,
+      "score": 79,
       "props": {
-        "risk_score": 80
+        "risk_score": 79
       }
     },
     {
@@ -20,7 +20,7 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 87,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-BY-economic",
@@ -33,15 +33,15 @@
       "id": "DOMAIN-BY-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 74,
-      "trend": "stable"
+      "score": 56,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-BY-technology",
       "type": "Domain",
       "label": "technology",
       "score": 58,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-BY-social",
@@ -87,18 +87,18 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-BY-Дождь:_Вит",
-      "type": "Signal",
-      "label": "Дождь: Витебская область, Гомельская обл",
-      "severity": 74,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-BY-Атака_прог",
       "type": "Signal",
       "label": "Атака программ-вымогателей на белорусску",
       "severity": 58,
       "domain": "technology"
+    },
+    {
+      "id": "SIGNAL-BY-Ветер:_Вит",
+      "type": "Signal",
+      "label": "Ветер: Витебская область, Гомельская обл",
+      "severity": 56,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-BY",
       "to": "DOMAIN-BY-climate",
       "type": "CORRELATES",
-      "weight": 0.74
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-BY",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-BY-climate",
-      "to": "DOMAIN-BY-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-BY-infrastructure",
-      "to": "DOMAIN-BY-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-BY-economic",
-      "to": "DOMAIN-BY-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-BY-geopolitical",
       "to": "DOMAIN-BY-infrastructure",
       "type": "ESCALATES",
@@ -226,22 +205,43 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-BY-climate",
+      "to": "DOMAIN-BY-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-BY-infrastructure",
+      "to": "DOMAIN-BY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-BY-economic",
+      "to": "DOMAIN-BY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-BY-Пострадавш",
       "to": "DOMAIN-BY-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.79
     },
     {
-      "from": "SIGNAL-BY-Дождь:_Вит",
-      "to": "DOMAIN-BY-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.74
-    },
-    {
       "from": "SIGNAL-BY-Атака_прог",
       "to": "DOMAIN-BY-technology",
       "type": "AMPLIFIES",
       "weight": 0.58
+    },
+    {
+      "from": "SIGNAL-BY-Ветер:_Вит",
+      "to": "DOMAIN-BY-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.56
     }
   ]
 }
