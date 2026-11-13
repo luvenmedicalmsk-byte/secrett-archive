@@ -2,7 +2,7 @@
   "country": "JP",
   "date": "2026-11-13",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-13T22:38:16.242316+00:00",
+  "generated_at": "2026-11-13T22:49:17.455567+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-JP",
       "type": "Country",
       "label": "JP",
-      "score": 81,
+      "score": 74,
       "props": {
-        "risk_score": 81
+        "risk_score": 74
       }
     },
     {
@@ -20,49 +20,49 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-JP-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-JP-climate",
       "type": "Domain",
       "label": "climate",
       "score": 74,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-JP-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 58,
-      "trend": "stable"
+      "score": 5,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-JP-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
-      "trend": "stable"
+      "score": 76,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-JP-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-JP-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DRIVER-JP-Geopolitical",
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-JP-Таким_нише",
-      "type": "Signal",
-      "label": "Таким нишевым способом руководитель япон",
-      "severity": 58,
-      "domain": "technology"
-    },
-    {
       "id": "SIGNAL-JP-Сейсмическ",
       "type": "Signal",
       "label": "Сейсмическая активность — Восточная Азия",
       "severity": 73,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-JP-Эпидемиоло",
+      "type": "Signal",
+      "label": "Эпидемиологический риск — Япония",
+      "severity": 76,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -124,13 +124,13 @@
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-technology",
       "type": "CORRELATES",
-      "weight": 0.58
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.76
     },
     {
       "from": "COUNTRY-JP",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-JP-climate",
-      "to": "DOMAIN-JP-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-JP-infrastructure",
-      "to": "DOMAIN-JP-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-JP-economic",
-      "to": "DOMAIN-JP-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-JP-climate",
       "to": "DOMAIN-JP-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,22 +184,43 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-JP-climate",
+      "to": "DOMAIN-JP-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-JP-infrastructure",
+      "to": "DOMAIN-JP-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-JP-economic",
+      "to": "DOMAIN-JP-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-JP-Дождь:_Аба",
       "to": "DOMAIN-JP-climate",
       "type": "AMPLIFIES",
       "weight": 0.74
     },
     {
-      "from": "SIGNAL-JP-Таким_нише",
-      "to": "DOMAIN-JP-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.58
-    },
-    {
       "from": "SIGNAL-JP-Сейсмическ",
       "to": "DOMAIN-JP-climate",
       "type": "AMPLIFIES",
       "weight": 0.73
+    },
+    {
+      "from": "SIGNAL-JP-Эпидемиоло",
+      "to": "DOMAIN-JP-social",
+      "type": "AMPLIFIES",
+      "weight": 0.76
     }
   ]
 }
