@@ -1,10 +1,10 @@
 {
-  "generated": "2026-11-13T09:28:02Z",
+  "generated": "2026-11-13T09:47:07Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
-    "PASS_FACT": 1202,
-    "DENY_COMMENTARY": 348,
+    "PASS_FACT": 1203,
+    "DENY_COMMENTARY": 347,
     "DENY_BACKGROUND": 5,
     "DENY_OTHER": 1,
     "UNMATCHED": 5,
@@ -18,9 +18,9 @@
     "unmatched": 5,
     "coverage_pct": 99.7,
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
-    "admission_pass_rate": 77.0,
-    "admission_deny_rate": 23.0,
-    "processes_without_fact": 359,
+    "admission_pass_rate": 77.1,
+    "admission_deny_rate": 22.9,
+    "processes_without_fact": 358,
     "report_evidence_count": 0,
     "reports_boosting": 0
   },
@@ -29,15 +29,16 @@
     "operational": {
       "processes": 539,
       "sample": 1876,
-      "agreement_pct": 87.4,
-      "decision_agreement_pct": 87.4,
-      "critical_errors": 236,
+      "agreement_pct": 87.3,
+      "decision_agreement_pct": 87.3,
+      "critical_errors": 238,
       "truth_ratio_pct": 99.8,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 218,
+        "FACT_EVENT→COMMENTARY": 219,
         "COMMENTARY→FACT_EVENT": 16,
         "BACKGROUND→FACT_EVENT": 1,
         "FACT_EVENT→FEATURE": 1,
+        "FACT_EVENT→UNKNOWN": 1,
         "BACKGROUND→COMMENTARY": 1
       }
     },
@@ -45,13 +46,14 @@
       "processes": 1566,
       "sample": 4080,
       "agreement_pct": 88.7,
-      "decision_agreement_pct": 88.8,
-      "critical_errors": 458,
+      "decision_agreement_pct": 88.7,
+      "critical_errors": 460,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 414,
+        "FACT_EVENT→COMMENTARY": 415,
         "COMMENTARY→FACT_EVENT": 37,
         "BACKGROUND→FACT_EVENT": 1,
         "FACT_EVENT→FEATURE": 2,
+        "FACT_EVENT→UNKNOWN": 1,
         "BACKGROUND→COMMENTARY": 1,
         "UNKNOWN→FACT_EVENT": 2,
         "STATE_CONFIRMATION→COMMENTARY": 1,
@@ -60,13 +62,14 @@
       }
     },
     "events_stream": {
-      "sample": 554,
-      "agreement_pct": 88.8,
-      "decision_agreement_pct": 88.8,
-      "critical_errors": 62,
+      "sample": 560,
+      "agreement_pct": 88.6,
+      "decision_agreement_pct": 88.6,
+      "critical_errors": 64,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 59,
+        "FACT_EVENT→COMMENTARY": 60,
         "COMMENTARY→FACT_EVENT": 2,
+        "FACT_EVENT→UNKNOWN": 1,
         "BACKGROUND→FACT_EVENT": 1
       }
     },
@@ -88,21 +91,21 @@
       "deny": 95
     },
     "climate": {
-      "pass": 404,
-      "deny": 81,
+      "pass": 402,
+      "deny": 83,
       "unmatched": 5
     },
     "economy": {
-      "pass": 259,
-      "deny": 115
+      "pass": 261,
+      "deny": 113
     },
     "technology": {
       "pass": 138,
       "deny": 27
     },
     "social": {
-      "pass": 138,
-      "deny": 41
+      "pass": 139,
+      "deny": 40
     }
   },
   "deny_impact": [
@@ -261,7 +264,7 @@
       "title": "Инфляция — Восточная Азия",
       "domain": "economy",
       "severity": 68,
-      "pressure": 47,
+      "pressure": 50,
       "first_seen": "2026-10-20",
       "evidence_count": 2,
       "evidence_classes": {
@@ -812,21 +815,6 @@
       "reason": "no FACT_EVENT in evidence"
     },
     {
-      "signal_id": "econ-экономичес-персидск-31b3",
-      "title": "Экономический сигнал — Персидский залив",
-      "domain": "economy",
-      "severity": 57,
-      "pressure": 26,
-      "first_seen": "2026-07-02",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "COMMENTARY": 1
-      },
-      "status": "active",
-      "causal_links": 0,
-      "reason": "no FACT_EVENT in evidence"
-    },
-    {
       "signal_id": "geop-геополитич-афганист-355e",
       "title": "Геополитический процесс — Афганистан",
       "domain": "geopolitics",
@@ -917,21 +905,6 @@
       "reason": "no FACT_EVENT in evidence"
     },
     {
-      "signal_id": "clim-климатичес-тихийоке-41c0",
-      "title": "Климатический сигнал — Тихий океан",
-      "domain": "climate",
-      "severity": 56,
-      "pressure": 49,
-      "first_seen": "2026-07-02",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "COMMENTARY": 1
-      },
-      "status": "active",
-      "causal_links": 0,
-      "reason": "no FACT_EVENT in evidence"
-    },
-    {
       "signal_id": "clim-климатичес-краснояр-ba54",
       "title": "Климатический сигнал — Красноярский край",
       "domain": "climate",
@@ -1005,17 +978,40 @@
       "status": "active",
       "causal_links": 0,
       "reason": "no FACT_EVENT in evidence"
+    },
+    {
+      "signal_id": "clim-наводнение-кемеровс-a545",
+      "title": "Климатический сигнал — Кемеровская область",
+      "domain": "climate",
+      "severity": 56,
+      "pressure": 40,
+      "first_seen": "2026-07-07",
+      "evidence_count": 1,
+      "evidence_classes": {
+        "COMMENTARY": 1
+      },
+      "status": "active",
+      "causal_links": 6,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
+      "signal_id": "clim-шторм-томскаяо-edbf",
+      "title": "Климатический сигнал — Томская область",
+      "domain": "climate",
+      "severity": 56,
+      "pressure": 40,
+      "first_seen": "2026-08-01",
+      "evidence_count": 1,
+      "evidence_classes": {
+        "COMMENTARY": 1
+      },
+      "status": "active",
+      "causal_links": 6,
+      "reason": "no FACT_EVENT in evidence"
     }
   ],
   "report_log": [],
   "severity_delta": [
-    {
-      "signal_id": "clim-тепловаяво-глобальн-1b10",
-      "domain": "climate",
-      "legacy": 54,
-      "shadow": null,
-      "delta": null
-    },
     {
       "signal_id": "soci-протестыиб-глобальн-b53f",
       "domain": "social",
@@ -1045,9 +1041,9 @@
       "delta": null
     },
     {
-      "signal_id": "econ-инфляция-сша-8a37",
-      "domain": "economy",
-      "legacy": 53,
+      "signal_id": "clim-тепловаяво-глобальн-1b10",
+      "domain": "climate",
+      "legacy": 54,
       "shadow": null,
       "delta": null
     },
@@ -1101,13 +1097,6 @@
       "delta": null
     },
     {
-      "signal_id": "clim-климатичес-тихийоке-41c0",
-      "domain": "climate",
-      "legacy": 56,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "econ-инфляция-канада-7e30",
       "domain": "economy",
       "legacy": 62,
@@ -1143,6 +1132,13 @@
       "delta": null
     },
     {
+      "signal_id": "geop-геополитич-турция-639a",
+      "domain": "geopolitics",
+      "legacy": 32,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "econ-валютныйры-северная-cd34",
       "domain": "economy",
       "legacy": 62,
@@ -1172,6 +1168,13 @@
     },
     {
       "signal_id": "clim-наводнение-вьетнам-1055",
+      "domain": "climate",
+      "legacy": 32,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "clim-климатичес-европа-27d7",
       "domain": "climate",
       "legacy": 32,
       "shadow": null,
@@ -1304,6 +1307,13 @@
       "delta": null
     },
     {
+      "signal_id": "econ-инфляция-китай-30e9",
+      "domain": "economy",
+      "legacy": 45,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "clim-климатичес-карачаев-ca73",
       "domain": "climate",
       "legacy": 56,
@@ -1374,16 +1384,9 @@
       "delta": null
     },
     {
-      "signal_id": "geop-геополитич-турция-639a",
-      "domain": "geopolitics",
-      "legacy": 32,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "econ-инфляция-китай-30e9",
+      "signal_id": "econ-экономичес-украина-828a",
       "domain": "economy",
-      "legacy": 45,
+      "legacy": 34,
       "shadow": null,
       "delta": null
     },
@@ -1391,6 +1394,13 @@
       "signal_id": "soci-социальный-египет-51df",
       "domain": "social",
       "legacy": 49,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "clim-климатичес-тихийоке-41c0",
+      "domain": "climate",
+      "legacy": 56,
       "shadow": null,
       "delta": null
     },
@@ -1421,19 +1431,12 @@
       "legacy": 47,
       "shadow": null,
       "delta": null
-    },
-    {
-      "signal_id": "soci-социальный-польша-a8b5",
-      "domain": "social",
-      "legacy": 74,
-      "shadow": null,
-      "delta": null
     }
   ],
   "deny_by_severity": {
     "0-30": 4,
-    "31-50": 213,
-    "51-70": 135,
+    "31-50": 214,
+    "51-70": 133,
     "71-90": 7,
     "91-100": 0
   }
