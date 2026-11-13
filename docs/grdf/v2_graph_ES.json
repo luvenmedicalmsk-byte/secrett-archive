@@ -1,8 +1,8 @@
 {
   "country": "ES",
-  "date": "2026-11-12",
+  "date": "2026-11-13",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-12T23:50:58.205500+00:00",
+  "generated_at": "2026-11-13T00:11:14.993100+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,17 +10,17 @@
       "id": "COUNTRY-ES",
       "type": "Country",
       "label": "ES",
-      "score": 92,
+      "score": 90,
       "props": {
-        "risk_score": 92
+        "risk_score": 90
       }
     },
     {
       "id": "DOMAIN-ES-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 82,
-      "trend": "stable"
+      "score": 54,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ES-economic",
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 72,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ES-technology",
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-ES-Полицейско",
-      "type": "Signal",
-      "label": "Полицейского убило взрывом, его коллеге ",
-      "severity": 82,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-ES-Ливень:_Ли",
       "type": "Signal",
       "label": "Ливень: Литораль Гипускоа, Литораль Биск",
@@ -99,6 +92,13 @@
       "label": "Ветер: Внутренний район Аликанте, Северн",
       "severity": 72,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-ES-Явления_на",
+      "type": "Signal",
+      "label": "Явления на побережье: Коста - Южное побе",
+      "severity": 72,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.82
+      "weight": 0.54
     },
     {
       "from": "COUNTRY-ES",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-ES-geopolitical",
-      "to": "DOMAIN-ES-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-ES-infrastructure",
-      "to": "DOMAIN-ES-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-ES-economic",
-      "to": "DOMAIN-ES-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "DOMAIN-ES-climate",
       "to": "DOMAIN-ES-infrastructure",
       "type": "ESCALATES",
@@ -226,10 +205,25 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-ES-Полицейско",
-      "to": "DOMAIN-ES-geopolitical",
+      "from": "DOMAIN-ES-geopolitical",
+      "to": "DOMAIN-ES-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-ES-infrastructure",
+      "to": "DOMAIN-ES-economic",
       "type": "AMPLIFIES",
-      "weight": 0.82
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ES-economic",
+      "to": "DOMAIN-ES-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-ES-Ливень:_Ли",
@@ -239,6 +233,12 @@
     },
     {
       "from": "SIGNAL-ES-Ветер:_Вну",
+      "to": "DOMAIN-ES-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.72
+    },
+    {
+      "from": "SIGNAL-ES-Явления_на",
       "to": "DOMAIN-ES-climate",
       "type": "AMPLIFIES",
       "weight": 0.72

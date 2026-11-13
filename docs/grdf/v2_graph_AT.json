@@ -1,8 +1,8 @@
 {
   "country": "AT",
-  "date": "2026-11-12",
+  "date": "2026-11-13",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-12T23:50:58.200583+00:00",
+  "generated_at": "2026-11-13T00:11:14.988909+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,23 +10,23 @@
       "id": "COUNTRY-AT",
       "type": "Country",
       "label": "AT",
-      "score": 50,
+      "score": 53,
       "props": {
-        "risk_score": 50
+        "risk_score": 53
       }
     },
     {
       "id": "DOMAIN-AT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 41,
-      "trend": "stable"
+      "score": 53,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AT-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 50,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AT-technology",
@@ -65,14 +65,14 @@
       "trend": "stable"
     },
     {
-      "id": "DRIVER-AT-climate",
-      "type": "Driver",
-      "label": "climate"
-    },
-    {
       "id": "DRIVER-AT-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
+    },
+    {
+      "id": "DRIVER-AT-climate",
+      "type": "Driver",
+      "label": "climate"
     },
     {
       "id": "DRIVER-AT-economic",
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
+      "id": "SIGNAL-AT-Ветер:_Хар",
+      "type": "Signal",
+      "label": "Ветер: Хартберг-Фюрстенфельд, Брук-Мюрцц",
+      "severity": 50,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-AT-Шторм_—_Ав",
       "type": "Signal",
       "label": "Шторм — Австрия",
       "severity": 50,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-AT-Экономичес",
-      "type": "Signal",
-      "label": "Экономический сигнал — Австрия",
-      "severity": 32,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-AT",
       "to": "DOMAIN-AT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.41
+      "weight": 0.53
     },
     {
       "from": "COUNTRY-AT",
       "to": "DOMAIN-AT-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-AT",
@@ -145,13 +145,13 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-AT-climate",
+      "from": "DRIVER-AT-geopolitical",
       "to": "COUNTRY-AT",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-AT-geopolitical",
+      "from": "DRIVER-AT-climate",
       "to": "COUNTRY-AT",
       "type": "CAUSES",
       "weight": 0.8
@@ -161,27 +161,6 @@
       "to": "COUNTRY-AT",
       "type": "CAUSES",
       "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-AT-climate",
-      "to": "DOMAIN-AT-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-AT-infrastructure",
-      "to": "DOMAIN-AT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-AT-economic",
-      "to": "DOMAIN-AT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
     },
     {
       "from": "DOMAIN-AT-climate",
@@ -203,6 +182,27 @@
       "type": "AMPLIFIES",
       "weight": 0.65,
       "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-AT-climate",
+      "to": "DOMAIN-AT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-AT-infrastructure",
+      "to": "DOMAIN-AT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-AT-economic",
+      "to": "DOMAIN-AT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-AT-geopolitical",
@@ -232,16 +232,16 @@
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-AT-Шторм_—_Ав",
+      "from": "SIGNAL-AT-Ветер:_Хар",
       "to": "DOMAIN-AT-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-AT-Экономичес",
-      "to": "DOMAIN-AT-economic",
+      "from": "SIGNAL-AT-Шторм_—_Ав",
+      "to": "DOMAIN-AT-climate",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.5
     }
   ]
 }

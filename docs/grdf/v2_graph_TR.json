@@ -1,68 +1,73 @@
 {
   "country": "TR",
-  "date": "2026-11-12",
+  "date": "2026-11-13",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-12T23:50:58.189467+00:00",
+  "generated_at": "2026-11-13T00:11:14.979117+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-TR",
       "type": "Country",
       "label": "TR",
-      "score": 86,
+      "score": 68,
       "props": {
-        "risk_score": 86
+        "risk_score": 68
       }
     },
     {
       "id": "DOMAIN-TR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 62,
-      "trend": "stable"
+      "score": 55,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-TR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 57,
-      "trend": "stable"
+      "score": 48,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-TR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "stable"
+      "score": 50,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-TR-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 80,
-      "trend": "stable"
+      "score": 5,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-TR-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-TR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-TR-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
+    },
+    {
+      "id": "DRIVER-TR-Economic",
+      "type": "Driver",
+      "label": "Economic"
     },
     {
       "id": "DRIVER-TR-Geopolitical",
@@ -75,30 +80,25 @@
       "label": "Economic"
     },
     {
-      "id": "DRIVER-TR-Economic",
-      "type": "Driver",
-      "label": "Economic"
-    },
-    {
-      "id": "SIGNAL-TR-16_человек",
-      "type": "Signal",
-      "label": "16 человек погибли в результате взрыва н",
-      "severity": 80,
-      "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-TR-Турция_зад",
-      "type": "Signal",
-      "label": "Турция задержала председателя сталелитей",
-      "severity": 80,
-      "domain": "technology"
-    },
-    {
       "id": "SIGNAL-TR-Бомба_для_",
       "type": "Signal",
       "label": "Бомба для подрыва военного прилетела в Л",
       "severity": 55,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-TR-Сильный_ве",
+      "type": "Signal",
+      "label": "Сильный ветер: Стамбул, Бурса, Коджаэли ",
+      "severity": 50,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-TR-Центральны",
+      "type": "Signal",
+      "label": "Центральный банк Турции повышает прогноз",
+      "severity": 48,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,25 +106,25 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.62
+      "weight": 0.55
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-economic",
       "type": "CORRELATES",
-      "weight": 0.57
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-technology",
       "type": "CORRELATES",
-      "weight": 0.8
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-TR",
@@ -145,6 +145,12 @@
       "weight": 0.05
     },
     {
+      "from": "DRIVER-TR-Economic",
+      "to": "COUNTRY-TR",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-TR-Geopolitical",
       "to": "COUNTRY-TR",
       "type": "CAUSES",
@@ -157,10 +163,46 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-TR-Economic",
-      "to": "COUNTRY-TR",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-TR-climate",
+      "to": "DOMAIN-TR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-TR-infrastructure",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-TR-climate",
+      "to": "DOMAIN-TR-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-TR-social",
+      "to": "DOMAIN-TR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "DOMAIN-TR-geopolitical",
@@ -184,22 +226,22 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-TR-16_человек",
-      "to": "DOMAIN-TR-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.8
-    },
-    {
-      "from": "SIGNAL-TR-Турция_зад",
-      "to": "DOMAIN-TR-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.8
-    },
-    {
       "from": "SIGNAL-TR-Бомба_для_",
       "to": "DOMAIN-TR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.55
+    },
+    {
+      "from": "SIGNAL-TR-Сильный_ве",
+      "to": "DOMAIN-TR-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
+      "from": "SIGNAL-TR-Центральны",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.48
     }
   ]
 }

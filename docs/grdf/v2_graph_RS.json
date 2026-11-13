@@ -1,8 +1,8 @@
 {
   "country": "RS",
-  "date": "2026-11-12",
+  "date": "2026-11-13",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-12T23:50:58.209127+00:00",
+  "generated_at": "2026-11-13T00:11:14.996404+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -47,7 +47,7 @@
       "id": "DOMAIN-RS-social",
       "type": "Domain",
       "label": "social",
-      "score": 62,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -70,14 +70,14 @@
       "label": "climate"
     },
     {
-      "id": "DRIVER-RS-social",
-      "type": "Driver",
-      "label": "social"
-    },
-    {
       "id": "DRIVER-RS-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
+    },
+    {
+      "id": "DRIVER-RS-economic",
+      "type": "Driver",
+      "label": "economic"
     },
     {
       "id": "SIGNAL-RS-Ливень:_Ко",
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
+      "id": "SIGNAL-RS-Аномальная",
+      "type": "Signal",
+      "label": "Аномальная жара: Юго-восточная Сербия, П",
+      "severity": 50,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-RS-Тепловая_в",
       "type": "Signal",
       "label": "Тепловая волна — Сербия",
       "severity": 50,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-RS-Протесты_и",
-      "type": "Signal",
-      "label": "Протесты и беспорядки — Сербия",
-      "severity": 62,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -130,7 +130,7 @@
       "from": "COUNTRY-RS",
       "to": "DOMAIN-RS-social",
       "type": "CORRELATES",
-      "weight": 0.62
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-RS",
@@ -151,13 +151,13 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-RS-social",
+      "from": "DRIVER-RS-geopolitical",
       "to": "COUNTRY-RS",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-RS-geopolitical",
+      "from": "DRIVER-RS-economic",
       "to": "COUNTRY-RS",
       "type": "CAUSES",
       "weight": 0.8
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-RS-geopolitical",
-      "to": "DOMAIN-RS-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-RS-infrastructure",
-      "to": "DOMAIN-RS-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-RS-economic",
-      "to": "DOMAIN-RS-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "DOMAIN-RS-climate",
       "to": "DOMAIN-RS-infrastructure",
       "type": "ESCALATES",
@@ -226,22 +205,43 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-RS-geopolitical",
+      "to": "DOMAIN-RS-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-RS-infrastructure",
+      "to": "DOMAIN-RS-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-RS-economic",
+      "to": "DOMAIN-RS-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-RS-Ливень:_Ко",
       "to": "DOMAIN-RS-climate",
       "type": "AMPLIFIES",
       "weight": 0.72
     },
     {
-      "from": "SIGNAL-RS-Тепловая_в",
+      "from": "SIGNAL-RS-Аномальная",
       "to": "DOMAIN-RS-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-RS-Протесты_и",
-      "to": "DOMAIN-RS-social",
+      "from": "SIGNAL-RS-Тепловая_в",
+      "to": "DOMAIN-RS-climate",
       "type": "AMPLIFIES",
-      "weight": 0.62
+      "weight": 0.5
     }
   ]
 }
