@@ -2,7 +2,7 @@
   "country": "DE",
   "date": "2026-11-13",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-13T03:10:34.108820+00:00",
+  "generated_at": "2026-11-13T03:30:14.415277+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-DE",
       "type": "Country",
       "label": "DE",
-      "score": 87,
+      "score": 91,
       "props": {
-        "risk_score": 87
+        "risk_score": 91
       }
     },
     {
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 72,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-technology",
@@ -47,7 +47,7 @@
       "id": "DOMAIN-DE-social",
       "type": "Domain",
       "label": "social",
-      "score": 60,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-DE-Явления_на",
+      "type": "Signal",
+      "label": "Явления на побережье: Севернофризское по",
+      "severity": 72,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-DE-Ветер:_Рай",
       "type": "Signal",
       "label": "Ветер: Район Остхольстайн - Берег, Край ",
@@ -92,13 +99,6 @@
       "label": "Гроза: Район Остерхольц, Край Куксхафен ",
       "severity": 72,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-DE-В_выходные",
-      "type": "Signal",
-      "label": "В выходные в нескольких городах Германии",
-      "severity": 60,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -130,7 +130,7 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-social",
       "type": "CORRELATES",
-      "weight": 0.6
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-DE",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-DE-climate",
-      "to": "DOMAIN-DE-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-DE-economic",
-      "to": "DOMAIN-DE-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-DE-social",
-      "to": "DOMAIN-DE-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-DE-climate",
       "to": "DOMAIN-DE-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -205,6 +184,33 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-DE-climate",
+      "to": "DOMAIN-DE-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-DE-economic",
+      "to": "DOMAIN-DE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-DE-social",
+      "to": "DOMAIN-DE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "SIGNAL-DE-Явления_на",
+      "to": "DOMAIN-DE-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.72
+    },
+    {
       "from": "SIGNAL-DE-Ветер:_Рай",
       "to": "DOMAIN-DE-climate",
       "type": "AMPLIFIES",
@@ -215,12 +221,6 @@
       "to": "DOMAIN-DE-climate",
       "type": "AMPLIFIES",
       "weight": 0.72
-    },
-    {
-      "from": "SIGNAL-DE-В_выходные",
-      "to": "DOMAIN-DE-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6
     }
   ]
 }
