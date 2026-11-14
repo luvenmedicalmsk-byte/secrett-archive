@@ -8647,7 +8647,9 @@ def _r2s_simulate(quota_map, feed_all, survivors, analytic, prio_fn, exported):
         res = {name: run(rules) for name, rules in _R2S_SCEN}
         orig = {id(e): e for e in pool_events}
         _R2S_SIM.update({'res': res, 'winners': winners, 'dups': dups, 'stories': stories, 'cand': cand,
-                         'orig': orig, 'exported': len([e for e in exported if e.get('feed_visible') is not False])})
+                         'orig': orig, 'exported': len([e for e in exported if e.get('feed_visible') is not False]),
+                         'exported_cards': [e for e in exported if e.get('feed_visible') is not False],
+                         'quota_map': dict(quota_map)})
         if LINEAGE:
             for i, w in winners.items():
                 _trace(w.get('_obs_tid'), 'R2_SHADOW', 'shadow', reason='r2_family_' + meta[i]['rule'],
@@ -8726,7 +8728,8 @@ def _r2s_write():
                     'правила': list(rules),
                     'лента после topic_cap': len(r['final']),
                     'карточек R2-семейства в ленте': sum(1 for i in winners if i in r['final_ids']),
-                    'занятость квот': r['quota_used'],
+                    'квота домена: принято мест (до feed_cap, промежуточных стадий и topic_cap)': r['quota_used'],
+                    'лимиты квот': {d_: _R2S_SIM.get('quota_map', {}).get(d_) for d_ in r['quota_used']},
                     'копия topic_cap совпадает с production': r['helper_match'],
                     'R2-семейство': fam,
                     'вытеснено из ленты A': len(lost),
@@ -8746,6 +8749,19 @@ def _r2s_write():
                                                               for n, _r in _R2S_SCEN}))
             rep['контроль стратегических карточек'] = watch
             rep['сверка модели'] = {'A_модель': len(A['final']), 'факт после topic_cap': _R2S_SIM.get('exported')}
+            # 14.11: расхождение модели и production по карточкам (только диагностика отчёта)
+            try:
+                _rk = lambda e: e.get('_obs_tid') or ('t:' + str(e.get('title') or '')[:150])
+                _mod = {_rk(e): e for e in A['final']}
+                _fct = {_rk(e): e for e in _R2S_SIM.get('exported_cards', [])}
+                _oinfo = lambda e: A['info'].get(e.get('_r2s_orig') or id(e), {})
+                rep['сверка модели']['только в модели'] = [dict(card(e), obs_trace_id=e.get('_obs_tid'), **_oinfo(e))
+                                                           for k, e in _mod.items() if k not in _fct][:20]
+                rep['сверка модели']['только в production'] = [dict(card(e), obs_trace_id=e.get('_obs_tid'),
+                                                                     стадия_модели=A['rem'].get(id(e), 'нет в пуле модели'), **A['info'].get(id(e), {}))
+                                                                for k, e in _fct.items() if k not in _mod][:20]
+            except Exception as _de:
+                rep['сверка модели']['ошибка диагностики'] = str(_de)[:200]
         (OUTPUT_PATH.parent / '_sev_shadow_r2.json').write_text(json.dumps(rep, ensure_ascii=False, indent=1), encoding='utf-8')
     except Exception as _e:
         print('  [WARN] r2 shadow: %s' % _e, file=sys.stderr)
