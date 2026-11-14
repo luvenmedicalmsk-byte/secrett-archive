@@ -8567,6 +8567,10 @@ def _r2s_simulate(quota_map, feed_all, survivors, analytic, prio_fn, exported):
         surv = {id(e) for e in survivors}
         base = [e for e in feed_all if id(e) not in qids]
         qpool = [(k, d, ev) for ev, d, k in qrec if ev.get('feed_visible') is not False]
+        # 14.11: в production аналитические записи (feed_visible=False) тоже занимают место
+        # в квоте домена; модель их раньше не считала и пропускала больше видимых карточек
+        qpool_all = [(k, d, ev) for ev, d, k in qrec]
+        _tpos = {id(e): i for i, e in enumerate(survivors)}
         # кандидаты: все записи, дошедшие до квоты или вне квоты
         pool_events = [ev for _k, _d, ev in qpool] + base
         cand = []
@@ -8607,7 +8611,7 @@ def _r2s_simulate(quota_map, feed_all, survivors, analytic, prio_fn, exported):
                 return e
             oid = lambda e: e.get('_r2s_orig') or id(e)
             pool = []
-            for i, (k, d, ev) in enumerate(qpool):
+            for i, (k, d, ev) in enumerate(qpool_all):
                 e2 = eff(ev)
                 pool.append((prio_fn(e2) if e2 is not ev else k, i, d, e2))
             pool.sort(key=lambda x: (-x[0], x[1]))
@@ -8615,9 +8619,11 @@ def _r2s_simulate(quota_map, feed_all, survivors, analytic, prio_fn, exported):
             for _k, _i, dd, e in pool:
                 q = quota_map.get(dd, MAX_EVENTS)
                 if cnt.get(dd, 0) < q:
-                    cnt[dd] = cnt.get(dd, 0) + 1; acc.append((_k, e))
+                    cnt[dd] = cnt.get(dd, 0) + 1
+                    if e.get('feed_visible') is not False:
+                        acc.append((_k, e))
                     info[oid(e)] = {'квота': '%s: место %d из %d' % (dd, cnt[dd], q)}
-                else:
+                elif e.get('feed_visible') is not False:
                     rem[oid(e)] = 'квота домена'
                     info[oid(e)] = {'квота': '%s: сверх квоты %d' % (dd, q)}
             feed = [(prio_fn(eff(e)), eff(e)) for e in base] + acc
@@ -8631,7 +8637,21 @@ def _r2s_simulate(quota_map, feed_all, survivors, analytic, prio_fn, exported):
                 if oid(e) in a_feed and oid(e) not in surv:
                     rem[oid(e)] = 'промежуточные стадии (факт A)'
             feed = [e for e in feed if not (oid(e) in a_feed and oid(e) not in surv)]
-            copies = [dict(e, _r1b_src_id=oid(e)) for e in feed] + [dict(e) for e in analytic]
+            # 14.11: порядок входа в topic_cap как в production (_tc_in); при равном весе
+            # topic_cap оставляет первую карточку темы, поэтому порядок важен
+            _sv = [(i, prio_fn(s)) for i, s in enumerate(survivors)]
+            def _ord(x):
+                if oid(x) in _tpos and x is not None and id(x) == oid(x):
+                    return _tpos[oid(x)]
+                px = prio_fn(x)
+                for i, ps in _sv:
+                    if ps < px:
+                        return i - 0.5
+                return len(_sv) + 0.5
+            allc = [(_ord(e), 0, dict(e, _r1b_src_id=oid(e))) for e in feed] + \
+                   [(_tpos.get(id(e), len(_sv) + 1), 1, dict(e)) for e in analytic]
+            allc.sort(key=lambda x: (x[0], x[1]))
+            copies = [c for _o, _f, c in allc]
             with contextlib.redirect_stderr(io.StringIO()):
                 tc = _topic_cap([dict(c) for c in copies], 6)
             kept = {x.get('_r1b_src_id') for x in tc if x.get('_r1b_src_id')}
