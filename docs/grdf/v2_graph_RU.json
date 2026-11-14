@@ -2,9 +2,9 @@
   "country": "RU",
   "date": "2026-11-14",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-14T14:29:49.720469+00:00",
+  "generated_at": "2026-11-14T14:48:32.264305+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-RU",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-RU-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 100,
+      "score": 92,
       "trend": "stable"
     },
     {
@@ -33,7 +33,7 @@
       "id": "DOMAIN-RU-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 92,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-RU-Туман:_уез",
+      "type": "Signal",
+      "label": "Туман: уезд Сюнин, район Хуанъян, уезд Ц",
+      "severity": 92,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-RU-В_России_а",
       "type": "Signal",
       "label": "В России атакованы НПЗ и инфраструктура ",
@@ -92,13 +99,6 @@
       "label": "В России атакован НПЗ и инфраструктура н",
       "severity": 92,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-RU-В_Белгород",
-      "type": "Signal",
-      "label": "В Белгородской области России после атак",
-      "severity": 86,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-geopolitical",
       "type": "CORRELATES",
-      "weight": 1.0
+      "weight": 0.92
     },
     {
       "from": "COUNTRY-RU",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.92
     },
     {
       "from": "COUNTRY-RU",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-RU-climate",
+      "to": "DOMAIN-RU-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-RU-economic",
+      "to": "DOMAIN-RU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-RU-social",
+      "to": "DOMAIN-RU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-RU-climate",
+      "to": "DOMAIN-RU-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-RU-infrastructure",
+      "to": "DOMAIN-RU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-RU-economic",
+      "to": "DOMAIN-RU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "DOMAIN-RU-geopolitical",
       "to": "DOMAIN-RU-infrastructure",
       "type": "ESCALATES",
@@ -184,8 +226,8 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-RU-В_России_а",
-      "to": "DOMAIN-RU-geopolitical",
+      "from": "SIGNAL-RU-Туман:_уез",
+      "to": "DOMAIN-RU-climate",
       "type": "AMPLIFIES",
       "weight": 0.92
     },
@@ -196,10 +238,10 @@
       "weight": 0.92
     },
     {
-      "from": "SIGNAL-RU-В_Белгород",
+      "from": "SIGNAL-RU-В_России_а",
       "to": "DOMAIN-RU-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.86
+      "weight": 0.92
     }
   ]
 }
