@@ -2,67 +2,67 @@
   "country": "JP",
   "date": "2026-11-14",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-14T07:48:41.136426+00:00",
+  "generated_at": "2026-11-14T08:09:23.478891+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-JP",
       "type": "Country",
       "label": "JP",
-      "score": 74,
+      "score": 56,
       "props": {
-        "risk_score": 74
+        "risk_score": 56
       }
     },
     {
       "id": "DOMAIN-JP-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
-      "trend": "stable"
+      "score": 46,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-JP-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-JP-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 74,
-      "trend": "stable"
+      "score": 56,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-JP-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-JP-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-JP-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-JP-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DRIVER-JP-Geopolitical",
@@ -83,7 +83,7 @@
       "id": "SIGNAL-JP-Дождь:_Аба",
       "type": "Signal",
       "label": "Дождь: Абайский район (Карагандинская об",
-      "severity": 74,
+      "severity": 56,
       "domain": "climate"
     },
     {
@@ -94,11 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-JP-Климатичес",
+      "id": "SIGNAL-JP-Санкционно",
       "type": "Signal",
-      "label": "Климатический сигнал — Япония",
-      "severity": 74,
-      "domain": "climate"
+      "label": "Санкционное давление — Восточная Азия",
+      "severity": 62,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-JP",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-climate",
       "type": "CORRELATES",
-      "weight": 0.74
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-JP",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-JP-climate",
-      "to": "DOMAIN-JP-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-JP-infrastructure",
-      "to": "DOMAIN-JP-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-JP-economic",
-      "to": "DOMAIN-JP-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-JP-climate",
       "to": "DOMAIN-JP-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,10 +184,52 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-JP-climate",
+      "to": "DOMAIN-JP-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-JP-infrastructure",
+      "to": "DOMAIN-JP-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-JP-economic",
+      "to": "DOMAIN-JP-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-JP-geopolitical",
+      "to": "DOMAIN-JP-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-JP-infrastructure",
+      "to": "DOMAIN-JP-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-JP-economic",
+      "to": "DOMAIN-JP-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-JP-Дождь:_Аба",
       "to": "DOMAIN-JP-climate",
       "type": "AMPLIFIES",
-      "weight": 0.74
+      "weight": 0.56
     },
     {
       "from": "SIGNAL-JP-Сейсмическ",
@@ -217,10 +238,10 @@
       "weight": 0.73
     },
     {
-      "from": "SIGNAL-JP-Климатичес",
-      "to": "DOMAIN-JP-climate",
+      "from": "SIGNAL-JP-Санкционно",
+      "to": "DOMAIN-JP-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.74
+      "weight": 0.62
     }
   ]
 }
