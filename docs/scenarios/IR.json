@@ -2,17 +2,17 @@
   "country": "IR",
   "country_name": "Иран",
   "date": "2026-11-14",
-  "generated_at": "2026-11-14T13:29:55.995127+00:00",
+  "generated_at": "2026-11-14T13:49:56.366263+00:00",
   "risk_score": 76,
-  "scenario_score": 35,
-  "instability": 26,
+  "scenario_score": 31,
+  "instability": 18,
   "instability_v2": true,
   "scenarios": [
     {
       "type": "best",
       "name": "Best Case",
       "name_ru": "Лучший сценарий",
-      "probability": 31,
+      "probability": 32,
       "score": 70,
       "delta_from_current": -6,
       "state": "escalating",
@@ -24,7 +24,7 @@
       "recovery_days": 380,
       "future_pressure": 51,
       "future_resilience": 47,
-      "future_probability": 31,
+      "future_probability": 32,
       "drivers": [
         {
           "driver": "Деэскалация",
@@ -71,7 +71,7 @@
       "type": "base",
       "name": "Base Case",
       "name_ru": "Базовый сценарий",
-      "probability": 21,
+      "probability": 26,
       "score": 75,
       "delta_from_current": -1,
       "state": "critical",
@@ -83,7 +83,7 @@
       "recovery_days": 407,
       "future_pressure": 57,
       "future_resilience": 44,
-      "future_probability": 21,
+      "future_probability": 26,
       "drivers": [
         {
           "driver": "Совет безопасности: Хрупкий спокойствие в Пер",
@@ -107,26 +107,26 @@
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 80,
+          "score": 75,
           "state": "critical",
           "state_ru": "Критическая эскалация",
-          "delta_from_current": 4
+          "delta_from_current": -1
         },
         {
           "horizon": "180d",
           "label": "180 дней",
-          "score": 85,
+          "score": 75,
           "state": "critical",
           "state_ru": "Критическая эскалация",
-          "delta_from_current": 9
+          "delta_from_current": -1
         },
         {
           "horizon": "365d",
           "label": "365 дней",
-          "score": 90,
-          "state": "cascade",
-          "state_ru": "Каскадный кризис",
-          "delta_from_current": 14
+          "score": 75,
+          "state": "critical",
+          "state_ru": "Критическая эскалация",
+          "delta_from_current": -1
         }
       ]
     },
@@ -134,7 +134,7 @@
       "type": "stress",
       "name": "Stress Case",
       "name_ru": "Стресс-сценарий",
-      "probability": 24,
+      "probability": 22,
       "score": 78,
       "delta_from_current": 2,
       "state": "critical",
@@ -146,7 +146,7 @@
       "recovery_days": 423,
       "future_pressure": 62,
       "future_resilience": 40,
-      "future_probability": 24,
+      "future_probability": 22,
       "drivers": [
         {
           "driver": "Совет безопасности: Хрупкий спокойствие в Пер",
@@ -174,18 +174,18 @@
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 84,
+          "score": 83,
           "state": "critical",
           "state_ru": "Критическая эскалация",
-          "delta_from_current": 8
+          "delta_from_current": 7
         },
         {
           "horizon": "180d",
           "label": "180 дней",
-          "score": 90,
+          "score": 89,
           "state": "cascade",
           "state_ru": "Каскадный кризис",
-          "delta_from_current": 14
+          "delta_from_current": 13
         },
         {
           "horizon": "365d",
@@ -201,7 +201,7 @@
       "type": "worst",
       "name": "Worst Case",
       "name_ru": "Худший сценарий",
-      "probability": 24,
+      "probability": 20,
       "score": 80,
       "delta_from_current": 4,
       "state": "critical",
@@ -213,7 +213,7 @@
       "recovery_days": 434,
       "future_pressure": 66,
       "future_resilience": 34,
-      "future_probability": 24,
+      "future_probability": 20,
       "drivers": [
         {
           "driver": "Совет безопасности: Хрупкий спокойствие в Пер",
@@ -245,10 +245,10 @@
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 88,
-          "state": "cascade",
-          "state_ru": "Каскадный кризис",
-          "delta_from_current": 12
+          "score": 87,
+          "state": "critical",
+          "state_ru": "Критическая эскалация",
+          "delta_from_current": 11
         },
         {
           "horizon": "180d",
@@ -271,24 +271,24 @@
   ],
   "transition_triggers": [
     {
-      "condition": "delta ≥ 5 за 24ч",
+      "condition": "delta ≥ 3 за 24ч",
       "leads_to": "worst",
-      "probability": 24
+      "probability": 20
     },
     {
       "condition": "Драйвер severity ≥ 85 в geopolitics",
       "leads_to": "stress",
-      "probability": 24
+      "probability": 22
     },
     {
       "condition": "Деэскалация ключевого кризиса",
       "leads_to": "best",
-      "probability": 31
+      "probability": 32
     },
     {
       "condition": "Цепочка распространения → 3+ страны",
       "leads_to": "worst",
-      "probability": 9
+      "probability": 6
     }
   ],
   "dominant_scenario": "best"
