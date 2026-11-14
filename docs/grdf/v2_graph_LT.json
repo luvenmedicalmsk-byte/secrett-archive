@@ -2,7 +2,7 @@
   "country": "LT",
   "date": "2026-11-14",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-14T09:10:05.460055+00:00",
+  "generated_at": "2026-11-14T09:30:34.187580+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-LT-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -47,7 +47,7 @@
       "id": "DOMAIN-LT-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
+      "score": 32,
       "trend": "stable"
     },
     {
@@ -75,9 +75,9 @@
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-LT-economic",
+      "id": "DRIVER-LT-social",
       "type": "Driver",
-      "label": "economic"
+      "label": "social"
     },
     {
       "id": "SIGNAL-LT-Ветер:_Юго",
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
+      "id": "SIGNAL-LT-Кровати_в_",
+      "type": "Signal",
+      "label": "Кровати в больницах Литвы",
+      "severity": 32,
+      "domain": "social"
+    },
+    {
       "id": "SIGNAL-LT-Геополитич",
       "type": "Signal",
       "label": "Геополитический процесс — Литва",
       "severity": 34,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-LT-Экономичес",
-      "type": "Signal",
-      "label": "Экономический сигнал — Литва",
-      "severity": 32,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-LT",
       "to": "DOMAIN-LT-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-LT",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-LT",
       "to": "DOMAIN-LT-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-LT",
@@ -157,31 +157,10 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-LT-economic",
+      "from": "DRIVER-LT-social",
       "to": "COUNTRY-LT",
       "type": "CAUSES",
       "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-LT-climate",
-      "to": "DOMAIN-LT-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-LT-infrastructure",
-      "to": "DOMAIN-LT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-LT-economic",
-      "to": "DOMAIN-LT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
     },
     {
       "from": "DOMAIN-LT-climate",
@@ -205,22 +184,43 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-LT-climate",
+      "to": "DOMAIN-LT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-LT-infrastructure",
+      "to": "DOMAIN-LT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-LT-economic",
+      "to": "DOMAIN-LT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-LT-Ветер:_Юго",
       "to": "DOMAIN-LT-climate",
       "type": "AMPLIFIES",
       "weight": 0.72
     },
     {
+      "from": "SIGNAL-LT-Кровати_в_",
+      "to": "DOMAIN-LT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.32
+    },
+    {
       "from": "SIGNAL-LT-Геополитич",
       "to": "DOMAIN-LT-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.34
-    },
-    {
-      "from": "SIGNAL-LT-Экономичес",
-      "to": "DOMAIN-LT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.32
     }
   ]
 }
