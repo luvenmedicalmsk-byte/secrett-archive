@@ -2,7 +2,7 @@
   "country": "GR",
   "date": "2026-11-14",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-14T23:29:58.220113+00:00",
+  "generated_at": "2026-11-14T23:50:19.165732+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -20,49 +20,49 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 64,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-GR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 51,
-      "trend": "down"
+      "score": 5,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-GR-climate",
       "type": "Domain",
       "label": "climate",
       "score": 50,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-GR-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
-      "trend": "down"
+      "score": 32,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-GR-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-GR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-GR-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-GR-geopolitical",
@@ -70,14 +70,14 @@
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-GR-economic",
-      "type": "Driver",
-      "label": "economic"
-    },
-    {
       "id": "DRIVER-GR-climate",
       "type": "Driver",
       "label": "climate"
+    },
+    {
+      "id": "DRIVER-GR-technology",
+      "type": "Driver",
+      "label": "technology"
     },
     {
       "id": "SIGNAL-GR-Ливень:_Се",
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
+      "id": "SIGNAL-GR-Как_призем",
+      "type": "Signal",
+      "label": "Как приземлиться на Луне с почти нулевой",
+      "severity": 32,
+      "domain": "technology"
+    },
+    {
       "id": "SIGNAL-GR-Военные_уд",
       "type": "Signal",
       "label": "Военные удары — Греция",
       "severity": 64,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-GR-Экономичес",
-      "type": "Signal",
-      "label": "Экономический сигнал — Греция",
-      "severity": 51,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-economic",
       "type": "CORRELATES",
-      "weight": 0.51
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-GR",
@@ -124,7 +124,7 @@
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-GR",
@@ -151,37 +151,16 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-GR-economic",
-      "to": "COUNTRY-GR",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
       "from": "DRIVER-GR-climate",
       "to": "COUNTRY-GR",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-GR-climate",
-      "to": "DOMAIN-GR-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-GR-infrastructure",
-      "to": "DOMAIN-GR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-GR-economic",
-      "to": "DOMAIN-GR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
+      "from": "DRIVER-GR-technology",
+      "to": "COUNTRY-GR",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DOMAIN-GR-climate",
@@ -203,6 +182,27 @@
       "type": "AMPLIFIES",
       "weight": 0.65,
       "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-GR-climate",
+      "to": "DOMAIN-GR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-GR-infrastructure",
+      "to": "DOMAIN-GR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GR-economic",
+      "to": "DOMAIN-GR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-GR-geopolitical",
@@ -232,16 +232,16 @@
       "weight": 0.5
     },
     {
+      "from": "SIGNAL-GR-Как_призем",
+      "to": "DOMAIN-GR-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.32
+    },
+    {
       "from": "SIGNAL-GR-Военные_уд",
       "to": "DOMAIN-GR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.64
-    },
-    {
-      "from": "SIGNAL-GR-Экономичес",
-      "to": "DOMAIN-GR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.51
     }
   ]
 }
