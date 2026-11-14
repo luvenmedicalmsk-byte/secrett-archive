@@ -2,7 +2,7 @@
   "country": "CA",
   "date": "2026-11-14",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-14T13:09:54.745666+00:00",
+  "generated_at": "2026-11-14T13:30:00.376319+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-CA",
       "type": "Country",
       "label": "CA",
-      "score": 63,
+      "score": 65,
       "props": {
-        "risk_score": 63
+        "risk_score": 65
       }
     },
     {
@@ -20,14 +20,14 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 5,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 50,
-      "trend": "up"
+      "score": 5,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CA-climate",
@@ -41,28 +41,28 @@
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CA-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-CA-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-CA-Сильный_ве",
+      "type": "Signal",
+      "label": "Сильный ветер: Хайда Гуай, Канада",
+      "severity": 56,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-CA-Дождь:_Сев",
       "type": "Signal",
       "label": "Дождь: Северный Ванкуверский остров, Зал",
@@ -92,13 +99,6 @@
       "label": "Метель: Демпстер, Канада",
       "severity": 56,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-CA-Рабочие_до",
-      "type": "Signal",
-      "label": "Рабочие доков порта Сент-Джон и работода",
-      "severity": 50,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-economic",
       "type": "CORRELATES",
-      "weight": 0.5
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CA",
@@ -205,6 +205,12 @@
       "lag_days": 90
     },
     {
+      "from": "SIGNAL-CA-Сильный_ве",
+      "to": "DOMAIN-CA-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.56
+    },
+    {
       "from": "SIGNAL-CA-Дождь:_Сев",
       "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
@@ -215,12 +221,6 @@
       "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
       "weight": 0.56
-    },
-    {
-      "from": "SIGNAL-CA-Рабочие_до",
-      "to": "DOMAIN-CA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.5
     }
   ]
 }

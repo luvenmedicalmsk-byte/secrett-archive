@@ -2,7 +2,7 @@
   "country": "IR",
   "date": "2026-11-14",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-14T13:09:54.743867+00:00",
+  "generated_at": "2026-11-14T13:30:00.374235+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-IR",
       "type": "Country",
       "label": "IR",
-      "score": 74,
+      "score": 76,
       "props": {
-        "risk_score": 74
+        "risk_score": 76
       }
     },
     {
@@ -20,7 +20,7 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 70,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-economic",
@@ -47,8 +47,8 @@
       "id": "DOMAIN-IR-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
-      "trend": "stable"
+      "score": 76,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-infrastructure",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IR-Совет_безо",
+      "type": "Signal",
+      "label": "Совет безопасности: Хрупкий спокойствие ",
+      "severity": 76,
+      "domain": "social"
+    },
+    {
       "id": "SIGNAL-IR-Рынок_нефт",
       "type": "Signal",
       "label": "Рынок нефти переполнен сырой нефтью, нес",
@@ -90,13 +97,6 @@
       "id": "SIGNAL-IR-Газовоз_вз",
       "type": "Signal",
       "label": "Газовоз взорвался после подрыва на мине",
-      "severity": 70,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-IR-Ведущий_ир",
-      "type": "Signal",
-      "label": "Ведущий иранский чиновник предупреждает,",
       "severity": 70,
       "domain": "geopolitical"
     }
@@ -130,7 +130,7 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.76
     },
     {
       "from": "COUNTRY-IR",
@@ -184,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-IR-Совет_безо",
+      "to": "DOMAIN-IR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.76
+    },
+    {
       "from": "SIGNAL-IR-Рынок_нефт",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
@@ -191,12 +197,6 @@
     },
     {
       "from": "SIGNAL-IR-Газовоз_вз",
-      "to": "DOMAIN-IR-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.7
-    },
-    {
-      "from": "SIGNAL-IR-Ведущий_ир",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.7
