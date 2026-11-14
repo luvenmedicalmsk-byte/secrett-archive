@@ -2,7 +2,7 @@
   "country": "MX",
   "date": "2026-11-14",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-14T09:30:34.196160+00:00",
+  "generated_at": "2026-11-14T09:48:10.818479+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-MX-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 46,
       "trend": "stable"
     },
     {
@@ -47,7 +47,7 @@
       "id": "DOMAIN-MX-social",
       "type": "Domain",
       "label": "social",
-      "score": 32,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,11 +80,11 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-MX-Кровати_в_",
+      "id": "SIGNAL-MX-Средняя_го",
       "type": "Signal",
-      "label": "Кровати в больницах Мексики",
+      "label": "Средняя годовая зарплата в Мексике",
       "severity": 32,
-      "domain": "social"
+      "domain": "economic"
     },
     {
       "id": "SIGNAL-MX-Наводнение",
@@ -112,7 +112,7 @@
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-MX",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-social",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-MX",
@@ -161,6 +161,27 @@
       "to": "COUNTRY-MX",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-MX-climate",
+      "to": "DOMAIN-MX-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-MX-infrastructure",
+      "to": "DOMAIN-MX-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-MX-economic",
+      "to": "DOMAIN-MX-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-MX-climate",
@@ -205,29 +226,8 @@
       "lag_days": 45
     },
     {
-      "from": "DOMAIN-MX-climate",
-      "to": "DOMAIN-MX-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-MX-infrastructure",
+      "from": "SIGNAL-MX-Средняя_го",
       "to": "DOMAIN-MX-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-MX-economic",
-      "to": "DOMAIN-MX-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "SIGNAL-MX-Кровати_в_",
-      "to": "DOMAIN-MX-social",
       "type": "AMPLIFIES",
       "weight": 0.32
     },
