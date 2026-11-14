@@ -2,7 +2,7 @@
   "country": "CN",
   "date": "2026-11-14",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-14T01:11:27.605314+00:00",
+  "generated_at": "2026-11-14T01:31:16.431035+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 77,
+      "score": 80,
       "props": {
-        "risk_score": 77
+        "risk_score": 80
       }
     },
     {
@@ -26,8 +26,8 @@
       "id": "DOMAIN-CN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
-      "trend": "stable"
+      "score": 74,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-climate",
@@ -80,9 +80,16 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CN-Туман:_Уез",
+      "id": "SIGNAL-CN-Туман:_Рай",
       "type": "Signal",
-      "label": "Туман: Уезд Цзиньсару, Уезд Лудзян, Уезд",
+      "label": "Туман: Район Тунчжоу, Юаньши, Район Сичэ",
+      "severity": 74,
+      "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-CN-Пожароопас",
+      "type": "Signal",
+      "label": "Пожароопасность: Раопинг, Мэйсянь, Автон",
       "severity": 74,
       "domain": "climate"
     },
@@ -92,13 +99,6 @@
       "label": "Падение интернет-связи: Китай",
       "severity": 72,
       "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-CN-Холод:_Рай",
-      "type": "Signal",
-      "label": "Холод: Район Хуанчжун, Китай",
-      "severity": 56,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.74
     },
     {
       "from": "COUNTRY-CN",
@@ -205,7 +205,13 @@
       "lag_days": 90
     },
     {
-      "from": "SIGNAL-CN-Туман:_Уез",
+      "from": "SIGNAL-CN-Туман:_Рай",
+      "to": "DOMAIN-CN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.74
+    },
+    {
+      "from": "SIGNAL-CN-Пожароопас",
       "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
       "weight": 0.74
@@ -215,12 +221,6 @@
       "to": "DOMAIN-CN-technology",
       "type": "AMPLIFIES",
       "weight": 0.72
-    },
-    {
-      "from": "SIGNAL-CN-Холод:_Рай",
-      "to": "DOMAIN-CN-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.56
     }
   ]
 }
