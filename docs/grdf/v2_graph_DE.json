@@ -2,7 +2,7 @@
   "country": "DE",
   "date": "2026-11-14",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-14T23:09:27.964572+00:00",
+  "generated_at": "2026-11-14T23:29:58.193909+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-DE",
       "type": "Country",
       "label": "DE",
-      "score": 91,
+      "score": 78,
       "props": {
-        "risk_score": 91
+        "risk_score": 78
       }
     },
     {
@@ -20,49 +20,49 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-DE-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-DE-climate",
       "type": "Domain",
       "label": "climate",
       "score": 72,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-DE-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-DE-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
-      "trend": "stable"
+      "score": 60,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-DE-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-DE-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DRIVER-DE-Geopolitical",
@@ -87,17 +87,17 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-DE-Явления_на",
+      "id": "SIGNAL-DE-В_выходные",
       "type": "Signal",
-      "label": "Явления на побережье: Фленсбург до Фемар",
-      "severity": 72,
-      "domain": "climate"
+      "label": "В выходные в нескольких городах Германии",
+      "severity": 60,
+      "domain": "social"
     },
     {
-      "id": "SIGNAL-DE-Гроза:_Кра",
+      "id": "SIGNAL-DE-Туман:_Кра",
       "type": "Signal",
-      "label": "Гроза: Крайс Остергольц, Крайс Куксхафен",
-      "severity": 72,
+      "label": "Туман: Крайс Зоннеберг, Крайс Шмалькальд",
+      "severity": 50,
       "domain": "climate"
     }
   ],
@@ -130,7 +130,7 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-DE",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-DE-climate",
-      "to": "DOMAIN-DE-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-DE-infrastructure",
-      "to": "DOMAIN-DE-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-DE-economic",
-      "to": "DOMAIN-DE-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-DE-climate",
       "to": "DOMAIN-DE-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,22 +184,43 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-DE-climate",
+      "to": "DOMAIN-DE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-DE-infrastructure",
+      "to": "DOMAIN-DE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-DE-economic",
+      "to": "DOMAIN-DE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-DE-Ветер:_Кра",
       "to": "DOMAIN-DE-climate",
       "type": "AMPLIFIES",
       "weight": 0.72
     },
     {
-      "from": "SIGNAL-DE-Явления_на",
-      "to": "DOMAIN-DE-climate",
+      "from": "SIGNAL-DE-В_выходные",
+      "to": "DOMAIN-DE-social",
       "type": "AMPLIFIES",
-      "weight": 0.72
+      "weight": 0.6
     },
     {
-      "from": "SIGNAL-DE-Гроза:_Кра",
+      "from": "SIGNAL-DE-Туман:_Кра",
       "to": "DOMAIN-DE-climate",
       "type": "AMPLIFIES",
-      "weight": 0.72
+      "weight": 0.5
     }
   ]
 }
