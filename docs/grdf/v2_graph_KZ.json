@@ -2,72 +2,67 @@
   "country": "KZ",
   "date": "2026-11-14",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-14T10:27:34.143021+00:00",
+  "generated_at": "2026-11-14T10:49:07.543879+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-KZ",
       "type": "Country",
       "label": "KZ",
-      "score": 62,
+      "score": 76,
       "props": {
-        "risk_score": 62
+        "risk_score": 76
       }
     },
     {
       "id": "DOMAIN-KZ-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 26,
-      "trend": "down"
+      "score": 81,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 62,
-      "trend": "down"
+      "score": 73,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 52,
-      "trend": "down"
+      "score": 74,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "down"
-    },
-    {
-      "id": "DRIVER-KZ-Economic",
-      "type": "Driver",
-      "label": "Economic"
+      "trend": "up"
     },
     {
       "id": "DRIVER-KZ-Geopolitical",
@@ -80,17 +75,22 @@
       "label": "Economic"
     },
     {
+      "id": "DRIVER-KZ-Economic",
+      "type": "Driver",
+      "label": "Economic"
+    },
+    {
+      "id": "SIGNAL-KZ-Ветер:_Улы",
+      "type": "Signal",
+      "label": "Ветер: Улытауский район (Улытауская обла",
+      "severity": 74,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-KZ-О_возобнов",
       "type": "Signal",
       "label": "О возобновлении поставок казахстанской н",
       "severity": 62,
-      "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-KZ-Туман:_Акк",
-      "type": "Signal",
-      "label": "Туман: Аккольский район (Акмолинская обл",
-      "severity": 56,
       "domain": "economic"
     },
     {
@@ -106,19 +106,19 @@
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.26
+      "weight": 0.81
     },
     {
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-economic",
       "type": "CORRELATES",
-      "weight": 0.62
+      "weight": 0.73
     },
     {
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-climate",
       "type": "CORRELATES",
-      "weight": 0.52
+      "weight": 0.74
     },
     {
       "from": "COUNTRY-KZ",
@@ -145,13 +145,13 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-KZ-Economic",
+      "from": "DRIVER-KZ-Geopolitical",
       "to": "COUNTRY-KZ",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-KZ-Geopolitical",
+      "from": "DRIVER-KZ-Economic",
       "to": "COUNTRY-KZ",
       "type": "CAUSES",
       "weight": 0.8
@@ -205,16 +205,37 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-KZ-geopolitical",
+      "to": "DOMAIN-KZ-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-KZ-infrastructure",
+      "to": "DOMAIN-KZ-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-KZ-economic",
+      "to": "DOMAIN-KZ-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-KZ-Ветер:_Улы",
+      "to": "DOMAIN-KZ-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.74
+    },
+    {
       "from": "SIGNAL-KZ-О_возобнов",
       "to": "DOMAIN-KZ-economic",
       "type": "AMPLIFIES",
       "weight": 0.62
-    },
-    {
-      "from": "SIGNAL-KZ-Туман:_Акк",
-      "to": "DOMAIN-KZ-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.56
     },
     {
       "from": "SIGNAL-KZ-В_Казахста",
