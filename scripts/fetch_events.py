@@ -8615,7 +8615,8 @@ def _r2s_simulate(quota_map, feed_all, survivors, analytic, prio_fn, exported):
                 e2 = eff(ev)
                 pool.append((prio_fn(e2) if e2 is not ev else k, i, d, e2))
             pool.sort(key=lambda x: (-x[0], x[1]))
-            cnt = {}; acc = []; rem = {}; info = {}
+            # 14.11: резервы паводков и метеопредупреждений занимают места квоты до основного цикла
+            cnt = dict(_R2S_SIM.get('dc0') or {}); acc = []; rem = {}; info = {}
             for _k, _i, dd, e in pool:
                 q = quota_map.get(dd, MAX_EVENTS)
                 if cnt.get(dd, 0) < q:
@@ -9705,6 +9706,8 @@ def process_events(raw_items):
         _warn_added += 1
     _LOSS['warn_reserve'] = _warn_added
     _LOSS['warn_reserve_by_source'] = _warn_by_src
+    # SEV_SHADOW_R2 (14.11): занятость квот резервами до основного цикла - только для модели отчёта
+    _R2S_SIM['dc0'] = dict(domain_counts)
 
     for ev in events:
         ev_date_str = ev.get('date', '')[:10]
