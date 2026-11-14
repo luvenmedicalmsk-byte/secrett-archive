@@ -2,7 +2,7 @@
   "country": "CZ",
   "date": "2026-11-14",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-14T10:09:37.063131+00:00",
+  "generated_at": "2026-11-14T10:27:34.150423+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -47,7 +47,7 @@
       "id": "DOMAIN-CZ-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
+      "score": 55,
       "trend": "stable"
     },
     {
@@ -75,16 +75,9 @@
       "label": "economic"
     },
     {
-      "id": "DRIVER-CZ-geopolitical",
+      "id": "DRIVER-CZ-social",
       "type": "Driver",
-      "label": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-CZ-Средняя_го",
-      "type": "Signal",
-      "label": "Средняя годовая зарплата в Чехии",
-      "severity": 32,
-      "domain": "economic"
+      "label": "social"
     },
     {
       "id": "SIGNAL-CZ-Тепловая_в",
@@ -99,6 +92,13 @@
       "label": "Государственные финансы — Чехия",
       "severity": 60,
       "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-CZ-Социальный",
+      "type": "Signal",
+      "label": "Социальный процесс — Чехия",
+      "severity": 55,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -130,7 +130,7 @@
       "from": "COUNTRY-CZ",
       "to": "DOMAIN-CZ-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.55
     },
     {
       "from": "COUNTRY-CZ",
@@ -157,31 +157,10 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-CZ-geopolitical",
+      "from": "DRIVER-CZ-social",
       "to": "COUNTRY-CZ",
       "type": "CAUSES",
       "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-CZ-climate",
-      "to": "DOMAIN-CZ-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-CZ-infrastructure",
-      "to": "DOMAIN-CZ-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-CZ-economic",
-      "to": "DOMAIN-CZ-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
     },
     {
       "from": "DOMAIN-CZ-climate",
@@ -205,6 +184,27 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-CZ-climate",
+      "to": "DOMAIN-CZ-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-CZ-infrastructure",
+      "to": "DOMAIN-CZ-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CZ-economic",
+      "to": "DOMAIN-CZ-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "DOMAIN-CZ-geopolitical",
       "to": "DOMAIN-CZ-infrastructure",
       "type": "ESCALATES",
@@ -226,12 +226,6 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-CZ-Средняя_го",
-      "to": "DOMAIN-CZ-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.32
-    },
-    {
       "from": "SIGNAL-CZ-Тепловая_в",
       "to": "DOMAIN-CZ-climate",
       "type": "AMPLIFIES",
@@ -242,6 +236,12 @@
       "to": "DOMAIN-CZ-economic",
       "type": "AMPLIFIES",
       "weight": 0.6
+    },
+    {
+      "from": "SIGNAL-CZ-Социальный",
+      "to": "DOMAIN-CZ-social",
+      "type": "AMPLIFIES",
+      "weight": 0.55
     }
   ]
 }
