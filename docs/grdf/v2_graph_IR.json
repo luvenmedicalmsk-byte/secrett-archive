@@ -2,7 +2,7 @@
   "country": "IR",
   "date": "2026-11-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-15T07:42:34.255478+00:00",
+  "generated_at": "2026-11-15T07:54:51.496598+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-IR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 73,
       "trend": "stable"
     },
     {
@@ -40,7 +40,7 @@
       "id": "DOMAIN-IR-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 62,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IR-12_человек",
+      "type": "Signal",
+      "label": "12 человек погибли, 16 получили ранения,",
+      "severity": 73,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-IR-Рынок_нефт",
       "type": "Signal",
       "label": "Рынок нефти переполнен сырой нефтью, нес",
@@ -92,13 +99,6 @@
       "label": "Газовоз взорвался после подрыва на мине",
       "severity": 70,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-IR-Преодолени",
-      "type": "Signal",
-      "label": "Преодоление авторитарных цифровых отключ",
-      "severity": 62,
-      "domain": "technology"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.73
     },
     {
       "from": "COUNTRY-IR",
@@ -124,7 +124,7 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-technology",
       "type": "CORRELATES",
-      "weight": 0.62
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-IR",
@@ -184,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-IR-12_человек",
+      "to": "DOMAIN-IR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.73
+    },
+    {
       "from": "SIGNAL-IR-Рынок_нефт",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
@@ -194,12 +200,6 @@
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.7
-    },
-    {
-      "from": "SIGNAL-IR-Преодолени",
-      "to": "DOMAIN-IR-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.62
     }
   ]
 }
