@@ -2,7 +2,7 @@
   "country": "RS",
   "date": "2026-11-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-15T10:30:09.900025+00:00",
+  "generated_at": "2026-11-15T10:47:40.183966+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,16 +10,16 @@
       "id": "COUNTRY-RS",
       "type": "Country",
       "label": "RS",
-      "score": 72,
+      "score": 80,
       "props": {
-        "risk_score": 72
+        "risk_score": 80
       }
     },
     {
       "id": "DOMAIN-RS-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 80,
+      "score": 81,
       "trend": "up"
     },
     {
@@ -33,7 +33,7 @@
       "id": "DOMAIN-RS-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 72,
+      "score": 74,
       "trend": "up"
     },
     {
@@ -80,6 +80,13 @@
       "label": "economic"
     },
     {
+      "id": "SIGNAL-RS-Ветер:_Бан",
+      "type": "Signal",
+      "label": "Ветер: Банат, Сербия",
+      "severity": 72,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-RS-Гроза:_Бан",
       "type": "Signal",
       "label": "Гроза: Банат, Сербия",
@@ -92,13 +99,6 @@
       "label": "Ливень: Шумадия, Поморавле, Белград и ещ",
       "severity": 50,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-RS-Ветер:_Бан",
-      "type": "Signal",
-      "label": "Ветер: Банат, Сербия",
-      "severity": 50,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-RS",
       "to": "DOMAIN-RS-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.8
+      "weight": 0.81
     },
     {
       "from": "COUNTRY-RS",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-RS",
       "to": "DOMAIN-RS-climate",
       "type": "CORRELATES",
-      "weight": 0.72
+      "weight": 0.74
     },
     {
       "from": "COUNTRY-RS",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-RS-geopolitical",
-      "to": "DOMAIN-RS-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-RS-infrastructure",
-      "to": "DOMAIN-RS-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-RS-economic",
-      "to": "DOMAIN-RS-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "DOMAIN-RS-climate",
       "to": "DOMAIN-RS-infrastructure",
       "type": "ESCALATES",
@@ -226,6 +205,33 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-RS-geopolitical",
+      "to": "DOMAIN-RS-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-RS-infrastructure",
+      "to": "DOMAIN-RS-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-RS-economic",
+      "to": "DOMAIN-RS-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-RS-Ветер:_Бан",
+      "to": "DOMAIN-RS-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.72
+    },
+    {
       "from": "SIGNAL-RS-Гроза:_Бан",
       "to": "DOMAIN-RS-climate",
       "type": "AMPLIFIES",
@@ -233,12 +239,6 @@
     },
     {
       "from": "SIGNAL-RS-Ливень:_Шу",
-      "to": "DOMAIN-RS-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-RS-Ветер:_Бан",
       "to": "DOMAIN-RS-climate",
       "type": "AMPLIFIES",
       "weight": 0.5

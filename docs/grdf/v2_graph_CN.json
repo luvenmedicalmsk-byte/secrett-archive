@@ -2,7 +2,7 @@
   "country": "CN",
   "date": "2026-11-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-15T10:30:09.875315+00:00",
+  "generated_at": "2026-11-15T10:47:40.162870+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 72,
+      "score": 77,
       "props": {
-        "risk_score": 72
+        "risk_score": 77
       }
     },
     {
@@ -33,15 +33,15 @@
       "id": "DOMAIN-CN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 56,
-      "trend": "stable"
+      "score": 74,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-technology",
       "type": "Domain",
       "label": "technology",
       "score": 72,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-social",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-CN-Туман:_Хэй",
+      "type": "Signal",
+      "label": "Туман: Хэйцзин, Юнцзи, Уезд Жуйчэн и ещё",
+      "severity": 74,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-CN-Падение_ин",
       "type": "Signal",
       "label": "Падение интернет-связи: Китай",
@@ -90,13 +97,6 @@
       "id": "SIGNAL-CN-Гололедица",
       "type": "Signal",
       "label": "Гололедица на дорогах: Уезд Гунлю, Город",
-      "severity": 56,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-CN-Туман:_Гор",
-      "type": "Signal",
-      "label": "Туман: Город Линвоу, Уезд Хелан, Уезд Ле",
       "severity": 56,
       "domain": "climate"
     }
@@ -118,7 +118,7 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-climate",
       "type": "CORRELATES",
-      "weight": 0.56
+      "weight": 0.74
     },
     {
       "from": "COUNTRY-CN",
@@ -205,6 +205,12 @@
       "lag_days": 90
     },
     {
+      "from": "SIGNAL-CN-Туман:_Хэй",
+      "to": "DOMAIN-CN-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.74
+    },
+    {
       "from": "SIGNAL-CN-Падение_ин",
       "to": "DOMAIN-CN-technology",
       "type": "AMPLIFIES",
@@ -212,12 +218,6 @@
     },
     {
       "from": "SIGNAL-CN-Гололедица",
-      "to": "DOMAIN-CN-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.56
-    },
-    {
-      "from": "SIGNAL-CN-Туман:_Гор",
       "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
       "weight": 0.56
