@@ -26,6 +26,8 @@ def fetch(cc):
     # 15.11.2026: ключ только в заголовке X-Admin-Key, не в адресе
     req = urllib.request.Request(url)
     req.add_header("Accept", "application/json")
+    # 15.11.2026: Cloudflare отклоняет подпись Python-urllib (error 1010), нужен свой User-Agent
+    req.add_header("User-Agent", "atlas-pipeline/1.0 (+github-actions)")
     if KEY:
         req.add_header("X-Admin-Key", KEY)
     with urllib.request.urlopen(req, timeout=30) as r:
