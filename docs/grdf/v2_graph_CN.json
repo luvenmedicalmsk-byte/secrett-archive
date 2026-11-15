@@ -2,7 +2,7 @@
   "country": "CN",
   "date": "2026-11-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-15T01:50:26.857889+00:00",
+  "generated_at": "2026-11-15T02:08:26.353369+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,59 +10,59 @@
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 72,
+      "score": 92,
       "props": {
-        "risk_score": 72
+        "risk_score": 92
       }
     },
     {
       "id": "DOMAIN-CN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 34,
-      "trend": "down"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 55,
-      "trend": "down"
+      "score": 92,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-technology",
       "type": "Domain",
       "label": "technology",
       "score": 72,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DRIVER-CN-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-CN-Туман:_Юнц",
+      "type": "Signal",
+      "label": "Туман: Юнцзи, Уезд Цихэ, Уезд Вэньси и е",
+      "severity": 92,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-CN-Падение_ин",
       "type": "Signal",
       "label": "Падение интернет-связи: Китай",
@@ -92,13 +99,6 @@
       "label": "Пока война потрясает энергетические рынк",
       "severity": 55,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-CN-Белый_дом_",
-      "type": "Signal",
-      "label": "Белый дом утверждает, что Трамп встретит",
-      "severity": 34,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CN",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-climate",
       "type": "CORRELATES",
-      "weight": 0.55
+      "weight": 0.92
     },
     {
       "from": "COUNTRY-CN",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-CN-climate",
-      "to": "DOMAIN-CN-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-CN-economic",
-      "to": "DOMAIN-CN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-CN-social",
-      "to": "DOMAIN-CN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-CN-climate",
       "to": "DOMAIN-CN-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -205,6 +184,33 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-CN-climate",
+      "to": "DOMAIN-CN-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-CN-economic",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-CN-social",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "SIGNAL-CN-Туман:_Юнц",
+      "to": "DOMAIN-CN-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.92
+    },
+    {
       "from": "SIGNAL-CN-Падение_ин",
       "to": "DOMAIN-CN-technology",
       "type": "AMPLIFIES",
@@ -215,12 +221,6 @@
       "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
       "weight": 0.55
-    },
-    {
-      "from": "SIGNAL-CN-Белый_дом_",
-      "to": "DOMAIN-CN-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.34
     }
   ]
 }
