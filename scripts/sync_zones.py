@@ -23,8 +23,7 @@ COUNTRIES = ["CN", "RU", "US", "DE", "TR", "AE", "KZ", "IN", "GB", "FR",
 
 def fetch(cc):
     url = "%s/api/country-zones?country=%s" % (API, cc)
-    if KEY:
-        url += "&key=" + KEY
+    # 15.11.2026: ключ только в заголовке X-Admin-Key, не в адресе
     req = urllib.request.Request(url)
     req.add_header("Accept", "application/json")
     if KEY:

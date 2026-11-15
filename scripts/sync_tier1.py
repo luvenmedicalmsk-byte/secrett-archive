@@ -28,7 +28,7 @@ def main():
     if not KEY:
         print("  [tier1] ADMIN_KEY не задан, эндпоинт отвечает только владельцу", file=sys.stderr)
         return
-    url = "%s/api/tier1?key=%s" % (API, KEY)
+    url = "%s/api/tier1" % API   # 15.11.2026: ключ только в заголовке X-Admin-Key
     req = urllib.request.Request(url)
     req.add_header("Accept", "application/json")
     req.add_header("X-Admin-Key", KEY)
