@@ -2,67 +2,72 @@
   "country": "IT",
   "date": "2026-11-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-15T19:09:37.735860+00:00",
+  "generated_at": "2026-11-15T19:30:29.150445+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-IT",
       "type": "Country",
       "label": "IT",
-      "score": 79,
+      "score": 65,
       "props": {
-        "risk_score": 79
+        "risk_score": 65
       }
     },
     {
       "id": "DOMAIN-IT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 54,
-      "trend": "stable"
+      "score": 21,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IT-economic",
       "type": "Domain",
       "label": "economic",
       "score": 62,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IT-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 72,
-      "trend": "stable"
+      "score": 50,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IT-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IT-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IT-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IT-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
+    },
+    {
+      "id": "DRIVER-IT-Economic",
+      "type": "Driver",
+      "label": "Economic"
     },
     {
       "id": "DRIVER-IT-Geopolitical",
@@ -73,18 +78,6 @@
       "id": "DRIVER-IT-Economic",
       "type": "Driver",
       "label": "Economic"
-    },
-    {
-      "id": "DRIVER-IT-Economic",
-      "type": "Driver",
-      "label": "Economic"
-    },
-    {
-      "id": "SIGNAL-IT-Гроза:_Кал",
-      "type": "Signal",
-      "label": "Гроза: Калабрия, Сардиния, Базиликата и ",
-      "severity": 72,
-      "domain": "climate"
     },
     {
       "id": "SIGNAL-IT-Италия_ошт",
@@ -99,6 +92,13 @@
       "label": "Ювелирный бизнес скандальной чиновницы, ",
       "severity": 56,
       "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-IT-Ветер:_Сар",
+      "type": "Signal",
+      "label": "Ветер: Сардиния, Калабрия, Базиликата и ",
+      "severity": 50,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.54
+      "weight": 0.21
     },
     {
       "from": "COUNTRY-IT",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-climate",
       "type": "CORRELATES",
-      "weight": 0.72
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-IT",
@@ -145,13 +145,13 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-IT-Geopolitical",
+      "from": "DRIVER-IT-Economic",
       "to": "COUNTRY-IT",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-IT-Economic",
+      "from": "DRIVER-IT-Geopolitical",
       "to": "COUNTRY-IT",
       "type": "CAUSES",
       "weight": 0.8
@@ -205,33 +205,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-IT-geopolitical",
-      "to": "DOMAIN-IT-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-IT-infrastructure",
-      "to": "DOMAIN-IT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-IT-economic",
-      "to": "DOMAIN-IT-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
-      "from": "SIGNAL-IT-Гроза:_Кал",
-      "to": "DOMAIN-IT-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.72
-    },
-    {
       "from": "SIGNAL-IT-Италия_ошт",
       "to": "DOMAIN-IT-economic",
       "type": "AMPLIFIES",
@@ -242,6 +215,12 @@
       "to": "DOMAIN-IT-economic",
       "type": "AMPLIFIES",
       "weight": 0.56
+    },
+    {
+      "from": "SIGNAL-IT-Ветер:_Сар",
+      "to": "DOMAIN-IT-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
     }
   ]
 }
