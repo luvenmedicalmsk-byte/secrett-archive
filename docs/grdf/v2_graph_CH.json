@@ -2,9 +2,9 @@
   "country": "CH",
   "date": "2026-11-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-15T23:11:18.088745+00:00",
+  "generated_at": "2026-11-15T23:28:06.126574+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-CH",
@@ -26,14 +26,14 @@
       "id": "DOMAIN-CH-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 50,
+      "score": 5,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-CH-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 28,
+      "score": 50,
       "trend": "stable"
     },
     {
@@ -94,11 +94,11 @@
       "domain": "social"
     },
     {
-      "id": "SIGNAL-CH-Финансовый",
+      "id": "SIGNAL-CH-Климатичес",
       "type": "Signal",
-      "label": "Финансовый рынок — Швейцария",
+      "label": "Климатический сигнал — Швейцария",
       "severity": 50,
-      "domain": "economic"
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -112,13 +112,13 @@
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-economic",
       "type": "CORRELATES",
-      "weight": 0.5
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-climate",
       "type": "CORRELATES",
-      "weight": 0.28
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-CH",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-CH-climate",
+      "to": "DOMAIN-CH-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-CH-economic",
+      "to": "DOMAIN-CH-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-CH-social",
+      "to": "DOMAIN-CH-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-CH-climate",
+      "to": "DOMAIN-CH-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-CH-infrastructure",
+      "to": "DOMAIN-CH-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CH-economic",
+      "to": "DOMAIN-CH-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-CH-Отключение",
       "to": "DOMAIN-CH-technology",
       "type": "AMPLIFIES",
@@ -175,8 +217,8 @@
       "weight": 0.54
     },
     {
-      "from": "SIGNAL-CH-Финансовый",
-      "to": "DOMAIN-CH-economic",
+      "from": "SIGNAL-CH-Климатичес",
+      "to": "DOMAIN-CH-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
     }
