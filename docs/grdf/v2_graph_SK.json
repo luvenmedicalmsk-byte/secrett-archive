@@ -2,7 +2,7 @@
   "country": "SK",
   "date": "2026-11-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-15T10:47:40.176268+00:00",
+  "generated_at": "2026-11-15T11:09:31.746109+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -40,7 +40,7 @@
       "id": "DOMAIN-SK-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 47,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -75,14 +75,21 @@
       "label": "climate"
     },
     {
-      "id": "DRIVER-SK-technology",
+      "id": "DRIVER-SK-economic",
       "type": "Driver",
-      "label": "technology"
+      "label": "economic"
     },
     {
-      "id": "SIGNAL-SK-Туман:_Мих",
+      "id": "SIGNAL-SK-Снег:_Вели",
       "type": "Signal",
-      "label": "Туман: Михаловце, Вранов над Топлёй, Спи",
+      "label": "Снег: Великий Кртеш, Римавская Собота, Р",
+      "severity": 50,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-SK-Ветер:_Бра",
+      "type": "Signal",
+      "label": "Ветер: Братислава, Левице, Нове Замки и ",
       "severity": 50,
       "domain": "climate"
     },
@@ -92,13 +99,6 @@
       "label": "Военные удары — Словакия",
       "severity": 53,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-SK-Технологич",
-      "type": "Signal",
-      "label": "Технологический сигнал — Словакия",
-      "severity": 47,
-      "domain": "technology"
     }
   ],
   "edges": [
@@ -124,7 +124,7 @@
       "from": "COUNTRY-SK",
       "to": "DOMAIN-SK-technology",
       "type": "CORRELATES",
-      "weight": 0.47
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-SK",
@@ -157,7 +157,7 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-SK-technology",
+      "from": "DRIVER-SK-economic",
       "to": "COUNTRY-SK",
       "type": "CAUSES",
       "weight": 0.8
@@ -226,7 +226,13 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-SK-Туман:_Мих",
+      "from": "SIGNAL-SK-Снег:_Вели",
+      "to": "DOMAIN-SK-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
+      "from": "SIGNAL-SK-Ветер:_Бра",
       "to": "DOMAIN-SK-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
@@ -236,12 +242,6 @@
       "to": "DOMAIN-SK-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.53
-    },
-    {
-      "from": "SIGNAL-SK-Технологич",
-      "to": "DOMAIN-SK-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.47
     }
   ]
 }
