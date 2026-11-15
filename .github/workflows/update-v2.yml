@@ -301,6 +301,18 @@ jobs:
           fi
           python scripts/push_reports.py || true
 
+      # Этап 2.1 безопасности (15.11.2026): бесплатный слой процессов. Файлы
+      # только генерируются и коммитятся, карта на них пока не переключена.
+      # signals_free.json - free-процессы по белому списку полей (без pro и без
+      # платных полей); wsd_aggregates.json - готовые агрегаты «Структуры
+      # системного давления» по всем процессам. ОТКАТ: удалить шаг и строку _add.
+      - name: Бесплатный слой процессов (этап 2.1)
+        continue-on-error: true
+        timeout-minutes: 3
+        run: |
+          python scripts/build_free_layer.py
+          node scripts/build_wsd.mjs
+
       - name: Коммит и публикация
         run: |
           git config user.name "archive-bot"
@@ -428,6 +440,7 @@ jobs:
           # уходят в приватный отдельным шагом. Данные зон остаются здесь,
           # они нужны генератору и не содержат готового разбора.
           _add docs/country_zones.json   # данные зон
+          _add docs/signals_free.json docs/wsd_aggregates.json docs/_free_layer_report.json   # этап 2.1: бесплатный слой
           if git diff --staged --quiet; then
             echo "Нет изменений"
           else
@@ -446,6 +459,19 @@ jobs:
             # ОТКАТ: вернуть блок PUBLISH-PUSH из истории (коммит до TASK-282).
             bash scripts/publish_guard.sh "$PUBLISH_BASE_SHA" "Карта сигналов · $TIMESTAMP · ${COUNT} событий"
           fi
+
+      # Этап 2.1 безопасности (15.11.2026): параллельная запись платных данных
+      # прогона в приватный secrett-archive-data. Публичная выдача не меняется,
+      # sync-private-data.yml продолжает работать. Только после успешной
+      # публикации, чтобы устаревший прогон не попал в приватный.
+      # ОТКАТ: удалить шаг.
+      - name: Платные данные в приватный репозиторий (этап 2.1)
+        if: env.PUBLISH_STATUS == 'published'
+        continue-on-error: true
+        timeout-minutes: 8
+        env:
+          TOKEN: ${{ secrets.DATA_REPO_TOKEN }}
+        run: bash scripts/private_write.sh
 
       - name: Контроль публикации (AUDIT 4.6)
         if: always()
