@@ -2,31 +2,31 @@
   "country": "EE",
   "date": "2026-11-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-15T13:27:57.096293+00:00",
+  "generated_at": "2026-11-15T13:49:06.272997+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-EE",
       "type": "Country",
       "label": "EE",
-      "score": 64,
+      "score": 65,
       "props": {
-        "risk_score": 64
+        "risk_score": 65
       }
     },
     {
       "id": "DOMAIN-EE-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 63,
+      "score": 5,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-EE-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 72,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -34,14 +34,14 @@
       "type": "Domain",
       "label": "climate",
       "score": 50,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-EE-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
-      "trend": "stable"
+      "score": 65,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-EE-social",
@@ -65,9 +65,14 @@
       "trend": "stable"
     },
     {
-      "id": "DRIVER-EE-economic",
+      "id": "DRIVER-EE-technology",
       "type": "Driver",
-      "label": "economic"
+      "label": "technology"
+    },
+    {
+      "id": "DRIVER-EE-climate",
+      "type": "Driver",
+      "label": "climate"
     },
     {
       "id": "DRIVER-EE-geopolitical",
@@ -75,9 +80,11 @@
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-EE-climate",
-      "type": "Driver",
-      "label": "climate"
+      "id": "SIGNAL-EE-В_Эстонии_",
+      "type": "Signal",
+      "label": "В Эстонии предотвратили попытку взрыва н",
+      "severity": 65,
+      "domain": "technology"
     },
     {
       "id": "SIGNAL-EE-Ветер:_Уез",
@@ -87,18 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-EE-Инфляция_—",
+      "id": "SIGNAL-EE-Промышленн",
       "type": "Signal",
-      "label": "Инфляция — Эстония",
-      "severity": 72,
-      "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-EE-Военные_уд",
-      "type": "Signal",
-      "label": "Военные удары — Эстония",
-      "severity": 63,
-      "domain": "geopolitical"
+      "label": "Промышленная авария — Эстония",
+      "severity": 65,
+      "domain": "technology"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-EE",
       "to": "DOMAIN-EE-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.63
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-EE",
       "to": "DOMAIN-EE-economic",
       "type": "CORRELATES",
-      "weight": 0.72
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-EE",
@@ -124,7 +124,7 @@
       "from": "COUNTRY-EE",
       "to": "DOMAIN-EE-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.65
     },
     {
       "from": "COUNTRY-EE",
@@ -145,19 +145,19 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-EE-economic",
-      "to": "COUNTRY-EE",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
-      "from": "DRIVER-EE-geopolitical",
+      "from": "DRIVER-EE-technology",
       "to": "COUNTRY-EE",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
       "from": "DRIVER-EE-climate",
+      "to": "COUNTRY-EE",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DRIVER-EE-geopolitical",
       "to": "COUNTRY-EE",
       "type": "CAUSES",
       "weight": 0.8
@@ -205,25 +205,10 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-EE-geopolitical",
-      "to": "DOMAIN-EE-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-EE-infrastructure",
-      "to": "DOMAIN-EE-economic",
+      "from": "SIGNAL-EE-В_Эстонии_",
+      "to": "DOMAIN-EE-technology",
       "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-EE-economic",
-      "to": "DOMAIN-EE-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
+      "weight": 0.65
     },
     {
       "from": "SIGNAL-EE-Ветер:_Уез",
@@ -232,16 +217,10 @@
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-EE-Инфляция_—",
-      "to": "DOMAIN-EE-economic",
+      "from": "SIGNAL-EE-Промышленн",
+      "to": "DOMAIN-EE-technology",
       "type": "AMPLIFIES",
-      "weight": 0.72
-    },
-    {
-      "from": "SIGNAL-EE-Военные_уд",
-      "to": "DOMAIN-EE-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.63
+      "weight": 0.65
     }
   ]
 }
