@@ -255,6 +255,9 @@ jobs:
         continue-on-error: true
         env:
           ADMIN_KEY: ${{ secrets.ADMIN_KEY }}
+          # 15.11.2026: api.a-atlas.com отвечает GitHub Actions проверкой Cloudflare (403).
+          # Тот же Worker по адресу workers.dev; ключ по-прежнему только в заголовке X-Admin-Key.
+          ATLAS_API: https://archive-api.luven-medical-msk.workers.dev
         run: |
           mkdir -p docs/reports
           # Зоны сохраняются консолью в KV. Забираем их оттуда и кладём
@@ -277,6 +280,7 @@ jobs:
         continue-on-error: true
         env:
           ADMIN_KEY: ${{ secrets.ADMIN_KEY }}
+          ATLAS_API: https://archive-api.luven-medical-msk.workers.dev   # 15.11.2026, см. шаг зон
         run: |
           mkdir -p docs/reports
           python scripts/sync_tier1.py || true
