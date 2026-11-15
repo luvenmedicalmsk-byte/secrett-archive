@@ -2,9 +2,9 @@
   "country": "EE",
   "date": "2026-11-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-15T13:49:06.272997+00:00",
+  "generated_at": "2026-11-15T14:09:06.601408+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-EE",
@@ -26,22 +26,22 @@
       "id": "DOMAIN-EE-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 72,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-EE-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 50,
-      "trend": "up"
+      "score": 5,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-EE-technology",
       "type": "Domain",
       "label": "technology",
       "score": 65,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-EE-social",
@@ -65,14 +65,14 @@
       "trend": "stable"
     },
     {
+      "id": "DRIVER-EE-economic",
+      "type": "Driver",
+      "label": "economic"
+    },
+    {
       "id": "DRIVER-EE-technology",
       "type": "Driver",
       "label": "technology"
-    },
-    {
-      "id": "DRIVER-EE-climate",
-      "type": "Driver",
-      "label": "climate"
     },
     {
       "id": "DRIVER-EE-geopolitical",
@@ -87,18 +87,18 @@
       "domain": "technology"
     },
     {
-      "id": "SIGNAL-EE-Ветер:_Уез",
-      "type": "Signal",
-      "label": "Ветер: Уезд Харью, Уезд Ляэне-Виру, Уезд",
-      "severity": 50,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-EE-Промышленн",
       "type": "Signal",
       "label": "Промышленная авария — Эстония",
       "severity": 65,
       "domain": "technology"
+    },
+    {
+      "id": "SIGNAL-EE-Инфляция_—",
+      "type": "Signal",
+      "label": "Инфляция — Эстония",
+      "severity": 72,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,13 +112,13 @@
       "from": "COUNTRY-EE",
       "to": "DOMAIN-EE-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.72
     },
     {
       "from": "COUNTRY-EE",
       "to": "DOMAIN-EE-climate",
       "type": "CORRELATES",
-      "weight": 0.5
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-EE",
@@ -145,13 +145,13 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-EE-technology",
+      "from": "DRIVER-EE-economic",
       "to": "COUNTRY-EE",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-EE-climate",
+      "from": "DRIVER-EE-technology",
       "to": "COUNTRY-EE",
       "type": "CAUSES",
       "weight": 0.8
@@ -163,64 +163,22 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-EE-climate",
-      "to": "DOMAIN-EE-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-EE-infrastructure",
-      "to": "DOMAIN-EE-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-EE-economic",
-      "to": "DOMAIN-EE-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-EE-climate",
-      "to": "DOMAIN-EE-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-EE-economic",
-      "to": "DOMAIN-EE-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-EE-social",
-      "to": "DOMAIN-EE-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
       "from": "SIGNAL-EE-В_Эстонии_",
       "to": "DOMAIN-EE-technology",
       "type": "AMPLIFIES",
       "weight": 0.65
     },
     {
-      "from": "SIGNAL-EE-Ветер:_Уез",
-      "to": "DOMAIN-EE-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.5
-    },
-    {
       "from": "SIGNAL-EE-Промышленн",
       "to": "DOMAIN-EE-technology",
       "type": "AMPLIFIES",
       "weight": 0.65
+    },
+    {
+      "from": "SIGNAL-EE-Инфляция_—",
+      "to": "DOMAIN-EE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72
     }
   ]
 }
