@@ -2,17 +2,17 @@
   "country": "CH",
   "date": "2026-11-16",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-16T09:51:35.151525+00:00",
+  "generated_at": "2026-11-16T10:10:07.431972+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-CH",
       "type": "Country",
       "label": "CH",
-      "score": 56,
+      "score": 65,
       "props": {
-        "risk_score": 56
+        "risk_score": 65
       }
     },
     {
@@ -33,21 +33,21 @@
       "id": "DOMAIN-CH-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 50,
       "trend": "up"
     },
     {
       "id": "DOMAIN-CH-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 61,
+      "score": 65,
       "trend": "up"
     },
     {
       "id": "DOMAIN-CH-social",
       "type": "Domain",
       "label": "social",
-      "score": 54,
+      "score": 5,
       "trend": "up"
     },
     {
@@ -87,18 +87,18 @@
       "domain": "technology"
     },
     {
+      "id": "SIGNAL-CH-Ливень:_Фр",
+      "type": "Signal",
+      "label": "Ливень: Фрибур, Эставейер - Кудрефин, Мо",
+      "severity": 50,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-CH-Отключение",
       "type": "Signal",
       "label": "Отключение интернета — Швейцария",
       "severity": 56,
       "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-CH-Протесты_и",
-      "type": "Signal",
-      "label": "Протесты и беспорядки — Швейцария",
-      "severity": 54,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -118,19 +118,19 @@
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-technology",
       "type": "CORRELATES",
-      "weight": 0.61
+      "weight": 0.65
     },
     {
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-social",
       "type": "CORRELATES",
-      "weight": 0.54
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CH",
@@ -163,22 +163,64 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-CH-climate",
+      "to": "DOMAIN-CH-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-CH-infrastructure",
+      "to": "DOMAIN-CH-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CH-economic",
+      "to": "DOMAIN-CH-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-CH-climate",
+      "to": "DOMAIN-CH-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-CH-economic",
+      "to": "DOMAIN-CH-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-CH-social",
+      "to": "DOMAIN-CH-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "SIGNAL-CH-Падение_ин",
       "to": "DOMAIN-CH-technology",
       "type": "AMPLIFIES",
       "weight": 0.56
     },
     {
+      "from": "SIGNAL-CH-Ливень:_Фр",
+      "to": "DOMAIN-CH-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
       "from": "SIGNAL-CH-Отключение",
       "to": "DOMAIN-CH-technology",
       "type": "AMPLIFIES",
       "weight": 0.56
-    },
-    {
-      "from": "SIGNAL-CH-Протесты_и",
-      "to": "DOMAIN-CH-social",
-      "type": "AMPLIFIES",
-      "weight": 0.54
     }
   ]
 }
