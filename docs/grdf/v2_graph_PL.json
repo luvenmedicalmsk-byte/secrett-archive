@@ -2,9 +2,9 @@
   "country": "PL",
   "date": "2026-11-16",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-16T07:48:10.297000+00:00",
+  "generated_at": "2026-11-16T08:11:10.261121+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-PL",
@@ -33,7 +33,7 @@
       "id": "DOMAIN-PL-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 50,
       "trend": "stable"
     },
     {
@@ -87,18 +87,18 @@
       "domain": "geopolitical"
     },
     {
+      "id": "SIGNAL-PL-Ветер:_Вал",
+      "type": "Signal",
+      "label": "Ветер: Валбжих повят, Йеленя гура повят,",
+      "severity": 50,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-PL-Польша_пре",
       "type": "Signal",
       "label": "Польша прекратила финансировать закупки ",
       "severity": 34,
       "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-PL-Польша_пок",
-      "type": "Signal",
-      "label": "Польша пока не будет делать взносы в про",
-      "severity": 22,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-PL",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-PL-climate",
+      "to": "DOMAIN-PL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-PL-infrastructure",
+      "to": "DOMAIN-PL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-PL-economic",
+      "to": "DOMAIN-PL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-PL-climate",
+      "to": "DOMAIN-PL-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-PL-economic",
+      "to": "DOMAIN-PL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-PL-social",
+      "to": "DOMAIN-PL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-PL-geopolitical",
       "to": "DOMAIN-PL-infrastructure",
       "type": "ESCALATES",
@@ -190,16 +232,16 @@
       "weight": 0.53
     },
     {
+      "from": "SIGNAL-PL-Ветер:_Вал",
+      "to": "DOMAIN-PL-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
       "from": "SIGNAL-PL-Польша_пре",
       "to": "DOMAIN-PL-economic",
       "type": "AMPLIFIES",
       "weight": 0.34
-    },
-    {
-      "from": "SIGNAL-PL-Польша_пок",
-      "to": "DOMAIN-PL-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.22
     }
   ]
 }
