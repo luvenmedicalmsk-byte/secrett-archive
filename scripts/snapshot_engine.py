@@ -1115,6 +1115,54 @@ def compute_delta_7d(iso2: str, field: str, today_val):
         return None
 
 
+def compute_shown_gri_delta_7d(iso2: str, today_domain_scores: dict):
+    """Изменение за 7 дней того GRI, который витрина показывает крупной цифрой
+    (domain_index), а не внутреннего risk_score.
+
+    16.11.2026, решение Мии. Под цифрой GRI стояла стрелка gri_delta_7d, а она
+    считается от risk_score: Германия «GRI 65, ▲ +13» - два разных числа рядом.
+    История domain_index не хранилась, но domain_scores в истории есть с первых
+    записей, поэтому прошлое значение пересчитывается той же функцией
+    compute_domain_index (формула индекса не меняется). Берётся запись,
+    отстоящая от сегодняшней на 6-8 дней; иначе None - витрина пишет
+    «накапл.», а не подставляет другое число.
+    """
+    today_val = compute_domain_index(today_domain_scores or {}, iso2)
+    if today_val is None:
+        return None
+    hist_path = HISTORY_DIR / f"{iso2}.json"
+    if not hist_path.exists():
+        return None
+    try:
+        snaps = json.load(open(hist_path)).get("snapshots", [])
+        from datetime import date as _date
+        today_d = _date.fromisoformat(TODAY)
+    except Exception:
+        return None
+    best, best_gap = None, None
+    for rec in snaps:
+        try:
+            rd = _date.fromisoformat(rec.get("date"))
+        except Exception:
+            continue
+        gap = abs((today_d - rd).days - 7)
+        if gap > 1:
+            continue
+        past = rec.get("domain_index")
+        if past is None:
+            past = compute_domain_index(rec.get("domain_scores") or {}, iso2)
+        if past is None:
+            continue
+        if best is None or gap < best_gap:
+            best, best_gap = past, gap
+    if best is None:
+        return None
+    try:
+        return int(today_val) - int(best)
+    except Exception:
+        return None
+
+
 def generate_summary(iso2: str, score: int, domain: str,
                      events: list[dict], level: str) -> Optional[str]:
     """
@@ -1674,6 +1722,8 @@ def build_snapshot(iso2: str, events: list[dict]) -> dict:
             if _ds.get(_mx) and snap.get("dominant_domain") != _mx:
                 snap["dominant_domain"] = _mx
     snap["gri_delta_7d"] = compute_delta_7d(iso2, "risk_score", score)
+    snap["domain_index"] = compute_domain_index(snap.get("domain_scores") or {}, iso2)
+    snap["gri_shown_delta_7d"] = compute_shown_gri_delta_7d(iso2, snap.get("domain_scores") or {})
     # Сопоставимость дельты: обе точки должны быть наблюдением. Признак
     # нужен потребителям, которые не могут сами дотянуться до истории.
     # Пишется всегда, читается пока только propagate_risk.
@@ -1731,6 +1781,7 @@ def update_history(snap: dict) -> None:
         "ews_score":          snap.get("ews_score"),
         "cri_score":          snap.get("cri_score"),
         "domain_scores":      snap.get("domain_scores"),
+        "domain_index":       snap.get("domain_index"),
         "event_count":        snap.get("event_count"),
         "drivers":            [{"name": d["name"], "severity": d["severity"]}
                                 for d in snap.get("drivers", [])],
@@ -1783,6 +1834,7 @@ def update_index(snapshots: list[dict]) -> None:
                 "ews_score":        s.get("ews_score"),
                 "cri_score":        s.get("cri_score"),
                 "gri_delta_7d":     s.get("gri_delta_7d"),
+                "gri_shown_delta_7d": s.get("gri_shown_delta_7d"),
                 "ews_delta_7d":     s.get("ews_delta_7d"),
                 "cri_delta_7d":     s.get("cri_delta_7d"),
                 "forecast_7d":      s.get("forecast_7d"),
