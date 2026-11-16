@@ -2,7 +2,7 @@
   "country": "BY",
   "date": "2026-11-16",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-16T17:30:30.041483+00:00",
+  "generated_at": "2026-11-16T17:48:38.299597+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -19,7 +19,7 @@
       "id": "DOMAIN-BY-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 69,
+      "score": 71,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-BY-В_Минске_х",
+      "type": "Signal",
+      "label": "В Минске хотят протестировать дроны, авт",
+      "severity": 63,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-BY-В_Минске_в",
       "type": "Signal",
       "label": "В Минске в тестовом режиме запустят сист",
@@ -92,13 +99,6 @@
       "label": "Ветер: Могилёвская область, Гомельская о",
       "severity": 56,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-BY-Климатичес",
-      "type": "Signal",
-      "label": "Климатический сигнал — Беларусь",
-      "severity": 56,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-BY",
       "to": "DOMAIN-BY-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.69
+      "weight": 0.71
     },
     {
       "from": "COUNTRY-BY",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-BY-climate",
-      "to": "DOMAIN-BY-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-BY-infrastructure",
-      "to": "DOMAIN-BY-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-BY-economic",
-      "to": "DOMAIN-BY-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-BY-geopolitical",
       "to": "DOMAIN-BY-infrastructure",
       "type": "ESCALATES",
@@ -226,6 +205,33 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-BY-climate",
+      "to": "DOMAIN-BY-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-BY-infrastructure",
+      "to": "DOMAIN-BY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-BY-economic",
+      "to": "DOMAIN-BY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-BY-В_Минске_х",
+      "to": "DOMAIN-BY-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.63
+    },
+    {
       "from": "SIGNAL-BY-В_Минске_в",
       "to": "DOMAIN-BY-geopolitical",
       "type": "AMPLIFIES",
@@ -233,12 +239,6 @@
     },
     {
       "from": "SIGNAL-BY-Ветер:_Мог",
-      "to": "DOMAIN-BY-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.56
-    },
-    {
-      "from": "SIGNAL-BY-Климатичес",
       "to": "DOMAIN-BY-climate",
       "type": "AMPLIFIES",
       "weight": 0.56
