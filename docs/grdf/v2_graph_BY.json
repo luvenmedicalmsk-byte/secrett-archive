@@ -2,7 +2,7 @@
   "country": "BY",
   "date": "2026-11-16",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-16T04:09:49.269744+00:00",
+  "generated_at": "2026-11-16T04:28:10.450897+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -19,7 +19,7 @@
       "id": "DOMAIN-BY-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 60,
+      "score": 74,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-BY-В_Миноборо",
+      "type": "Signal",
+      "label": "В Минобороны рассказали, как сбивают бес",
+      "severity": 66,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-BY-Ветер:_Мог",
       "type": "Signal",
       "label": "Ветер: Могилёвская область, Витебская об",
@@ -92,13 +99,6 @@
       "label": "Воздушное пространство — Беларусь: помех",
       "severity": 54,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-BY-Климатичес",
-      "type": "Signal",
-      "label": "Климатический сигнал — Беларусь",
-      "severity": 56,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-BY",
       "to": "DOMAIN-BY-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.6
+      "weight": 0.74
     },
     {
       "from": "COUNTRY-BY",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-BY-climate",
-      "to": "DOMAIN-BY-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-BY-infrastructure",
-      "to": "DOMAIN-BY-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-BY-economic",
-      "to": "DOMAIN-BY-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-BY-geopolitical",
       "to": "DOMAIN-BY-infrastructure",
       "type": "ESCALATES",
@@ -226,6 +205,33 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-BY-climate",
+      "to": "DOMAIN-BY-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-BY-infrastructure",
+      "to": "DOMAIN-BY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-BY-economic",
+      "to": "DOMAIN-BY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-BY-В_Миноборо",
+      "to": "DOMAIN-BY-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.66
+    },
+    {
       "from": "SIGNAL-BY-Ветер:_Мог",
       "to": "DOMAIN-BY-climate",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-BY-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.54
-    },
-    {
-      "from": "SIGNAL-BY-Климатичес",
-      "to": "DOMAIN-BY-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.56
     }
   ]
 }
