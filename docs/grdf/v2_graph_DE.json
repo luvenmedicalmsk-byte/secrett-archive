@@ -2,7 +2,7 @@
   "country": "DE",
   "date": "2026-11-16",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-16T11:29:16.389755+00:00",
+  "generated_at": "2026-11-16T11:50:13.540537+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-DE",
       "type": "Country",
       "label": "DE",
-      "score": 92,
+      "score": 87,
       "props": {
-        "risk_score": 92
+        "risk_score": 87
       }
     },
     {
@@ -33,8 +33,8 @@
       "id": "DOMAIN-DE-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 88,
-      "trend": "stable"
+      "score": 72,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-DE-technology",
@@ -47,8 +47,8 @@
       "id": "DOMAIN-DE-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
-      "trend": "stable"
+      "score": 60,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-DE-infrastructure",
@@ -80,16 +80,9 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-DE-Ливень:_Кр",
-      "type": "Signal",
-      "label": "Ливень: Край Вальдшут, Ротвайль, район О",
-      "severity": 88,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-DE-Ветер:_Рай",
       "type": "Signal",
-      "label": "Ветер: Район Росток - Побережье, Район П",
+      "label": "Ветер: Район Баутцен - Бергланд, Край Ме",
       "severity": 72,
       "domain": "climate"
     },
@@ -99,6 +92,13 @@
       "label": "Снег: Край и город Пассау, Район Деггенд",
       "severity": 72,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-DE-В_выходные",
+      "type": "Signal",
+      "label": "В выходные в нескольких городах Германии",
+      "severity": 60,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-climate",
       "type": "CORRELATES",
-      "weight": 0.88
+      "weight": 0.72
     },
     {
       "from": "COUNTRY-DE",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-DE",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-DE-climate",
-      "to": "DOMAIN-DE-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-DE-infrastructure",
-      "to": "DOMAIN-DE-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-DE-economic",
-      "to": "DOMAIN-DE-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-DE-climate",
       "to": "DOMAIN-DE-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,10 +184,25 @@
       "lag_days": 90
     },
     {
-      "from": "SIGNAL-DE-Ливень:_Кр",
-      "to": "DOMAIN-DE-climate",
+      "from": "DOMAIN-DE-climate",
+      "to": "DOMAIN-DE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-DE-infrastructure",
+      "to": "DOMAIN-DE-economic",
       "type": "AMPLIFIES",
-      "weight": 0.88
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-DE-economic",
+      "to": "DOMAIN-DE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "SIGNAL-DE-Ветер:_Рай",
@@ -221,6 +215,12 @@
       "to": "DOMAIN-DE-climate",
       "type": "AMPLIFIES",
       "weight": 0.72
+    },
+    {
+      "from": "SIGNAL-DE-В_выходные",
+      "to": "DOMAIN-DE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6
     }
   ]
 }
