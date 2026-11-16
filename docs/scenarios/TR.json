@@ -2,17 +2,17 @@
   "country": "TR",
   "country_name": "Турция",
   "date": "2026-11-16",
-  "generated_at": "2026-11-16T15:10:18.803633+00:00",
+  "generated_at": "2026-11-16T15:29:53.028652+00:00",
   "risk_score": 68,
   "scenario_score": 27,
-  "instability": 13,
+  "instability": 33,
   "instability_v2": true,
   "scenarios": [
     {
       "type": "best",
       "name": "Best Case",
       "name_ru": "Лучший сценарий",
-      "probability": 34,
+      "probability": 30,
       "score": 61,
       "delta_from_current": -7,
       "state": "escalating",
@@ -24,7 +24,7 @@
       "recovery_days": 325,
       "future_pressure": 41,
       "future_resilience": 50,
-      "future_probability": 34,
+      "future_probability": 30,
       "drivers": [
         {
           "driver": "Деэскалация",
@@ -44,26 +44,26 @@
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 55,
+          "score": 54,
           "state": "contained",
           "state_ru": "Контролируемо",
-          "delta_from_current": -13
+          "delta_from_current": -14
         },
         {
           "horizon": "180d",
           "label": "180 дней",
-          "score": 49,
+          "score": 48,
           "state": "contained",
           "state_ru": "Контролируемо",
-          "delta_from_current": -19
+          "delta_from_current": -20
         },
         {
           "horizon": "365d",
           "label": "365 дней",
-          "score": 44,
-          "state": "contained",
-          "state_ru": "Контролируемо",
-          "delta_from_current": -24
+          "score": 42,
+          "state": "stabilization",
+          "state_ru": "Стабилизация",
+          "delta_from_current": -26
         }
       ]
     },
@@ -71,7 +71,7 @@
       "type": "base",
       "name": "Base Case",
       "name_ru": "Базовый сценарий",
-      "probability": 25,
+      "probability": 18,
       "score": 75,
       "delta_from_current": 7,
       "state": "critical",
@@ -83,8 +83,13 @@
       "recovery_days": 399,
       "future_pressure": 56,
       "future_resilience": 47,
-      "future_probability": 25,
-      "drivers": [],
+      "future_probability": 18,
+      "drivers": [
+        {
+          "driver": "Тепловая волна — Ближний Восток (системный пр",
+          "impact": 14
+        }
+      ],
       "description": "Текущие тренды сохраняются, без значимых изменений",
       "horizons": [
         {
@@ -125,7 +130,7 @@
       "type": "stress",
       "name": "Stress Case",
       "name_ru": "Стресс-сценарий",
-      "probability": 22,
+      "probability": 25,
       "score": 82,
       "delta_from_current": 14,
       "state": "critical",
@@ -137,8 +142,12 @@
       "recovery_days": 436,
       "future_pressure": 65,
       "future_resilience": 43,
-      "future_probability": 22,
+      "future_probability": 25,
       "drivers": [
+        {
+          "driver": "Тепловая волна — Ближний Восток (системный пр",
+          "impact": 18
+        },
         {
           "driver": "Негативный сдвиг",
           "impact": 8
@@ -157,18 +166,18 @@
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 87,
-          "state": "critical",
-          "state_ru": "Критическая эскалация",
-          "delta_from_current": 19
+          "score": 88,
+          "state": "cascade",
+          "state_ru": "Каскадный кризис",
+          "delta_from_current": 20
         },
         {
           "horizon": "180d",
           "label": "180 дней",
-          "score": 93,
+          "score": 95,
           "state": "cascade",
           "state_ru": "Каскадный кризис",
-          "delta_from_current": 25
+          "delta_from_current": 27
         },
         {
           "horizon": "365d",
@@ -184,7 +193,7 @@
       "type": "worst",
       "name": "Worst Case",
       "name_ru": "Худший сценарий",
-      "probability": 19,
+      "probability": 27,
       "score": 89,
       "delta_from_current": 21,
       "state": "cascade",
@@ -196,8 +205,12 @@
       "recovery_days": 473,
       "future_pressure": 75,
       "future_resilience": 36,
-      "future_probability": 19,
+      "future_probability": 27,
       "drivers": [
+        {
+          "driver": "Тепловая волна — Ближний Восток (системный пр",
+          "impact": 26
+        },
         {
           "driver": "Каскадный эффект",
           "impact": 15
@@ -244,22 +257,22 @@
     {
       "condition": "delta ≥ 3 за 24ч",
       "leads_to": "worst",
-      "probability": 19
+      "probability": 27
     },
     {
       "condition": "Драйвер severity ≥ 85 в climate",
       "leads_to": "stress",
-      "probability": 22
+      "probability": 25
     },
     {
       "condition": "Деэскалация ключевого кризиса",
       "leads_to": "best",
-      "probability": 34
+      "probability": 30
     },
     {
       "condition": "Цепочка распространения → 3+ страны",
       "leads_to": "worst",
-      "probability": 5
+      "probability": 12
     }
   ],
   "dominant_scenario": "best"
