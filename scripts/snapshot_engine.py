@@ -1115,7 +1115,7 @@ def compute_delta_7d(iso2: str, field: str, today_val):
         return None
 
 
-def compute_shown_gri_delta_7d(iso2: str, today_domain_scores: dict):
+def compute_shown_gri_delta_7d(iso2: str, today_domain_scores: dict, days: int = 7, tol: int = 1):
     """Изменение за 7 дней того GRI, который витрина показывает крупной цифрой
     (domain_index), а не внутреннего risk_score.
 
@@ -1145,8 +1145,8 @@ def compute_shown_gri_delta_7d(iso2: str, today_domain_scores: dict):
             rd = _date.fromisoformat(rec.get("date"))
         except Exception:
             continue
-        gap = abs((today_d - rd).days - 7)
-        if gap > 1:
+        gap = abs((today_d - rd).days - days)
+        if gap > tol:
             continue
         past = rec.get("domain_index")
         if past is None:
@@ -1724,6 +1724,8 @@ def build_snapshot(iso2: str, events: list[dict]) -> dict:
     snap["gri_delta_7d"] = compute_delta_7d(iso2, "risk_score", score)
     snap["domain_index"] = compute_domain_index(snap.get("domain_scores") or {}, iso2)
     snap["gri_shown_delta_7d"] = compute_shown_gri_delta_7d(iso2, snap.get("domain_scores") or {})
+    # 17.11.2026, аудит этап B: суточное изменение показанного GRI (для «Рост/Снижение риска»)
+    snap["gri_shown_delta_1d"] = compute_shown_gri_delta_7d(iso2, snap.get("domain_scores") or {}, days=1, tol=0)
     # Сопоставимость дельты: обе точки должны быть наблюдением. Признак
     # нужен потребителям, которые не могут сами дотянуться до истории.
     # Пишется всегда, читается пока только propagate_risk.
@@ -1804,6 +1806,21 @@ def update_history(snap: dict) -> None:
     else:
         hist["snapshots"].append(record)
 
+    # 17.11.2026, аудит этап B: график истории подписан «GRI» и должен рисовать
+    # domain_index. Для записей до 16.11 поле восстанавливается из их же
+    # domain_scores той же compute_domain_index (формула не меняется) и
+    # помечается domain_index_recomputed. Без domain_scores - не заполняется,
+    # витрина показывает разрыв, а не risk_score.
+    for _r in hist["snapshots"]:
+        if _r.get("domain_index") is None and _r.get("domain_scores"):
+            try:
+                _v = compute_domain_index(_r.get("domain_scores") or {}, iso2)
+            except Exception:
+                _v = None
+            if _v is not None:
+                _r["domain_index"] = _v
+                _r["domain_index_recomputed"] = True
+
     # Keep last 365 days
     hist["snapshots"] = hist["snapshots"][-365:]
     hist["last_updated"] = datetime.now(timezone.utc).isoformat()
@@ -1835,6 +1852,7 @@ def update_index(snapshots: list[dict]) -> None:
                 "cri_score":        s.get("cri_score"),
                 "gri_delta_7d":     s.get("gri_delta_7d"),
                 "gri_shown_delta_7d": s.get("gri_shown_delta_7d"),
+                "gri_shown_delta_1d": s.get("gri_shown_delta_1d"),
                 "ews_delta_7d":     s.get("ews_delta_7d"),
                 "cri_delta_7d":     s.get("cri_delta_7d"),
                 "forecast_7d":      s.get("forecast_7d"),
