@@ -4743,9 +4743,32 @@ def _ss_section(st, ph, stage, pe, watch):
 
 
 def _state_shadow_apply(signals):
-    st_cnt = {'processes': 0, 'changed': 0, 'stage': 0, 'phase': 0, 'status': 0, 'section': 0,
-              'macro': 0, 'by_pair': {}, 'by_domain': {}, 'by_section': {}}
+    st_cnt = {'processes': 0, 'changed': 0, 'stage': 0, 'phase': 0, 'status': 0, 'section': 0, 'by_pair': {}, 'by_domain': {}, 'by_section': {}}
+    st_cnt['macro_excluded'] = 0; st_cnt['macro_status_mismatch'] = 0
+    _now = datetime.now(timezone.utc)
     for s in signals or []:
+        if s.get('is_macro'):
+            # Решение Мии 17.11 (КТ1): системные процессы исключены из правила C до
+            # решения об их статусе. Правило к ним НЕ применяется (иначе архивный
+            # макропроцесс со status='active' получил бы «growing / Развитие»).
+            # Пишется только диагностика macro_state_shadow.
+            s.pop('state_shadow', None)
+            try:
+                _ls = datetime.fromisoformat(str(s.get('last_seen')).replace('Z', '+00:00'))
+                if _ls.tzinfo is None: _ls = _ls.replace(tzinfo=timezone.utc)
+                _hi = round((_now - _ls).total_seconds() / 3600, 1)
+            except Exception:
+                _hi = None
+            _by_ls = None if _hi is None else ('archived' if _hi >= 720 else 'dormant' if _hi >= 168 else 'fading' if _hi >= 48 else 'active')
+            _mem = [x for x in (s.get('included_processes') or [])]
+            s['macro_state_shadow'] = {'rule': 'C-macro-diag-2026-11-17', 'status': s.get('status'),
+                                       'phase': s.get('phase'), 'lifecycle_stage': s.get('lifecycle_stage'),
+                                       'last_seen': s.get('last_seen'), 'hours_idle': _hi,
+                                       'status_by_last_seen': _by_ls, 'members': len(_mem),
+                                       'status_mismatch': bool(_by_ls and _by_ls != s.get('status'))}
+            st_cnt['macro_excluded'] += 1
+            if s['macro_state_shadow']['status_mismatch']: st_cnt['macro_status_mismatch'] += 1
+            continue
         status = s.get('status') or 'active'
         stage0 = s.get('lifecycle_stage'); ph0 = s.get('phase')
         allowed = _SS_ALLOWED_STAGE.get(status, _SS_ALLOWED_STAGE['active'])
@@ -4772,7 +4795,6 @@ def _state_shadow_apply(signals):
         s['state_shadow'] = {'rule': 'C-2026-11-17', 'status': status, 'phase': ph1, 'lifecycle_stage': stage1,
                              'changed': changed, 'section_before': sec0, 'section_after': sec1}
         st_cnt['processes'] += 1
-        if s.get('is_macro'): st_cnt['macro'] += 1
         if changed:
             st_cnt['changed'] += 1
             for k in changed: st_cnt[k] += 1

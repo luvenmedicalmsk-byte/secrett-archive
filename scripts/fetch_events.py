@@ -33,7 +33,7 @@ def _hide_mark(e, code, detail=None):
         if not isinstance(_lst, list):
             _lst = []
         if not any(isinstance(x, dict) and x.get('code') == code for x in _lst):
-            _it = {'code': code}
+            _it = {'code': code, 'src': 'production'}
             if detail:
                 _it['detail'] = str(detail)[:80]
             _lst.append(_it)
@@ -64,7 +64,7 @@ def _hide_diag_pass(events):
         lst = e.get('hide_reasons') if isinstance(e.get('hide_reasons'), list) else []
         if any(isinstance(x, dict) and x.get('code') == code and (x.get('detail') or None) == (detail or None) for x in lst):
             return 0
-        it = {'code': code, 'diag': True}
+        it = {'code': code, 'diag': True, 'src': 'diag'}
         if detail:
             it['detail'] = detail
         lst.append(it); e['hide_reasons'] = lst
@@ -83,6 +83,14 @@ def _hide_diag_pass(events):
                 bd['final_domain'] = e.get('domain')
                 bd['feed_threshold_final'] = _thr(e)
                 bd['shadow_would_show'] = bool(sev >= _thr(e))
+                bd['domain_changed'] = bool(bd.get('domain_at_hide') and bd.get('domain_at_hide') != e.get('domain'))
+                if bd['domain_changed']:
+                    _dd = e.get('domain_decision') or {}
+                    _tr = [x for x in (_dd.get('trace') or []) if isinstance(x, dict) and x.get('from')]
+                    bd['domain_change'] = {'last_writer': _dd.get('last_writer'),
+                                           'last_step': (_tr[-1] if _tr else None)}
+                bd['crossed_after_recompute'] = bool(bd.get('severity_at_hide', 0) < bd.get('feed_threshold', 0)
+                                                     and sev >= bd.get('feed_threshold', 0))
             # D3: условия, которые выполняются на итоговой записи
             if m.get('kind') in _WK and m.get('verified'):
                 n_added += _add(e, 'warn_kinds')
@@ -28089,6 +28097,7 @@ _Y31_RE = re.compile(r'(?<![\d$€£¥₽.,])(?<!\$\s)(1[0-9]{3}|2[0-9]{3})(?![\
 
 # 17.11.2026, аудит этап D1 (shadow): «1336 БПЛА», «1052 BTC» - количество, не год.
 # Только для year_guard_shadow; production-проверка yrs по-прежнему на _Y31_RE.
+_Y31_COUNT_WORDS = r'бпла|беспилот|дрон|ракет|снаряд|бомб|btc|биткоин|eth\b|эфир|самол|вертол|танк|бронетех|кораб|судн|судов|участк|случа|пострада|погиб|ранен|жертв|домов|дом\b|здани|объект|задерж|арест|мигрант|беженц|военнослуж|солдат|боевик|заболе|зараж|рейс|пассажир|автомоб|машин|вагон|гектар|га\b|сотрудник|работник|вакан|компан|предприят|школ|семей|детей|жител|пожар|очаг|подземн|толчк|населённ|сёл|сел\b|точек|адрес|аккаунт|пользоват|устройств|сервер|сайт|убит|уязвим|коммутатор|маршрутизат|патч|файл|запис|учётн|учетн|акци|бойц|контракт|заявок|обращен'
 _Y31_RE_SHADOW = re.compile(r'(?<!более )(?<!около )(?<!свыше )(?<!почти )(?<!примерно )(?<!порядка )(?<![\d$€£¥₽.,])(?<!\$\s)(1[0-9]{3}|2[0-9]{3})(?![\d.,])(?!\s*(?:\$|€|долл|евро|руб|₽|тыс|млн|млрд|кубо|м³|тонн|баррел|км|%|процент|человек|чел\b|раз\b|единиц|штук|голов|мв\b|гвт|мвт))(?!\s+(?!год|гг)(?:[\w-]+\s+){0,3}(?:бпла|беспилот|дрон|ракет|снаряд|бомб|btc|биткоин|eth\b|эфир|самол|вертол|танк|бронетех|кораб|судн|судов|участк|случа|пострада|погиб|ранен|жертв|домов|дом\b|здани|объект|задерж|арест|мигрант|беженц|военнослуж|солдат|боевик|заболе|зараж|рейс|пассажир|автомоб|машин|вагон|гектар|га\b|сотрудник|работник|вакан|компан|предприят|школ|семей|детей|жител|пожар|очаг|подземн|толчк|населённ|сёл|сел\b|точек|адрес|аккаунт|пользоват|устройств|сервер|сайт|убит|уязвим|коммутатор|маршрутизат|патч|файл|запис|учётн|учетн|акци|бойц|контракт|заявок|обращен))', re.I)
 # 31.10.2026 · RALLY_CAP_3110: акция протеста по поводу катастрофы - не сама катастрофа.
 # «Более 1000 человек собрались у здания министерства транспорта… за катастрофу,
@@ -29738,8 +29747,15 @@ def _feed_hygiene(events):
             try:   # аудит 17.11, D1 shadow: решение с расширенным списком счётных слов
                 _ysh = [int(_m.group(1)) for _m in _Y31_RE_SHADOW.finditer(t)]
                 _sh_hide = bool(_ysh and (min(_ysh) < 1990 or max(_ysh) >= 2060))
+                _excl = [y for y in yrs if y not in _ysh]
+                _kind = []
+                for _y in _excl:
+                    _mm = re.search(r'(?:более|около|свыше|почти|примерно|порядка)\s+%d\b' % _y, t, re.I)
+                    if _mm: _kind.append('quantifier'); continue
+                    _ad = re.search(r'\b%d\s+[\w-]+' % _y, t)
+                    _kind.append('adjacent' if (_ad and _Y31_RE_SHADOW.pattern and re.search(r'\b%d\s+(?:' % _y + _Y31_COUNT_WORDS + ')', t, re.I)) else 'gap')
                 e['year_guard_shadow'] = {'orig': 'hide', 'shadow': 'hide' if _sh_hide else 'show',
-                                          'years': yrs, 'years_shadow': _ysh}
+                                          'years': yrs, 'years_shadow': _ysh, 'excluded_as': _kind}
             except Exception:
                 pass
             hide(e, 'история/дальний прогноз'); continue
