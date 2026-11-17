@@ -2,7 +2,7 @@
   "country": "TR",
   "date": "2026-11-17",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-17T13:49:12.255318+00:00",
+  "generated_at": "2026-11-17T14:11:06.742889+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -47,7 +47,7 @@
       "id": "DOMAIN-TR-social",
       "type": "Domain",
       "label": "social",
-      "score": 52,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-TR-Пять_школ,",
-      "type": "Signal",
-      "label": "Пять школ, разработанных для того, чтобы",
-      "severity": 52,
-      "domain": "social"
-    },
-    {
       "id": "SIGNAL-TR-Сильный_ве",
       "type": "Signal",
       "label": "Сильный ветер, гроза: Стамбул, Бурса, Ко",
@@ -99,6 +92,13 @@
       "label": "Россия за девять месяцев 2026 года сокра",
       "severity": 50,
       "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-TR-Загрузка:_",
+      "type": "Signal",
+      "label": "Загрузка: климатический вызов COP31 и по",
+      "severity": 32,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -130,7 +130,7 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-social",
       "type": "CORRELATES",
-      "weight": 0.52
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-TR",
@@ -161,6 +161,27 @@
       "to": "COUNTRY-TR",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-TR-climate",
+      "to": "DOMAIN-TR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-TR-infrastructure",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-TR-climate",
@@ -205,33 +226,6 @@
       "lag_days": 45
     },
     {
-      "from": "DOMAIN-TR-climate",
-      "to": "DOMAIN-TR-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-TR-infrastructure",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-TR-economic",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "SIGNAL-TR-Пять_школ,",
-      "to": "DOMAIN-TR-social",
-      "type": "AMPLIFIES",
-      "weight": 0.52
-    },
-    {
       "from": "SIGNAL-TR-Сильный_ве",
       "to": "DOMAIN-TR-climate",
       "type": "AMPLIFIES",
@@ -242,6 +236,12 @@
       "to": "DOMAIN-TR-economic",
       "type": "AMPLIFIES",
       "weight": 0.5
+    },
+    {
+      "from": "SIGNAL-TR-Загрузка:_",
+      "to": "DOMAIN-TR-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.32
     }
   ]
 }
