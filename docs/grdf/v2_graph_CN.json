@@ -2,25 +2,25 @@
   "country": "CN",
   "date": "2026-11-17",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-17T02:09:25.017614+00:00",
+  "generated_at": "2026-11-17T02:28:44.992953+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 83,
+      "score": 79,
       "props": {
-        "risk_score": 83
+        "risk_score": 79
       }
     },
     {
       "id": "DOMAIN-CN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
-      "trend": "stable"
+      "score": 46,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CN-economic",
@@ -33,15 +33,15 @@
       "id": "DOMAIN-CN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 74,
-      "trend": "up"
+      "score": 76,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CN-technology",
       "type": "Domain",
       "label": "technology",
       "score": 72,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CN-social",
@@ -80,25 +80,25 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CN-Метель:_Уе",
-      "type": "Signal",
-      "label": "Метель: Уезд Канбао, Китай",
-      "severity": 74,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-CN-Сильный_ве",
-      "type": "Signal",
-      "label": "Сильный ветер: Уезд Тяньцзюнь, Китай",
-      "severity": 74,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-CN-Падение_ин",
       "type": "Signal",
       "label": "Падение интернет-связи: Китай",
       "severity": 72,
       "domain": "technology"
+    },
+    {
+      "id": "SIGNAL-CN-Пока_война",
+      "type": "Signal",
+      "label": "Пока война потрясает энергетические рынк",
+      "severity": 76,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-CN-Китай_выст",
+      "type": "Signal",
+      "label": "Китай выступает против обсуждения украин",
+      "severity": 46,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-CN",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-climate",
       "type": "CORRELATES",
-      "weight": 0.74
+      "weight": 0.76
     },
     {
       "from": "COUNTRY-CN",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-CN-climate",
-      "to": "DOMAIN-CN-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-CN-infrastructure",
-      "to": "DOMAIN-CN-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-CN-economic",
-      "to": "DOMAIN-CN-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-CN-climate",
       "to": "DOMAIN-CN-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,22 +184,64 @@
       "lag_days": 90
     },
     {
-      "from": "SIGNAL-CN-Метель:_Уе",
-      "to": "DOMAIN-CN-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.74
+      "from": "DOMAIN-CN-climate",
+      "to": "DOMAIN-CN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
     },
     {
-      "from": "SIGNAL-CN-Сильный_ве",
-      "to": "DOMAIN-CN-climate",
+      "from": "DOMAIN-CN-infrastructure",
+      "to": "DOMAIN-CN-economic",
       "type": "AMPLIFIES",
-      "weight": 0.74
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CN-economic",
+      "to": "DOMAIN-CN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-CN-geopolitical",
+      "to": "DOMAIN-CN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CN-infrastructure",
+      "to": "DOMAIN-CN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CN-economic",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-CN-Падение_ин",
       "to": "DOMAIN-CN-technology",
       "type": "AMPLIFIES",
       "weight": 0.72
+    },
+    {
+      "from": "SIGNAL-CN-Пока_война",
+      "to": "DOMAIN-CN-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.76
+    },
+    {
+      "from": "SIGNAL-CN-Китай_выст",
+      "to": "DOMAIN-CN-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.46
     }
   ]
 }
