@@ -20,6 +20,46 @@ _LINEAGE_LOG = {}
 _STAGE_ORDER = ['INGESTED','SOURCE_BLOCK','OLD','FILTER','CLASSIFIER','NO_GEO','GEO','SEVERITY','DEDUP','ADMISSION','BUILT','OVERFLOW','FRESHNESS','SIGNAL_GATE','TOPIC_CAP','EXPORTED','FEED','FEED_HIDDEN']
 _STAGE_IDX = {s: i for i, s in enumerate(_STAGE_ORDER)}
 _OBS_SEQ = [0]
+
+# 17.11.2026, аудит этап D (shadow-инструментация, решение Мии): каждая запись,
+# скрытая из ленты, несёт причину. hide_reasons - все причины по порядку
+# срабатывания (code + этап + деталь), hide_reason - основная: та, что первой
+# перевела запись из видимой в скрытую. Логика допуска, cap и severity не меняются:
+# функция делает ровно то же присваивание feed_visible=False.
+def _hide_mark(e, code, detail=None):
+    try:
+        _was_visible = e.get('feed_visible') is not False
+        _lst = e.get('hide_reasons')
+        if not isinstance(_lst, list):
+            _lst = []
+        if not any(isinstance(x, dict) and x.get('code') == code for x in _lst):
+            _it = {'code': code}
+            if detail:
+                _it['detail'] = str(detail)[:80]
+            _lst.append(_it)
+        e['hide_reasons'] = _lst
+        if _was_visible or not e.get('hide_reason'):
+            if _was_visible or e.get('hide_reason') in (None, '', 'unknown'):
+                e['hide_reason'] = code
+    except Exception:
+        pass
+    e['feed_visible'] = False
+
+
+def _hide_finalize(events):
+    """Перед записью: у видимых записей причины убираются, у скрытых без
+    записанной причины ставится 'unknown' - так видно непокрытые пути скрытия."""
+    _n_unknown = 0
+    for e in events or []:
+        if e.get('feed_visible') is False:
+            if not e.get('hide_reason'):
+                e['hide_reason'] = 'unknown'
+                _n_unknown += 1
+        else:
+            e.pop('hide_reason', None)
+            e.pop('hide_reasons', None)
+    return _n_unknown
+
 def _obs_assign(item):
     # obs_trace_id: ТЕХНИЧЕСКИЙ id наблюдаемости. Уникален per raw_item (md5+seq, коллизии дублей исключены).
     # Присваивается ОДИН раз на INGESTED, живёт внутри объекта (_obs_tid), повторный расчёт запрещён.
@@ -9739,7 +9779,7 @@ def process_events(raw_items):
         # «Предупреждения». С жёлтым уровнем MeteoAlarm их десятки, и в квоте
         # климата они вытесняли бы новости, а в капе ленты - друг друга.
         if ((ev.get('meta') or {}).get('kind')) in _WARN_KINDS and (ev.get('meta') or {}).get('verified'):
-            ev['feed_visible'] = False
+            _hide_mark(ev, 'warn_kinds')
             ev['alerts_only'] = True
             _trace(ev.get('_obs_tid'),'BUILT',layer='alerts', source=ev.get('source'))
             balanced.append(ev)
@@ -9752,7 +9792,7 @@ def process_events(raw_items):
             continue
         # SATELLITE LAYER: детекции вне общей квоты — не конкурируют с новостями.
         if _is_satellite(ev):
-            ev['feed_visible'] = False
+            _hide_mark(ev, 'satellite_layer')
             ev['_layer'] = 'satellite'
             _k = str(ev.get('source') or '?')
             _SAT_LAYER[_k] = _SAT_LAYER.get(_k, 0) + 1
@@ -10143,7 +10183,7 @@ def process_events(raw_items):
         else:
             # Переписать не удалось — событие скрывается из ленты,
             # но остаётся в процессах и связях.
-            _e['feed_visible'] = False
+            _hide_mark(_e, 'rewrite_failed')
             _rw_fail += 1
     if _rw_ok or _rw_fail:
         print(f"  [OBSCENE] переписано: {_rw_ok} · скрыто из ленты: {_rw_fail}", file=sys.stderr)
@@ -12482,7 +12522,7 @@ def _aggregate_series(events):
             out.append(lead)
             for _e in wx:                        # атомарные события сохраняются
                 _a = dict(_e)
-                _a['feed_visible'] = False       # в ленте — сводка, не дубли
+                _hide_mark(_a, 'series_digest_member')       # в ленте — сводка, не дубли
                 _a['aggregated_into'] = lead.get('id')
                 out.append(_a)
         else:
@@ -26914,7 +26954,7 @@ def _tail_caps(events):
             e['severity'] = _sev_log(e, rule, cur, to, why, 'penalty')
             n += 1
         if hide and e.get('feed_visible') is not False:
-            e['feed_visible'] = False
+            _hide_mark(e, 'tail_cap', rule)
     for e in events:
         head = e.get('title') or ''
         kin = _TC_KINETIC.search(head)
@@ -27242,7 +27282,7 @@ def _unverified_feed_gate(events):
         if _SIC_UNVERIFIED.search(low) and not _SIC_VERIFIED.search(low):
             e['unverified'] = True
             if e.get('feed_visible') is not False:
-                e['feed_visible'] = False; n += 1; nu += 1
+                _hide_mark(e, 'unverified'); n += 1; nu += 1
             continue
         # ② ИНТЕРВЬЮ/КОЛОНКА/МНЕНИЕ — рассуждение О явлении, а не явление.
         # «Никита Михалков в интервью News.ru: "Война ведь не просто стрельба, дроны,
@@ -27256,7 +27296,7 @@ def _unverified_feed_gate(events):
                 and e.get('sic_class') in ('COMMENTARY', 'FEATURE', 'BACKGROUND')):
             e['opinion_format'] = True
             if e.get('feed_visible') is not False:
-                e['feed_visible'] = False; n += 1; no += 1
+                _hide_mark(e, 'opinion_format'); n += 1; no += 1
             continue
         # ③ FEATURE — лайфстайл/курьёзы: люкс-недвижимость, аукционы Sotheby's, «история
         # одной доставки». Единичный факт о цене предмета роскоши не описывает состояние
@@ -27265,7 +27305,7 @@ def _unverified_feed_gate(events):
         # ипотечный кризис / обвал рынка) остаётся: у неё класс COMMENTARY/EVENT, не FEATURE.
         if FEATURE_FEED_GATE and e.get('sic_class') == 'FEATURE':
             if e.get('feed_visible') is not False:
-                e['feed_visible'] = False; n += 1; nf += 1
+                _hide_mark(e, 'feature_format'); n += 1; nf += 1
             continue
         # ④ АДМИНИСТРАТИВНАЯ МЕЛОЧЬ — вне оперативной ленты.
         # «Суд оштрафовал Бориса Надеждина* на 1 тыс. рублей» — действие института
@@ -27276,7 +27316,7 @@ def _unverified_feed_gate(events):
         if (PETTY_FEED_GATE and _SIC_PETTY.search(low) and not _SIC_MAJOR.search(low)):
             e['petty_scale'] = True
             if e.get('feed_visible') is not False:
-                e['feed_visible'] = False; n += 1; np_ += 1
+                _hide_mark(e, 'petty_scale'); n += 1; np_ += 1
     if n:
         print(f'  [FEED-GATE] скрыто из ленты: {n} '
               f'(не подтверждено: {nu}, интервью/мнение: {no}, лайфстайл: {nf}, '
@@ -28960,7 +29000,7 @@ def _context_feed_gate(events):
         if (e.get('meta') or {}).get('kind') in _OFFICIAL_SIGNAL_KINDS and (e.get('meta') or {}).get('verified'):
             continue                      # официальное сообщение ведомства (ВОЗ DON, санкции) это сигнал
         if e.get('feed_visible') is not False:
-            e['feed_visible'] = False
+            _hide_mark(e, 'context_gate')
             e['context_only'] = True
             n += 1
             dom[e.get('domain')] = dom.get(e.get('domain'), 0) + 1
@@ -29075,7 +29115,7 @@ def _decency_filter(events):
                     e[k] = v
                     ch = True
         if hard_title:
-            e['feed_visible'] = False
+            _hide_mark(e, 'decency_title')
             e['map_visible'] = False
             e['decency_hidden'] = True
             ch = True
@@ -29519,7 +29559,7 @@ def _feed_hygiene(events):
 
     def hide(e, why):
         if e.get('feed_visible') is not False:
-            e['feed_visible'] = False
+            _hide_mark(e, 'hygiene', why)
             e['hygiene'] = why
             cnt[why] = cnt.get(why, 0) + 1
     for e in events:
@@ -30084,7 +30124,7 @@ def _incident_collapse(events):
         head = g['m'][0]
         srcs = []
         for e in g['m'][1:]:
-            e['feed_visible'] = False
+            _hide_mark(e, 'incident_collapse')
             e['incident_of'] = head.get('id')
             s_ = str(e.get('source') or '')
             if s_ and s_ != head.get('source') and s_ not in srcs:
@@ -30117,7 +30157,7 @@ def _cap_feed_gate(events):
             continue
         if e.get('alerts_only'):
             continue
-        e['feed_visible'] = False
+        _hide_mark(e, 'cap_feed_gate')
         e['alerts_only'] = True
         e.pop('context_only', None)   # место записи — вкладка предупреждений
         n += 1
@@ -30800,7 +30840,7 @@ def save_enriched(events, previous_snapshot=None):
             if ('пожар' in _hfb or 'загорел' in _hfb) and any(w in _hfb for w in _HF_HOME) and not any(w in _hfb for w in _HF_PUB):
                 _hfm=re.search(r'(\d+)\s*(?:погиб|жертв|человек)', _hfb)
                 if not (_hfm and _hfm.group(1).isdigit() and int(_hfm.group(1))>=10):
-                    _hfe['feed_visible']=False
+                    _hide_mark(_hfe, 'home_fire')
     # AIR_ACCIDENT post-build: авиапроисшествие малой/сельхоз авиации -> из ленты (не крупная/военная/массовая)
     if HOME_FIRE_GUARD:
         for _aae in events:
@@ -30811,7 +30851,7 @@ def save_enriched(events, previous_snapshot=None):
             if _acr and not _amaj and not _acmb:
                 _aam=re.search(r'(\d+)\s*(?:погиб|жертв|человек|пассажир)', _aab)
                 if not (_aam and _aam.group(1).isdigit() and int(_aam.group(1))>=10):
-                    _aae['feed_visible']=False
+                    _hide_mark(_aae, 'small_air_accident')
     raw_snapshot = {
         "updated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "count":   len(events),
@@ -31064,7 +31104,7 @@ def save_enriched(events, previous_snapshot=None):
             for _cme2 in enriched["events"]:
                 _cmb2=(_cme2.get('title','') or '')
                 if _cme2.get('domain')=='climate' and _CM_ANIMAL.search(_cmb2):
-                    _cme2['feed_visible']=False
+                    _hide_mark(_cme2, 'cm_animal')
                 if _CM_QA.search(_cmb2) and _cme2.get('sic_class')=='EVENT':
                     _cme2['sic_class']='COMMENTARY'
             # ШУМ-КЛАСС КОНТРТЕРРОР-КРИМ (Мия 21.07): единичные задержания/ликвидации ФСБ/МВД —
@@ -31077,7 +31117,7 @@ def save_enriched(events, previous_snapshot=None):
                 _blob=_t+' '+_s[:160]
                 # единичное задержание/ликвидация силовиками = локальная крим-хроника
                 if _SH_CTKRIM.search(_blob) and _SH_CTKRIM_ACT.search(_blob):
-                    _sck['feed_visible']=False
+                    _hide_mark(_sck, 'sh_ctkrim')
             # ШУМ-КЛАСС ПОЛИТПРОГНОЗ (Мия 21.07): оценочные прогнозы о крахе/смене власти —
             # политически опасный контент для РФ-аудитории (не факт, а мнение об одной стороне)
             _SH_REGIME=re.compile(r'(?:подрыва\w+|подорв\w+|рухн\w+|паден\w+|крах\w*|свержен\w+|конец режим\w+|смен\w+ власти|дни.{0,15}сочтены|последн\w+ минут\w+ перед|потеря\w+ власт|уход\w* путин|после путин)\w*', re.I)
@@ -31088,7 +31128,7 @@ def save_enriched(events, previous_snapshot=None):
                 _blob=_t+' '+_s[:160]
                 # оба условия: оценочный прогноз о крахе + контекст власти РФ
                 if _SH_REGIME.search(_blob) and _SH_REGIME_CTX.search(_blob):
-                    _shr['feed_visible']=False
+                    _hide_mark(_shr, 'sh_regime')
             # ШУМ-КЛАСС ФИНБЛОГ (Мия 21.07): личные блог-посты трейдеров (мнение, не сигнал)
             # «поговорил с коллегами», «дорогие друзья», «хотите верьте», обращения от первого лица
             _SH_FINBLOG=re.compile(r'поговорил с коллег|дорогие друзья|хотите верьте|утро начинается не с коф|друзья,|как я (?:уже )?(?:писал|говорил)|мо\w+ прогноз|моё мнение|история одной|дорогой подписчик|подписчик\w* спрашива', re.I)
@@ -31096,13 +31136,13 @@ def save_enriched(events, previous_snapshot=None):
                 if _sfb.get('domain')!='economy': continue
                 _t=(_sfb.get('title','') or ''); _s=(_sfb.get('summary','') or '')
                 if _SH_FINBLOG.search(_t+' '+_s[:140]):
-                    _sfb['feed_visible']=False
+                    _hide_mark(_sfb, 'sh_finblog')
             # ШУМ-КЛАСС ЭССЕ (Мия 21.07): фотоэссе / travel-блог / личное повествование
             _SH_ESSAY=re.compile(r'фотоэссе|фото-эссе|photo essay|это эссе|личн\w+ (?:истори|повествован|заметк)|мо\w+ путешеств|о моих путешеств|путешествие вне сезона|автор:\s*\w+\s+\w+\s+следующее|дневник\w* путешеств|travel (?:blog|diary)', re.I)
             for _she2 in enriched["events"]:
                 _t=(_she2.get('title','') or ''); _s=(_she2.get('summary','') or '')
                 if _SH_ESSAY.search(_t+' '+_s[:120]):
-                    _she2['feed_visible']=False
+                    _hide_mark(_she2, 'sh_essay')
             # БАЗОВЫЙ УРОВЕНЬ БЕЗ НАБЛЮДЕНИЯ (01.09.2026).
             # Аудит показал: 78 событий ленты из 380 стоят ровно на 32 — это
             # база плюс вес источника, то есть формула не нашла ни одного
@@ -31121,7 +31161,7 @@ def save_enriched(events, previous_snapshot=None):
             for _bl in enriched["events"]:
                 if (_bl.get('severity') or 0) <= 34 and _bl.get('feed_visible') is not False:
                     if not _OBS_MARK.search((_bl.get('title') or '') + ' ' + (_bl.get('summary') or '')):
-                        _bl['feed_visible'] = False
+                        _hide_mark(_bl, 'obs_mark')
 
             # ТЕЛЕВИЗИОННЫЙ ДАЙДЖЕСТ (04.09.2026). «Главные новости в утреннем
             # выпуске: 0:00-0:39 столкновения в Чили, 0:42-1:22 атаки на
@@ -31142,7 +31182,7 @@ def save_enriched(events, previous_snapshot=None):
                     continue
                 _dt = (_dg.get('title') or '') + ' ' + (_dg.get('summary') or '')
                 if _TV_DIGEST_RE.search(_dt):
-                    _dg['feed_visible'] = False
+                    _hide_mark(_dg, 'tv_digest')
                     _dg['noise_class'] = 'tv_digest'
 
             # СВЁРТКА ОДНОТИПНЫХ ПРЕДУПРЕЖДЕНИЙ (01.09.2026).
@@ -31164,7 +31204,7 @@ def save_enriched(events, previous_snapshot=None):
                     continue
                 _cap_seen[_kind] = _cap_seen.get(_kind, 0) + 1
                 if _cap_seen[_kind] > _CAP_LIMIT:
-                    _cw['feed_visible'] = False
+                    _hide_mark(_cw, 'cap_limit')
 
             # ШУМ-КЛАССЫ 2 (Мия 20.07): спорт-колонки + фандрайзинг/донаты + бытовые заметки в климате
             _SH_SPORT=re.compile(r'месси|роналду|ямал|стадион\w*|матч\w*|футбол\w*|чемпионат мира по|олимпиад\w*|кубок \w+|финал лиги', re.I)
@@ -31186,20 +31226,20 @@ def save_enriched(events, previous_snapshot=None):
                 _t=(_sh2.get('title','') or ''); _s=(_sh2.get('summary','') or '')
                 _blob=_t+' '+_s
                 if _sh2.get('domain')=='climate' and _SH_SPORT.search(_blob):
-                    _sh2['feed_visible']=False
+                    _hide_mark(_sh2, 'sh_sport')
                 if _SH_DONATE.search(_blob):
-                    _sh2['feed_visible']=False
+                    _hide_mark(_sh2, 'sh_donate')
                 if _sh2.get('domain')=='climate' and _SH_TRIVIA.search(_blob):
-                    _sh2['feed_visible']=False
+                    _hide_mark(_sh2, 'sh_trivia')
             # ШУМ-КЛАССЫ (Мия 20.07): мелкая крим-хроника краж + listicle-дайджесты
             _SH_PETTY=re.compile(r'(?:вынести|вынес\w+|спрятал\w*|похитил\w*|укра\w+|кража) .{0,40}(?:супермаркет|магазин|тысяч руб)|любовь к \w+ довела|грозит до \w+ лет|магазинн\w+ (?:кража|вор)', re.I)
             _SH_LISTICLE=re.compile(r'^\d{1,2} (?:цитат|фактов|способ\w*|причин|вещей|признак\w*|совет\w*|правил|мифов|график\w*)|впервые появился на|пост \x27\d', re.I)
             for _she in enriched["events"]:
                 _sht=(_she.get('title','') or ''); _shs=(_she.get('summary','') or '')
                 if _SH_PETTY.search(_sht+' '+_shs):
-                    _she['feed_visible']=False
+                    _hide_mark(_she, 'sh_petty')
                 if _SH_LISTICLE.search(_sht) or 'впервые появился на' in _shs:
-                    _she['feed_visible']=False
+                    _hide_mark(_she, 'sh_listicle')
             # КЛИМАТ-КОНТЕНТ 3 (Мия 20.07): природные зарисовки + дайджест-рубрики = шум; голод в climate -> social
             _CM_WILDLIFE=re.compile(r'кулик\w*|птиц\w+, известн|острыми клювами|блестящими глазами|бусинка|пингвин\w*, |милые |очаровательн\w+ (?:животн|птиц|зверь)', re.I)
             _CM_DIGEST=re.compile(r'^(срезано|сокращение|обрезано|cropped|дайджест|мы отбираем и объясняем)|самые важные истории на пересечении', re.I)
@@ -31208,10 +31248,10 @@ def save_enriched(events, previous_snapshot=None):
                 if _cme3.get('domain')=='climate':
                     # природная зарисовка про животных = не риск-сигнал
                     if _CM_WILDLIFE.search(_t3) or _CM_WILDLIFE.search(_s3[:80]):
-                        _cme3['feed_visible']=False
+                        _hide_mark(_cme3, 'cm_wildlife')
                     # дайджест-рубрика (Carbon Brief Cropped и т.п.) = шаблон, не событие
                     if _CM_DIGEST.search(_t3) or _CM_DIGEST.search(_s3[:60]):
-                        _cme3['feed_visible']=False
+                        _hide_mark(_cme3, 'cm_digest')
                     # голод/продбезопасность в climate -> social (гуманитарное измерение)
                     if re.search(r'голод\w*|недоеда\w+|продовольствен\w+ кризис|famine', _t3+' '+_s3, re.I):
                         _cme3['domain']='social'
@@ -31248,7 +31288,7 @@ def save_enriched(events, previous_snapshot=None):
                         _cme['domain']='social'
                         if _cme.get('canon_domain')=='climate': _cme['canon_domain']='social'
                     elif _CM_NONCLIM.search(_cmb):
-                        _cme['feed_visible']=False
+                        _hide_mark(_cme, 'cm_nonclim')
             # COURT_CHRONICLE (Мия 19.07): судебная хроника отдельных персон (продление ареста/СИЗО
             # редактору/блогеру/бизнесмену) = шум, из ленты. Guard: массовые/системные кейсы остаются.
             import re as _re_cc
@@ -31260,7 +31300,7 @@ def save_enriched(events, previous_snapshot=None):
             for _cce in enriched["events"]:
                 _ccb=((_cce.get('title','') or '')+' '+(_cce.get('summary','') or ''))
                 if (_CC_HIT.search(_ccb) or _CC_MNT.search(_ccb)) and not _CC_SYS.search(_ccb):
-                    _cce['feed_visible']=False
+                    _hide_mark(_cce, 'cc_hit')
             # Аналитические эссе-мнения (риторические заголовки) + иностранная локальная политика = шум для RU-аудитории
             import re as _re_fl
             _FL_ESSAY=_re_fl.compile(r'выиграл\w* войну|новый путь к глобальн|история новой философ|конец эпохи|что означает для мира', _re_fl.I)
@@ -31268,7 +31308,7 @@ def save_enriched(events, previous_snapshot=None):
             for _fle in enriched["events"]:
                 _flb=((_fle.get('title','') or '')+' '+(_fle.get('summary','') or '')+' '+(_fle.get('source','') or ''))
                 if _FL_ESSAY.search(_fle.get('title','') or '') or _FL_LOCAL.search(_flb):
-                    _fle['feed_visible']=False
+                    _hide_mark(_fle, 'fl_essay')
             # Решение Мии 19.07: весь UN News = социум (в т.ч. персистентные карточки).
             # СУЖЕНО 13.08: правило смотрело только на источник и переписывало
             # домен даже там, где канонический тип определён однозначно.
@@ -31358,6 +31398,11 @@ def save_enriched(events, previous_snapshot=None):
                 print('  [WARN] final dedup: %s' % _xde, file=sys.stderr)
             OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
             _domain_lineage_finalize(enriched["events"], 'write_1')      # TASK-278
+            try:
+                _hu = _hide_finalize(enriched["events"])                  # аудит 17.11, этап D
+                print('  [HIDE] hidden=%d unknown_reason=%d' % (sum(1 for _x in enriched["events"] if _x.get('feed_visible') is False), _hu))
+            except Exception as _hfe_:
+                print('  [WARN] hide_finalize: %s' % _hfe_, file=sys.stderr)
             with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
                 json.dump(enriched, f, ensure_ascii=False, indent=2)
                 _lineage_flush(str(OUTPUT_PATH.parent / '_lineage.jsonl'))
@@ -31470,6 +31515,8 @@ def save_enriched(events, previous_snapshot=None):
                     try:
                         if any(_le.get('process_id') for _le in enriched["events"]):
                             _domain_lineage_finalize(enriched["events"], 'write_2')   # TASK-278
+                            try: _hide_finalize(enriched["events"])
+                            except Exception: pass
                             with open(OUTPUT_PATH, "w", encoding="utf-8") as _lf:
                                 json.dump(enriched, _lf, ensure_ascii=False, indent=2)
                             _ln = sum(1 for _le in enriched["events"] if _le.get('process_id'))
