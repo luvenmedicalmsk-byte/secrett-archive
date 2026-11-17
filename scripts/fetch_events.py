@@ -9587,6 +9587,12 @@ def process_events(raw_items):
             "source_bias": item.get('source_bias', 0),
             "feed_visible": (not _below_feed) and not _hide_local,   # FREE-лента: только сильные; локальные ЧП на ферме скрыты
         }
+        # аудит 17.11, этап D: причина скрытия, выставленного при сборке события
+        if _ev.get('feed_visible') is False:
+            if _below_feed:
+                _hide_mark(_ev, 'below_feed_threshold')
+            if _hide_local:
+                _hide_mark(_ev, 'local_incident')
         if item.get('_meta'): _ev["meta"] = item['_meta']
         # D4 (Pre-Release Window): event_kind отделяет геофизику от метеоклимата.
         # Домен climate НЕ меняется и новый домен НЕ вводится (только тег).
