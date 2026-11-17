@@ -2,9 +2,9 @@
   "country": "TR",
   "date": "2026-11-17",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-17T08:28:18.800145+00:00",
+  "generated_at": "2026-11-17T08:51:46.699961+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-TR",
@@ -33,7 +33,7 @@
       "id": "DOMAIN-TR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 50,
       "trend": "stable"
     },
     {
@@ -47,7 +47,7 @@
       "id": "DOMAIN-TR-social",
       "type": "Domain",
       "label": "social",
-      "score": 52,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -87,18 +87,18 @@
       "domain": "economic"
     },
     {
-      "id": "SIGNAL-TR-Пять_школ,",
-      "type": "Signal",
-      "label": "Пять школ, разработанных для того, чтобы",
-      "severity": 52,
-      "domain": "social"
-    },
-    {
       "id": "SIGNAL-TR-Турция_при",
       "type": "Signal",
       "label": "Турция приказывает заблокировать 21 акка",
       "severity": 50,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-TR-Гроза:_Ста",
+      "type": "Signal",
+      "label": "Гроза: Стамбул, Измир, Бурса и ещё 10 пр",
+      "severity": 50,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-TR",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-social",
       "type": "CORRELATES",
-      "weight": 0.52
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-TR",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-TR-climate",
+      "to": "DOMAIN-TR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-TR-infrastructure",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-TR-climate",
+      "to": "DOMAIN-TR-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-TR-social",
+      "to": "DOMAIN-TR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-TR-geopolitical",
       "to": "DOMAIN-TR-infrastructure",
       "type": "ESCALATES",
@@ -190,14 +232,14 @@
       "weight": 0.62
     },
     {
-      "from": "SIGNAL-TR-Пять_школ,",
-      "to": "DOMAIN-TR-social",
-      "type": "AMPLIFIES",
-      "weight": 0.52
-    },
-    {
       "from": "SIGNAL-TR-Турция_при",
       "to": "DOMAIN-TR-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
+      "from": "SIGNAL-TR-Гроза:_Ста",
+      "to": "DOMAIN-TR-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
     }
