@@ -2,7 +2,7 @@
   "country": "VN",
   "date": "2026-11-17",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-17T08:51:46.722036+00:00",
+  "generated_at": "2026-11-17T09:07:17.485571+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -47,7 +47,7 @@
       "id": "DOMAIN-VN-social",
       "type": "Domain",
       "label": "social",
-      "score": 43,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -70,14 +70,21 @@
       "label": "climate"
     },
     {
-      "id": "DRIVER-VN-social",
-      "type": "Driver",
-      "label": "social"
-    },
-    {
       "id": "DRIVER-VN-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
+    },
+    {
+      "id": "DRIVER-VN-economic",
+      "type": "Driver",
+      "label": "economic"
+    },
+    {
+      "id": "SIGNAL-VN-Вьетнамски",
+      "type": "Signal",
+      "label": "Вьетнамские провинции поддерживают плава",
+      "severity": 32,
+      "domain": "economic"
     },
     {
       "id": "SIGNAL-VN-Геополитич",
@@ -92,13 +99,6 @@
       "label": "Наводнение — Вьетнам",
       "severity": 46,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-VN-Миграционн",
-      "type": "Signal",
-      "label": "Миграционная политика — Юго-Восточная Аз",
-      "severity": 58,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -130,7 +130,7 @@
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-social",
       "type": "CORRELATES",
-      "weight": 0.43
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-VN",
@@ -151,37 +151,16 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-VN-social",
-      "to": "COUNTRY-VN",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
       "from": "DRIVER-VN-geopolitical",
       "to": "COUNTRY-VN",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-VN-climate",
-      "to": "DOMAIN-VN-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-VN-economic",
-      "to": "DOMAIN-VN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-VN-social",
-      "to": "DOMAIN-VN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
+      "from": "DRIVER-VN-economic",
+      "to": "COUNTRY-VN",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DOMAIN-VN-climate",
@@ -205,6 +184,33 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-VN-climate",
+      "to": "DOMAIN-VN-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-VN-economic",
+      "to": "DOMAIN-VN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-VN-social",
+      "to": "DOMAIN-VN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "SIGNAL-VN-Вьетнамски",
+      "to": "DOMAIN-VN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.32
+    },
+    {
       "from": "SIGNAL-VN-Геополитич",
       "to": "DOMAIN-VN-geopolitical",
       "type": "AMPLIFIES",
@@ -215,12 +221,6 @@
       "to": "DOMAIN-VN-climate",
       "type": "AMPLIFIES",
       "weight": 0.46
-    },
-    {
-      "from": "SIGNAL-VN-Миграционн",
-      "to": "DOMAIN-VN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.58
     }
   ]
 }
