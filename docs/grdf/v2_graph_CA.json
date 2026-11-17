@@ -2,7 +2,7 @@
   "country": "CA",
   "date": "2026-11-17",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-17T10:31:02.868743+00:00",
+  "generated_at": "2026-11-17T11:08:31.104088+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-CA",
       "type": "Country",
       "label": "CA",
-      "score": 62,
+      "score": 65,
       "props": {
-        "risk_score": 62
+        "risk_score": 65
       }
     },
     {
@@ -33,8 +33,8 @@
       "id": "DOMAIN-CA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 71,
-      "trend": "down"
+      "score": 56,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-technology",
@@ -80,9 +80,16 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CA-Снегопад:_",
+      "id": "SIGNAL-CA-Погода:_Mo",
       "type": "Signal",
-      "label": "Снегопад: Кикиктаржуа, М.Д. Ранчленд, Ка",
+      "label": "Погода: Mountain View Co. рядом с Сандре",
+      "severity": 56,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-CA-Ожидается_",
+      "type": "Signal",
+      "label": "Ожидается снегопад с общим количеством о",
       "severity": 56,
       "domain": "climate"
     },
@@ -91,13 +98,6 @@
       "type": "Signal",
       "label": "Метель: Демпстер, Канада",
       "severity": 56,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-CA-Пожарная_а",
-      "type": "Signal",
-      "label": "Пожарная активность — Северная Америка",
-      "severity": 95,
       "domain": "climate"
     }
   ],
@@ -118,7 +118,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-climate",
       "type": "CORRELATES",
-      "weight": 0.71
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-CA",
@@ -205,7 +205,13 @@
       "lag_days": 90
     },
     {
-      "from": "SIGNAL-CA-Снегопад:_",
+      "from": "SIGNAL-CA-Погода:_Mo",
+      "to": "DOMAIN-CA-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.56
+    },
+    {
+      "from": "SIGNAL-CA-Ожидается_",
       "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
       "weight": 0.56
@@ -215,12 +221,6 @@
       "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
       "weight": 0.56
-    },
-    {
-      "from": "SIGNAL-CA-Пожарная_а",
-      "to": "DOMAIN-CA-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.95
     }
   ]
 }

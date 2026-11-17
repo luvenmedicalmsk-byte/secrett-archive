@@ -2,7 +2,7 @@
   "country": "TH",
   "date": "2026-11-17",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-17T10:31:02.873977+00:00",
+  "generated_at": "2026-11-17T11:08:31.107170+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -19,7 +19,7 @@
       "id": "DOMAIN-TH-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
+      "score": 36,
       "trend": "stable"
     },
     {
@@ -80,13 +80,6 @@
       "label": "economic"
     },
     {
-      "id": "SIGNAL-TH-Южный_Таил",
-      "type": "Signal",
-      "label": "Южный Таиланд готовится к сильным дождям",
-      "severity": 44,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-TH-Шторм_—_Та",
       "type": "Signal",
       "label": "Шторм — Таиланд",
@@ -99,6 +92,13 @@
       "label": "Пожарная активность — Таиланд",
       "severity": 65,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-TH-Геополитич",
+      "type": "Signal",
+      "label": "Геополитический процесс — Юго-Восточная ",
+      "severity": 49,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-TH",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-TH-climate",
-      "to": "DOMAIN-TH-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-TH-infrastructure",
-      "to": "DOMAIN-TH-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-TH-economic",
-      "to": "DOMAIN-TH-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-TH-climate",
       "to": "DOMAIN-TH-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,10 +184,25 @@
       "lag_days": 90
     },
     {
-      "from": "SIGNAL-TH-Южный_Таил",
-      "to": "DOMAIN-TH-climate",
+      "from": "DOMAIN-TH-climate",
+      "to": "DOMAIN-TH-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-TH-infrastructure",
+      "to": "DOMAIN-TH-economic",
       "type": "AMPLIFIES",
-      "weight": 0.44
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TH-economic",
+      "to": "DOMAIN-TH-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "SIGNAL-TH-Шторм_—_Та",
@@ -221,6 +215,12 @@
       "to": "DOMAIN-TH-climate",
       "type": "AMPLIFIES",
       "weight": 0.65
+    },
+    {
+      "from": "SIGNAL-TH-Геополитич",
+      "to": "DOMAIN-TH-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.49
     }
   ]
 }

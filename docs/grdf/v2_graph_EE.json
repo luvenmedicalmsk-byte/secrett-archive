@@ -2,9 +2,9 @@
   "country": "EE",
   "date": "2026-11-17",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-17T10:31:02.863630+00:00",
+  "generated_at": "2026-11-17T11:08:31.100894+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-EE",
@@ -33,7 +33,7 @@
       "id": "DOMAIN-EE-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 50,
       "trend": "stable"
     },
     {
@@ -75,9 +75,9 @@
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-EE-economic",
+      "id": "DRIVER-EE-climate",
       "type": "Driver",
-      "label": "economic"
+      "label": "climate"
     },
     {
       "id": "SIGNAL-EE-В_Эстонии_",
@@ -94,11 +94,11 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-EE-Промышленн",
+      "id": "SIGNAL-EE-Ветер:_Вос",
       "type": "Signal",
-      "label": "Промышленная авария — Эстония",
-      "severity": 65,
-      "domain": "technology"
+      "label": "Ветер: Восточный залив Финского залива, ",
+      "severity": 50,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-EE",
       "to": "DOMAIN-EE-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-EE",
@@ -157,10 +157,52 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-EE-economic",
+      "from": "DRIVER-EE-climate",
       "to": "COUNTRY-EE",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-EE-climate",
+      "to": "DOMAIN-EE-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-EE-economic",
+      "to": "DOMAIN-EE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-EE-social",
+      "to": "DOMAIN-EE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-EE-climate",
+      "to": "DOMAIN-EE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-EE-infrastructure",
+      "to": "DOMAIN-EE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-EE-economic",
+      "to": "DOMAIN-EE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-EE-geopolitical",
@@ -196,10 +238,10 @@
       "weight": 0.54
     },
     {
-      "from": "SIGNAL-EE-Промышленн",
-      "to": "DOMAIN-EE-technology",
+      "from": "SIGNAL-EE-Ветер:_Вос",
+      "to": "DOMAIN-EE-climate",
       "type": "AMPLIFIES",
-      "weight": 0.65
+      "weight": 0.5
     }
   ]
 }
