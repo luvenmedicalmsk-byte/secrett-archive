@@ -46,10 +46,92 @@ def _hide_mark(e, code, detail=None):
     e['feed_visible'] = False
 
 
+def _hide_diag_pass(events):
+    """Аудит 17.11, D2/D3 (shadow): диагностический проход по уже скрытым записям
+    ПОСЛЕ основного конвейера. Проверяет условия скрытия на итоговой записи и
+    дописывает сработавшие в hide_reasons с пометкой diag. hide_reason и
+    feed_visible не меняются, состав выдачи тот же. Условия повторяют
+    production-проверки дословно; правила здесь не меняются."""
+    from datetime import date as _d
+    _today = datetime.now(timezone.utc).date()
+    _WK = {'mgm', 'rosgidromet_cap', 'cap', 'cap_hub'}
+    def _thr(e):
+        if str(e.get('source') or '').startswith('Telegram'):
+            return 0
+        d = e.get('domain')
+        return 35 if d in ('economy', 'social') else 32 if d == 'climate' else SEVERITY_THRESHOLD
+    def _add(e, code, detail=None):
+        lst = e.get('hide_reasons') if isinstance(e.get('hide_reasons'), list) else []
+        if any(isinstance(x, dict) and x.get('code') == code and (x.get('detail') or None) == (detail or None) for x in lst):
+            return 0
+        it = {'code': code, 'diag': True}
+        if detail:
+            it['detail'] = detail
+        lst.append(it); e['hide_reasons'] = lst
+        return 1
+    n_added = 0
+    for e in events or []:
+        if e.get('feed_visible') is not False:
+            continue
+        try:
+            m = e.get('meta') or {}
+            sev = e.get('severity') or 0
+            # D2: перепроверка порога ленты на итоговой severity
+            bd = e.get('below_feed_diag')
+            if isinstance(bd, dict):
+                bd['final_severity'] = sev
+                bd['final_domain'] = e.get('domain')
+                bd['feed_threshold_final'] = _thr(e)
+                bd['shadow_would_show'] = bool(sev >= _thr(e))
+            # D3: условия, которые выполняются на итоговой записи
+            if m.get('kind') in _WK and m.get('verified'):
+                n_added += _add(e, 'warn_kinds')
+            if (CONTEXT_FEED_GATE and not e.get('alerts_only') and e.get('sic_class') and e.get('sic_class') != 'EVENT'
+                    and ((e.get('basis') or {}).get('severity') or {}).get('route') != 'cyber'
+                    and not (m.get('kind') in _OFFICIAL_SIGNAL_KINDS and m.get('verified'))):
+                n_added += _add(e, 'context_gate')
+            if sev < _thr(e):
+                n_added += _add(e, 'below_feed_threshold')
+            if e.get('dup_of'):
+                n_added += _add(e, 'dup_of')
+            if e.get('incident_of'):
+                n_added += _add(e, 'incident_collapse')
+            if FEED_HYGIENE and not e.get('alerts_only'):
+                if m.get('kind') not in _OFFICIAL_SIGNAL_KINDS:
+                    try:
+                        if (_today - _d.fromisoformat((e.get('date') or '')[:10])).days > FEED_MAX_AGE.get(e.get('domain'), 7):
+                            n_added += _add(e, 'hygiene', 'устарело')
+                    except Exception:
+                        pass
+                if not m.get('verified'):
+                    t = e.get('title') or ''
+                    if FEED_UNTRANSLATED_GATE and _untranslated_title(t):
+                        n_added += _add(e, 'hygiene', 'не переведено')
+                    if str(e.get('source') or '') in HYG_VENDOR_BLOG:
+                        n_added += _add(e, 'hygiene', 'блог вендора')
+                    if str(e.get('source') or '').replace('Telegram/', '') in TG_AGITPROP_OFF:
+                        n_added += _add(e, 'hygiene', 'агитация')
+                    if _HYG_EXPLAIN.search(t) or (HYG_QUESTION_ANY and re.search(r'\?(?=\s)', t)):
+                        n_added += _add(e, 'hygiene', 'объяснение/вопрос')
+                    _yr = [int(_m.group(1)) for _m in _Y31_RE.finditer(t)] if YEAR_GUARD_3110 else \
+                          [int(y) for y in re.findall(r'(?<!\d)(1[0-9]{3}|2[0-9]{3})(?!\d)', t)]
+                    if _yr and (min(_yr) < 1990 or max(_yr) >= 2060):
+                        n_added += _add(e, 'hygiene', 'история/дальний прогноз')
+                    if _HYG_OBSERV.search(t):
+                        n_added += _add(e, 'hygiene', 'памятный день/фичер')
+        except Exception:
+            continue
+    return n_added
+
+
 def _hide_finalize(events):
     """Перед записью: у видимых записей причины убираются, у скрытых без
     записанной причины ставится 'unknown' - так видно непокрытые пути скрытия."""
     _n_unknown = 0
+    try:
+        _hide_diag_pass(events)
+    except Exception as _hdx:
+        print('  [WARN] hide_diag_pass: %s' % _hdx, file=sys.stderr)
     for e in events or []:
         if e.get('feed_visible') is False:
             if not e.get('hide_reason'):
@@ -9591,6 +9673,8 @@ def process_events(raw_items):
         if _ev.get('feed_visible') is False:
             if _below_feed:
                 _hide_mark(_ev, 'below_feed_threshold')
+                _ev['below_feed_diag'] = {'severity_at_hide': severity, 'feed_threshold': _thr,
+                                          'domain_at_hide': domain, 'tg': bool(_is_tg)}   # D2 shadow
             if _hide_local:
                 _hide_mark(_ev, 'local_incident')
         if item.get('_meta'): _ev["meta"] = item['_meta']
@@ -28002,6 +28086,10 @@ AGRI_OUTPUT_3010 = True
 # Число с валютой или единицей измерения рядом - не год. Откат: YEAR_GUARD_3110 = False.
 YEAR_GUARD_3110 = True
 _Y31_RE = re.compile(r'(?<![\d$€£¥₽.,])(?<!\$\s)(1[0-9]{3}|2[0-9]{3})(?![\d.,])(?!\s*(?:\$|€|долл|евро|руб|₽|тыс|млн|млрд|кубо|м³|тонн|баррел|км|%|процент|человек|чел\b|раз\b|единиц|штук|голов|мв\b|гвт|мвт))', re.I)
+
+# 17.11.2026, аудит этап D1 (shadow): «1336 БПЛА», «1052 BTC» - количество, не год.
+# Только для year_guard_shadow; production-проверка yrs по-прежнему на _Y31_RE.
+_Y31_RE_SHADOW = re.compile(r'(?<![\d$€£¥₽.,])(?<!\$\s)(1[0-9]{3}|2[0-9]{3})(?![\d.,])(?!\s*(?:\$|€|долл|евро|руб|₽|тыс|млн|млрд|кубо|м³|тонн|баррел|км|%|процент|человек|чел\b|раз\b|единиц|штук|голов|мв\b|гвт|мвт))(?!\s+(?!год|гг)(?:[\w-]+\s+){0,3}(?:бпла|беспилот|дрон|ракет|снаряд|бомб|btc|биткоин|eth\b|эфир|самол|вертол|танк|бронетех|кораб|судн|судов|участк|случа|пострада|погиб|ранен|жертв|домов|дом\b|здани|объект|задерж|арест|мигрант|беженц|военнослуж|солдат|боевик|заболе|зараж|рейс|пассажир|автомоб|машин|вагон|гектар|га\b|сотрудник|работник|вакан|компан|предприят|школ|семей|детей|жител|пожар|очаг|подземн|толчк|населённ|сёл|сел\b|точек|адрес|аккаунт|пользоват|устройств|сервер|сайт))', re.I)
 # 31.10.2026 · RALLY_CAP_3110: акция протеста по поводу катастрофы - не сама катастрофа.
 # «Более 1000 человек собрались у здания министерства транспорта… за катастрофу,
 # которая унесла жизни 68 человек» получала 79: число погибших бралось из описания.
@@ -29647,6 +29735,13 @@ def _feed_hygiene(events):
             e['severity'] = HYG_STUDY_CAP
             cnt['исследование → потолок'] = cnt.get('исследование → потолок', 0) + 1
         if yrs and (min(yrs) < 1990 or max(yrs) >= 2060):
+            try:   # аудит 17.11, D1 shadow: решение с расширенным списком счётных слов
+                _ysh = [int(_m.group(1)) for _m in _Y31_RE_SHADOW.finditer(t)]
+                _sh_hide = bool(_ysh and (min(_ysh) < 1990 or max(_ysh) >= 2060))
+                e['year_guard_shadow'] = {'orig': 'hide', 'shadow': 'hide' if _sh_hide else 'show',
+                                          'years': yrs, 'years_shadow': _ysh}
+            except Exception:
+                pass
             hide(e, 'история/дальний прогноз'); continue
         if _HYG_OBSERV.search(t):
             hide(e, 'памятный день/фичер'); continue

@@ -4604,6 +4604,18 @@ def write_signals_json(events, path):
             _crypto_archive_merge(evolved, os.path.join(os.path.dirname(path), '_crypto_archive.json'))
         except Exception as _ce:
             print(f'  [CRYPTO-ARCHIVE] skip: {_ce}', file=sys.stderr)
+    # ── STATE_SHADOW 17.11.2026 (аудит, этап C, решение Мии) ─────────────────
+    # Единое согласованное состояние процесса считается РЯДОМ с действующими
+    # status/phase/lifecycle_stage и их не перезаписывает. Единое время - last_seen
+    # (через status). status в shadow не меняется: макропроцессы с жёстким
+    # status='active' разбираются отдельно, без скрытого исключения здесь.
+    if STATE_SHADOW:
+        try:
+            _ss_stats = _state_shadow_apply(evolved)
+            _state_shadow_log(os.path.join(os.path.dirname(path), '_state_shadow_log.json'), now, _ss_stats)
+            print('  [STATE-SHADOW] %s' % json.dumps(_ss_stats, ensure_ascii=False)[:300], file=sys.stderr)
+        except Exception as _sse:
+            print(f'  [STATE-SHADOW] skip: {_sse}', file=sys.stderr)
     out={'updated':now,'count':len(evolved),'schema':'process-signal-v1.6',
          'global_health':global_health,'patterns_detected':patterns,'report':report,'signals':evolved}
     if TOMBSTONE_CONSERVATION:
@@ -4688,6 +4700,103 @@ def write_signals_json(events, path):
         print(f"  [BIRTH] skip: {_be}", file=__import__('sys').stderr)
     return len(evolved)
 
+
+# ═══ STATE_SHADOW 17.11.2026 (аудит расхождений, этап C) ═══════════════════
+# Shadow-правило согласования состояния процесса. Production-поля не меняются.
+# Откат: STATE_SHADOW = False.
+STATE_SHADOW = True
+_SS_ALLOWED_STAGE = {
+    'archived': ('Завершён',),
+    'dormant': ('Ослабление', 'Завершён'),
+    'fading': ('Стабилизация', 'Ослабление'),
+    'active': ('Обнаружение', 'Развитие', 'Пик', 'Стабилизация', 'Ослабление'),
+}
+_SS_ALLOWED_PHASE = {
+    'Обнаружение': ('emerging', 'growing', 'active'),
+    'Развитие': ('growing', 'escalating', 'active'),
+    'Пик': ('escalating', 'active'),
+    'Стабилизация': ('stabilizing', 'active'),
+    'Ослабление': ('de-escalating', 'stabilizing'),
+}
+_SS_DEF_PHASE = {'Обнаружение': 'emerging', 'Развитие': 'growing', 'Пик': 'escalating',
+                 'Стабилизация': 'stabilizing', 'Ослабление': 'de-escalating'}
+
+
+def _ss_rising(s):
+    d = s.get('delta') or {}
+    v = (s.get('velocity') or {}).get('severity_per_h', 0) or 0
+    return (d.get('severity', 0) or 0) > 0 or v > 0.05 or len(d.get('new_connections') or []) > 0
+
+
+def _ss_section(st, ph, stage, pe, watch):
+    st_l = (stage or '').lower(); ph_l = (ph or '').lower(); stt = (st or '').lower()
+    if st_l in ('завершён', 'завершен') or ph_l in ('dormant', 'archived'): return 'closed'
+    if pe >= 90: return 'critical'
+    if pe >= 75: return 'high'
+    if 'de-escal' not in ph_l and ('escalat' in ph_l or 'усилен' in st_l or 'рост' in st_l): return 'escalating'
+    if watch: return 'watch'
+    if 'fad' in stt or 'de-escal' in ph_l or any(w in st_l for w in ('затух', 'стабил', 'ослаб')): return 'fading'
+    return 'active'
+
+
+def _state_shadow_apply(signals):
+    st_cnt = {'processes': 0, 'changed': 0, 'stage': 0, 'phase': 0, 'status': 0, 'section': 0,
+              'macro': 0, 'by_pair': {}, 'by_domain': {}, 'by_section': {}}
+    for s in signals or []:
+        status = s.get('status') or 'active'
+        stage0 = s.get('lifecycle_stage'); ph0 = s.get('phase')
+        allowed = _SS_ALLOWED_STAGE.get(status, _SS_ALLOWED_STAGE['active'])
+        if stage0 in allowed:
+            stage1 = stage0
+        elif status == 'archived':
+            stage1 = 'Завершён'
+        elif status == 'dormant':
+            stage1 = 'Ослабление'
+        elif status == 'fading':
+            stage1 = 'Ослабление' if stage0 == 'Завершён' else 'Стабилизация'
+        else:
+            stage1 = 'Развитие' if _ss_rising(s) else 'Стабилизация'
+        if status in ('archived', 'dormant'):
+            ph1 = status
+        elif ph0 in _SS_ALLOWED_PHASE.get(stage1, ()):
+            ph1 = ph0
+        else:
+            ph1 = _SS_DEF_PHASE.get(stage1, ph0)
+        changed = [k for k, a, b in (('stage', stage0, stage1), ('phase', ph0, ph1)) if a != b]
+        pe = s.get('pressure') or s.get('priority') or 0
+        sec0 = _ss_section(status, ph0, stage0, pe, s.get('watchlist'))
+        sec1 = _ss_section(status, ph1, stage1, pe, s.get('watchlist'))
+        s['state_shadow'] = {'rule': 'C-2026-11-17', 'status': status, 'phase': ph1, 'lifecycle_stage': stage1,
+                             'changed': changed, 'section_before': sec0, 'section_after': sec1}
+        st_cnt['processes'] += 1
+        if s.get('is_macro'): st_cnt['macro'] += 1
+        if changed:
+            st_cnt['changed'] += 1
+            for k in changed: st_cnt[k] += 1
+            key = '%s/%s/%s -> %s/%s/%s' % (status, ph0, stage0, status, ph1, stage1)
+            st_cnt['by_pair'][key] = st_cnt['by_pair'].get(key, 0) + 1
+            dm = s.get('primary_domain') or '?'
+            st_cnt['by_domain'][dm] = st_cnt['by_domain'].get(dm, 0) + 1
+        if sec0 != sec1 and status != 'archived':
+            st_cnt['section'] += 1
+            k2 = sec0 + '->' + sec1
+            st_cnt['by_section'][k2] = st_cnt['by_section'].get(k2, 0) + 1
+    st_cnt['by_pair'] = dict(sorted(st_cnt['by_pair'].items(), key=lambda x: -x[1])[:25])
+    return st_cnt
+
+
+def _state_shadow_log(path, now, stats):
+    try:
+        log = json.load(open(path, encoding='utf-8'))
+        if not isinstance(log, list): log = []
+    except Exception:
+        log = []
+    log.append({'run': now, **stats})
+    log = log[-400:]
+    with open(path, 'w', encoding='utf-8') as f:
+        json.dump(log, f, ensure_ascii=False, separators=(',', ':'))
+
+
 if __name__=='__main__':
     d=json.load(open('/tmp/AUD.json')); ev=d['events']
     sigs=build_signals(ev); multi=[s for s in sigs if s['evidence_count']>1]
@@ -4696,3 +4805,4 @@ if __name__=='__main__':
     for s in sorted(multi,key=lambda x:-x['evidence_count']):
         print('  x{} [{}] место={:12} | {}'.format(s['evidence_count'],s['domains'][0][:4],str(s['process_place'])[:12],s['title'][:44]))
         for e in s['evidence']: print('       - {}'.format(e['title'][:58]))
+
