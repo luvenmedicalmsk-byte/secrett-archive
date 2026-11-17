@@ -2,7 +2,7 @@
   "country": "BY",
   "date": "2026-11-17",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-17T18:09:30.589804+00:00",
+  "generated_at": "2026-11-17T18:22:58.731674+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -26,14 +26,14 @@
       "id": "DOMAIN-BY-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 51,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-BY-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 56,
+      "score": 70,
       "trend": "stable"
     },
     {
@@ -47,7 +47,7 @@
       "id": "DOMAIN-BY-social",
       "type": "Domain",
       "label": "social",
-      "score": 35,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-BY-В_МВД_расс",
-      "type": "Signal",
-      "label": "В МВД рассказали, сколько преступлений с",
-      "severity": 35,
-      "domain": "social"
-    },
-    {
       "id": "SIGNAL-BY-Военные_уд",
       "type": "Signal",
       "label": "Военные удары — Беларусь",
@@ -98,6 +91,13 @@
       "type": "Signal",
       "label": "Климатический сигнал — Беларусь",
       "severity": 56,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-BY-Пожарная_а",
+      "type": "Signal",
+      "label": "Пожарная активность — Беларусь",
+      "severity": 70,
       "domain": "climate"
     }
   ],
@@ -112,13 +112,13 @@
       "from": "COUNTRY-BY",
       "to": "DOMAIN-BY-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.51
     },
     {
       "from": "COUNTRY-BY",
       "to": "DOMAIN-BY-climate",
       "type": "CORRELATES",
-      "weight": 0.56
+      "weight": 0.7
     },
     {
       "from": "COUNTRY-BY",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-BY",
       "to": "DOMAIN-BY-social",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-BY",
@@ -161,6 +161,27 @@
       "to": "COUNTRY-BY",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-BY-climate",
+      "to": "DOMAIN-BY-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-BY-infrastructure",
+      "to": "DOMAIN-BY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-BY-economic",
+      "to": "DOMAIN-BY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-BY-climate",
@@ -205,33 +226,6 @@
       "lag_days": 45
     },
     {
-      "from": "DOMAIN-BY-climate",
-      "to": "DOMAIN-BY-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-BY-infrastructure",
-      "to": "DOMAIN-BY-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-BY-economic",
-      "to": "DOMAIN-BY-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "SIGNAL-BY-В_МВД_расс",
-      "to": "DOMAIN-BY-social",
-      "type": "AMPLIFIES",
-      "weight": 0.35
-    },
-    {
       "from": "SIGNAL-BY-Военные_уд",
       "to": "DOMAIN-BY-geopolitical",
       "type": "AMPLIFIES",
@@ -242,6 +236,12 @@
       "to": "DOMAIN-BY-climate",
       "type": "AMPLIFIES",
       "weight": 0.56
+    },
+    {
+      "from": "SIGNAL-BY-Пожарная_а",
+      "to": "DOMAIN-BY-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.7
     }
   ]
 }
