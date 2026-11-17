@@ -1,8 +1,8 @@
 {
   "country": "RO",
-  "date": "2026-11-16",
+  "date": "2026-11-17",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-16T23:50:13.752003+00:00",
+  "generated_at": "2026-11-17T00:34:24.742375+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,64 +10,59 @@
       "id": "COUNTRY-RO",
       "type": "Country",
       "label": "RO",
-      "score": 79,
+      "score": 64,
       "props": {
-        "risk_score": 79
+        "risk_score": 64
       }
     },
     {
       "id": "DOMAIN-RO-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 83,
-      "trend": "stable"
+      "score": 64,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-RO-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-RO-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 50,
-      "trend": "stable"
+      "score": 80,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-RO-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-RO-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-RO-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-RO-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
-    },
-    {
-      "id": "DRIVER-RO-geopolitical",
-      "type": "Driver",
-      "label": "geopolitical"
+      "trend": "down"
     },
     {
       "id": "DRIVER-RO-climate",
@@ -75,16 +70,14 @@
       "label": "climate"
     },
     {
+      "id": "DRIVER-RO-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
+    },
+    {
       "id": "DRIVER-RO-economic",
       "type": "Driver",
       "label": "economic"
-    },
-    {
-      "id": "SIGNAL-RO-Неизвестны",
-      "type": "Signal",
-      "label": "Неизвестный дрон атаковал грузовое судно",
-      "severity": 75,
-      "domain": "geopolitical"
     },
     {
       "id": "SIGNAL-RO-Воздушное_",
@@ -99,6 +92,13 @@
       "label": "Ветер: Вранча, Вылча, Тимиш и ещё 22 рай",
       "severity": 50,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-RO-Водный_деф",
+      "type": "Signal",
+      "label": "Водный дефицит — Румыния",
+      "severity": 80,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-RO",
       "to": "DOMAIN-RO-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.83
+      "weight": 0.64
     },
     {
       "from": "COUNTRY-RO",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-RO",
       "to": "DOMAIN-RO-climate",
       "type": "CORRELATES",
-      "weight": 0.5
+      "weight": 0.8
     },
     {
       "from": "COUNTRY-RO",
@@ -145,13 +145,13 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-RO-geopolitical",
+      "from": "DRIVER-RO-climate",
       "to": "COUNTRY-RO",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-RO-climate",
+      "from": "DRIVER-RO-geopolitical",
       "to": "COUNTRY-RO",
       "type": "CAUSES",
       "weight": 0.8
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-RO-geopolitical",
-      "to": "DOMAIN-RO-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-RO-infrastructure",
-      "to": "DOMAIN-RO-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-RO-economic",
-      "to": "DOMAIN-RO-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "DOMAIN-RO-climate",
       "to": "DOMAIN-RO-infrastructure",
       "type": "ESCALATES",
@@ -226,10 +205,25 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-RO-Неизвестны",
-      "to": "DOMAIN-RO-geopolitical",
+      "from": "DOMAIN-RO-geopolitical",
+      "to": "DOMAIN-RO-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-RO-infrastructure",
+      "to": "DOMAIN-RO-economic",
       "type": "AMPLIFIES",
-      "weight": 0.75
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-RO-economic",
+      "to": "DOMAIN-RO-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-RO-Воздушное_",
@@ -242,6 +236,12 @@
       "to": "DOMAIN-RO-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
+    },
+    {
+      "from": "SIGNAL-RO-Водный_деф",
+      "to": "DOMAIN-RO-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.8
     }
   ]
 }
