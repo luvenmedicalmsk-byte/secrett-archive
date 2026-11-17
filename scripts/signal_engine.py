@@ -4609,6 +4609,7 @@ def write_signals_json(events, path):
     # status/phase/lifecycle_stage и их не перезаписывает. Единое время - last_seen
     # (через status). status в shadow не меняется: макропроцессы с жёстким
     # status='active' разбираются отдельно, без скрытого исключения здесь.
+    _ss_stats = None
     if STATE_SHADOW:
         try:
             _ss_stats = _state_shadow_apply(evolved)
@@ -4618,6 +4619,8 @@ def write_signals_json(events, path):
             print(f'  [STATE-SHADOW] skip: {_sse}', file=sys.stderr)
     out={'updated':now,'count':len(evolved),'schema':'process-signal-v1.6',
          'global_health':global_health,'patterns_detected':patterns,'report':report,'signals':evolved}
+    if _ss_stats is not None:
+        out['state_shadow_summary'] = _ss_stats   # этап C: сводка прогона хранится в истории signals.json
     if TOMBSTONE_CONSERVATION:
         out['tombstones']=list(_TOMBSTONES)
         out['count_total']=len(evolved)+len(_TOMBSTONES)
