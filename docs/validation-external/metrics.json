@@ -1,48 +1,48 @@
 {
-  "generated_at": "2026-11-17T11:08:29.632895+00:00",
+  "generated_at": "2026-11-17T11:30:33.974122+00:00",
   "events_database_size": 93,
   "years_covered": "2010-2026",
   "signal_threshold": 60,
   "severity_threshold": 70,
   "1_forecast_accuracy": {
     "n": 72,
-    "mae": 12.79,
-    "rmse": 15.47,
-    "bias": 2.96,
-    "accuracy_pct": 82.9
+    "mae": 12.88,
+    "rmse": 15.51,
+    "bias": 3.18,
+    "accuracy_pct": 82.8
   },
   "2_scenario_accuracy": {
     "n": 76,
-    "hit_rate": 23.7
+    "hit_rate": 25.0
   },
   "3_signal_correlation": {
     "n": 72,
-    "pearson_r": -0.149,
-    "r_squared": 0.022,
+    "pearson_r": -0.189,
+    "r_squared": 0.036,
     "interpretation": "weak"
   },
   "4_5_6_classification": {
     "TP": 60,
-    "FP": 10,
-    "TN": 4,
+    "FP": 11,
+    "TN": 3,
     "FN": 19,
-    "precision_pct": 85.7,
+    "precision_pct": 84.5,
     "recall_pct": 75.9,
-    "fpr_pct": 71.4,
+    "fpr_pct": 78.6,
     "fnr_pct": 24.1,
-    "f1_score_pct": 80.5,
-    "accuracy_pct": 68.8,
+    "f1_score_pct": 80.0,
+    "accuracy_pct": 67.7,
     "signal_threshold": 60,
     "severity_threshold": 70
   },
   "7_brier_score": {
     "n": 93,
-    "brier_score": 0.1654,
-    "brier_skill_score": -0.293,
+    "brier_score": 0.1677,
+    "brier_skill_score": -0.311,
     "interpretation": "fair"
   },
   "8_calibration_error": {
-    "ece": 0.1642,
+    "ece": 0.1625,
     "n_bins_populated": 6,
     "calibration_curve": [
       {
@@ -54,10 +54,10 @@
       },
       {
         "bin_center": 0.55,
-        "mean_pred": 0.507,
-        "mean_actual": 0.818,
-        "n": 22,
-        "error": 0.311
+        "mean_pred": 0.504,
+        "mean_actual": 0.857,
+        "n": 21,
+        "error": 0.353
       },
       {
         "bin_center": 0.65,
@@ -68,10 +68,10 @@
       },
       {
         "bin_center": 0.75,
-        "mean_pred": 0.751,
-        "mean_actual": 0.857,
-        "n": 7,
-        "error": 0.106
+        "mean_pred": 0.75,
+        "mean_actual": 0.75,
+        "n": 8,
+        "error": 0.0
       },
       {
         "bin_center": 0.85,
@@ -306,9 +306,9 @@
       },
       "KZ": {
         "n_events": 1,
-        "mae": 5.0,
-        "classification_accuracy_pct": 100.0,
-        "n_hits": 1,
+        "mae": 11.0,
+        "classification_accuracy_pct": 0.0,
+        "n_hits": 0,
         "event_ids": [
           "E2022-007"
         ]
@@ -338,10 +338,6 @@
     ],
     "bottom5": [
       {
-        "country": "US",
-        "accuracy": 80.0
-      },
-      {
         "country": "AR",
         "accuracy": 80.0
       },
@@ -356,17 +352,27 @@
       {
         "country": "JP",
         "accuracy": 0.0
+      },
+      {
+        "country": "KZ",
+        "accuracy": 0.0
       }
     ],
     "n_countries_covered": 18
   },
   "learning_signals": {
-    "n_signals": 4,
+    "n_signals": 5,
     "signals": [
+      {
+        "type": "bias_correction",
+        "action": "reduce_base_pressure",
+        "detail": "Systematic overestimation bias +3.18pt. Reduce base_pressure factor.",
+        "priority": "MEDIUM"
+      },
       {
         "type": "calibration",
         "action": "recalibrate_confidence",
-        "detail": "ECE=0.164 — confidence scores need Platt scaling or isotonic regression.",
+        "detail": "ECE=0.163 — confidence scores need Platt scaling or isotonic regression.",
         "priority": "HIGH"
       },
       {
@@ -378,18 +384,18 @@
       {
         "type": "correlation",
         "action": "review_signal_sources",
-        "detail": "Signal-outcome correlation r=-0.149 is weak. Review domain weighting formula.",
+        "detail": "Signal-outcome correlation r=-0.189 is weak. Review domain weighting formula.",
         "priority": "HIGH"
       },
       {
         "type": "brier",
         "action": "recalibrate_probability_model",
-        "detail": "BSS=-0.293 — model barely outperforms climatology. Reweight GRIE_W.",
+        "detail": "BSS=-0.311 — model barely outperforms climatology. Reweight GRIE_W.",
         "priority": "HIGH"
       }
     ],
     "priority_high": 3,
-    "priority_medium": 1,
+    "priority_medium": 2,
     "overall_model_health": "critical"
   }
 }
