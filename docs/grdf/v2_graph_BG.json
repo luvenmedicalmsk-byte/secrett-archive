@@ -2,7 +2,7 @@
   "country": "BG",
   "date": "2026-11-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-18T12:48:58.161277+00:00",
+  "generated_at": "2026-11-18T13:09:13.523847+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -33,7 +33,7 @@
       "id": "DOMAIN-BG-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 56,
+      "score": 50,
       "trend": "stable"
     },
     {
@@ -70,14 +70,21 @@
       "label": "social"
     },
     {
+      "id": "DRIVER-BG-economic",
+      "type": "Driver",
+      "label": "economic"
+    },
+    {
       "id": "DRIVER-BG-climate",
       "type": "Driver",
       "label": "climate"
     },
     {
-      "id": "DRIVER-BG-economic",
-      "type": "Driver",
-      "label": "economic"
+      "id": "SIGNAL-BG-Ветер:_Вра",
+      "type": "Signal",
+      "label": "Ветер: Враца, Монтана, Видин и ещё 16 ра",
+      "severity": 50,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-BG-Социальный",
@@ -92,13 +99,6 @@
       "label": "Инфляция — Болгария",
       "severity": 55,
       "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-BG-Климатичес",
-      "type": "Signal",
-      "label": "Климатический сигнал — Болгария",
-      "severity": 56,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-BG",
       "to": "DOMAIN-BG-climate",
       "type": "CORRELATES",
-      "weight": 0.56
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-BG",
@@ -151,13 +151,13 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-BG-climate",
+      "from": "DRIVER-BG-economic",
       "to": "COUNTRY-BG",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-BG-economic",
+      "from": "DRIVER-BG-climate",
       "to": "COUNTRY-BG",
       "type": "CAUSES",
       "weight": 0.8
@@ -226,6 +226,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-BG-Ветер:_Вра",
+      "to": "DOMAIN-BG-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
       "from": "SIGNAL-BG-Социальный",
       "to": "DOMAIN-BG-social",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-BG-economic",
       "type": "AMPLIFIES",
       "weight": 0.55
-    },
-    {
-      "from": "SIGNAL-BG-Климатичес",
-      "to": "DOMAIN-BG-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.56
     }
   ]
 }
