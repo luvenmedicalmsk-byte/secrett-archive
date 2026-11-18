@@ -2,25 +2,25 @@
   "country": "JP",
   "date": "2026-11-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-18T09:49:22.891155+00:00",
+  "generated_at": "2026-11-18T10:09:44.237258+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-JP",
       "type": "Country",
       "label": "JP",
-      "score": 54,
+      "score": 57,
       "props": {
-        "risk_score": 54
+        "risk_score": 57
       }
     },
     {
       "id": "DOMAIN-JP-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 37,
-      "trend": "stable"
+      "score": 50,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-economic",
@@ -47,8 +47,8 @@
       "id": "DOMAIN-JP-social",
       "type": "Domain",
       "label": "social",
-      "score": 76,
-      "trend": "stable"
+      "score": 62,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-infrastructure",
@@ -87,17 +87,17 @@
       "domain": "social"
     },
     {
-      "id": "SIGNAL-JP-Эпидемиоло",
+      "id": "SIGNAL-JP-Япония_рас",
       "type": "Signal",
-      "label": "Эпидемиологический риск — Восточная Азия",
-      "severity": 83,
-      "domain": "social"
+      "label": "Япония рассматривает возможность удалени",
+      "severity": 50,
+      "domain": "geopolitical"
     },
     {
       "id": "SIGNAL-JP-Эпидемиоло",
       "type": "Signal",
-      "label": "Эпидемиологический риск — Япония",
-      "severity": 76,
+      "label": "Эпидемиологический риск — Восточная Азия",
+      "severity": 83,
       "domain": "social"
     }
   ],
@@ -106,7 +106,7 @@
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-JP",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-social",
       "type": "CORRELATES",
-      "weight": 0.76
+      "weight": 0.62
     },
     {
       "from": "COUNTRY-JP",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-JP-geopolitical",
+      "to": "DOMAIN-JP-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-JP-infrastructure",
+      "to": "DOMAIN-JP-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-JP-economic",
+      "to": "DOMAIN-JP-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-JP-Поход_в_го",
       "to": "DOMAIN-JP-social",
       "type": "AMPLIFIES",
       "weight": 0.54
     },
     {
-      "from": "SIGNAL-JP-Эпидемиоло",
-      "to": "DOMAIN-JP-social",
+      "from": "SIGNAL-JP-Япония_рас",
+      "to": "DOMAIN-JP-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.83
+      "weight": 0.5
     },
     {
       "from": "SIGNAL-JP-Эпидемиоло",
       "to": "DOMAIN-JP-social",
       "type": "AMPLIFIES",
-      "weight": 0.76
+      "weight": 0.83
     }
   ]
 }

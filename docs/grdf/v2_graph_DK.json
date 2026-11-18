@@ -2,67 +2,72 @@
   "country": "DK",
   "date": "2026-11-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-18T09:49:22.896142+00:00",
-  "node_count": 13,
-  "edge_count": 12,
+  "generated_at": "2026-11-18T10:09:44.242165+00:00",
+  "node_count": 14,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-DK",
       "type": "Country",
       "label": "DK",
-      "score": 48,
+      "score": 62,
       "props": {
-        "risk_score": 48
+        "risk_score": 62
       }
     },
     {
       "id": "DOMAIN-DK-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 12,
-      "trend": "down"
+      "score": 66,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DK-economic",
       "type": "Domain",
       "label": "economic",
       "score": 32,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DK-climate",
       "type": "Domain",
       "label": "climate",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DK-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DK-social",
       "type": "Domain",
       "label": "social",
       "score": 58,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DK-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DK-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
+    },
+    {
+      "id": "DRIVER-DK-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
     },
     {
       "id": "DRIVER-DK-social",
@@ -75,9 +80,11 @@
       "label": "economic"
     },
     {
-      "id": "DRIVER-DK-geopolitical",
-      "type": "Driver",
-      "label": "geopolitical"
+      "id": "SIGNAL-DK-Евросоюз_в",
+      "type": "Signal",
+      "label": "Евросоюз ввёл санкции против пропагандис",
+      "severity": 62,
+      "domain": "geopolitical"
     },
     {
       "id": "SIGNAL-DK-Социальный",
@@ -99,7 +106,7 @@
       "from": "COUNTRY-DK",
       "to": "DOMAIN-DK-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.66
     },
     {
       "from": "COUNTRY-DK",
@@ -138,6 +145,12 @@
       "weight": 0.05
     },
     {
+      "from": "DRIVER-DK-geopolitical",
+      "to": "COUNTRY-DK",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-DK-social",
       "to": "COUNTRY-DK",
       "type": "CAUSES",
@@ -150,10 +163,31 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-DK-geopolitical",
-      "to": "COUNTRY-DK",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-DK-geopolitical",
+      "to": "DOMAIN-DK-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-DK-infrastructure",
+      "to": "DOMAIN-DK-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-DK-economic",
+      "to": "DOMAIN-DK-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-DK-Евросоюз_в",
+      "to": "DOMAIN-DK-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.62
     },
     {
       "from": "SIGNAL-DK-Социальный",
