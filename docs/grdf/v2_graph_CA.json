@@ -1,26 +1,26 @@
 {
   "country": "CA",
-  "date": "2026-11-17",
+  "date": "2026-11-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-17T23:50:15.681089+00:00",
+  "generated_at": "2026-11-18T00:11:33.276495+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-CA",
       "type": "Country",
       "label": "CA",
-      "score": 64,
+      "score": 65,
       "props": {
-        "risk_score": 64
+        "risk_score": 65
       }
     },
     {
       "id": "DOMAIN-CA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
-      "trend": "stable"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-economic",
@@ -94,11 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-CA-Пожарный_с",
+      "id": "SIGNAL-CA-Air_qualit",
       "type": "Signal",
-      "label": "Пожарный сигнал — Северная Америка · Ван",
-      "severity": 52,
-      "domain": "climate"
+      "label": "Air quality: Стюарт - Нечако, Канада",
+      "severity": 56,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-CA",
@@ -184,6 +184,27 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-CA-geopolitical",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "DOMAIN-CA-climate",
       "to": "DOMAIN-CA-infrastructure",
       "type": "ESCALATES",
@@ -217,10 +238,10 @@
       "weight": 0.56
     },
     {
-      "from": "SIGNAL-CA-Пожарный_с",
-      "to": "DOMAIN-CA-climate",
+      "from": "SIGNAL-CA-Air_qualit",
+      "to": "DOMAIN-CA-social",
       "type": "AMPLIFIES",
-      "weight": 0.52
+      "weight": 0.56
     }
   ]
 }
