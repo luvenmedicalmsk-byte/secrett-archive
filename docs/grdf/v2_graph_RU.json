@@ -2,9 +2,9 @@
   "country": "RU",
   "date": "2026-11-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-18T11:48:24.540525+00:00",
+  "generated_at": "2026-11-18T12:10:42.648930+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-RU",
@@ -33,7 +33,7 @@
       "id": "DOMAIN-RU-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 88,
       "trend": "stable"
     },
     {
@@ -87,17 +87,17 @@
       "domain": "geopolitical"
     },
     {
+      "id": "SIGNAL-RU-Ветер:_Кра",
+      "type": "Signal",
+      "label": "Ветер: Край Харц - Горы (Оберхарц), Край",
+      "severity": 88,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-RU-Дроны_атак",
       "type": "Signal",
       "label": "Дроны атаковали Краснодарский край Росси",
       "severity": 85,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-RU-ПВО_России",
-      "type": "Signal",
-      "label": "ПВО России отразила самую массированную ",
-      "severity": 84,
       "domain": "geopolitical"
     }
   ],
@@ -118,7 +118,7 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.88
     },
     {
       "from": "COUNTRY-RU",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-RU-climate",
+      "to": "DOMAIN-RU-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-RU-economic",
+      "to": "DOMAIN-RU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-RU-social",
+      "to": "DOMAIN-RU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-RU-geopolitical",
       "to": "DOMAIN-RU-infrastructure",
       "type": "ESCALATES",
@@ -184,22 +205,43 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-RU-climate",
+      "to": "DOMAIN-RU-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-RU-infrastructure",
+      "to": "DOMAIN-RU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-RU-economic",
+      "to": "DOMAIN-RU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-RU-Массирован",
       "to": "DOMAIN-RU-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.95
     },
     {
+      "from": "SIGNAL-RU-Ветер:_Кра",
+      "to": "DOMAIN-RU-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.88
+    },
+    {
       "from": "SIGNAL-RU-Дроны_атак",
       "to": "DOMAIN-RU-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.85
-    },
-    {
-      "from": "SIGNAL-RU-ПВО_России",
-      "to": "DOMAIN-RU-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.84
     }
   ]
 }
