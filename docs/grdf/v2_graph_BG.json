@@ -2,9 +2,9 @@
   "country": "BG",
   "date": "2026-11-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-18T09:29:23.817594+00:00",
+  "generated_at": "2026-11-18T09:49:22.897760+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-BG",
@@ -33,7 +33,7 @@
       "id": "DOMAIN-BG-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 56,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -70,14 +70,21 @@
       "label": "social"
     },
     {
-      "id": "DRIVER-BG-climate",
-      "type": "Driver",
-      "label": "climate"
-    },
-    {
       "id": "DRIVER-BG-economic",
       "type": "Driver",
       "label": "economic"
+    },
+    {
+      "id": "DRIVER-BG-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-BG-Болгария_о",
+      "type": "Signal",
+      "label": "Болгария отказалась выделять Украине доп",
+      "severity": 46,
+      "domain": "economic"
     },
     {
       "id": "SIGNAL-BG-Инфляция_—",
@@ -92,13 +99,6 @@
       "label": "Социальный процесс — Болгария",
       "severity": 61,
       "domain": "social"
-    },
-    {
-      "id": "SIGNAL-BG-Климатичес",
-      "type": "Signal",
-      "label": "Климатический сигнал — Болгария",
-      "severity": 56,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-BG",
       "to": "DOMAIN-BG-climate",
       "type": "CORRELATES",
-      "weight": 0.56
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-BG",
@@ -151,58 +151,16 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-BG-climate",
-      "to": "COUNTRY-BG",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
       "from": "DRIVER-BG-economic",
       "to": "COUNTRY-BG",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-BG-climate",
-      "to": "DOMAIN-BG-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-BG-economic",
-      "to": "DOMAIN-BG-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-BG-social",
-      "to": "DOMAIN-BG-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-BG-climate",
-      "to": "DOMAIN-BG-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-BG-infrastructure",
-      "to": "DOMAIN-BG-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-BG-economic",
-      "to": "DOMAIN-BG-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
+      "from": "DRIVER-BG-geopolitical",
+      "to": "COUNTRY-BG",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DOMAIN-BG-geopolitical",
@@ -226,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-BG-Болгария_о",
+      "to": "DOMAIN-BG-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.46
+    },
+    {
       "from": "SIGNAL-BG-Инфляция_—",
       "to": "DOMAIN-BG-economic",
       "type": "AMPLIFIES",
@@ -236,12 +200,6 @@
       "to": "DOMAIN-BG-social",
       "type": "AMPLIFIES",
       "weight": 0.61
-    },
-    {
-      "from": "SIGNAL-BG-Климатичес",
-      "to": "DOMAIN-BG-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.56
     }
   ]
 }
