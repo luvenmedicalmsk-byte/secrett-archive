@@ -2,9 +2,9 @@
   "country": "BY",
   "date": "2026-11-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-18T19:49:06.970519+00:00",
+  "generated_at": "2026-11-18T20:09:31.838955+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-BY",
@@ -33,14 +33,14 @@
       "id": "DOMAIN-BY-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 70,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-BY-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 35,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -87,18 +87,18 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-BY-В_Беларуси",
-      "type": "Signal",
-      "label": "В Беларуси 21-летнего иностранца обвиняю",
-      "severity": 35,
-      "domain": "technology"
-    },
-    {
       "id": "SIGNAL-BY-Военные_уд",
       "type": "Signal",
       "label": "Военные удары — Беларусь",
       "severity": 56,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-BY-Пожарная_а",
+      "type": "Signal",
+      "label": "Пожарная активность — Беларусь",
+      "severity": 70,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -118,13 +118,13 @@
       "from": "COUNTRY-BY",
       "to": "DOMAIN-BY-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.7
     },
     {
       "from": "COUNTRY-BY",
       "to": "DOMAIN-BY-technology",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-BY",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-BY-climate",
+      "to": "DOMAIN-BY-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-BY-economic",
+      "to": "DOMAIN-BY-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-BY-social",
+      "to": "DOMAIN-BY-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-BY-climate",
+      "to": "DOMAIN-BY-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-BY-infrastructure",
+      "to": "DOMAIN-BY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-BY-economic",
+      "to": "DOMAIN-BY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "DOMAIN-BY-geopolitical",
       "to": "DOMAIN-BY-infrastructure",
       "type": "ESCALATES",
@@ -190,16 +232,16 @@
       "weight": 0.56
     },
     {
-      "from": "SIGNAL-BY-В_Беларуси",
-      "to": "DOMAIN-BY-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.35
-    },
-    {
       "from": "SIGNAL-BY-Военные_уд",
       "to": "DOMAIN-BY-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.56
+    },
+    {
+      "from": "SIGNAL-BY-Пожарная_а",
+      "to": "DOMAIN-BY-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.7
     }
   ]
 }
