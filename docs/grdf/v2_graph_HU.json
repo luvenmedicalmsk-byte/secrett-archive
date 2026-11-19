@@ -2,7 +2,7 @@
   "country": "HU",
   "date": "2026-11-19",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-19T22:29:37.600765+00:00",
+  "generated_at": "2026-11-19T22:42:42.026036+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -40,7 +40,7 @@
       "id": "DOMAIN-HU-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 64,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -65,11 +65,6 @@
       "trend": "stable"
     },
     {
-      "id": "DRIVER-HU-technology",
-      "type": "Driver",
-      "label": "technology"
-    },
-    {
       "id": "DRIVER-HU-climate",
       "type": "Driver",
       "label": "climate"
@@ -80,9 +75,21 @@
       "label": "geopolitical"
     },
     {
-      "id": "SIGNAL-HU-Ливень:_Юж",
+      "id": "DRIVER-HU-economic",
+      "type": "Driver",
+      "label": "economic"
+    },
+    {
+      "id": "SIGNAL-HU-Гроза:_Южн",
       "type": "Signal",
-      "label": "Ливень: Южная Великая Равнина, Северная ",
+      "label": "Гроза: Южный Трансданубий, Южная Великая",
+      "severity": 50,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-HU-Ливень:_Се",
+      "type": "Signal",
+      "label": "Ливень: Северная Великая Равнина, Венгри",
       "severity": 50,
       "domain": "climate"
     },
@@ -92,13 +99,6 @@
       "label": "Шторм — Венгрия",
       "severity": 50,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-HU-Технологич",
-      "type": "Signal",
-      "label": "Технологический сигнал — Венгрия",
-      "severity": 64,
-      "domain": "technology"
     }
   ],
   "edges": [
@@ -124,7 +124,7 @@
       "from": "COUNTRY-HU",
       "to": "DOMAIN-HU-technology",
       "type": "CORRELATES",
-      "weight": 0.64
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-HU",
@@ -145,12 +145,6 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-HU-technology",
-      "to": "COUNTRY-HU",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
       "from": "DRIVER-HU-climate",
       "to": "COUNTRY-HU",
       "type": "CAUSES",
@@ -158,6 +152,12 @@
     },
     {
       "from": "DRIVER-HU-geopolitical",
+      "to": "COUNTRY-HU",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DRIVER-HU-economic",
       "to": "COUNTRY-HU",
       "type": "CAUSES",
       "weight": 0.8
@@ -226,7 +226,13 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-HU-Ливень:_Юж",
+      "from": "SIGNAL-HU-Гроза:_Южн",
+      "to": "DOMAIN-HU-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
+      "from": "SIGNAL-HU-Ливень:_Се",
       "to": "DOMAIN-HU-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
@@ -236,12 +242,6 @@
       "to": "DOMAIN-HU-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-HU-Технологич",
-      "to": "DOMAIN-HU-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.64
     }
   ]
 }
