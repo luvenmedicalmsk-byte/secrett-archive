@@ -2,7 +2,7 @@
   "country": "CH",
   "date": "2026-11-19",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-19T13:48:41.726601+00:00",
+  "generated_at": "2026-11-19T14:09:01.289245+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-CH",
       "type": "Country",
       "label": "CH",
-      "score": 85,
+      "score": 92,
       "props": {
-        "risk_score": 85
+        "risk_score": 92
       }
     },
     {
@@ -20,49 +20,49 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-climate",
       "type": "Domain",
       "label": "climate",
       "score": 72,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
-      "trend": "down"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DRIVER-CH-Geopolitical",
@@ -87,16 +87,16 @@
       "domain": "climate"
     },
     {
+      "id": "SIGNAL-CH-Вспышка:_б",
+      "type": "Signal",
+      "label": "Вспышка: болезнь, вызванная вирусом чику",
+      "severity": 60,
+      "domain": "social"
+    },
+    {
       "id": "SIGNAL-CH-Снег:_Грин",
       "type": "Signal",
       "label": "Снег: Гриндельвальд, Иннерткирхен-Гуттан",
-      "severity": 50,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-CH-Ливень:_Эр",
-      "type": "Signal",
-      "label": "Ливень: Эрстфельд-Энгельберг, Мейринген-",
       "severity": 50,
       "domain": "climate"
     }
@@ -130,7 +130,7 @@
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-CH",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-CH-climate",
-      "to": "DOMAIN-CH-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-CH-infrastructure",
-      "to": "DOMAIN-CH-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-CH-economic",
-      "to": "DOMAIN-CH-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-CH-climate",
       "to": "DOMAIN-CH-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,19 +184,40 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-CH-climate",
+      "to": "DOMAIN-CH-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-CH-infrastructure",
+      "to": "DOMAIN-CH-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CH-economic",
+      "to": "DOMAIN-CH-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-CH-Ветер:_Дел",
       "to": "DOMAIN-CH-climate",
       "type": "AMPLIFIES",
       "weight": 0.72
     },
     {
-      "from": "SIGNAL-CH-Снег:_Грин",
-      "to": "DOMAIN-CH-climate",
+      "from": "SIGNAL-CH-Вспышка:_б",
+      "to": "DOMAIN-CH-social",
       "type": "AMPLIFIES",
-      "weight": 0.5
+      "weight": 0.6
     },
     {
-      "from": "SIGNAL-CH-Ливень:_Эр",
+      "from": "SIGNAL-CH-Снег:_Грин",
       "to": "DOMAIN-CH-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
