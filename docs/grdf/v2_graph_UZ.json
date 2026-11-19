@@ -2,9 +2,9 @@
   "country": "UZ",
   "date": "2026-11-19",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-19T18:29:48.021315+00:00",
+  "generated_at": "2026-11-19T19:11:05.013207+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-UZ",
@@ -33,7 +33,7 @@
       "id": "DOMAIN-UZ-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 46,
       "trend": "stable"
     },
     {
@@ -47,7 +47,7 @@
       "id": "DOMAIN-UZ-social",
       "type": "Domain",
       "label": "social",
-      "score": 25,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -70,14 +70,21 @@
       "label": "technology"
     },
     {
+      "id": "DRIVER-UZ-climate",
+      "type": "Driver",
+      "label": "climate"
+    },
+    {
       "id": "DRIVER-UZ-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-UZ-economic",
-      "type": "Driver",
-      "label": "economic"
+      "id": "SIGNAL-UZ-Водный_деф",
+      "type": "Signal",
+      "label": "Водный дефицит — Центральная Азия",
+      "severity": 62,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-UZ-Отключение",
@@ -92,13 +99,6 @@
       "label": "Экономический сигнал — Центральная Азия",
       "severity": 44,
       "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-UZ-Социальный",
-      "type": "Signal",
-      "label": "Социальный процесс — Центральная Азия",
-      "severity": 34,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-UZ",
       "to": "DOMAIN-UZ-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-UZ",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-UZ",
       "to": "DOMAIN-UZ-social",
       "type": "CORRELATES",
-      "weight": 0.25
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-UZ",
@@ -151,16 +151,58 @@
       "weight": 0.8
     },
     {
+      "from": "DRIVER-UZ-climate",
+      "to": "COUNTRY-UZ",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-UZ-geopolitical",
       "to": "COUNTRY-UZ",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-UZ-economic",
-      "to": "COUNTRY-UZ",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-UZ-climate",
+      "to": "DOMAIN-UZ-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-UZ-infrastructure",
+      "to": "DOMAIN-UZ-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-UZ-economic",
+      "to": "DOMAIN-UZ-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-UZ-climate",
+      "to": "DOMAIN-UZ-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-UZ-economic",
+      "to": "DOMAIN-UZ-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-UZ-social",
+      "to": "DOMAIN-UZ-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "DOMAIN-UZ-geopolitical",
@@ -184,6 +226,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-UZ-Водный_деф",
+      "to": "DOMAIN-UZ-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.62
+    },
+    {
       "from": "SIGNAL-UZ-Отключение",
       "to": "DOMAIN-UZ-technology",
       "type": "AMPLIFIES",
@@ -194,12 +242,6 @@
       "to": "DOMAIN-UZ-economic",
       "type": "AMPLIFIES",
       "weight": 0.44
-    },
-    {
-      "from": "SIGNAL-UZ-Социальный",
-      "to": "DOMAIN-UZ-social",
-      "type": "AMPLIFIES",
-      "weight": 0.34
     }
   ]
 }
