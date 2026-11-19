@@ -2,7 +2,7 @@
   "country": "MY",
   "date": "2026-11-19",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-19T16:29:34.967826+00:00",
+  "generated_at": "2026-11-19T16:48:53.212808+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -47,7 +47,7 @@
       "id": "DOMAIN-MY-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
+      "score": 43,
       "trend": "stable"
     },
     {
@@ -75,16 +75,9 @@
       "label": "technology"
     },
     {
-      "id": "DRIVER-MY-geopolitical",
+      "id": "DRIVER-MY-social",
       "type": "Driver",
-      "label": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-MY-Экспорт_Ма",
-      "type": "Signal",
-      "label": "Экспорт Малайзии в годовом исчислении",
-      "severity": 32,
-      "domain": "economic"
+      "label": "social"
     },
     {
       "id": "SIGNAL-MY-Отключение",
@@ -99,6 +92,13 @@
       "label": "Наводнение — Малайзия",
       "severity": 63,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-MY-Миграционн",
+      "type": "Signal",
+      "label": "Миграционная политика — Юго-Восточная Аз",
+      "severity": 58,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -130,7 +130,7 @@
       "from": "COUNTRY-MY",
       "to": "DOMAIN-MY-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.43
     },
     {
       "from": "COUNTRY-MY",
@@ -157,31 +157,10 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-MY-geopolitical",
+      "from": "DRIVER-MY-social",
       "to": "COUNTRY-MY",
       "type": "CAUSES",
       "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-MY-climate",
-      "to": "DOMAIN-MY-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-MY-infrastructure",
-      "to": "DOMAIN-MY-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-MY-economic",
-      "to": "DOMAIN-MY-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
     },
     {
       "from": "DOMAIN-MY-climate",
@@ -205,10 +184,25 @@
       "lag_days": 90
     },
     {
-      "from": "SIGNAL-MY-Экспорт_Ма",
+      "from": "DOMAIN-MY-climate",
+      "to": "DOMAIN-MY-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-MY-infrastructure",
       "to": "DOMAIN-MY-economic",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-MY-economic",
+      "to": "DOMAIN-MY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "SIGNAL-MY-Отключение",
@@ -221,6 +215,12 @@
       "to": "DOMAIN-MY-climate",
       "type": "AMPLIFIES",
       "weight": 0.63
+    },
+    {
+      "from": "SIGNAL-MY-Миграционн",
+      "to": "DOMAIN-MY-social",
+      "type": "AMPLIFIES",
+      "weight": 0.58
     }
   ]
 }
