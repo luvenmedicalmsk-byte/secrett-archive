@@ -4742,6 +4742,144 @@ def _ss_section(st, ph, stage, pe, watch):
     return 'active'
 
 
+# ═══ MACRO_STATE_POLICY_SHADOW 19.11.2026 (решение Мии по КТ2, этап C) ═════════
+# Две модели состояния системного процесса. Только shadow: status, phase и
+# lifecycle_stage не меняются. Откат: MACRO_POLICY_SHADOW = False.
+#   Временная модель: состояние только по возрасту последнего реального сигнала
+#     (до 48 ч active, до 168 ч fading, до 720 ч dormant, дальше archived).
+#   Системная модель: то же, но если есть признак продолжающегося структурного
+#     риска, длительное молчание не переводит процесс в archived: он становится
+#     latent («структурный риск сохраняется, новых сигналов нет»).
+# Структурный признак (одно из):
+#   - хронический класс процесса (долг, рынки, санкции, дефицит воды, миграция...);
+#   - продолжающийся вооружённый конфликт (Военные удары / конфликтный уровень);
+#   - постоянный структурный риск России из статичного слоя карты (пожары,
+#     паводки, засуха и жара) для климатических процессов по России.
+# Эпизодические классы (инциденты, аварии, взрывы, шторм) и общие «… сигнал»
+# структурного признака не имеют: для них системная модель = временной.
+MACRO_POLICY_SHADOW = True
+_MP_STRUCTURAL = {
+    'Санкционное давление': 'хроническое санкционное давление',
+    'Топливный рынок': 'рыночный структурный фактор',
+    'Финансовый рынок': 'рыночный структурный фактор',
+    'Валютный рынок': 'рыночный структурный фактор',
+    'Розничная торговля': 'рыночный структурный фактор',
+    'Рынок труда': 'хронический социально-экономический фактор',
+    'Инфляция': 'хронический макроэкономический фактор',
+    'Государственный долг': 'хронический макроэкономический фактор',
+    'Торговый баланс': 'хронический макроэкономический фактор',
+    'Возобновляемая энергетика': 'долгосрочный энергетический переход',
+    'Водный дефицит': 'хронический водный стресс',
+    'Миграционная политика': 'хронический миграционный фактор',
+    'Эпидемиологический риск': 'продолжающийся эпидемиологический риск',
+    'Эпидемиологический надзор': 'продолжающийся эпидемиологический риск',
+    'Киберугроза': 'постоянная киберугроза',
+    'Военные удары': 'продолжающийся вооружённый конфликт',
+}
+_MP_RU_STATIC = {   # статичный слой get_russia_static_risks() (fetch_events.py)
+    'Пожарная активность': 'постоянный структурный риск: сезон лесных пожаров (Сибирь, Дальний Восток, Якутия)',
+    'Наводнение': 'постоянный структурный риск: паводки (Амур, Урал, Западная Сибирь)',
+    'Тепловая волна': 'постоянный структурный риск: засуха и аномальная жара (Поволжье, Черноземье)',
+    'Водный дефицит': 'постоянный структурный риск: деградация Каспия, засуха',
+}
+
+
+# Заголовки статичного слоя России обновляются каждым прогоном и не являются
+# реальными сигналами: в «последний реальный сигнал» не входят.
+_MP_STATIC_TITLES = ('Сезон лесных пожаров:', 'Лесные пожары: Якутия', 'Паводковый риск: бассейн',
+                     'Паводки: реки Урала', 'Таяние вечной мерзлоты:', 'Выбросы метана: таяние',
+                     'Норильск: зона критического', 'Деградация Каспийского моря', 'Засуха и аномальная жара: Поволжье',
+                     'Арктика теплеет')
+
+
+def _mp_is_static(t):
+    t = str(t or '')
+    return any(t.startswith(x) for x in _MP_STATIC_TITLES)
+
+
+def _mp_by_age(h):
+    if h is None: return None
+    return 'active' if h < 48 else 'fading' if h < 168 else 'dormant' if h < 720 else 'archived'
+
+
+def _macro_policy_shadow(signals, now):
+    by_id = {x.get('signal_id'): x for x in signals or []}
+    cnt = {'macro': 0, 'mismatch_temporal': 0, 'mismatch_systemic': 0, 'latent': 0,
+           'temporal': {}, 'systemic': {}}
+    for s in signals or []:
+        if not s.get('is_macro'):
+            continue
+        last_t, last_title, has_static = None, None, False
+        for ev in (s.get('evidence') or []):
+            if _mp_is_static(ev.get('title')):
+                has_static = True
+                continue
+            d = str(ev.get('date') or '')[:10]
+            if d and (last_t is None or d > last_t):
+                last_t, last_title = d, ev.get('title')
+        try:
+            _ls = datetime.fromisoformat(str(s.get('last_seen')).replace('Z', '+00:00'))
+            if _ls.tzinfo is None: _ls = _ls.replace(tzinfo=timezone.utc)
+        except Exception:
+            _ls = None
+        for mid in (s.get('included_processes') or []):
+            m = by_id.get(mid)
+            if not m: continue
+            try:
+                _ml = datetime.fromisoformat(str(m.get('last_seen')).replace('Z', '+00:00'))
+                if _ml.tzinfo is None: _ml = _ml.replace(tzinfo=timezone.utc)
+                if _ls is None or _ml > _ls: _ls = _ml
+            except Exception:
+                pass
+        static_only_fresh = False
+        if has_static and last_t:
+            # статичный слой «освежает» last_seen; реальный сигнал - по дате
+            # последнего нестатичного свидетельства (точность - сутки, конец дня)
+            try:
+                _rt = datetime.fromisoformat(last_t + 'T23:59:59+00:00')
+                if _ls is None or _rt < _ls:
+                    _ls, static_only_fresh = _rt, True
+            except Exception:
+                pass
+        age = None if _ls is None else round((now - _ls).total_seconds() / 3600, 1)
+        temporal = _mp_by_age(age)
+        pt = s.get('process_type') or ''
+        regions = s.get('included_regions') or []
+        basis = []
+        if age is not None and age < 48:
+            basis.append('новые сигналы за 48 ч')
+        if pt in _MP_STRUCTURAL:
+            basis.append(_MP_STRUCTURAL[pt])
+        elif s.get('macro_level') == 'conflict':
+            basis.append('продолжающийся вооружённый конфликт')
+        if pt in _MP_RU_STATIC and (' Россия' in (s.get('title') or '') or s.get('macro_level') == 'country'
+                                     and any('област' in r or 'край' in r or r in ('Сибирь', 'Урал', 'Дальний Восток') for r in regions)):
+            basis.append(_MP_RU_STATIC[pt])
+        structural = any(b != 'новые сигналы за 48 ч' for b in basis)
+        systemic = temporal
+        if structural and temporal in ('dormant', 'archived'):
+            systemic = 'latent'
+        s['macro_state_policy_shadow'] = {
+            'rule': 'MACRO-POLICY-2026-11-19',
+            'status_now': s.get('status'), 'phase_now': s.get('phase'), 'stage_now': s.get('lifecycle_stage'),
+            'last_signal_at': _ls.strftime('%Y-%m-%dT%H:%M:%SZ') if _ls else None,
+            'last_signal_title': (last_title or '')[:140] or None,
+            'age_h': age,
+            'static_layer_refresh': static_only_fresh,
+            'basis': basis or ['нет основания: эпизодический класс без новых сигналов'],
+            'structural': structural,
+            'temporal_model': temporal,
+            'systemic_model': systemic,
+        }
+        cnt['macro'] += 1
+        cnt['temporal'][temporal] = cnt['temporal'].get(temporal, 0) + 1
+        cnt['systemic'][systemic] = cnt['systemic'].get(systemic, 0) + 1
+        if temporal != s.get('status'): cnt['mismatch_temporal'] += 1
+        if systemic != s.get('status'): cnt['mismatch_systemic'] += 1
+        if systemic == 'latent': cnt['latent'] += 1
+    return cnt
+
+
 def _state_shadow_apply(signals):
     st_cnt = {'processes': 0, 'changed': 0, 'stage': 0, 'phase': 0, 'status': 0, 'section': 0, 'by_pair': {}, 'by_domain': {}, 'by_section': {}}
     st_cnt['macro_excluded'] = 0; st_cnt['macro_status_mismatch'] = 0
@@ -4807,6 +4945,11 @@ def _state_shadow_apply(signals):
             k2 = sec0 + '->' + sec1
             st_cnt['by_section'][k2] = st_cnt['by_section'].get(k2, 0) + 1
     st_cnt['by_pair'] = dict(sorted(st_cnt['by_pair'].items(), key=lambda x: -x[1])[:25])
+    if MACRO_POLICY_SHADOW:
+        try:
+            st_cnt['macro_policy'] = _macro_policy_shadow(signals, _now)
+        except Exception as _mpe:
+            st_cnt['macro_policy'] = {'error': str(_mpe)[:120]}
     return st_cnt
 
 
