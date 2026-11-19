@@ -2,7 +2,7 @@
   "country": "MY",
   "date": "2026-11-19",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-19T23:27:39.597178+00:00",
+  "generated_at": "2026-11-19T23:48:23.045251+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -19,7 +19,7 @@
       "id": "DOMAIN-MY-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
+      "score": 39,
       "trend": "stable"
     },
     {
@@ -47,7 +47,7 @@
       "id": "DOMAIN-MY-social",
       "type": "Domain",
       "label": "social",
-      "score": 43,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -75,9 +75,9 @@
       "label": "technology"
     },
     {
-      "id": "DRIVER-MY-social",
+      "id": "DRIVER-MY-geopolitical",
       "type": "Driver",
-      "label": "social"
+      "label": "geopolitical"
     },
     {
       "id": "SIGNAL-MY-Отключение",
@@ -87,18 +87,18 @@
       "domain": "technology"
     },
     {
+      "id": "SIGNAL-MY-Геополитич",
+      "type": "Signal",
+      "label": "Геополитический процесс — Юго-Восточная ",
+      "severity": 53,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-MY-Наводнение",
       "type": "Signal",
       "label": "Наводнение — Малайзия",
       "severity": 63,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-MY-Миграционн",
-      "type": "Signal",
-      "label": "Миграционная политика — Юго-Восточная Аз",
-      "severity": 58,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-MY",
       "to": "DOMAIN-MY-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.39
     },
     {
       "from": "COUNTRY-MY",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-MY",
       "to": "DOMAIN-MY-social",
       "type": "CORRELATES",
-      "weight": 0.43
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-MY",
@@ -157,31 +157,10 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-MY-social",
+      "from": "DRIVER-MY-geopolitical",
       "to": "COUNTRY-MY",
       "type": "CAUSES",
       "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-MY-climate",
-      "to": "DOMAIN-MY-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-MY-economic",
-      "to": "DOMAIN-MY-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-MY-social",
-      "to": "DOMAIN-MY-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
     },
     {
       "from": "DOMAIN-MY-climate",
@@ -205,22 +184,43 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-MY-climate",
+      "to": "DOMAIN-MY-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-MY-economic",
+      "to": "DOMAIN-MY-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-MY-social",
+      "to": "DOMAIN-MY-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "SIGNAL-MY-Отключение",
       "to": "DOMAIN-MY-technology",
       "type": "AMPLIFIES",
       "weight": 0.56
     },
     {
+      "from": "SIGNAL-MY-Геополитич",
+      "to": "DOMAIN-MY-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.53
+    },
+    {
       "from": "SIGNAL-MY-Наводнение",
       "to": "DOMAIN-MY-climate",
       "type": "AMPLIFIES",
       "weight": 0.63
-    },
-    {
-      "from": "SIGNAL-MY-Миграционн",
-      "to": "DOMAIN-MY-social",
-      "type": "AMPLIFIES",
-      "weight": 0.58
     }
   ]
 }
