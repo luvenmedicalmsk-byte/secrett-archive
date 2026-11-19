@@ -2,7 +2,7 @@
   "country": "LT",
   "date": "2026-11-19",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-19T10:08:30.843239+00:00",
+  "generated_at": "2026-11-19T10:28:16.488412+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-LT-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 32,
       "trend": "stable"
     },
     {
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-LT-Ветер:_Кла",
-      "type": "Signal",
-      "label": "Ветер: Клайпедский уезд, Юго-восточная Б",
-      "severity": 50,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-LT-Геополитич",
       "type": "Signal",
       "label": "Геополитический процесс — Литва",
       "severity": 34,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-LT-Экономичес",
+      "type": "Signal",
+      "label": "Экономический сигнал — Литва",
+      "severity": 32,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-LT",
       "to": "DOMAIN-LT-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-LT",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-LT-climate",
-      "to": "DOMAIN-LT-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-LT-economic",
-      "to": "DOMAIN-LT-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-LT-social",
-      "to": "DOMAIN-LT-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-LT-climate",
       "to": "DOMAIN-LT-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -205,13 +184,28 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-LT-Ветер:_Мор",
-      "to": "DOMAIN-LT-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.5
+      "from": "DOMAIN-LT-climate",
+      "to": "DOMAIN-LT-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
     },
     {
-      "from": "SIGNAL-LT-Ветер:_Кла",
+      "from": "DOMAIN-LT-economic",
+      "to": "DOMAIN-LT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-LT-social",
+      "to": "DOMAIN-LT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "SIGNAL-LT-Ветер:_Мор",
       "to": "DOMAIN-LT-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
@@ -221,6 +215,12 @@
       "to": "DOMAIN-LT-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.34
+    },
+    {
+      "from": "SIGNAL-LT-Экономичес",
+      "to": "DOMAIN-LT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.32
     }
   ]
 }
