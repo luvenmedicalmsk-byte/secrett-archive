@@ -11553,7 +11553,25 @@ _GR9_PL = {'краков': ('Малопольское воеводство', 50.
            'белосток': ('Подляское воеводство', 53.13, 23.16)}
 
 
-def _gr9_set(e, cc, region, lat, lng, why):
+# GR9_SYNC_1911 (19.11.2026, решение Мии, ПОДГОТОВЛЕНО, В PRODUCTION НЕ ВКЛЮЧЕНО).
+# Правило D исправляло country_code, а primary_country и event_country оставались
+# прежними, поэтому хорватские и французские предупреждения продолжали входить
+# в индекс России. При включении правило D (страна в конце заголовка - однозначная
+# география) обновляет три поля согласованно и сохраняет исходные значения.
+# Исключение RU/UA для Крыма, Керчи, Севастополя и Азовского моря сохраняется.
+GR9_SYNC_1911 = False
+GEO_SYNC_1911 = False   # CAP: страна службы (scripts/geo_sync_1911.py), подготовлено, выключено
+_GR9_DISPUTED = re.compile(r'крым|керч|севастопол|азовск', re.I)
+
+
+def _gr9_set(e, cc, region, lat, lng, why, sync=False):
+    if GR9_SYNC_1911 and sync:
+        _before = {k: (e.get(k) or None) for k in ('country_code', 'primary_country', 'event_country')}
+        _pair = set(v for v in _before.values() if v) | {cc}
+        if not ({'RU', 'UA'} <= _pair and _GR9_DISPUTED.search(e.get('title') or '')):
+            if any(v != cc for v in _before.values()):
+                e['geo_fix_audit'] = {'rule': 'GR9_SYNC_1911', 'reason': why, 'before': _before, 'to': cc}
+            e['primary_country'] = e['event_country'] = cc
     e['lat'], e['lng'] = lat, lng
     try:
         e['svgX'], e['svgY'] = coord_to_svg(lat, lng)
@@ -11593,8 +11611,11 @@ def _geo_repair_0911(events):
                 tail = t.rsplit(',', 1)[1].strip().lower()
                 for _iso, _c in _gr9_countries().items():
                     _cur = (e.get('country_code') or '').upper()
+                    if GR9_SYNC_1911 and tail == _c[0] and _cur == _iso \
+                            and (e.get('primary_country') or _iso).upper() != _iso:
+                        _cur = (e.get('primary_country') or '').upper()   # country_code уже исправлен, остальные поля - нет
                     if tail == _c[0] and _cur and _cur != _iso:   # только привязка к ДРУГОЙ стране; точные точки без страны не трогаем
-                        _gr9_set(e, _iso, _c[1], _c[2], _c[3], 'страна в конце заголовка предупреждения')
+                        _gr9_set(e, _iso, _c[1], _c[2], _c[3], 'страна в конце заголовка предупреждения', sync=True)
                         n += 1
                         break
                 continue
@@ -31175,6 +31196,12 @@ def save_enriched(events, previous_snapshot=None):
                 _tail_caps(enriched["events"])
                 _zone_place(enriched["events"])
                 _geo_repair_0911(enriched["events"])   # GEO_REPAIR_0911: после контракта и запасных правил
+                if GEO_SYNC_1911:   # подготовлено 19.11, выключено до решения Мии
+                    try:
+                        import geo_sync_1911 as _gs1911
+                        print('  [GEO-SYNC-1911] %s' % _gs1911.apply(enriched["events"], enabled=True))
+                    except Exception as _gse:
+                        print('  [WARN] geo_sync_1911: %s' % _gse, file=sys.stderr)
                 # Предупреждения метятся ПЕРВЫМИ: иначе запись, отнесённая
                 # интентом к комментарию, уходит в контекст и на вкладку
                 # предупреждений уже не попадает как предупреждение.
