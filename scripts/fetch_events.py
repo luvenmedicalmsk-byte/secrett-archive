@@ -6968,6 +6968,18 @@ def _strip_natdis_analogy(text):
     return _NATDIS_ANALOGY.sub(' ', text)
 
 
+# 19.11.2026 (решение Мии, ПОДГОТОВЛЕНО, ВЫКЛЮЧЕНО до регрессии и решения):
+# CLIM_VOCAB_1911 - климатический словарь переназначения домена: «экстремальная
+#   погода», «тепловые волны» во множественном числе. Кейс: «Экстремальная
+#   погода убила более 910 000 человек за 30 лет» (Germanwatch) ушла в экономику
+#   по словам «экономические потери 4,7 трлн долларов».
+# RETRO_FLOOR_GUARD_1911 - пол оценки по гибели людей не применяется к
+#   ретроспективной статистике за период (тот же кейс: 62 → 85 по «910»).
+CLIM_VOCAB_1911 = False
+RETRO_FLOOR_GUARD_1911 = False
+_CLIM_VOCAB_1911_RE = re.compile(r'тепловы\w* волн|волн\w* жары|экстремальн\w* погод')
+
+
 def _reclass_domain(title, summary, current):
     """S44: основной риск по содержанию. Переносим только в СТРОГО более подходящий домен."""
     b = _strip_natdis_analogy(((title or '') + ' ' + (summary or ''))).lower()
@@ -6987,6 +6999,10 @@ def _reclass_domain(title, summary, current):
     _clim_heat = any(w in b for w in (' жара',' жары',' жаре',' жарой',' жару','зной','heatwave','аномальн жар','тепловая волна','волна жары','тепловой удар','теплового удара','тепловые удары','засух'))
     if DOMAIN_INFIX_0711 and _clim_heat and 'зной' in b and not _ZNOY_RE.search(b):
         _clim_heat = any(w in b for w in (' жара',' жары',' жаре',' жарой',' жару','heatwave','аномальн жар','тепловая волна','волна жары','тепловой удар','теплового удара','тепловые удары','засух'))
+    if CLIM_VOCAB_1911 and _CLIM_VOCAB_1911_RE.search(b):
+        if current == 'climate':
+            return None     # предмет - погода: климат не уводим в экономику по словам об ущербе
+        _clim_heat = True   # «экстремальная погода», «тепловые волны» (мн. ч.)
     _clim_eco = (('токсичн' in b or 'загрязн' in b or 'разлив' in b) and ('рек' in b or 'вод' in b or 'нефт' in b or 'воздух' in b or 'почв' in b)) or 'экологическ катастроф' in b or 'экологическ бедств' in b
     if current in ('geopolitics','economy','social') and (_clim_heat or _clim_eco) and not any(w in b for w in ('война','войну','ракетн','санкц','удар по','спецоперац','госпереворот','боевик','наступлени')):
         return 'climate'
@@ -28690,6 +28706,16 @@ def _sev_post_hyg_0511(events):
             continue
         if _c4_is_quote(t):
             continue
+        if RETRO_FLOOR_GUARD_1911:
+            # ретроспективная статистика («убила 910 000 человек за 30 лет») -
+            # накопленный итог за период, а не событие: пол по гибели не ставим
+            try:
+                import chain_shadow as _csr
+                if _csr._retro(e):
+                    e['retro_floor_guard'] = True
+                    continue
+            except Exception:
+                pass
         fl, why = 0, ''
         for _nm, _rx, _v in _F5_RULES:
             # ежедневные сводки каталога CISA KEV - рутина, не отдельный сигнал

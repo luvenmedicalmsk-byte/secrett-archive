@@ -273,14 +273,28 @@ def _alert(e):
     return out
 
 # ── главный проход ──────────────────────────────────────────────────────────
+try:
+    import context_signal_shadow as _ctxsig
+except Exception:
+    _ctxsig = None
+
+
 def apply(events, static_titles=()):
     static_titles = set(static_titles or ())
     n = {'type_shadow': 0, 'retrospective_statistic': 0, 'structural_risk': 0, 'global_market_context_country': 0,
          'severity_chain_shadow': 0, 's45_statement': 0, 'geo_shadow': 0, 'geo_changed_country': 0, 'alert_diag': 0,
-         'alert_shadow_lower': 0, 'ioda_diag': 0}
+         'alert_shadow_lower': 0, 'ioda_diag': 0, 'context_checked': 0, 'context_signal': 0}
     for e in events or []:
-        for k in ('type_shadow', 'severity_chain_shadow', 'geo_shadow', 'ioda_diag', 'alert_diag'):
+        for k in ('type_shadow', 'severity_chain_shadow', 'geo_shadow', 'ioda_diag', 'alert_diag', 'context_signal_shadow'):
             e.pop(k, None)
+        try:
+            _cs = _ctxsig.check(e) if _ctxsig else None
+            if _cs is not None:
+                e['context_signal_shadow'] = _cs
+                n['context_checked'] += 1
+                n['context_signal'] += 1 if _cs['signal'] else 0
+        except Exception:
+            pass
         try:
             t = _low(e.get('title'))
             # тип
