@@ -2,7 +2,7 @@
   "country": "ES",
   "date": "2026-11-19",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-19T06:28:48.993446+00:00",
+  "generated_at": "2026-11-19T06:49:21.134276+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-ES-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 65,
       "trend": "stable"
     },
     {
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-ES-Ветер:_Сев",
-      "type": "Signal",
-      "label": "Ветер: Северное побережье Валенсии, Месе",
-      "severity": 50,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-ES-Ливень:_Гр",
       "type": "Signal",
       "label": "Ливень: Гразалема, Меньо де Понтеведра, ",
       "severity": 50,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-ES-Рынок_труд",
+      "type": "Signal",
+      "label": "Рынок труда — Испания",
+      "severity": 65,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.65
     },
     {
       "from": "COUNTRY-ES",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-ES-climate",
-      "to": "DOMAIN-ES-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-ES-economic",
-      "to": "DOMAIN-ES-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-ES-social",
-      "to": "DOMAIN-ES-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-ES-climate",
       "to": "DOMAIN-ES-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -203,6 +182,27 @@
       "type": "AMPLIFIES",
       "weight": 0.55,
       "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ES-climate",
+      "to": "DOMAIN-ES-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ES-economic",
+      "to": "DOMAIN-ES-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-ES-social",
+      "to": "DOMAIN-ES-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "DOMAIN-ES-geopolitical",
@@ -232,16 +232,16 @@
       "weight": 0.72
     },
     {
-      "from": "SIGNAL-ES-Ветер:_Сев",
+      "from": "SIGNAL-ES-Ливень:_Гр",
       "to": "DOMAIN-ES-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-ES-Ливень:_Гр",
-      "to": "DOMAIN-ES-climate",
+      "from": "SIGNAL-ES-Рынок_труд",
+      "to": "DOMAIN-ES-economic",
       "type": "AMPLIFIES",
-      "weight": 0.5
+      "weight": 0.65
     }
   ]
 }
