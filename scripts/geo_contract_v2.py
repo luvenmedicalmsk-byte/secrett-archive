@@ -151,6 +151,9 @@ def _eu_bloc(gc):
 # точной и лежит в рамке территории, иначе центр территории как centroid.
 # ОТКАТ: GEO_DISPUTED = False.
 GEO_DISPUTED = True
+GEO_CRIMEA_BRIDGE = True
+_CRIMEA_BRIDGE = re.compile(r'крымск(?:ий|ого|ому|им|ом)\s+мост|мост\w*\s+(?:в|на)\s+крым(?![а-яё])', re.I)
+_CB_LAT, _CB_LNG = 45.31, 36.51
 _DP_PRE = r'(?:^|[:—–\-]\s*|(?:^|\s)(?:в|во|на|по|из|под|над|у|близ|около|возле)\s+(?:оккупированн\w+\s+(?:россией\s+)?(?:части\s+)?|аннексированн\w+\s+)?)'
 _DISPUTED = (
     ('disputed_zaporizhzhia', re.compile(_DP_PRE + r'запорожск(?:ая|ой|ую)\s+(?:обл|област)', re.I)),
@@ -167,6 +170,17 @@ def _disputed(gc, title):
     if gc.country not in (None, 'RU', 'UA'):
         return gc
     t = (title or '')
+    if GEO_CRIMEA_BRIDGE and _CRIMEA_BRIDGE.search(t):
+        # Объект «Крымский мост» (19.11.2026): место события - сам мост, а не
+        # страна, названная в заголовке («…после второго удара Украины» давало
+        # Украину с точкой под Киевом). Мост относится к спорной территории
+        # Крым (ADR-284D), точка - сам мост. Откат: GEO_CRIMEA_BRIDGE = False.
+        import geo_contract as _g
+        name, ztype, _zl, _zg, _zb = _g.ZONES['disputed_crimea']
+        act = gc.actor_country if gc.actor_country not in ('RU', 'UA') or gc.country is None else gc.actor_country
+        return _g.GeoContract(None, None, name, _CB_LAT, _CB_LNG, (), act, 'exact',
+                              max(gc.confidence or 0, 0.8), 'объект: Крымский мост', process_place_type='zone',
+                              zone_id='disputed_crimea', zone_type=ztype)
     hit = None
     for zid, rx in _DISPUTED:
         if rx.search(t):
