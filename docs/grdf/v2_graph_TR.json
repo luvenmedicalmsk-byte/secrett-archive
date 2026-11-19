@@ -2,7 +2,7 @@
   "country": "TR",
   "date": "2026-11-19",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-19T11:27:49.625726+00:00",
+  "generated_at": "2026-11-19T11:49:53.543183+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -26,14 +26,14 @@
       "id": "DOMAIN-TR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 62,
+      "score": 5,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-TR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 50,
+      "score": 69,
       "trend": "stable"
     },
     {
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-TR-Ирак_возоб",
-      "type": "Signal",
-      "label": "Ирак возобновил поставки нефти в Турцию ",
-      "severity": 62,
-      "domain": "economic"
-    },
-    {
       "id": "SIGNAL-TR-Сильный_ве",
       "type": "Signal",
       "label": "Сильный ветер, гроза, сильный дождь / ли",
@@ -98,6 +91,13 @@
       "type": "Signal",
       "label": "Вопрос-ответ: Что такое механизм Белем-А",
       "severity": 32,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-TR-Климатичес",
+      "type": "Signal",
+      "label": "Климатический сигнал — Ближний Восток (с",
+      "severity": 92,
       "domain": "climate"
     }
   ],
@@ -112,13 +112,13 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-economic",
       "type": "CORRELATES",
-      "weight": 0.62
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-climate",
       "type": "CORRELATES",
-      "weight": 0.5
+      "weight": 0.69
     },
     {
       "from": "COUNTRY-TR",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-TR-climate",
-      "to": "DOMAIN-TR-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-TR-infrastructure",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-TR-economic",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-TR-climate",
       "to": "DOMAIN-TR-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -203,6 +182,27 @@
       "type": "AMPLIFIES",
       "weight": 0.65,
       "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-TR-climate",
+      "to": "DOMAIN-TR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-TR-infrastructure",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-TR-geopolitical",
@@ -226,12 +226,6 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-TR-Ирак_возоб",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.62
-    },
-    {
       "from": "SIGNAL-TR-Сильный_ве",
       "to": "DOMAIN-TR-climate",
       "type": "AMPLIFIES",
@@ -242,6 +236,12 @@
       "to": "DOMAIN-TR-climate",
       "type": "AMPLIFIES",
       "weight": 0.32
+    },
+    {
+      "from": "SIGNAL-TR-Климатичес",
+      "to": "DOMAIN-TR-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.92
     }
   ]
 }

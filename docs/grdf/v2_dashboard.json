@@ -1,21 +1,63 @@
 {
   "grdf_version": "2.0",
   "date": "2026-11-19",
-  "generated_at": "2026-11-19T11:27:49.650611+00:00",
+  "generated_at": "2026-11-19T11:49:53.595690+00:00",
   "critical_cascades": [],
   "critical_cascades_n": 0,
   "fastest_escalating": [
     {
+      "country": "CA",
+      "country_name": "Канада",
+      "velocity": 21,
+      "risk_score": 62
+    },
+    {
+      "country": "DK",
+      "country_name": "Дания",
+      "velocity": 14,
+      "risk_score": 48
+    },
+    {
       "country": "ID",
       "country_name": "Индонезия",
       "velocity": 4,
+      "risk_score": 56
+    },
+    {
+      "country": "UZ",
+      "country_name": "Узбекистан",
+      "velocity": 4,
       "risk_score": 52
+    },
+    {
+      "country": "CN",
+      "country_name": "Китай",
+      "velocity": 2,
+      "risk_score": 84
     }
   ],
   "emerging_threats": [
     {
+      "country": "DK",
+      "country_name": "Дания",
+      "risk_score": 48,
+      "delta": -14
+    },
+    {
+      "country": "CA",
+      "country_name": "Канада",
+      "risk_score": 62,
+      "delta": -21
+    },
+    {
       "country": "ID",
       "country_name": "Индонезия",
+      "risk_score": 56,
+      "delta": 4
+    },
+    {
+      "country": "UZ",
+      "country_name": "Узбекистан",
       "risk_score": 52,
       "delta": -4
     }
@@ -23,26 +65,33 @@
   "global_top_drivers": [
     {
       "domain": "climate",
-      "count": 69
+      "count": 70
     },
     {
       "domain": "geopolitical",
       "count": 25
     },
     {
-      "domain": "economic",
+      "domain": "social",
       "count": 17
     },
     {
-      "domain": "social",
+      "domain": "economic",
       "count": 16
     },
     {
       "domain": "technology",
-      "count": 13
+      "count": 11
     }
   ],
   "warning_feed": [
+    {
+      "country": "CA",
+      "rule": "A",
+      "warning_level": "CRITICAL",
+      "trigger": "velocity=21.0 pts/day",
+      "confidence": 0.91
+    },
     {
       "country": "RU",
       "rule": "B",
@@ -54,8 +103,22 @@
       "country": "CN",
       "rule": "B",
       "warning_level": "WARNING",
+      "trigger": "climate +1380% in 30d",
+      "confidence": 0.82
+    },
+    {
+      "country": "CN",
+      "rule": "B",
+      "warning_level": "WARNING",
       "trigger": "technology +1340% in 30d",
       "confidence": 0.82
+    },
+    {
+      "country": "CN",
+      "rule": "D",
+      "warning_level": "WARNING",
+      "trigger": "3 domains escalating: geopolitical, climate, technology",
+      "confidence": 0.87
     },
     {
       "country": "TW",
@@ -100,17 +163,10 @@
       "confidence": 0.82
     },
     {
-      "country": "TR",
-      "rule": "B",
-      "warning_level": "WARNING",
-      "trigger": "economic +1140% in 30d",
-      "confidence": 0.82
-    },
-    {
       "country": "KZ",
       "rule": "B",
       "warning_level": "WARNING",
-      "trigger": "climate +960% in 30d",
+      "trigger": "economic +1020% in 30d",
       "confidence": 0.82
     },
     {
@@ -152,13 +208,6 @@
       "country": "IN",
       "rule": "B",
       "warning_level": "WARNING",
-      "trigger": "technology +1020% in 30d",
-      "confidence": 0.82
-    },
-    {
-      "country": "IN",
-      "rule": "B",
-      "warning_level": "WARNING",
       "trigger": "social +1340% in 30d",
       "confidence": 0.82
     },
@@ -175,27 +224,38 @@
       "warning_level": "WARNING",
       "trigger": "climate +56% in 30d",
       "confidence": 0.82
-    },
-    {
-      "country": "EG",
-      "rule": "B",
-      "warning_level": "WARNING",
-      "trigger": "technology +1000% in 30d",
-      "confidence": 0.82
     }
   ],
-  "warning_feed_n": 82,
-  "warning_critical_n": 0,
-  "warning_warning_n": 70,
+  "warning_feed_n": 86,
+  "warning_critical_n": 1,
+  "warning_warning_n": 72,
   "top_correlations": [
     {
       "pair": "climate:economic",
       "domain_a": "climate",
       "domain_b": "economic",
-      "strength": 0.849,
-      "confidence": 0.44,
+      "strength": 0.865,
+      "confidence": 0.4,
       "lag_days": 30,
-      "n_countries": 12
+      "n_countries": 11
+    },
+    {
+      "pair": "climate:social",
+      "domain_a": "climate",
+      "domain_b": "social",
+      "strength": 0.849,
+      "confidence": 0.29,
+      "lag_days": 60,
+      "n_countries": 8
+    },
+    {
+      "pair": "geopolitical:technology",
+      "domain_a": "geopolitical",
+      "domain_b": "technology",
+      "strength": 0.847,
+      "confidence": 0.33,
+      "lag_days": 0,
+      "n_countries": 9
     },
     {
       "pair": "economic:social",
@@ -207,31 +267,13 @@
       "n_countries": 6
     },
     {
-      "pair": "climate:social",
-      "domain_a": "climate",
-      "domain_b": "social",
-      "strength": 0.829,
-      "confidence": 0.29,
-      "lag_days": 60,
-      "n_countries": 8
-    },
-    {
-      "pair": "social:technology",
-      "domain_a": "social",
-      "domain_b": "technology",
-      "strength": 0.826,
-      "confidence": 0.18,
+      "pair": "economic:geopolitical",
+      "domain_a": "economic",
+      "domain_b": "geopolitical",
+      "strength": 0.839,
+      "confidence": 0.48,
       "lag_days": 0,
-      "n_countries": 5
-    },
-    {
-      "pair": "geopolitical:technology",
-      "domain_a": "geopolitical",
-      "domain_b": "technology",
-      "strength": 0.825,
-      "confidence": 0.33,
-      "lag_days": 0,
-      "n_countries": 9
+      "n_countries": 13
     }
   ],
   "forecast_consensus": [
@@ -268,22 +310,6 @@
       "trend": "up"
     },
     {
-      "country": "CA",
-      "country_name": "Канада",
-      "now": 83,
-      "forecast_30d": 72,
-      "delta_30d": -11,
-      "trend": "down"
-    },
-    {
-      "country": "ID",
-      "country_name": "Индонезия",
-      "now": 52,
-      "forecast_30d": 62,
-      "delta_30d": 10,
-      "trend": "up"
-    },
-    {
       "country": "KZ",
       "country_name": "Казахстан",
       "now": 58,
@@ -314,14 +340,30 @@
       "forecast_30d": 58,
       "delta_30d": 8,
       "trend": "up"
+    },
+    {
+      "country": "FR",
+      "country_name": "Франция",
+      "now": 90,
+      "forecast_30d": 83,
+      "delta_30d": -7,
+      "trend": "down"
+    },
+    {
+      "country": "ID",
+      "country_name": "Индонезия",
+      "now": 56,
+      "forecast_30d": 63,
+      "delta_30d": 7,
+      "trend": "up"
     }
   ],
   "summary": {
-    "critical": 7,
-    "high": 19,
-    "elevated": 16,
-    "moderate": 5,
-    "avg_gri": 66.2,
+    "critical": 8,
+    "high": 18,
+    "elevated": 14,
+    "moderate": 7,
+    "avg_gri": 66.0,
     "highest_risk_country": "RU",
     "highest_risk_gri": 100
   },
@@ -356,7 +398,7 @@
     },
     {
       "country": "IR",
-      "gri": 80
+      "gri": 81
     },
     {
       "country": "MX",
@@ -379,16 +421,12 @@
       "gri": 72
     },
     {
-      "country": "US",
+      "country": "IN",
       "gri": 72
     },
     {
-      "country": "CA",
-      "gri": 70
-    },
-    {
-      "country": "IN",
-      "gri": 70
+      "country": "US",
+      "gri": 72
     },
     {
       "country": "ES",
@@ -400,10 +438,6 @@
     },
     {
       "country": "PT",
-      "gri": 69
-    },
-    {
-      "country": "IL",
       "gri": 69
     },
     {
@@ -427,6 +461,14 @@
       "gri": 67
     },
     {
+      "country": "IL",
+      "gri": 67
+    },
+    {
+      "country": "TR",
+      "gri": 67
+    },
+    {
       "country": "AE",
       "gri": 66
     },
@@ -443,7 +485,7 @@
       "gri": 60
     },
     {
-      "country": "TR",
+      "country": "CA",
       "gri": 60
     },
     {
@@ -463,8 +505,8 @@
       "gri": 58
     },
     {
-      "country": "DK",
-      "gri": 58
+      "country": "ID",
+      "gri": 57
     },
     {
       "country": "VN",
@@ -475,7 +517,7 @@
       "gri": 56
     },
     {
-      "country": "ID",
+      "country": "KZ",
       "gri": 56
     },
     {
@@ -487,19 +529,19 @@
       "gri": 54
     },
     {
-      "country": "KZ",
-      "gri": 52
-    },
-    {
-      "country": "UZ",
-      "gri": 51
-    },
-    {
       "country": "SK",
       "gri": 49
     },
     {
+      "country": "DK",
+      "gri": 48
+    },
+    {
       "country": "AT",
+      "gri": 48
+    },
+    {
+      "country": "UZ",
       "gri": 48
     },
     {
