@@ -133,6 +133,20 @@ def _geo(e):
     named = title_countries(e.get('title'))
     base = {'primary_now': pc, 'country_code_now': e.get('country_code') or None, 'coords_now': [lat, lng] if (lat or lng) else None,
             'flag_country': None, 'event_country': pc, 'object': None, 'coords_shadow': None}
+    # A0) предупреждение: страна самой метеослужбы (meta.country). MeteoAlarm и
+    # Казгидромет выдают предупреждения только своей страны, а обрезанный
+    # заголовок («…, Северная Карелия, Южн») теряет страну в хвосте.
+    _m = e.get('meta') if isinstance(e.get('meta'), dict) else {}
+    _mc = str(_m.get('country') or '').upper()
+    if _is_alert(e) and len(_mc) == 2 and pc and _mc != pc:
+        if {pc, _mc} == {'RU', 'UA'} and re.search(r'крым|керч|севастопол|азовск', t):
+            return dict(base, event_country=pc, object=(_m.get('place') or '')[:60] or None,
+                        rule='спорная территория: страна метеослужбы не применяется',
+                        problem='метеослужба %s, primary %s - оставлено без изменения' % (_mc, pc), changed=False)
+        return dict(base, event_country=_mc, object=(_m.get('place') or '')[:60] or None, coords_shadow=None,
+                    rule='страна метеослужбы, выпустившей предупреждение (meta.country)',
+                    problem='primary_country не совпадает со страной метеослужбы; вероятная причина - основа названия российского субъекта внутри иностранного топонима',
+                    changed=True)
     # A) предупреждение: страна в конце заголовка
     if _is_alert(e) and ',' in (e.get('title') or ''):
         tail = _low(e['title'].rsplit(',', 1)[1].strip())
