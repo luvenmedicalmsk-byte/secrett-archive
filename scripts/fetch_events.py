@@ -132,6 +132,26 @@ def _hide_diag_pass(events):
     return n_added
 
 
+# CHAIN_SHADOW_1911 (аудит 19.11.2026, решение Мии): shadow-поля цепочки
+# «событие → тип → география → severity → процесс → индекс». Модуль chain_shadow
+# только ДОБАВЛЯЕТ поля type_shadow / severity_chain_shadow / geo_shadow / ioda_diag /
+# alert_diag и сводку chain_shadow_summary; production-поля не меняются.
+# Откат: CHAIN_SHADOW_1911 = False.
+CHAIN_SHADOW_1911 = True
+
+def _chain_shadow_finalize(enriched):
+    if not CHAIN_SHADOW_1911:
+        return
+    try:
+        import chain_shadow as _cs
+        _st = [r.get('title') for r in get_russia_static_risks()]
+        _n = _cs.apply(enriched.get('events') or [], _st)
+        enriched['chain_shadow_summary'] = dict(_n, rule='CHAIN-2026-11-19', production_changed=False)
+        print('  [CHAIN-SHADOW] ' + ' '.join('%s=%s' % (k, v) for k, v in _n.items()))
+    except Exception as _cse:
+        print('  [WARN] chain_shadow: %s' % _cse, file=sys.stderr)
+
+
 def _hide_finalize(events):
     """Перед записью: у видимых записей причины убираются, у скрытых без
     записанной причины ставится 'unknown' - так видно непокрытые пути скрытия."""
@@ -31520,6 +31540,7 @@ def save_enriched(events, previous_snapshot=None):
                 print('  [HIDE] hidden=%d unknown_reason=%d' % (sum(1 for _x in enriched["events"] if _x.get('feed_visible') is False), _hu))
             except Exception as _hfe_:
                 print('  [WARN] hide_finalize: %s' % _hfe_, file=sys.stderr)
+            _chain_shadow_finalize(enriched)                             # аудит 19.11, shadow цепочки
             with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
                 json.dump(enriched, f, ensure_ascii=False, indent=2)
                 _lineage_flush(str(OUTPUT_PATH.parent / '_lineage.jsonl'))
@@ -31634,6 +31655,7 @@ def save_enriched(events, previous_snapshot=None):
                             _domain_lineage_finalize(enriched["events"], 'write_2')   # TASK-278
                             try: _hide_finalize(enriched["events"])
                             except Exception: pass
+                            _chain_shadow_finalize(enriched)
                             with open(OUTPUT_PATH, "w", encoding="utf-8") as _lf:
                                 json.dump(enriched, _lf, ensure_ascii=False, indent=2)
                             _ln = sum(1 for _le in enriched["events"] if _le.get('process_id'))
