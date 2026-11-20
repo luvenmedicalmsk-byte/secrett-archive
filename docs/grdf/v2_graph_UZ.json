@@ -2,7 +2,7 @@
   "country": "UZ",
   "date": "2026-11-20",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-20T21:29:41.686488+00:00",
+  "generated_at": "2026-11-20T21:48:07.819561+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-UZ-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 36,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "geopolitical"
     },
     {
+      "id": "SIGNAL-UZ-Энергетиче",
+      "type": "Signal",
+      "label": "Энергетический сектор Узбекистана сталки",
+      "severity": 45,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-UZ-Водный_деф",
       "type": "Signal",
       "label": "Водный дефицит — Центральная Азия",
@@ -92,13 +99,6 @@
       "label": "Отключение интернета — Узбекистан",
       "severity": 56,
       "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-UZ-Экономичес",
-      "type": "Signal",
-      "label": "Экономический сигнал — Центральная Азия",
-      "severity": 44,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-UZ",
       "to": "DOMAIN-UZ-economic",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-UZ",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-UZ-climate",
-      "to": "DOMAIN-UZ-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-UZ-infrastructure",
-      "to": "DOMAIN-UZ-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-UZ-economic",
-      "to": "DOMAIN-UZ-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-UZ-climate",
       "to": "DOMAIN-UZ-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -203,6 +182,27 @@
       "type": "AMPLIFIES",
       "weight": 0.65,
       "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-UZ-climate",
+      "to": "DOMAIN-UZ-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-UZ-infrastructure",
+      "to": "DOMAIN-UZ-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-UZ-economic",
+      "to": "DOMAIN-UZ-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-UZ-geopolitical",
@@ -226,6 +226,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-UZ-Энергетиче",
+      "to": "DOMAIN-UZ-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.45
+    },
+    {
       "from": "SIGNAL-UZ-Водный_деф",
       "to": "DOMAIN-UZ-climate",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-UZ-technology",
       "type": "AMPLIFIES",
       "weight": 0.56
-    },
-    {
-      "from": "SIGNAL-UZ-Экономичес",
-      "to": "DOMAIN-UZ-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.44
     }
   ]
 }
