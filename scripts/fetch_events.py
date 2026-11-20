@@ -11575,7 +11575,7 @@ _GR9_PL = {'краков': ('Малопольское воеводство', 50.
 # в индекс России. При включении правило D (страна в конце заголовка - однозначная
 # география) обновляет три поля согласованно и сохраняет исходные значения.
 # Исключение RU/UA для Крыма, Керчи, Севастополя и Азовского моря сохраняется.
-GR9_SYNC_1911 = False
+GR9_SYNC_1911 = True    # 20.11.2026: включено по решению Мии (отчёт task-geo-sync-regression-2026-11-19)
 GEO_SYNC_1911 = False   # CAP: страна службы (scripts/geo_sync_1911.py), подготовлено, выключено
 _GR9_DISPUTED = re.compile(r'крым|керч|севастопол|азовск', re.I)
 
@@ -11588,6 +11588,26 @@ def _gr9_set(e, cc, region, lat, lng, why, sync=False):
             if any(v != cc for v in _before.values()):
                 e['geo_fix_audit'] = {'rule': 'GR9_SYNC_1911', 'reason': why, 'before': _before, 'to': cc}
             e['primary_country'] = e['event_country'] = cc
+            # 20.11.2026. Списки стран тоже синхронизируются: иначе панель страны на
+            # сайте (фильтр по country_codes) и индекс по упоминаниям продолжали
+            # относить хорватские и французские предупреждения к России.
+            _wrong = set(v for v in _before.values() if v and v != cc)
+            for _lk in ('country_codes', 'mentioned_countries', 'impact_countries'):
+                _lv = e.get(_lk)
+                if isinstance(_lv, list) and _wrong & set(_lv):
+                    _nv = []
+                    for _x in _lv:
+                        _y = cc if _x in _wrong else _x
+                        if _y not in _nv:
+                            _nv.append(_y)
+                    e[_lk] = _nv
+            _gq = e.get('geo') if isinstance(e.get('geo'), dict) else None
+            if _gq is not None:
+                if isinstance(_gq.get('impact_countries'), list) and _wrong & set(_gq['impact_countries']):
+                    _gq['impact_countries'] = [cc]
+                _tail = (e.get('title') or '').rsplit(',', 1)[-1].strip()
+                if _tail:
+                    _gq['country_ru'] = _tail
     e['lat'], e['lng'] = lat, lng
     try:
         e['svgX'], e['svgY'] = coord_to_svg(lat, lng)

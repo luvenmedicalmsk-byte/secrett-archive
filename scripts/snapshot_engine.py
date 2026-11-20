@@ -864,6 +864,9 @@ def compute_domain_index(domain_scores: dict, iso3: str = "") -> int | None:
     return idx
 
 
+DOMINANT_BY_SCORE_2011 = True   # см. build_snapshot, 20.11.2026
+
+
 def compute_dominant_domain(events: list[dict]) -> str:
     """Return domain with highest total severity weight."""
     if not events:
@@ -1616,7 +1619,9 @@ def build_snapshot(iso2: str, events: list[dict]) -> dict:
     domain   = compute_dominant_domain(matched)
     delta    = compute_delta(iso2, score)
     level    = compute_escalation_level(score, delta)
-    summary        = generate_summary(iso2, score, domain, matched, level)
+    # 20.11.2026: сводка генерируется ПОСЛЕ выбора главного домена (DOMINANT_BY_SCORE_2011),
+    # чтобы в подсказку модели уходил итоговый домен, а не домен по сумме тяжести.
+    summary        = None
     # ДРАЙВЕРЫ: единый приоритет для всех стран — произошло в стране → процессы по
     # месту → влияет на страну. Раньше брались по match_events (mentioned) → Италия и
     # Греция получали драйвер про US Treasuries за одно упоминание в тексте.
@@ -1653,7 +1658,7 @@ def build_snapshot(iso2: str, events: list[dict]) -> dict:
     print(
         f"  [SNAP] {iso2}: score={score} ({'+' if delta>=0 else ''}{delta}) "
         f"domain={domain} level={level} events={len(matched)} "
-        f"drivers={len(drivers)} summary={'ok' if summary else 'null'}",
+        f"drivers={len(drivers)} summary=after-domain",
         file=sys.stderr
     )
     snap["_seismic_risk"] = _hazard_climate_risk(matched)
@@ -1721,6 +1726,21 @@ def build_snapshot(iso2: str, events: list[dict]) -> dict:
             _mx = max(_ds, key=lambda k: _ds.get(k) or 0)
             if _ds.get(_mx) and snap.get("dominant_domain") != _mx:
                 snap["dominant_domain"] = _mx
+    # DOMINANT_BY_SCORE_2011 (20.11.2026, решение Мии). Главный домен страны при наличии
+    # событий - домен с наибольшей оценкой domain_scores, а не с наибольшей суммой
+    # тяжести сигналов. Сумма росла от числа рядовых погодных предупреждений:
+    # у России климат 74 выходил главным при геополитике 93 (19 из 47 стран
+    # расходились). domain_scores считаются ДО этой замены и от неё не зависят,
+    # поэтому GRI (domain_index) не меняется. Прежнее значение - в _dominant_by_volume.
+    # Ветки process-layer и baseline не трогаются: там домен уже выбран своим правилом.
+    if DOMINANT_BY_SCORE_2011 and matched and snap.get("_source_layer") not in ("process", "baseline"):
+        _ds = snap.get("domain_scores") or {}
+        if _ds:
+            _mx = max(_ds, key=lambda k: _ds.get(k) or 0)
+            if (_ds.get(_mx) or 0) > 0 and _mx != snap.get("dominant_domain"):
+                snap["_dominant_by_volume"] = snap.get("dominant_domain")
+                snap["dominant_domain"] = _mx
+    snap["summary"] = generate_summary(iso2, score, snap.get("dominant_domain") or domain, matched, level)
     snap["gri_delta_7d"] = compute_delta_7d(iso2, "risk_score", score)
     snap["domain_index"] = compute_domain_index(snap.get("domain_scores") or {}, iso2)
     snap["gri_shown_delta_7d"] = compute_shown_gri_delta_7d(iso2, snap.get("domain_scores") or {})
