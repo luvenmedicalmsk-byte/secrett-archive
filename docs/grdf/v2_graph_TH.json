@@ -2,7 +2,7 @@
   "country": "TH",
   "date": "2026-11-20",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-20T11:29:05.854717+00:00",
+  "generated_at": "2026-11-20T11:50:40.179712+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -19,7 +19,7 @@
       "id": "DOMAIN-TH-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 39,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -70,14 +70,21 @@
       "label": "climate"
     },
     {
+      "id": "DRIVER-TH-economic",
+      "type": "Driver",
+      "label": "economic"
+    },
+    {
       "id": "DRIVER-TH-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-TH-economic",
-      "type": "Driver",
-      "label": "economic"
+      "id": "SIGNAL-TH-Наводнения",
+      "type": "Signal",
+      "label": "Наводнения в Таиланде выявили загрязнени",
+      "severity": 48,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-TH-Центральны",
@@ -92,13 +99,6 @@
       "label": "Шторм — Таиланд",
       "severity": 74,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-TH-Санкционно",
-      "type": "Signal",
-      "label": "Санкционное давление — Юго-Восточная Ази",
-      "severity": 53,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-TH",
@@ -151,13 +151,13 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-TH-geopolitical",
+      "from": "DRIVER-TH-economic",
       "to": "COUNTRY-TH",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-TH-economic",
+      "from": "DRIVER-TH-geopolitical",
       "to": "COUNTRY-TH",
       "type": "CAUSES",
       "weight": 0.8
@@ -205,6 +205,12 @@
       "lag_days": 90
     },
     {
+      "from": "SIGNAL-TH-Наводнения",
+      "to": "DOMAIN-TH-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.48
+    },
+    {
       "from": "SIGNAL-TH-Центральны",
       "to": "DOMAIN-TH-economic",
       "type": "AMPLIFIES",
@@ -215,12 +221,6 @@
       "to": "DOMAIN-TH-climate",
       "type": "AMPLIFIES",
       "weight": 0.74
-    },
-    {
-      "from": "SIGNAL-TH-Санкционно",
-      "to": "DOMAIN-TH-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.53
     }
   ]
 }
