@@ -2,24 +2,24 @@
   "country": "CA",
   "date": "2026-11-20",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-20T18:11:06.480424+00:00",
+  "generated_at": "2026-11-20T18:28:34.830629+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-CA",
       "type": "Country",
       "label": "CA",
-      "score": 66,
+      "score": 65,
       "props": {
-        "risk_score": 66
+        "risk_score": 65
       }
     },
     {
       "id": "DOMAIN-CA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 56,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 56,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-technology",
@@ -47,8 +47,8 @@
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
-      "trend": "stable"
+      "score": 56,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-infrastructure",
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CA-Поскольку_",
-      "type": "Signal",
-      "label": "Поскольку торговая война затрагивает авт",
-      "severity": 56,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-CA-Снегопад:_",
       "type": "Signal",
       "label": "Снегопад: Демпстер, Канада",
@@ -99,6 +92,13 @@
       "label": "В Паулатук, Канада, наблюдаются сильные ",
       "severity": 56,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-CA-Air_qualit",
+      "type": "Signal",
+      "label": "Air quality: Долина Бакли, Канада",
+      "severity": 56,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.56
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CA",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-CA",
@@ -205,33 +205,6 @@
       "lag_days": 30
     },
     {
-      "from": "DOMAIN-CA-geopolitical",
-      "to": "DOMAIN-CA-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-CA-infrastructure",
-      "to": "DOMAIN-CA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-CA-economic",
-      "to": "DOMAIN-CA-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
-      "from": "SIGNAL-CA-Поскольку_",
-      "to": "DOMAIN-CA-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.56
-    },
-    {
       "from": "SIGNAL-CA-Снегопад:_",
       "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
@@ -240,6 +213,12 @@
     {
       "from": "SIGNAL-CA-В_Паулатук",
       "to": "DOMAIN-CA-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.56
+    },
+    {
+      "from": "SIGNAL-CA-Air_qualit",
+      "to": "DOMAIN-CA-social",
       "type": "AMPLIFIES",
       "weight": 0.56
     }
