@@ -2,9 +2,9 @@
   "country": "ID",
   "date": "2026-11-20",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-20T17:48:32.970373+00:00",
+  "generated_at": "2026-11-20T18:11:06.481868+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-ID",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-ID-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 46,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-ID-Ставки_на_",
-      "type": "Signal",
-      "label": "Ставки на повышение ФРС сильнее ударяют ",
-      "severity": 46,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-ID-Никель_свя",
       "type": "Signal",
       "label": "Никель связан с вырубкой лесов — Индонез",
@@ -99,6 +92,13 @@
       "label": "Последний ареал яванского носорога оказа",
       "severity": 32,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-ID-От_бумаги_",
+      "type": "Signal",
+      "label": "От бумаги до вискозы: древесная целлюлоз",
+      "severity": 32,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.46
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-ID",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-ID-climate",
-      "to": "DOMAIN-ID-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-ID-economic",
-      "to": "DOMAIN-ID-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-ID-social",
-      "to": "DOMAIN-ID-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-ID-climate",
       "to": "DOMAIN-ID-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -205,31 +184,25 @@
       "lag_days": 30
     },
     {
-      "from": "DOMAIN-ID-geopolitical",
-      "to": "DOMAIN-ID-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-ID-infrastructure",
+      "from": "DOMAIN-ID-climate",
       "to": "DOMAIN-ID-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-ID-economic",
       "to": "DOMAIN-ID-social",
       "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
+      "weight": 0.7,
+      "lag_days": 60
     },
     {
-      "from": "SIGNAL-ID-Ставки_на_",
-      "to": "DOMAIN-ID-geopolitical",
+      "from": "DOMAIN-ID-social",
+      "to": "DOMAIN-ID-social",
       "type": "AMPLIFIES",
-      "weight": 0.46
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "SIGNAL-ID-Никель_свя",
@@ -239,6 +212,12 @@
     },
     {
       "from": "SIGNAL-ID-Последний_",
+      "to": "DOMAIN-ID-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.32
+    },
+    {
+      "from": "SIGNAL-ID-От_бумаги_",
       "to": "DOMAIN-ID-climate",
       "type": "AMPLIFIES",
       "weight": 0.32
