@@ -2,7 +2,7 @@
   "country": "SA",
   "date": "2026-11-20",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-20T23:29:42.486274+00:00",
+  "generated_at": "2026-11-20T23:50:04.109299+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,23 +10,23 @@
       "id": "COUNTRY-SA",
       "type": "Country",
       "label": "SA",
-      "score": 74,
+      "score": 75,
       "props": {
-        "risk_score": 74
+        "risk_score": 75
       }
     },
     {
       "id": "DOMAIN-SA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 61,
-      "trend": "stable"
+      "score": 65,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 48,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 74,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-technology",
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
+      "id": "SIGNAL-SA-Громкий_вз",
+      "type": "Signal",
+      "label": "Громкий взрыв слышен — Эр-Рияд после пре",
+      "severity": 60,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-SA-Хуситы_зая",
       "type": "Signal",
       "label": "Хуситы заявили о новой атаке на финансов",
       "severity": 52,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-SA-Саудовская",
-      "type": "Signal",
-      "label": "Саудовская Аравия расширяет запасы нефти",
-      "severity": 48,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.61
+      "weight": 0.65
     },
     {
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-economic",
       "type": "CORRELATES",
-      "weight": 0.48
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-SA",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-SA-climate",
-      "to": "DOMAIN-SA-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-SA-infrastructure",
-      "to": "DOMAIN-SA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-SA-economic",
-      "to": "DOMAIN-SA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-SA-climate",
       "to": "DOMAIN-SA-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -203,6 +182,27 @@
       "type": "AMPLIFIES",
       "weight": 0.65,
       "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-SA-climate",
+      "to": "DOMAIN-SA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-SA-infrastructure",
+      "to": "DOMAIN-SA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-SA-economic",
+      "to": "DOMAIN-SA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-SA-geopolitical",
@@ -232,16 +232,16 @@
       "weight": 0.74
     },
     {
+      "from": "SIGNAL-SA-Громкий_вз",
+      "to": "DOMAIN-SA-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.6
+    },
+    {
       "from": "SIGNAL-SA-Хуситы_зая",
       "to": "DOMAIN-SA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.52
-    },
-    {
-      "from": "SIGNAL-SA-Саудовская",
-      "to": "DOMAIN-SA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.48
     }
   ]
 }
