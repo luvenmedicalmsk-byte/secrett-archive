@@ -2,7 +2,7 @@
   "country": "TR",
   "date": "2026-11-20",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-20T07:09:24.164594+00:00",
+  "generated_at": "2026-11-20T07:28:48.855751+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-TR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 62,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-TR-Турция_пре",
+      "type": "Signal",
+      "label": "Турция предупреждает, что исключение из ",
+      "severity": 62,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-TR-Турция_и_1",
       "type": "Signal",
       "label": "Турция и 14 других стран приветствуют са",
@@ -91,13 +98,6 @@
       "type": "Signal",
       "label": "Сильный ветер, гроза: Стамбул, Бурса, Ко",
       "severity": 50,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-TR-Вопрос-отв",
-      "type": "Signal",
-      "label": "Вопрос-ответ: Что такое механизм Белем-А",
-      "severity": 32,
       "domain": "climate"
     }
   ],
@@ -112,7 +112,7 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.62
     },
     {
       "from": "COUNTRY-TR",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-TR-climate",
-      "to": "DOMAIN-TR-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-TR-economic",
-      "to": "DOMAIN-TR-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-TR-social",
-      "to": "DOMAIN-TR-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-TR-climate",
       "to": "DOMAIN-TR-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -203,6 +182,27 @@
       "type": "AMPLIFIES",
       "weight": 0.55,
       "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-TR-climate",
+      "to": "DOMAIN-TR-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-TR-social",
+      "to": "DOMAIN-TR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "DOMAIN-TR-geopolitical",
@@ -226,6 +226,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-TR-Турция_пре",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.62
+    },
+    {
       "from": "SIGNAL-TR-Турция_и_1",
       "to": "DOMAIN-TR-geopolitical",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-TR-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-TR-Вопрос-отв",
-      "to": "DOMAIN-TR-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.32
     }
   ]
 }
