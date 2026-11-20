@@ -2,7 +2,7 @@
   "country": "UA",
   "date": "2026-11-20",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-20T00:52:25.025360+00:00",
+  "generated_at": "2026-11-20T01:11:48.742087+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,17 +10,17 @@
       "id": "COUNTRY-UA",
       "type": "Country",
       "label": "UA",
-      "score": 85,
+      "score": 92,
       "props": {
-        "risk_score": 85
+        "risk_score": 92
       }
     },
     {
       "id": "DOMAIN-UA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 89,
-      "trend": "stable"
+      "score": 100,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-economic",
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 72,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-technology",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-UA-ВС_РФ_в_пе",
+      "type": "Signal",
+      "label": "ВС РФ в первой половине ночи нанесли мас",
+      "severity": 92,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-UA-ВС_РФ_нане",
       "type": "Signal",
       "label": "ВС РФ нанесли ракетные удары по Северном",
@@ -92,13 +99,6 @@
       "label": "Ливень: Карпаты, Черновицкая область, Ив",
       "severity": 72,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-UA-В_Одессе_в",
-      "type": "Signal",
-      "label": "В Одессе в результате российского удара ",
-      "severity": 71,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.89
+      "weight": 1.0
     },
     {
       "from": "COUNTRY-UA",
@@ -226,6 +226,12 @@
       "lag_days": 30
     },
     {
+      "from": "SIGNAL-UA-ВС_РФ_в_пе",
+      "to": "DOMAIN-UA-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.92
+    },
+    {
       "from": "SIGNAL-UA-ВС_РФ_нане",
       "to": "DOMAIN-UA-geopolitical",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-UA-climate",
       "type": "AMPLIFIES",
       "weight": 0.72
-    },
-    {
-      "from": "SIGNAL-UA-В_Одессе_в",
-      "to": "DOMAIN-UA-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.71
     }
   ]
 }

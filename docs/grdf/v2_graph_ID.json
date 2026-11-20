@@ -2,7 +2,7 @@
   "country": "ID",
   "date": "2026-11-20",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-20T00:52:25.050797+00:00",
+  "generated_at": "2026-11-20T01:11:48.756818+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -19,8 +19,8 @@
       "id": "DOMAIN-ID-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 39,
-      "trend": "up"
+      "score": 5,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-ID-economic",
@@ -33,8 +33,8 @@
       "id": "DOMAIN-ID-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 58,
-      "trend": "up"
+      "score": 56,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-ID-technology",
@@ -80,10 +80,17 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-ID-Гроза:_Сев",
+      "id": "SIGNAL-ID-Гроза:_Пап",
       "type": "Signal",
-      "label": "Гроза: Северный Калимантан, Западный Кал",
+      "label": "Гроза: Папуа, Северный Калимантан, Запад",
       "severity": 56,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-ID-Угрожаемые",
+      "type": "Signal",
+      "label": "Угрожаемые виды составляют половину улов",
+      "severity": 44,
       "domain": "climate"
     },
     {
@@ -92,13 +99,6 @@
       "label": "Шторм — Индонезия",
       "severity": 56,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-ID-Геополитич",
-      "type": "Signal",
-      "label": "Геополитический процесс — Юго-Восточная ",
-      "severity": 53,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-ID",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-climate",
       "type": "CORRELATES",
-      "weight": 0.58
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-ID",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-ID-climate",
-      "to": "DOMAIN-ID-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-ID-economic",
-      "to": "DOMAIN-ID-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-ID-social",
-      "to": "DOMAIN-ID-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-ID-climate",
       "to": "DOMAIN-ID-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -205,22 +184,43 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-ID-Гроза:_Сев",
+      "from": "DOMAIN-ID-climate",
+      "to": "DOMAIN-ID-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ID-economic",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-ID-social",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "SIGNAL-ID-Гроза:_Пап",
       "to": "DOMAIN-ID-climate",
       "type": "AMPLIFIES",
       "weight": 0.56
+    },
+    {
+      "from": "SIGNAL-ID-Угрожаемые",
+      "to": "DOMAIN-ID-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.44
     },
     {
       "from": "SIGNAL-ID-Шторм_—_Ин",
       "to": "DOMAIN-ID-climate",
       "type": "AMPLIFIES",
       "weight": 0.56
-    },
-    {
-      "from": "SIGNAL-ID-Геополитич",
-      "to": "DOMAIN-ID-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.53
     }
   ]
 }
