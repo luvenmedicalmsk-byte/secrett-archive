@@ -2,9 +2,9 @@
   "country": "BY",
   "date": "2026-11-20",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-20T06:21:52.575056+00:00",
+  "generated_at": "2026-11-20T06:34:41.567278+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-BY",
@@ -33,14 +33,14 @@
       "id": "DOMAIN-BY-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 62,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-BY-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
+      "score": 64,
       "trend": "stable"
     },
     {
@@ -80,25 +80,25 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-BY-На_Игналин",
+      "type": "Signal",
+      "label": "На Игналинской АЭС горел склад. Беларусь",
+      "severity": 64,
+      "domain": "technology"
+    },
+    {
+      "id": "SIGNAL-BY-МЧС_Белару",
+      "type": "Signal",
+      "label": "МЧС Беларуси получило ответ Литвы по пов",
+      "severity": 62,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-BY-В_Минске_г",
       "type": "Signal",
       "label": "В Минске глава Роспотребнадзора Анна Поп",
       "severity": 58,
       "domain": "social"
-    },
-    {
-      "id": "SIGNAL-BY-Эпидемиоло",
-      "type": "Signal",
-      "label": "Эпидемиологический надзор — Беларусь",
-      "severity": 58,
-      "domain": "social"
-    },
-    {
-      "id": "SIGNAL-BY-Санкционно",
-      "type": "Signal",
-      "label": "Санкционное давление — Беларусь",
-      "severity": 53,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -118,13 +118,13 @@
       "from": "COUNTRY-BY",
       "to": "DOMAIN-BY-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.62
     },
     {
       "from": "COUNTRY-BY",
       "to": "DOMAIN-BY-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.64
     },
     {
       "from": "COUNTRY-BY",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-BY-climate",
+      "to": "DOMAIN-BY-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-BY-economic",
+      "to": "DOMAIN-BY-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-BY-social",
+      "to": "DOMAIN-BY-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-BY-geopolitical",
       "to": "DOMAIN-BY-infrastructure",
       "type": "ESCALATES",
@@ -184,22 +205,43 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-BY-climate",
+      "to": "DOMAIN-BY-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-BY-infrastructure",
+      "to": "DOMAIN-BY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-BY-economic",
+      "to": "DOMAIN-BY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-BY-На_Игналин",
+      "to": "DOMAIN-BY-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.64
+    },
+    {
+      "from": "SIGNAL-BY-МЧС_Белару",
+      "to": "DOMAIN-BY-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.62
+    },
+    {
       "from": "SIGNAL-BY-В_Минске_г",
       "to": "DOMAIN-BY-social",
       "type": "AMPLIFIES",
       "weight": 0.58
-    },
-    {
-      "from": "SIGNAL-BY-Эпидемиоло",
-      "to": "DOMAIN-BY-social",
-      "type": "AMPLIFIES",
-      "weight": 0.58
-    },
-    {
-      "from": "SIGNAL-BY-Санкционно",
-      "to": "DOMAIN-BY-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.53
     }
   ]
 }
