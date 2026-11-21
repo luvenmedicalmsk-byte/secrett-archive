@@ -2,9 +2,9 @@
   "country": "MX",
   "date": "2026-11-21",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-21T22:08:48.494250+00:00",
+  "generated_at": "2026-11-21T22:21:37.737319+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-MX",
@@ -33,7 +33,7 @@
       "id": "DOMAIN-MX-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 81,
       "trend": "stable"
     },
     {
@@ -87,18 +87,18 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-MX-Арест_лиде",
-      "type": "Signal",
-      "label": "Арест лидера мексиканского наркокартеля ",
-      "severity": 61,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-MX-Криминальн",
       "type": "Signal",
       "label": "Криминальный инцидент — Мексика",
       "severity": 61,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-MX-Наводнение",
+      "type": "Signal",
+      "label": "Наводнение — Мексика",
+      "severity": 81,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.81
     },
     {
       "from": "COUNTRY-MX",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-MX-climate",
+      "to": "DOMAIN-MX-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-MX-economic",
+      "to": "DOMAIN-MX-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-MX-social",
+      "to": "DOMAIN-MX-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-MX-climate",
+      "to": "DOMAIN-MX-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-MX-infrastructure",
+      "to": "DOMAIN-MX-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-MX-economic",
+      "to": "DOMAIN-MX-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "DOMAIN-MX-geopolitical",
       "to": "DOMAIN-MX-infrastructure",
       "type": "ESCALATES",
@@ -190,16 +232,16 @@
       "weight": 0.61
     },
     {
-      "from": "SIGNAL-MX-Арест_лиде",
+      "from": "SIGNAL-MX-Криминальн",
       "to": "DOMAIN-MX-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.61
     },
     {
-      "from": "SIGNAL-MX-Криминальн",
-      "to": "DOMAIN-MX-geopolitical",
+      "from": "SIGNAL-MX-Наводнение",
+      "to": "DOMAIN-MX-climate",
       "type": "AMPLIFIES",
-      "weight": 0.61
+      "weight": 0.81
     }
   ]
 }
