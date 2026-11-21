@@ -2,7 +2,7 @@
   "country": "KZ",
   "date": "2026-11-21",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-21T13:49:14.470712+00:00",
+  "generated_at": "2026-11-21T14:27:37.142512+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -47,7 +47,7 @@
       "id": "DOMAIN-KZ-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
+      "score": 58,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-KZ-Роспотребн",
+      "type": "Signal",
+      "label": "Роспотребнадзор запросил у Минздрава Каз",
+      "severity": 58,
+      "domain": "social"
+    },
+    {
       "id": "SIGNAL-KZ-Ветер:_Еси",
       "type": "Signal",
       "label": "Ветер: Есильский район (Акмолинская обла",
@@ -91,13 +98,6 @@
       "type": "Signal",
       "label": "Штормовое предупреждение объявили в Аста",
       "severity": 50,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-KZ-Туман,_гол",
-      "type": "Signal",
-      "label": "Туман, гололед и сильный ветер: в Казахс",
-      "severity": 49,
       "domain": "climate"
     }
   ],
@@ -130,7 +130,7 @@
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-KZ",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-KZ-climate",
-      "to": "DOMAIN-KZ-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-KZ-infrastructure",
-      "to": "DOMAIN-KZ-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-KZ-economic",
-      "to": "DOMAIN-KZ-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-KZ-geopolitical",
       "to": "DOMAIN-KZ-infrastructure",
       "type": "ESCALATES",
@@ -226,6 +205,33 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-KZ-climate",
+      "to": "DOMAIN-KZ-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-KZ-infrastructure",
+      "to": "DOMAIN-KZ-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-KZ-economic",
+      "to": "DOMAIN-KZ-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-KZ-Роспотребн",
+      "to": "DOMAIN-KZ-social",
+      "type": "AMPLIFIES",
+      "weight": 0.58
+    },
+    {
       "from": "SIGNAL-KZ-Ветер:_Еси",
       "to": "DOMAIN-KZ-climate",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-KZ-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-KZ-Туман,_гол",
-      "to": "DOMAIN-KZ-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.49
     }
   ]
 }
