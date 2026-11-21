@@ -2,72 +2,67 @@
   "country": "GR",
   "date": "2026-11-21",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-21T19:50:38.634576+00:00",
+  "generated_at": "2026-11-21T20:09:29.464690+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-GR",
       "type": "Country",
       "label": "GR",
-      "score": 64,
+      "score": 51,
       "props": {
-        "risk_score": 64
+        "risk_score": 51
       }
     },
     {
       "id": "DOMAIN-GR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 63,
-      "trend": "stable"
+      "score": 15,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GR-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GR-climate",
       "type": "Domain",
       "label": "climate",
       "score": 50,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GR-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GR-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GR-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
-    },
-    {
-      "id": "DRIVER-GR-geopolitical",
-      "type": "Driver",
-      "label": "geopolitical"
+      "trend": "down"
     },
     {
       "id": "DRIVER-GR-climate",
@@ -75,16 +70,14 @@
       "label": "climate"
     },
     {
+      "id": "DRIVER-GR-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
+    },
+    {
       "id": "DRIVER-GR-economic",
       "type": "Driver",
       "label": "economic"
-    },
-    {
-      "id": "SIGNAL-GR-Греция_и_И",
-      "type": "Signal",
-      "label": "Греция и Израиль обсуждают новые сделки ",
-      "severity": 63,
-      "domain": "geopolitical"
     },
     {
       "id": "SIGNAL-GR-Ливень:_Эп",
@@ -99,6 +92,13 @@
       "label": "Гроза: Эпир, Греция",
       "severity": 50,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-GR-Шторм_—_Гр",
+      "type": "Signal",
+      "label": "Шторм — Греция",
+      "severity": 50,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.63
+      "weight": 0.15
     },
     {
       "from": "COUNTRY-GR",
@@ -145,13 +145,13 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-GR-geopolitical",
+      "from": "DRIVER-GR-climate",
       "to": "COUNTRY-GR",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-GR-climate",
+      "from": "DRIVER-GR-geopolitical",
       "to": "COUNTRY-GR",
       "type": "CAUSES",
       "weight": 0.8
@@ -161,27 +161,6 @@
       "to": "COUNTRY-GR",
       "type": "CAUSES",
       "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-GR-climate",
-      "to": "DOMAIN-GR-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-GR-economic",
-      "to": "DOMAIN-GR-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-GR-social",
-      "to": "DOMAIN-GR-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
     },
     {
       "from": "DOMAIN-GR-climate",
@@ -205,31 +184,25 @@
       "lag_days": 30
     },
     {
-      "from": "DOMAIN-GR-geopolitical",
-      "to": "DOMAIN-GR-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-GR-infrastructure",
+      "from": "DOMAIN-GR-climate",
       "to": "DOMAIN-GR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-GR-economic",
       "to": "DOMAIN-GR-social",
       "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
+      "weight": 0.7,
+      "lag_days": 60
     },
     {
-      "from": "SIGNAL-GR-Греция_и_И",
-      "to": "DOMAIN-GR-geopolitical",
+      "from": "DOMAIN-GR-social",
+      "to": "DOMAIN-GR-social",
       "type": "AMPLIFIES",
-      "weight": 0.63
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "SIGNAL-GR-Ливень:_Эп",
@@ -239,6 +212,12 @@
     },
     {
       "from": "SIGNAL-GR-Гроза:_Эпи",
+      "to": "DOMAIN-GR-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
+      "from": "SIGNAL-GR-Шторм_—_Гр",
       "to": "DOMAIN-GR-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
