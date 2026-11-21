@@ -1,10 +1,10 @@
 {
   "country": "JP",
-  "date": "2026-11-20",
+  "date": "2026-11-21",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-20T23:50:04.108563+00:00",
+  "generated_at": "2026-11-21T00:10:08.144530+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-JP",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-JP-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
+      "score": 52,
       "trend": "stable"
     },
     {
@@ -47,7 +47,7 @@
       "id": "DOMAIN-JP-social",
       "type": "Domain",
       "label": "social",
-      "score": 54,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -94,11 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-JP-Поход_в_го",
+      "id": "SIGNAL-JP-Японский_ф",
       "type": "Signal",
-      "label": "Поход в горы закончился больницей в Алма",
-      "severity": 54,
-      "domain": "social"
+      "label": "Японский флагман на коленях",
+      "severity": 52,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.52
     },
     {
       "from": "COUNTRY-JP",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-social",
       "type": "CORRELATES",
-      "weight": 0.54
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-JP",
@@ -205,6 +205,27 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-JP-geopolitical",
+      "to": "DOMAIN-JP-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-JP-infrastructure",
+      "to": "DOMAIN-JP-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-JP-economic",
+      "to": "DOMAIN-JP-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-JP-Гололедно_",
       "to": "DOMAIN-JP-climate",
       "type": "AMPLIFIES",
@@ -217,10 +238,10 @@
       "weight": 0.56
     },
     {
-      "from": "SIGNAL-JP-Поход_в_го",
-      "to": "DOMAIN-JP-social",
+      "from": "SIGNAL-JP-Японский_ф",
+      "to": "DOMAIN-JP-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.54
+      "weight": 0.52
     }
   ]
 }
