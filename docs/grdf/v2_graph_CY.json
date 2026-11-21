@@ -2,9 +2,9 @@
   "country": "CY",
   "date": "2026-11-21",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-21T06:49:51.478312+00:00",
-  "node_count": 13,
-  "edge_count": 18,
+  "generated_at": "2026-11-21T07:21:53.320245+00:00",
+  "node_count": 14,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-CY",
@@ -26,14 +26,14 @@
       "id": "DOMAIN-CY-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
+      "score": 5,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-CY-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 50,
+      "score": 56,
       "trend": "stable"
     },
     {
@@ -80,17 +80,24 @@
       "label": "economic"
     },
     {
-      "id": "SIGNAL-CY-Шторм_—_Ки",
+      "id": "SIGNAL-CY-Климатичес",
       "type": "Signal",
-      "label": "Шторм — Кипр",
-      "severity": 50,
+      "label": "Климатическое давление",
+      "severity": 56,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-CY-Геополитич",
+      "type": "Signal",
+      "label": "Геополитическое давление",
+      "severity": 38,
+      "domain": "geopolitical"
     },
     {
       "id": "SIGNAL-CY-Экономичес",
       "type": "Signal",
-      "label": "Экономический сигнал — Кипр",
-      "severity": 32,
+      "label": "Экономическое давление",
+      "severity": 5,
       "domain": "economic"
     }
   ],
@@ -105,13 +112,13 @@
       "from": "COUNTRY-CY",
       "to": "DOMAIN-CY-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CY",
       "to": "DOMAIN-CY-climate",
       "type": "CORRELATES",
-      "weight": 0.5
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-CY",
@@ -157,27 +164,6 @@
     },
     {
       "from": "DOMAIN-CY-climate",
-      "to": "DOMAIN-CY-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-CY-infrastructure",
-      "to": "DOMAIN-CY-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-CY-economic",
-      "to": "DOMAIN-CY-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-CY-climate",
       "to": "DOMAIN-CY-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -198,16 +184,43 @@
       "lag_days": 90
     },
     {
-      "from": "SIGNAL-CY-Шторм_—_Ки",
+      "from": "DOMAIN-CY-climate",
+      "to": "DOMAIN-CY-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-CY-infrastructure",
+      "to": "DOMAIN-CY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CY-economic",
+      "to": "DOMAIN-CY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-CY-Климатичес",
       "to": "DOMAIN-CY-climate",
       "type": "AMPLIFIES",
-      "weight": 0.5
+      "weight": 0.56
+    },
+    {
+      "from": "SIGNAL-CY-Геополитич",
+      "to": "DOMAIN-CY-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.38
     },
     {
       "from": "SIGNAL-CY-Экономичес",
       "to": "DOMAIN-CY-economic",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.05
     }
   ]
 }
