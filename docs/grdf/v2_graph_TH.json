@@ -2,7 +2,7 @@
   "country": "TH",
   "date": "2026-11-21",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-21T07:21:53.317657+00:00",
+  "generated_at": "2026-11-21T07:34:15.293411+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -19,7 +19,7 @@
       "id": "DOMAIN-TH-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
+      "score": 39,
       "trend": "stable"
     },
     {
@@ -33,7 +33,7 @@
       "id": "DOMAIN-TH-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 58,
+      "score": 74,
       "trend": "stable"
     },
     {
@@ -80,25 +80,25 @@
       "label": "economic"
     },
     {
-      "id": "SIGNAL-TH-Климатичес",
+      "id": "SIGNAL-TH-Шторм_—_Та",
       "type": "Signal",
-      "label": "Климатическое давление",
-      "severity": 58,
+      "label": "Шторм — Таиланд",
+      "severity": 74,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-TH-Санкционно",
+      "type": "Signal",
+      "label": "Санкционное давление — Юго-Восточная Ази",
+      "severity": 53,
+      "domain": "geopolitical"
     },
     {
       "id": "SIGNAL-TH-Геополитич",
       "type": "Signal",
-      "label": "Геополитическое давление",
-      "severity": 5,
+      "label": "Геополитический процесс — Юго-Восточная ",
+      "severity": 53,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-TH-Экономичес",
-      "type": "Signal",
-      "label": "Экономическое давление",
-      "severity": 5,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.39
     },
     {
       "from": "COUNTRY-TH",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-climate",
       "type": "CORRELATES",
-      "weight": 0.58
+      "weight": 0.74
     },
     {
       "from": "COUNTRY-TH",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-TH-climate",
-      "to": "DOMAIN-TH-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-TH-infrastructure",
-      "to": "DOMAIN-TH-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-TH-economic",
-      "to": "DOMAIN-TH-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-TH-climate",
       "to": "DOMAIN-TH-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,22 +184,43 @@
       "lag_days": 90
     },
     {
-      "from": "SIGNAL-TH-Климатичес",
+      "from": "DOMAIN-TH-climate",
+      "to": "DOMAIN-TH-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-TH-infrastructure",
+      "to": "DOMAIN-TH-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TH-economic",
+      "to": "DOMAIN-TH-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-TH-Шторм_—_Та",
       "to": "DOMAIN-TH-climate",
       "type": "AMPLIFIES",
-      "weight": 0.58
+      "weight": 0.74
+    },
+    {
+      "from": "SIGNAL-TH-Санкционно",
+      "to": "DOMAIN-TH-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.53
     },
     {
       "from": "SIGNAL-TH-Геополитич",
       "to": "DOMAIN-TH-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.05
-    },
-    {
-      "from": "SIGNAL-TH-Экономичес",
-      "to": "DOMAIN-TH-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.05
+      "weight": 0.53
     }
   ]
 }

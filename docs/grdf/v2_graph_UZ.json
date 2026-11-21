@@ -2,9 +2,9 @@
   "country": "UZ",
   "date": "2026-11-21",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-21T07:21:53.317151+00:00",
-  "node_count": 12,
-  "edge_count": 20,
+  "generated_at": "2026-11-21T07:34:15.293009+00:00",
+  "node_count": 14,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-UZ",
@@ -33,14 +33,14 @@
       "id": "DOMAIN-UZ-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 45,
+      "score": 46,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-UZ-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
+      "score": 56,
       "trend": "stable"
     },
     {
@@ -65,6 +65,11 @@
       "trend": "stable"
     },
     {
+      "id": "DRIVER-UZ-technology",
+      "type": "Driver",
+      "label": "technology"
+    },
+    {
       "id": "DRIVER-UZ-climate",
       "type": "Driver",
       "label": "climate"
@@ -75,16 +80,25 @@
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-UZ-economic",
-      "type": "Driver",
-      "label": "economic"
-    },
-    {
       "id": "SIGNAL-UZ-Энергетиче",
       "type": "Signal",
       "label": "Энергетический сектор Узбекистана сталки",
       "severity": 45,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-UZ-Водный_деф",
+      "type": "Signal",
+      "label": "Водный дефицит — Центральная Азия",
+      "severity": 62,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-UZ-Отключение",
+      "type": "Signal",
+      "label": "Отключение интернета — Узбекистан",
+      "severity": 56,
+      "domain": "technology"
     }
   ],
   "edges": [
@@ -104,13 +118,13 @@
       "from": "COUNTRY-UZ",
       "to": "DOMAIN-UZ-climate",
       "type": "CORRELATES",
-      "weight": 0.45
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-UZ",
       "to": "DOMAIN-UZ-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-UZ",
@@ -131,6 +145,12 @@
       "weight": 0.05
     },
     {
+      "from": "DRIVER-UZ-technology",
+      "to": "COUNTRY-UZ",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-UZ-climate",
       "to": "COUNTRY-UZ",
       "type": "CAUSES",
@@ -138,12 +158,6 @@
     },
     {
       "from": "DRIVER-UZ-geopolitical",
-      "to": "COUNTRY-UZ",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
-      "from": "DRIVER-UZ-economic",
       "to": "COUNTRY-UZ",
       "type": "CAUSES",
       "weight": 0.8
@@ -216,6 +230,18 @@
       "to": "DOMAIN-UZ-climate",
       "type": "AMPLIFIES",
       "weight": 0.45
+    },
+    {
+      "from": "SIGNAL-UZ-Водный_деф",
+      "to": "DOMAIN-UZ-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.62
+    },
+    {
+      "from": "SIGNAL-UZ-Отключение",
+      "to": "DOMAIN-UZ-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.56
     }
   ]
 }
