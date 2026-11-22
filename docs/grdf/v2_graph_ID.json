@@ -2,17 +2,17 @@
   "country": "ID",
   "date": "2026-11-22",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-22T05:29:17.833184+00:00",
+  "generated_at": "2026-11-22T05:47:41.260860+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-ID",
       "type": "Country",
       "label": "ID",
-      "score": 54,
+      "score": 52,
       "props": {
-        "risk_score": 54
+        "risk_score": 52
       }
     },
     {
@@ -33,15 +33,15 @@
       "id": "DOMAIN-ID-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 32,
-      "trend": "up"
+      "score": 56,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ID-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 54,
-      "trend": "up"
+      "score": 5,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-ID-social",
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-ID-Пожар_на_и",
-      "type": "Signal",
-      "label": "Пожар на индонезийской фабрике сладостей",
-      "severity": 54,
-      "domain": "technology"
-    },
-    {
       "id": "SIGNAL-ID-Последний_",
       "type": "Signal",
       "label": "Последний ареал яванского носорога оказа",
@@ -98,6 +91,13 @@
       "type": "Signal",
       "label": "От бумаги до вискозы: древесная целлюлоз",
       "severity": 32,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-ID-Шторм_—_Ин",
+      "type": "Signal",
+      "label": "Шторм — Индонезия",
+      "severity": 56,
       "domain": "climate"
     }
   ],
@@ -118,13 +118,13 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-climate",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-technology",
       "type": "CORRELATES",
-      "weight": 0.54
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-ID",
@@ -163,10 +163,46 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-ID-Пожар_на_и",
-      "to": "DOMAIN-ID-technology",
+      "from": "DOMAIN-ID-climate",
+      "to": "DOMAIN-ID-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-ID-infrastructure",
+      "to": "DOMAIN-ID-economic",
       "type": "AMPLIFIES",
-      "weight": 0.54
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ID-economic",
+      "to": "DOMAIN-ID-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ID-climate",
+      "to": "DOMAIN-ID-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ID-economic",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-ID-social",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "SIGNAL-ID-Последний_",
@@ -179,6 +215,12 @@
       "to": "DOMAIN-ID-climate",
       "type": "AMPLIFIES",
       "weight": 0.32
+    },
+    {
+      "from": "SIGNAL-ID-Шторм_—_Ин",
+      "to": "DOMAIN-ID-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.56
     }
   ]
 }
