@@ -40,6 +40,11 @@ CONTRACT_VERSION = "free-v2"
 # системе, связанные процессы, прогноз следующего шага, активность.
 # Каскад, сценарии и экспериментальная аналитика в бесплатный слой не входят.
 CRITICAL_PRESSURE = 90
+# 22.11.2026 (Мия): из платных критичных подробности открыты только у этих типов.
+# Остальные критичные платные процессы - только карточка (поля списка), флаг preview_only;
+# хроника, свидетельства, объяснение, связи и т.п. в бесплатный файл не попадают.
+OPEN_PRO_TYPES = ("Санкционное давление",)
+
 
 # Поля процесса, которые бесплатная карта читает напрямую.
 FREE_FIELDS = (
@@ -65,7 +70,7 @@ ROLE_FIELDS = ("role", "role_icon", "role_hex", "role_summary", "role_label", "r
 REL_FIELDS = ("target_process", "target_title", "sem_class", "confidence", "class_phrase", "natural_phrase")
 FORECAST_FIELDS = ("escalation", "stabilization", "decay")
 EXTRA_FIELDS = ("relationship_context", "critical_transition")
-DERIVED_FIELDS = ("evidence", "timeline", "explain", "included_processes",
+DERIVED_FIELDS = ("preview_only", "evidence", "timeline", "explain", "included_processes",
                   "included_count", "links_count",
                   "explanation", "importance", "system_role", "relationships",
                   "forecast", "velocity", "pressure_history") + EXTRA_FIELDS
@@ -78,6 +83,15 @@ def _pick(obj, fields):
 
 
 def _free_process(s, free_ids):
+    if s.get("access_tier") != "free" and s.get("process_type") not in OPEN_PRO_TYPES:
+        out = _pick(s, FREE_FIELDS)
+        inc = s.get("included_processes")
+        if isinstance(inc, list):
+            out["included_processes"] = []
+            out["included_count"] = len(inc)
+        out["access_tier"] = "free"
+        out["preview_only"] = True
+        return out
     out = _pick(s, FREE_FIELDS)
     if isinstance(s.get("evidence"), list):
         out["evidence"] = [_pick(e, EVIDENCE_FIELDS) for e in s["evidence"] if isinstance(e, dict)]
