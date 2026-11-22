@@ -46,9 +46,13 @@ CRITICAL_PRESSURE = 90
 # хроника, свидетельства, объяснение, связи и т.п. в бесплатный файл не попадают.
 # Открыт ровно один платный процесс: «Санкционное давление - Россия» (решение Мии 22.11.2026).
 OPEN_PRO = (("Санкционное давление", "Россия"),)
-# Закрытый критичный процесс: только замок. Ни названия, ни места, ни чисел, кроме давления
-# (по нему карточка встаёт в «Критичные»).
-LOCKED_FIELDS = ("signal_id", "status", "pressure", "primary_domain", "is_macro")
+# Закрытый критичный процесс (решение Мии 22.11.2026, уточнение): в ленте карточка с названием
+# и замочком, подробностей нет - только поля карточки списка, без хроники, свидетельств,
+# объяснений и связей. Нажатие на карточку на сайте открывает окно доступа.
+LOCKED_FIELDS = ("signal_id", "title", "status", "process_type", "primary_domain", "domains",
+                 "process_place", "phase", "lifecycle_stage", "first_seen", "last_seen",
+                 "evidence_count", "geo_spread", "geo_spread_count", "is_macro",
+                 "priority", "severity", "pressure")
 
 
 # Поля процесса, которые бесплатная карта читает напрямую.
@@ -90,8 +94,6 @@ def _pick(obj, fields):
 def _free_process(s, free_ids):
     if s.get("access_tier") != "free" and (s.get("process_type"), s.get("process_place")) not in OPEN_PRO:
         out = _pick(s, LOCKED_FIELDS)
-        # signal_id содержит тип и место («geop-macroвоенн-россияук-…») - заменяем непрозрачным
-        out["signal_id"] = "locked-" + hashlib.sha1(str(s.get("signal_id")).encode("utf-8")).hexdigest()[:12]
         out["access_tier"] = "free"
         out["preview_only"] = True
         return out
