@@ -64,6 +64,28 @@ jobs:
           echo "PUBLISH_BASE_SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
           echo "[PUBLISH-LINEAGE] base_sha=$(git rev-parse HEAD) run_id=${{ github.run_id }}"
 
+      # P0.6a RESTORE SHADOW (22.11.2026, решение Мии). Только чтение: сверяет
+      # платные файлы рабочей копии с приватным secrett-archive-data по sha и
+      # проверяет свежесть приватного манифеста. Рабочую копию не меняет, в
+      # репозиторий ничего не пишет, прогон уронить не может. Клон - во
+      # временной папке вне рабочей копии. ОТКАТ: удалить шаг.
+      - name: P0.6a Restore shadow (только чтение)
+        continue-on-error: true
+        timeout-minutes: 4
+        env:
+          TOKEN: ${{ secrets.DATA_REPO_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then echo '[RESTORE-SHADOW] {"skipped":"no_token"}'; exit 0; fi
+          D=$(mktemp -d)
+          if git clone -q --depth 1 "https://x-access-token:${TOKEN}@github.com/luvenmedicalmsk-byte/secrett-archive-data.git" "$D/priv" >/dev/null 2>&1; then
+            python3 scripts/restore_shadow.py "$D/priv" || echo '[RESTORE-SHADOW] {"script_error":true}'
+          else
+            echo '[RESTORE-SHADOW] {"clone_failed":true}'
+          fi
+          rm -rf "$D"
+          git status --porcelain | head -5
+
       - name: Настройка Python
         uses: actions/setup-python@v5
         with:

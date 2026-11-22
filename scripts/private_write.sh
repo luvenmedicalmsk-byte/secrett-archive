@@ -30,7 +30,11 @@ command -v rsync >/dev/null || { echo "::warning::[private] нет rsync, про
 # стал полной копией перед переводом воркера и конвейера. Публичная выдача не меняется.
 # docs/reports сюда НЕ входит: в приватном это отдельная накопительная папка
 # (scripts/push_reports.py, без удаления); rsync --delete стирал старые PDF.
-DIRS="docs/grdf docs/resilience docs/scenarios docs/strategy docs/decision-support docs/early-warning docs/executive-summary docs/risk-ranking docs/calibration docs/correlations docs/systemic docs/timelines docs/scenario-tree docs/scenario-pathways docs/scenario-evolution docs/propagation docs/decision-quality docs/recommendations docs/dashboard docs/risk-hierarchy docs/risk-acceleration docs/strategy-feedback docs/strategy-history docs/strategy-optimization docs/validation docs/validation-external docs/decision-ranking docs/explanations docs/global-risks docs/snapshots docs/track-record docs/intelligence docs/strategy-evolution docs/alerts docs/signals"
+# P0.6 (22.11.2026, решение Мии): docs/.history (почасовые снимки сигналов, вход
+# escalation_score) - INTERNAL. Это зеркальная папка, не накопительная: окно
+# 7 дней задаёт сам конвейер (history_store.HISTORY_RETENTION_DAYS), поэтому
+# rsync --delete здесь соответствует политике хранения.
+DIRS="docs/grdf docs/resilience docs/scenarios docs/strategy docs/decision-support docs/early-warning docs/executive-summary docs/risk-ranking docs/calibration docs/correlations docs/systemic docs/timelines docs/scenario-tree docs/scenario-pathways docs/scenario-evolution docs/propagation docs/decision-quality docs/recommendations docs/dashboard docs/risk-hierarchy docs/risk-acceleration docs/strategy-feedback docs/strategy-history docs/strategy-optimization docs/validation docs/validation-external docs/decision-ranking docs/explanations docs/global-risks docs/snapshots docs/track-record docs/intelligence docs/strategy-evolution docs/alerts docs/signals docs/.history"
 FILES="docs/signals.json docs/_preview_processes.json docs/country_zones.json docs/signal_memory.json docs/model-history.json docs/_hypothesis_snapshots.json"
 
 PUB_SHA=$(git rev-parse HEAD 2>/dev/null || echo "?")
