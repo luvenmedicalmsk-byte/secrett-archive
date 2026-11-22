@@ -32,7 +32,14 @@ from datetime import datetime, timezone
 SRC = "docs/signals.json"
 OUT = "docs/signals_free.json"
 REPORT = "docs/_free_layer_report.json"
-CONTRACT_VERSION = "free-v1"
+CONTRACT_VERSION = "free-v2"
+# free-v2 (решение Мии 22.11.2026): в бесплатный слой открываются КРИТИЧНЫЕ процессы
+# (давление 90+, не завершённые) - «как в реальности 7», включая геополитику
+# («Санкционное давление - Россия»), и поля для блоков бесплатной карточки
+# до «Возможного каскада влияния»: объяснение, системная значимость, роль в
+# системе, связанные процессы, прогноз следующего шага, активность.
+# Каскад, сценарии и экспериментальная аналитика в бесплатный слой не входят.
+CRITICAL_PRESSURE = 90
 
 # Поля процесса, которые бесплатная карта читает напрямую.
 FREE_FIELDS = (
@@ -50,8 +57,18 @@ EVIDENCE_FIELDS = ("title", "source", "date", "severity")
 TIMELINE_FIELDS = ("event", "t")
 EXPLAIN_FIELDS = ("why_exists",)
 LINK_FIELDS = ("causes", "caused_by", "related", "amplifies")
+EXPLANATION_FIELDS = ("human_summary", "why_one_process", "why_watch", "what_changed", "confidence")
+MEANING_FIELDS = ("current_state", "stage_meaning", "trend", "scale")
+IMPORTANCE_FIELDS = ("score", "stars", "centrality", "connects_processes", "cascade_reach",
+                     "domains_connected", "explanation")
+ROLE_FIELDS = ("role", "role_icon", "role_hex", "role_summary", "role_label", "role_explanation")
+REL_FIELDS = ("target_process", "target_title", "sem_class", "confidence", "class_phrase", "natural_phrase")
+FORECAST_FIELDS = ("escalation", "stabilization", "decay")
+EXTRA_FIELDS = ("relationship_context", "critical_transition")
 DERIVED_FIELDS = ("evidence", "timeline", "explain", "included_processes",
-                  "included_count", "links_count")
+                  "included_count", "links_count",
+                  "explanation", "importance", "system_role", "relationships",
+                  "forecast", "velocity", "pressure_history") + EXTRA_FIELDS
 ALLOWED = set(FREE_FIELDS) | set(DERIVED_FIELDS)
 TOP_HEALTH = ("global_pressure", "pressure_change_pct")
 
@@ -73,7 +90,37 @@ def _free_process(s, free_ids):
         out["included_processes"] = [p for p in inc if p in free_ids]
         out["included_count"] = len(inc)
     out["links_count"] = sum(len(s.get(k) or []) for k in LINK_FIELDS)
+    # free-v2: поля блоков до каскада
+    ex = s.get("explanation")
+    if isinstance(ex, dict):
+        e2 = _pick(ex, EXPLANATION_FIELDS)
+        if isinstance(ex.get("meaning"), dict):
+            e2["meaning"] = _pick(ex["meaning"], MEANING_FIELDS)
+        if e2: out["explanation"] = e2
+    if isinstance(s.get("importance"), dict):
+        out["importance"] = _pick(s["importance"], IMPORTANCE_FIELDS)
+    if isinstance(s.get("system_role"), dict):
+        out["system_role"] = _pick(s["system_role"], ROLE_FIELDS)
+    if isinstance(s.get("relationships"), list):
+        out["relationships"] = [_pick(r, REL_FIELDS) for r in s["relationships"][:8] if isinstance(r, dict)]
+    if isinstance(s.get("forecast"), dict):
+        out["forecast"] = _pick(s["forecast"], FORECAST_FIELDS)
+    if isinstance(s.get("velocity"), dict) and s["velocity"].get("category"):
+        out["velocity"] = {"category": s["velocity"]["category"]}
+    if isinstance(s.get("pressure_history"), list):
+        out["pressure_history"] = [_pick(h, ("t", "v")) for h in s["pressure_history"][-12:] if isinstance(h, dict)]
+    for k in EXTRA_FIELDS:
+        if k in s: out[k] = s[k]
+    # критичный процесс из платного слоя открывается как бесплатный
+    out["access_tier"] = "free"
     return out
+
+
+def _is_critical(s):
+    st = str(s.get("lifecycle_stage") or "").lower()
+    ph = str(s.get("phase") or "").lower()
+    closed = st in ("завершён", "завершен") or ph in ("dormant", "archived") or s.get("status") == "archived"
+    return (not closed) and (s.get("pressure") or 0) >= CRITICAL_PRESSURE
 
 
 def _violations(doc):
@@ -103,7 +150,7 @@ def main():
         print("  [free] %s не прочитан: %s, пропуск" % (SRC, e), file=sys.stderr)
         return 0
     sigs = full.get("signals") or []
-    free_src = [s for s in sigs if isinstance(s, dict) and s.get("access_tier") == "free"]
+    free_src = [s for s in sigs if isinstance(s, dict) and (s.get("access_tier") == "free" or _is_critical(s))]
     free_ids = {s.get("signal_id") for s in free_src}
     gh = full.get("global_health") or {}
     doc = {
