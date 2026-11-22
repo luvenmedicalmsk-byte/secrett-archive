@@ -2,7 +2,7 @@
   "country": "LT",
   "date": "2026-11-22",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-22T05:47:41.256713+00:00",
+  "generated_at": "2026-11-22T06:09:16.185584+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-LT-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,9 +80,16 @@
       "label": "economic"
     },
     {
-      "id": "SIGNAL-LT-Ветер:_Юго",
+      "id": "SIGNAL-LT-Туман:_Тау",
       "type": "Signal",
-      "label": "Ветер: Юго-восточная Балтика, Куршская к",
+      "label": "Туман: Тауравская уезд, Мариямпольский у",
+      "severity": 50,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-LT-Ветер:_Уез",
+      "type": "Signal",
+      "label": "Ветер: Уезд Клайпеда, Юго-восточная Балт",
       "severity": 50,
       "domain": "climate"
     },
@@ -92,13 +99,6 @@
       "label": "Геополитический процесс — Литва",
       "severity": 34,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-LT-Экономичес",
-      "type": "Signal",
-      "label": "Экономический сигнал — Литва",
-      "severity": 32,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-LT",
       "to": "DOMAIN-LT-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-LT",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-LT-climate",
-      "to": "DOMAIN-LT-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-LT-infrastructure",
-      "to": "DOMAIN-LT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-LT-economic",
-      "to": "DOMAIN-LT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-LT-climate",
       "to": "DOMAIN-LT-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,7 +184,34 @@
       "lag_days": 90
     },
     {
-      "from": "SIGNAL-LT-Ветер:_Юго",
+      "from": "DOMAIN-LT-climate",
+      "to": "DOMAIN-LT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-LT-infrastructure",
+      "to": "DOMAIN-LT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-LT-economic",
+      "to": "DOMAIN-LT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-LT-Туман:_Тау",
+      "to": "DOMAIN-LT-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
+      "from": "SIGNAL-LT-Ветер:_Уез",
       "to": "DOMAIN-LT-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
@@ -215,12 +221,6 @@
       "to": "DOMAIN-LT-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.34
-    },
-    {
-      "from": "SIGNAL-LT-Экономичес",
-      "to": "DOMAIN-LT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.32
     }
   ]
 }
