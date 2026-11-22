@@ -1,5 +1,5 @@
 {
-  "generated": "2026-11-22T11:07:08Z",
+  "generated": "2026-11-22T11:27:23Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
@@ -7,9 +7,9 @@
     "DENY_COMMENTARY": 382,
     "DENY_BACKGROUND": 3,
     "DENY_FEATURE": 4,
-    "DENY_STATE_ONLY": 2,
     "UNMATCHED": 4,
-    "DENY_OTHER": 1
+    "DENY_OTHER": 1,
+    "DENY_STATE_ONLY": 2
   },
   "kpi": {
     "processes_total": 1600,
@@ -26,44 +26,44 @@
   "shadow_reliability": {
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
-      "processes": 460,
-      "sample": 1652,
-      "agreement_pct": 88.6,
-      "decision_agreement_pct": 88.7,
+      "processes": 458,
+      "sample": 1636,
+      "agreement_pct": 88.5,
+      "decision_agreement_pct": 88.6,
       "critical_errors": 186,
       "truth_ratio_pct": 99.8,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 173,
-        "FACT_EVENT→BACKGROUND": 2,
-        "COMMENTARY→FACT_EVENT": 9,
+        "FACT_EVENT→COMMENTARY": 172,
+        "COMMENTARY→FACT_EVENT": 10,
         "FEATURE→COMMENTARY": 2,
         "FACT_EVENT→UNKNOWN": 1,
+        "FACT_EVENT→BACKGROUND": 2,
         "FACT_EVENT→FEATURE": 1
       }
     },
     "historical": {
       "processes": 1600,
-      "sample": 4409,
+      "sample": 4396,
       "agreement_pct": 89.6,
-      "decision_agreement_pct": 89.7,
+      "decision_agreement_pct": 89.6,
       "critical_errors": 455,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 410,
-        "FACT_EVENT→BACKGROUND": 4,
-        "COMMENTARY→FACT_EVENT": 33,
+        "FACT_EVENT→COMMENTARY": 409,
+        "COMMENTARY→FACT_EVENT": 34,
         "FEATURE→COMMENTARY": 3,
         "FACT_EVENT→UNKNOWN": 1,
+        "FACT_EVENT→BACKGROUND": 4,
         "FACT_EVENT→FEATURE": 4,
         "STATE_CONFIRMATION→FACT_EVENT": 3
       }
     },
     "events_stream": {
-      "sample": 533,
-      "agreement_pct": 90.1,
-      "decision_agreement_pct": 90.2,
-      "critical_errors": 52,
+      "sample": 535,
+      "agreement_pct": 90.5,
+      "decision_agreement_pct": 90.7,
+      "critical_errors": 50,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 49,
+        "FACT_EVENT→COMMENTARY": 47,
         "COMMENTARY→FACT_EVENT": 2,
         "FACT_EVENT→UNKNOWN": 1,
         "FEATURE→COMMENTARY": 1
@@ -77,7 +77,7 @@
     }
   },
   "class_source": {
-    "evidence_sic": 4409,
+    "evidence_sic": 4396,
     "shadow_title_summary": 4
   },
   "truth_ratio_pct": 99.9,
@@ -91,10 +91,6 @@
       "deny": 90,
       "unmatched": 4
     },
-    "social": {
-      "pass": 136,
-      "deny": 51
-    },
     "economy": {
       "pass": 260,
       "deny": 126
@@ -102,6 +98,10 @@
     "technology": {
       "pass": 141,
       "deny": 28
+    },
+    "social": {
+      "pass": 136,
+      "deny": 51
     }
   },
   "deny_impact": [
@@ -275,7 +275,7 @@
       "title": "Инфляция — Восточная Азия",
       "domain": "economy",
       "severity": 68,
-      "pressure": 57,
+      "pressure": 52,
       "first_seen": "2026-10-20",
       "evidence_count": 2,
       "evidence_classes": {
@@ -346,21 +346,6 @@
       "reason": "no FACT_EVENT in evidence"
     },
     {
-      "signal_id": "geop-военныеуда-сша-иран-1837",
-      "title": "Взрыв в общественном месте — США",
-      "domain": "geopolitics",
-      "severity": 64,
-      "pressure": 33,
-      "first_seen": "2026-07-07",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "STATE_CONFIRMATION": 1
-      },
-      "status": "fading",
-      "causal_links": 6,
-      "reason": "no FACT_EVENT in evidence"
-    },
-    {
       "signal_id": "geop-геополитич-мали-f290",
       "title": "Геополитический процесс — Мали",
       "domain": "geopolitics",
@@ -403,6 +388,21 @@
       },
       "status": "dormant",
       "causal_links": 1,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
+      "signal_id": "geop-военныеуда-сша-иран-1837",
+      "title": "Взрыв в общественном месте — США",
+      "domain": "geopolitics",
+      "severity": 64,
+      "pressure": 33,
+      "first_seen": "2026-07-07",
+      "evidence_count": 1,
+      "evidence_classes": {
+        "STATE_CONFIRMATION": 1
+      },
+      "status": "dormant",
+      "causal_links": 6,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -1142,13 +1142,6 @@
       "delta": null
     },
     {
-      "signal_id": "econ-инфляция-китай-30e9",
-      "domain": "economy",
-      "legacy": 45,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "clim-климатичес-индия-80ae",
       "domain": "climate",
       "legacy": 35,
@@ -1282,6 +1275,13 @@
       "delta": null
     },
     {
+      "signal_id": "econ-инфляция-китай-30e9",
+      "domain": "economy",
+      "legacy": 45,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "tech-отключение-индия-8ac2",
       "domain": "technology",
       "legacy": 50,
@@ -1339,6 +1339,13 @@
     },
     {
       "signal_id": "clim-климатичес-курильск-9ac3",
+      "domain": "climate",
+      "legacy": 56,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "clim-климатичес-австрали-1fcc",
       "domain": "climate",
       "legacy": 56,
       "shadow": null,
@@ -1418,13 +1425,6 @@
       "signal_id": "geop-геополитич-москва-58ca",
       "domain": "geopolitics",
       "legacy": 45,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "geop-визовыеогр-россия-2161",
-      "domain": "geopolitics",
-      "legacy": 52,
       "shadow": null,
       "delta": null
     }
