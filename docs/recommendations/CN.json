@@ -1,9 +1,9 @@
 {
   "country": "CN",
   "country_name": "Китай",
-  "date": "2026-11-21",
-  "generated_at": "2026-11-21T23:29:10.600177+00:00",
-  "srs_score": 62,
+  "date": "2026-11-22",
+  "generated_at": "2026-11-22T00:01:58.755810+00:00",
+  "srs_score": 65,
   "srs_grade": "C",
   "srs_grade_ru": "Умеренная",
   "priority_risks": [
@@ -26,6 +26,15 @@
       "source": "diagnostics"
     },
     {
+      "id": "R-06",
+      "category": "WATCHLIST",
+      "title": "Дрейф уверенности прогнозов: +13.0pt",
+      "detail": "Уверенность прогнозной системы дрейфует на +13.0pt от краткосрочного к долгосрочному горизонту.",
+      "metric_value": 13,
+      "urgency": 56,
+      "source": "confidence_drift"
+    },
+    {
       "id": "R-05",
       "category": "STRATEGIC",
       "title": "Смещения в принятии решений (2)",
@@ -33,15 +42,6 @@
       "metric_value": 2,
       "urgency": 54,
       "source": "decision_bias"
-    },
-    {
-      "id": "R-06",
-      "category": "WATCHLIST",
-      "title": "Дрейф уверенности прогнозов: +11.0pt",
-      "detail": "Уверенность прогнозной системы дрейфует на +11.0pt от краткосрочного к долгосрочному горизонту.",
-      "metric_value": 11,
-      "urgency": 52,
-      "source": "confidence_drift"
     }
   ],
   "risk_count": 4,
@@ -80,7 +80,7 @@
     {
       "type": "confidence_drift",
       "horizon": "long",
-      "detail": "Дрейф уверенности +11.0pt указывает на деградацию долгосрочных прогнозов."
+      "detail": "Дрейф уверенности +13.0pt указывает на деградацию долгосрочных прогнозов."
     }
   ],
   "forecast_improvement": [
@@ -119,6 +119,15 @@
       "source": "diagnostics"
     },
     {
+      "id": "R-06",
+      "type": "risk",
+      "priority": "WATCHLIST",
+      "title": "Дрейф уверенности прогнозов: +13.0pt",
+      "rec_score": 43,
+      "metric_value": 13,
+      "source": "confidence_drift"
+    },
+    {
       "id": "R-05",
       "type": "risk",
       "priority": "STRATEGIC",
@@ -126,15 +135,6 @@
       "rec_score": 42,
       "metric_value": 2,
       "source": "decision_bias"
-    },
-    {
-      "id": "R-06",
-      "type": "risk",
-      "priority": "WATCHLIST",
-      "title": "Дрейф уверенности прогнозов: +11.0pt",
-      "rec_score": 41,
-      "metric_value": 11,
-      "source": "confidence_drift"
     }
   ],
   "action_plan": [
@@ -155,12 +155,12 @@
       "source": "diagnostics"
     },
     {
-      "id": "ACT-R-05",
+      "id": "ACT-R-06",
       "priority": "STRATEGIC",
-      "action": "Реагировать: Смещения в принятии решений (2)",
-      "rationale": "Выявлено 2 смещений: Гиперреакция, Недостаточная реакция. Рекомендуется рекалибровка стратегии.",
+      "action": "Реагировать: Дрейф уверенности прогнозов: +13.0pt",
+      "rationale": "Уверенность прогнозной системы дрейфует на +13.0pt от краткосрочного к долгосрочному горизонту.",
       "deadline": "7 дней",
-      "source": "decision_bias"
+      "source": "confidence_drift"
     },
     {
       "id": "ACT-O-05",
@@ -169,13 +169,21 @@
       "rationale": "Идентифицировано 3 действий с альфой выше порога. Их приоритизация улучшит стратегический результат.",
       "deadline": "7 дней",
       "source": "high_alpha"
+    },
+    {
+      "id": "ACT-CONF",
+      "priority": "STRATEGIC",
+      "action": "Рекалибровать уверенность прогнозов → 55.0%",
+      "rationale": "Оптимизационный движок выявил отклонение от оптимальной уверенности.",
+      "deadline": "30 дней",
+      "source": "confidence_target"
     }
   ],
-  "action_count": 4,
+  "action_count": 5,
   "rec_diagnostics": [],
   "diagnostic_count": 0,
   "risk_score": 85,
   "delta": 0,
   "domain": "geopolitics",
-  "history_depth": 177
+  "history_depth": 178
 }
