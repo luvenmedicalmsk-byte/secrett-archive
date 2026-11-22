@@ -24,6 +24,7 @@ _explLead, freeDetailHTML. При изменении бесплатной кар
 «ни одного pro-процесса, ни одного поля вне контракта».
 Код выхода 0 всегда, кроме нарушения контракта (тогда файл не пишется).
 """
+import hashlib
 import json
 import os
 import sys
@@ -43,7 +44,11 @@ CRITICAL_PRESSURE = 90
 # 22.11.2026 (Мия): из платных критичных подробности открыты только у этих типов.
 # Остальные критичные платные процессы - только карточка (поля списка), флаг preview_only;
 # хроника, свидетельства, объяснение, связи и т.п. в бесплатный файл не попадают.
-OPEN_PRO_TYPES = ("Санкционное давление",)
+# Открыт ровно один платный процесс: «Санкционное давление - Россия» (решение Мии 22.11.2026).
+OPEN_PRO = (("Санкционное давление", "Россия"),)
+# Закрытый критичный процесс: только замок. Ни названия, ни места, ни чисел, кроме давления
+# (по нему карточка встаёт в «Критичные»).
+LOCKED_FIELDS = ("signal_id", "status", "pressure", "primary_domain", "is_macro")
 
 
 # Поля процесса, которые бесплатная карта читает напрямую.
@@ -83,12 +88,10 @@ def _pick(obj, fields):
 
 
 def _free_process(s, free_ids):
-    if s.get("access_tier") != "free" and s.get("process_type") not in OPEN_PRO_TYPES:
-        out = _pick(s, FREE_FIELDS)
-        inc = s.get("included_processes")
-        if isinstance(inc, list):
-            out["included_processes"] = []
-            out["included_count"] = len(inc)
+    if s.get("access_tier") != "free" and (s.get("process_type"), s.get("process_place")) not in OPEN_PRO:
+        out = _pick(s, LOCKED_FIELDS)
+        # signal_id содержит тип и место («geop-macroвоенн-россияук-…») - заменяем непрозрачным
+        out["signal_id"] = "locked-" + hashlib.sha1(str(s.get("signal_id")).encode("utf-8")).hexdigest()[:12]
         out["access_tier"] = "free"
         out["preview_only"] = True
         return out
