@@ -86,6 +86,32 @@ jobs:
           rm -rf "$D"
           git status --porcelain | head -5
 
+      # P0.6b RESTORE FROM PRIVATE (23.11.2026, решение Мии: GO в режиме fail-closed).
+      # Источник истины - приватный secrett-archive-data. До парсеров и сборки платные
+      # пути (DIRS + FILES из scripts/private_write.sh) копируются private -> рабочая
+      # копия: rsync без --delete. Нет токена, приватный недоступен, манифест несвежий,
+      # путь отсутствует, ошибка копирования или расхождение после копирования -
+      # шаг падает, публикация не выполняется (нет fallback на public).
+      # ОТКАТ: удалить шаг и условие env.PRIVATE_RESTORE у шага «Коммит и публикация».
+      - name: P0.6b Restore from private (fail-closed)
+        timeout-minutes: 6
+        env:
+          TOKEN: ${{ secrets.DATA_REPO_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then echo '[RESTORE] {"status":"error","error":"no_private_token"}'; exit 1; fi
+          command -v rsync >/dev/null || { echo '[RESTORE] {"status":"error","error":"no_rsync"}'; exit 1; }
+          D=$(mktemp -d)
+          if ! git clone -q --depth 1 "https://x-access-token:${TOKEN}@github.com/luvenmedicalmsk-byte/secrett-archive-data.git" "$D/priv" >/dev/null 2>&1; then
+            echo '[RESTORE] {"status":"error","error":"private_clone_failed"}'; rm -rf "$D"; exit 1
+          fi
+          set +e
+          python3 scripts/restore_private.py "$D/priv"
+          RC=$?
+          set -e
+          rm -rf "$D"
+          if [ "$RC" != "0" ]; then echo "::error::P0.6b: восстановление из приватного не подтверждено (код $RC) - публикация запрещена"; exit 1; fi
+
       - name: Настройка Python
         uses: actions/setup-python@v5
         with:
@@ -336,6 +362,7 @@ jobs:
           node scripts/build_wsd.mjs
 
       - name: Коммит и публикация
+        if: env.PRIVATE_RESTORE == 'ok'   # P0.6b: без подтверждённого восстановления из приватного - нет публикации
         run: |
           git config user.name "archive-bot"
           git config user.email "bot@secrett-archive.com"
