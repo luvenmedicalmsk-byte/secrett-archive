@@ -2,25 +2,25 @@
   "country": "PL",
   "date": "2026-11-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-23T16:50:58.356035+00:00",
+  "generated_at": "2026-11-23T17:29:19.569535+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-PL",
       "type": "Country",
       "label": "PL",
-      "score": 87,
+      "score": 91,
       "props": {
-        "risk_score": 87
+        "risk_score": 91
       }
     },
     {
       "id": "DOMAIN-PL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 84,
-      "trend": "stable"
+      "score": 76,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PL-economic",
@@ -33,8 +33,8 @@
       "id": "DOMAIN-PL-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "stable"
+      "score": 72,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PL-technology",
@@ -87,17 +87,17 @@
       "domain": "geopolitical"
     },
     {
+      "id": "SIGNAL-PL-Ветер:_Зап",
+      "type": "Signal",
+      "label": "Ветер: Западная прибрежная зона, Централ",
+      "severity": 72,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-PL-'Серьезное",
       "type": "Signal",
       "label": "'Серьезное нарушение': Российские ракеты",
       "severity": 72,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-PL-Размещенны",
-      "type": "Signal",
-      "label": "Размещенные в Польше зенитно-ракетные ко",
-      "severity": 58,
       "domain": "geopolitical"
     }
   ],
@@ -106,7 +106,7 @@
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.84
+      "weight": 0.76
     },
     {
       "from": "COUNTRY-PL",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.72
     },
     {
       "from": "COUNTRY-PL",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-PL-climate",
+      "to": "DOMAIN-PL-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-PL-economic",
+      "to": "DOMAIN-PL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-PL-social",
+      "to": "DOMAIN-PL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-PL-geopolitical",
       "to": "DOMAIN-PL-infrastructure",
       "type": "ESCALATES",
@@ -184,22 +205,43 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-PL-climate",
+      "to": "DOMAIN-PL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-PL-infrastructure",
+      "to": "DOMAIN-PL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-PL-economic",
+      "to": "DOMAIN-PL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-PL-Атака_балл",
       "to": "DOMAIN-PL-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.76
     },
     {
-      "from": "SIGNAL-PL-'Серьезное",
-      "to": "DOMAIN-PL-geopolitical",
+      "from": "SIGNAL-PL-Ветер:_Зап",
+      "to": "DOMAIN-PL-climate",
       "type": "AMPLIFIES",
       "weight": 0.72
     },
     {
-      "from": "SIGNAL-PL-Размещенны",
+      "from": "SIGNAL-PL-'Серьезное",
       "to": "DOMAIN-PL-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.58
+      "weight": 0.72
     }
   ]
 }

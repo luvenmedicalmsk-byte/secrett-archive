@@ -2,7 +2,7 @@
   "country": "ES",
   "date": "2026-11-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-23T16:50:58.365803+00:00",
+  "generated_at": "2026-11-23T17:29:19.577797+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -19,7 +19,7 @@
       "id": "DOMAIN-ES-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 94,
+      "score": 50,
       "trend": "stable"
     },
     {
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
+      "id": "SIGNAL-ES-Ливень:_Юг",
+      "type": "Signal",
+      "label": "Ливень: Юго-запад Ла-Коруньи, Западная ч",
+      "severity": 50,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-ES-Ветер:_Сев",
       "type": "Signal",
       "label": "Ветер: Северный внутренний район Кастель",
       "severity": 50,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-ES-Военные_уд",
-      "type": "Signal",
-      "label": "Военные удары — Испания",
-      "severity": 94,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.94
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-ES",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-ES-geopolitical",
-      "to": "DOMAIN-ES-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-ES-infrastructure",
-      "to": "DOMAIN-ES-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-ES-economic",
-      "to": "DOMAIN-ES-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "DOMAIN-ES-climate",
       "to": "DOMAIN-ES-infrastructure",
       "type": "ESCALATES",
@@ -226,22 +205,43 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-ES-geopolitical",
+      "to": "DOMAIN-ES-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-ES-infrastructure",
+      "to": "DOMAIN-ES-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ES-economic",
+      "to": "DOMAIN-ES-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-ES-Явления_на",
       "to": "DOMAIN-ES-climate",
       "type": "AMPLIFIES",
       "weight": 0.72
     },
     {
-      "from": "SIGNAL-ES-Ветер:_Сев",
+      "from": "SIGNAL-ES-Ливень:_Юг",
       "to": "DOMAIN-ES-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-ES-Военные_уд",
-      "to": "DOMAIN-ES-geopolitical",
+      "from": "SIGNAL-ES-Ветер:_Сев",
+      "to": "DOMAIN-ES-climate",
       "type": "AMPLIFIES",
-      "weight": 0.94
+      "weight": 0.5
     }
   ]
 }
