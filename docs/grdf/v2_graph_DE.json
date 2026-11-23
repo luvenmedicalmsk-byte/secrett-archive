@@ -2,7 +2,7 @@
   "country": "DE",
   "date": "2026-11-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-23T11:48:33.394073+00:00",
+  "generated_at": "2026-11-23T12:10:32.810382+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-DE",
       "type": "Country",
       "label": "DE",
-      "score": 79,
+      "score": 82,
       "props": {
-        "risk_score": 79
+        "risk_score": 82
       }
     },
     {
@@ -20,7 +20,7 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 70,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-economic",
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 72,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-technology",
@@ -47,8 +47,8 @@
       "id": "DOMAIN-DE-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
-      "trend": "stable"
+      "score": 62,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-infrastructure",
@@ -82,9 +82,16 @@
     {
       "id": "SIGNAL-DE-Снег:_Край",
       "type": "Signal",
-      "label": "Снег: Край Вальдсхут, Край Брайсгау-Хохш",
+      "label": "Снег: Край Зигмаринген, Край Ротвайль, р",
       "severity": 72,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-DE-Сотни_школ",
+      "type": "Signal",
+      "label": "Сотни школ по всей Германии получили угр",
+      "severity": 62,
+      "domain": "social"
     },
     {
       "id": "SIGNAL-DE-Армия_США_",
@@ -92,13 +99,6 @@
       "label": "Армия США испытала в Германии установку,",
       "severity": 62,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-DE-Аномальный",
-      "type": "Signal",
-      "label": "Аномальный холод: Край Гёттинген, Край Г",
-      "severity": 50,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -130,7 +130,7 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.62
     },
     {
       "from": "COUNTRY-DE",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-DE-climate",
-      "to": "DOMAIN-DE-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-DE-infrastructure",
-      "to": "DOMAIN-DE-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-DE-economic",
-      "to": "DOMAIN-DE-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-DE-geopolitical",
       "to": "DOMAIN-DE-infrastructure",
       "type": "ESCALATES",
@@ -226,22 +205,43 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-DE-climate",
+      "to": "DOMAIN-DE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-DE-infrastructure",
+      "to": "DOMAIN-DE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-DE-economic",
+      "to": "DOMAIN-DE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-DE-Снег:_Край",
       "to": "DOMAIN-DE-climate",
       "type": "AMPLIFIES",
       "weight": 0.72
     },
     {
-      "from": "SIGNAL-DE-Армия_США_",
-      "to": "DOMAIN-DE-geopolitical",
+      "from": "SIGNAL-DE-Сотни_школ",
+      "to": "DOMAIN-DE-social",
       "type": "AMPLIFIES",
       "weight": 0.62
     },
     {
-      "from": "SIGNAL-DE-Аномальный",
-      "to": "DOMAIN-DE-climate",
+      "from": "SIGNAL-DE-Армия_США_",
+      "to": "DOMAIN-DE-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.5
+      "weight": 0.62
     }
   ]
 }
