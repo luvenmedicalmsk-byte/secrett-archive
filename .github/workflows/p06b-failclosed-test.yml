@@ -42,7 +42,7 @@ jobs:
         id: restore
         timeout-minutes: 6
         env:
-          TOKEN: ${{ matrix.case == 'no_token' && '' || 'synthetic' }}
+          TOKEN: ${{ matrix.case != 'no_token' && 'synthetic' || '' }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ -z "$TOKEN" ]; then echo '[RESTORE] {"status":"error","error":"no_private_token"}'; echo 1 > /tmp/rc.txt; exit 1; fi
