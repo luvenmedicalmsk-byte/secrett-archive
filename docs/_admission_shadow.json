@@ -1,15 +1,15 @@
 {
-  "generated": "2026-11-23T14:28:41Z",
+  "generated": "2026-11-23T14:49:54Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
-    "PASS_FACT": 1216,
-    "DENY_COMMENTARY": 372,
+    "PASS_FACT": 1214,
+    "DENY_COMMENTARY": 374,
     "DENY_FEATURE": 4,
-    "DENY_BACKGROUND": 2,
     "UNMATCHED": 4,
     "DENY_OTHER": 1,
-    "DENY_STATE_ONLY": 2
+    "DENY_STATE_ONLY": 2,
+    "DENY_BACKGROUND": 2
   },
   "kpi": {
     "processes_total": 1601,
@@ -17,9 +17,9 @@
     "unmatched": 4,
     "coverage_pct": 99.8,
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
-    "admission_pass_rate": 76.1,
-    "admission_deny_rate": 23.9,
-    "processes_without_fact": 381,
+    "admission_pass_rate": 76.0,
+    "admission_deny_rate": 24.0,
+    "processes_without_fact": 383,
     "report_evidence_count": 0,
     "reports_boosting": 0
   },
@@ -27,13 +27,13 @@
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
       "processes": 454,
-      "sample": 1722,
+      "sample": 1724,
       "agreement_pct": 89.4,
       "decision_agreement_pct": 89.5,
-      "critical_errors": 180,
+      "critical_errors": 181,
       "truth_ratio_pct": 99.8,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 168,
+        "FACT_EVENT→COMMENTARY": 169,
         "COMMENTARY→FACT_EVENT": 6,
         "FACT_EVENT→BACKGROUND": 4,
         "FEATURE→COMMENTARY": 2,
@@ -43,12 +43,12 @@
     },
     "historical": {
       "processes": 1601,
-      "sample": 4340,
-      "agreement_pct": 90.0,
+      "sample": 4342,
+      "agreement_pct": 89.9,
       "decision_agreement_pct": 90.0,
-      "critical_errors": 433,
+      "critical_errors": 434,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 390,
+        "FACT_EVENT→COMMENTARY": 391,
         "COMMENTARY→FACT_EVENT": 30,
         "FACT_EVENT→BACKGROUND": 6,
         "FEATURE→COMMENTARY": 3,
@@ -58,12 +58,12 @@
       }
     },
     "events_stream": {
-      "sample": 513,
-      "agreement_pct": 90.8,
-      "decision_agreement_pct": 91.0,
-      "critical_errors": 46,
+      "sample": 515,
+      "agreement_pct": 91.1,
+      "decision_agreement_pct": 91.3,
+      "critical_errors": 45,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 44,
+        "FACT_EVENT→COMMENTARY": 43,
         "FACT_EVENT→UNKNOWN": 1,
         "FEATURE→COMMENTARY": 1,
         "FACT_EVENT→BACKGROUND": 1
@@ -77,7 +77,7 @@
     }
   },
   "class_source": {
-    "evidence_sic": 4340,
+    "evidence_sic": 4342,
     "shadow_title_summary": 4
   },
   "truth_ratio_pct": 99.9,
@@ -91,8 +91,8 @@
       "deny": 116
     },
     "climate": {
-      "pass": 401,
-      "deny": 90,
+      "pass": 399,
+      "deny": 92,
       "unmatched": 4
     },
     "technology": {
@@ -160,6 +160,21 @@
       "evidence_count": 2,
       "evidence_classes": {
         "COMMENTARY": 2
+      },
+      "status": "active",
+      "causal_links": 6,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
+      "signal_id": "clim-климатичес-китай-6396",
+      "title": "Климатический сигнал — Китай",
+      "domain": "climate",
+      "severity": 74,
+      "pressure": 47,
+      "first_seen": "2026-07-19",
+      "evidence_count": 1,
+      "evidence_classes": {
+        "COMMENTARY": 1
       },
       "status": "active",
       "causal_links": 6,
@@ -260,7 +275,7 @@
       "title": "Инфляция — Восточная Азия",
       "domain": "economy",
       "severity": 68,
-      "pressure": 55,
+      "pressure": 54,
       "first_seen": "2026-10-20",
       "evidence_count": 2,
       "evidence_classes": {
@@ -989,21 +1004,6 @@
       "status": "active",
       "causal_links": 0,
       "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "clim-климатичес-краснода-2062",
-      "title": "Климатический сигнал — Краснодарский край",
-      "domain": "climate",
-      "severity": 56,
-      "pressure": 51,
-      "first_seen": "2026-06-30",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "COMMENTARY": 1
-      },
-      "status": "active",
-      "causal_links": 6,
-      "reason": "no FACT_EVENT in evidence"
     }
   ],
   "report_log": [],
@@ -1121,6 +1121,13 @@
       "delta": null
     },
     {
+      "signal_id": "clim-климатичес-китай-6396",
+      "domain": "climate",
+      "legacy": 74,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "econ-топливныйр-сша-8442",
       "domain": "economy",
       "legacy": 32,
@@ -1198,9 +1205,23 @@
       "delta": null
     },
     {
+      "signal_id": "clim-климатичес-тихийоке-41c0",
+      "domain": "climate",
+      "legacy": 56,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "econ-инфляция-великобр-aa54",
       "domain": "economy",
       "legacy": 48,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "soci-эпидемиоло-судан-aecd",
+      "domain": "social",
+      "legacy": 58,
       "shadow": null,
       "delta": null
     },
@@ -1215,13 +1236,6 @@
       "signal_id": "clim-климатичес-дагестан-184b",
       "domain": "climate",
       "legacy": 56,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "soci-эпидемиоло-судан-aecd",
-      "domain": "social",
-      "legacy": 58,
       "shadow": null,
       "delta": null
     },
@@ -1413,27 +1427,13 @@
       "legacy": 47,
       "shadow": null,
       "delta": null
-    },
-    {
-      "signal_id": "econ-топливныйр-великобр-c365",
-      "domain": "economy",
-      "legacy": 46,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "tech-технологич-антаркти-0e11",
-      "domain": "technology",
-      "legacy": 47,
-      "shadow": null,
-      "delta": null
     }
   ],
   "deny_by_severity": {
     "0-30": 2,
     "31-50": 224,
-    "51-70": 148,
-    "71-90": 7,
+    "51-70": 149,
+    "71-90": 8,
     "91-100": 0
   }
 }
