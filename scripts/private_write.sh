@@ -56,6 +56,11 @@ while [ $attempt -le 3 ]; do
   done
   # Неполная копия в приватный не уходит: из него потом восстанавливаются истории.
   if [ $okcopy -ne 1 ]; then echo "::warning::[private] копирование не удалось, запись отменена"; exit 0; fi
+  # P0.7-prep шаг 1 (23.11.2026): срез ADR-039C раньше писал только
+  # sync-private-data.yml. Перенесён сюда, чтобы синхронизацию можно было
+  # отключить без потери истории. Шаг прежний - не чаще 1 раза в 4 ч.
+  # Сбой среза не отменяет запись платных данных.
+  ADR039C_MIN_HOURS=4 python3 scripts/adr039c_snapshot.py docs "$WORK/docs" || echo "  [private] ADR-039C: срез пропущен"
   # Манифест записи: по нему видно, что приватный обновляется каждый прогон.
   python3 - "$WORK" "$PUB_SHA" "$NOW" "${GITHUB_RUN_ID:-}" "$DIRS" "$FILES" <<'PY'
 import json, os, sys
