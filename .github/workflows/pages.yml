@@ -27,10 +27,14 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      # PAGES_ALLOWLIST_2311 (P0): публикуется только разрешённый список, не весь репозиторий
+      - name: Build allowlist site
+        run: python3 scripts/pages_build_site.py _site
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: '_site'
 
       - name: Deploy to GitHub Pages
         id: deployment
