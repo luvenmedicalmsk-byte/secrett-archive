@@ -32042,6 +32042,25 @@ if __name__ == '__main__':
             print('  [SIGNAL-GATE] ОШИБКА, поток без фильтра: %s' % _sge, file=sys.stderr)
             _sgt.print_exc()
             events, _gate_rej = news_events, {'gate_error': str(_sge)}
+        # CAP_GATE_SHADOW_2311 (23.11.2026, Мия): ТОЛЬКО ЖУРНАЛ. Какие проверенные
+        # предупреждения официальных служб отсёк SIGNAL GATE. Допуск не меняется:
+        # список нужен для решения о пропуске CAP-видов через gate.
+        try:
+            _cg_kinds = ('cap', 'cap_hub', 'rosgidromet_cap', 'mgm', 'cems')
+            _cg_kept = {id(x) for x in events}
+            _cg_lost = [x for x in news_events
+                        if id(x) not in _cg_kept
+                        and (x.get('meta') or {}).get('kind') in _cg_kinds
+                        and (x.get('meta') or {}).get('verified')]
+            import collections as _cgc
+            _cg_by = _cgc.Counter(str(x.get('source') or '?') for x in _cg_lost)
+            print('  [CAP-GATE-SHADOW] отсечено официальных предупреждений: %d (%s)'
+                  % (len(_cg_lost), ', '.join('%s %d' % kv for kv in _cg_by.most_common())), file=sys.stderr)
+            for _cgx in _cg_lost[:60]:
+                print('    - %s | %s | %s' % (_cgx.get('source'), _cgx.get('domain'),
+                                             str(_cgx.get('title') or '')[:110]), file=sys.stderr)
+        except Exception as _cge:
+            print('  [CAP-GATE-SHADOW] ошибка: %s' % _cge, file=sys.stderr)
         if LINEAGE:
             _sg_post = {e.get('_obs_tid') for e in events if e.get('_obs_tid')}
             for _sgx in (_sg_pre - _sg_post): _trace(_sgx,'SIGNAL_GATE','removed',reason='signal_gate')
