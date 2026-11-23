@@ -2,95 +2,196 @@
   "country": "IL",
   "country_name": "Израиль",
   "date": "2026-11-23",
-  "generated_at": "2026-11-23T13:30:28.697246+00:00",
-  "evolution_score": 59,
-  "grade": "C",
-  "grade_ru": "Умеренная",
+  "generated_at": "2026-11-23T13:44:10.309900+00:00",
+  "evolution_score": 64,
+  "grade": "B",
+  "grade_ru": "Стабильная эволюция",
   "active_scenarios": [
     {
-      "id": "ASE-ESC-DETE",
-      "type": "escalation_branch",
-      "name": "Ветвь эскалации: deteriorating",
-      "trigger": "Тренд: нарастание давления",
-      "score": 88,
+      "id": "ASE-ACC-5",
+      "type": "acceleration",
+      "name": "Сценарий ускорения (acceleration)",
+      "trigger": "signal_acceleration Δ=+5",
+      "score": 95,
       "probability": 18,
-      "confidence": 50,
-      "trend_strength": 65,
+      "confidence": 55,
+      "trend_strength": 50,
       "status": "emerging",
-      "source": "recommendation_shift",
-      "domain": "geopolitics"
-    }
-  ],
-  "active_count": 1,
-  "emerging_scenarios": [
+      "source": "signal_acceleration",
+      "domain": "climate"
+    },
     {
       "id": "ASE-ESC-DETE",
       "type": "escalation_branch",
       "name": "Ветвь эскалации: deteriorating",
       "trigger": "Тренд: нарастание давления",
-      "score": 88,
+      "score": 93,
       "probability": 18,
       "confidence": 50,
       "trend_strength": 65,
       "status": "emerging",
       "source": "recommendation_shift",
-      "domain": "geopolitics"
+      "domain": "climate"
+    },
+    {
+      "id": "ASE-CRIT-WORST",
+      "type": "critical_branch",
+      "name": "Критический каскад (ветвь КРИТИЧЕСКИХ рисков)",
+      "trigger": "Критический уровень риска: 83",
+      "score": 97,
+      "probability": 12,
+      "confidence": 60,
+      "trend_strength": 80,
+      "status": "emerging",
+      "source": "critical_risk",
+      "domain": "climate"
     }
   ],
-  "convergences": [],
+  "active_count": 3,
+  "emerging_scenarios": [
+    {
+      "id": "ASE-ACC-5",
+      "type": "acceleration",
+      "name": "Сценарий ускорения (acceleration)",
+      "trigger": "signal_acceleration Δ=+5",
+      "score": 95,
+      "probability": 18,
+      "confidence": 55,
+      "trend_strength": 50,
+      "status": "emerging",
+      "source": "signal_acceleration",
+      "domain": "climate"
+    },
+    {
+      "id": "ASE-ESC-DETE",
+      "type": "escalation_branch",
+      "name": "Ветвь эскалации: deteriorating",
+      "trigger": "Тренд: нарастание давления",
+      "score": 93,
+      "probability": 18,
+      "confidence": 50,
+      "trend_strength": 65,
+      "status": "emerging",
+      "source": "recommendation_shift",
+      "domain": "climate"
+    },
+    {
+      "id": "ASE-CRIT-WORST",
+      "type": "critical_branch",
+      "name": "Критический каскад (ветвь КРИТИЧЕСКИХ рисков)",
+      "trigger": "Критический уровень риска: 83",
+      "score": 97,
+      "probability": 12,
+      "confidence": 60,
+      "trend_strength": 80,
+      "status": "emerging",
+      "source": "critical_risk",
+      "domain": "climate"
+    }
+  ],
+  "convergences": [
+    {
+      "scenario_a": "acceleration",
+      "scenario_b": "escalation_branch",
+      "score_gap": 2,
+      "prob_gap": 0,
+      "label": "Сближение: Сценарий ускорения (acceleration) ↔ Ветвь эскалации: deteriorating"
+    },
+    {
+      "scenario_a": "acceleration",
+      "scenario_b": "critical_branch",
+      "score_gap": 2,
+      "prob_gap": 6,
+      "label": "Сближение: Сценарий ускорения (acceleration) ↔ Критический каскад (ветвь КРИТИЧЕСКИХ рисков)"
+    },
+    {
+      "scenario_a": "escalation_branch",
+      "scenario_b": "critical_branch",
+      "score_gap": 4,
+      "prob_gap": 6,
+      "label": "Сближение: Ветвь эскалации: deteriorating ↔ Критический каскад (ветвь КРИТИЧЕСКИХ рисков)"
+    }
+  ],
   "divergences": [],
   "ranked_pathways": [
     {
+      "id": "ASE-CRIT-WORST",
+      "name": "Критический каскад (ветвь КРИТИЧЕСКИХ рисков)",
+      "type": "critical_branch",
+      "status": "emerging",
+      "probability": 25.0,
+      "score": 97,
+      "confidence": 60,
+      "trend_strength": 80,
+      "scenario_score": 61
+    },
+    {
+      "id": "ASE-ACC-5",
+      "name": "Сценарий ускорения (acceleration)",
+      "type": "acceleration",
+      "status": "emerging",
+      "probability": 37.5,
+      "score": 95,
+      "confidence": 55,
+      "trend_strength": 50,
+      "scenario_score": 58
+    },
+    {
       "id": "ASE-ESC-DETE",
       "name": "Ветвь эскалации: deteriorating",
       "type": "escalation_branch",
       "status": "emerging",
-      "probability": 100.0,
-      "score": 88,
+      "probability": 37.5,
+      "score": 93,
       "confidence": 50,
       "trend_strength": 65,
-      "scenario_score": 74
+      "scenario_score": 58
     }
   ],
-  "pathway_count": 1,
+  "pathway_count": 3,
   "future_landscape": {
-    "dominant_pathway": "Ветвь эскалации: deteriorating",
-    "dominant_prob": 100.0,
-    "dominant_score": 88,
-    "outlook": "stable",
-    "narrative": "Базовый сценарий 'Ветвь эскалации: deteriorating' (100%) — ситуация стабильна. Скор 88.",
-    "n_convergences": 0,
+    "dominant_pathway": "Критический каскад (ветвь КРИТИЧЕСКИХ рисков)",
+    "dominant_prob": 25.0,
+    "dominant_score": 97,
+    "outlook": "deteriorating",
+    "narrative": "Доминирующий сценарий 'Критический каскад (ветвь КРИТИЧЕСКИХ рисков)' (25%) указывает на ухудшение — скор 97. Риск системной эскалации.",
+    "n_convergences": 3,
     "n_divergences": 0,
-    "landscape_complexity": 10
+    "landscape_complexity": 30
   },
   "diagnostics": [
+    {
+      "type": "narrative_collapse",
+      "label": "Распад нарратива",
+      "detail": "Доминирующий сценарий набирает лишь 25% — нарратив раздроблен"
+    },
     {
       "type": "future_blind_spot",
       "label": "Слепое пятно будущего",
       "detail": "Нет положительных сценариев в активном наборе — потенциал улучшения не отражён"
     }
   ],
-  "diagnostic_count": 1,
-  "scenario_diversity_index": 0,
-  "future_stability_index": 100,
+  "diagnostic_count": 2,
+  "scenario_diversity_index": 8,
+  "future_stability_index": 48,
   "retired_scenarios": [
     {
       "type": "best",
       "name": "Best Case",
       "name_ru": "Лучший сценарий",
-      "probability": 32,
-      "score": 74,
-      "delta_from_current": -4,
+      "probability": 27,
+      "score": 76,
+      "delta_from_current": -7,
       "state": "critical",
       "state_ru": "Критическая эскалация",
       "impact": "severe",
       "impact_ru": "Тяжёлый",
-      "velocity": "fast",
-      "velocity_ru": "Быстрый",
-      "recovery_days": 404,
-      "future_pressure": 56,
-      "future_resilience": 46,
-      "future_probability": 32,
+      "velocity": "explosive",
+      "velocity_ru": "Взрывной",
+      "recovery_days": 420,
+      "future_pressure": 58,
+      "future_resilience": 44,
+      "future_probability": 27,
       "drivers": [
         {
           "driver": "Деэскалация",
@@ -102,18 +203,18 @@
         {
           "horizon": "30d",
           "label": "30 дней",
-          "score": 74,
+          "score": 76,
           "state": "critical",
           "state_ru": "Критическая эскалация",
-          "delta_from_current": -4
+          "delta_from_current": -7
         },
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 66,
+          "score": 67,
           "state": "escalating",
           "state_ru": "Эскалация",
-          "delta_from_current": -12
+          "delta_from_current": -16
         },
         {
           "horizon": "180d",
@@ -121,18 +222,18 @@
           "score": 59,
           "state": "escalating",
           "state_ru": "Эскалация",
-          "delta_from_current": -19
+          "delta_from_current": -24
         },
         {
           "horizon": "365d",
           "label": "365 дней",
-          "score": 53,
-          "state": "contained",
-          "state_ru": "Контролируемо",
-          "delta_from_current": -25
+          "score": 52,
+          "state": "escalating",
+          "state_ru": "Эскалация",
+          "delta_from_current": -31
         }
       ],
-      "evolved_probability": 31.8,
+      "evolved_probability": 26.8,
       "evolved_confidence": 25,
       "evolution_delta": -0.2,
       "status": "retiring"
@@ -141,26 +242,26 @@
       "type": "base",
       "name": "Base Case",
       "name_ru": "Базовый сценарий",
-      "probability": 24,
-      "score": 78,
-      "delta_from_current": 0,
+      "probability": 14,
+      "score": 80,
+      "delta_from_current": -3,
       "state": "critical",
       "state_ru": "Критическая эскалация",
-      "impact": "severe",
-      "impact_ru": "Тяжёлый",
-      "velocity": "slow",
-      "velocity_ru": "Медленный",
-      "recovery_days": 426,
-      "future_pressure": 61,
-      "future_resilience": 43,
-      "future_probability": 24,
+      "impact": "catastrophic",
+      "impact_ru": "Катастрофический",
+      "velocity": "moderate",
+      "velocity_ru": "Умеренный",
+      "recovery_days": 442,
+      "future_pressure": 64,
+      "future_resilience": 41,
+      "future_probability": 14,
       "drivers": [
         {
-          "driver": "Израиль убивает палестинца — Дейр-эль-Балах",
+          "driver": "Израиль убивает палестинцев — блокада помощи ",
           "impact": 11
         },
         {
-          "driver": "Туман: Долина Израиля, Западный Негев, Северо",
+          "driver": "Израиль убивает палестинца — Дейр-эль-Балах",
           "impact": 11
         }
       ],
@@ -169,66 +270,66 @@
         {
           "horizon": "30d",
           "label": "30 дней",
-          "score": 78,
+          "score": 80,
           "state": "critical",
           "state_ru": "Критическая эскалация",
-          "delta_from_current": 0
+          "delta_from_current": -3
         },
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 78,
-          "state": "critical",
-          "state_ru": "Критическая эскалация",
-          "delta_from_current": 0
+          "score": 92,
+          "state": "cascade",
+          "state_ru": "Каскадный кризис",
+          "delta_from_current": 9
         },
         {
           "horizon": "180d",
           "label": "180 дней",
-          "score": 78,
-          "state": "critical",
-          "state_ru": "Критическая эскалация",
-          "delta_from_current": 0
+          "score": 95,
+          "state": "cascade",
+          "state_ru": "Каскадный кризис",
+          "delta_from_current": 12
         },
         {
           "horizon": "365d",
           "label": "365 дней",
-          "score": 78,
-          "state": "critical",
-          "state_ru": "Критическая эскалация",
-          "delta_from_current": 0
+          "score": 95,
+          "state": "cascade",
+          "state_ru": "Каскадный кризис",
+          "delta_from_current": 12
         }
       ],
-      "evolved_probability": 23.8,
+      "evolved_probability": 13.9,
       "evolved_confidence": 25,
-      "evolution_delta": -0.2,
+      "evolution_delta": -0.1,
       "status": "retiring"
     },
     {
       "type": "stress",
       "name": "Stress Case",
       "name_ru": "Стресс-сценарий",
-      "probability": 23,
-      "score": 80,
-      "delta_from_current": 2,
+      "probability": 27,
+      "score": 82,
+      "delta_from_current": -1,
       "state": "critical",
       "state_ru": "Критическая эскалация",
       "impact": "catastrophic",
       "impact_ru": "Катастрофический",
-      "velocity": "moderate",
-      "velocity_ru": "Умеренный",
-      "recovery_days": 437,
-      "future_pressure": 64,
-      "future_resilience": 40,
-      "future_probability": 23,
+      "velocity": "fast",
+      "velocity_ru": "Быстрый",
+      "recovery_days": 453,
+      "future_pressure": 67,
+      "future_resilience": 38,
+      "future_probability": 27,
       "drivers": [
         {
-          "driver": "Израиль убивает палестинца — Дейр-эль-Балах",
-          "impact": 14
+          "driver": "Израиль убивает палестинцев — блокада помощи ",
+          "impact": 15
         },
         {
-          "driver": "Туман: Долина Израиля, Западный Негев, Северо",
-          "impact": 14
+          "driver": "Израиль убивает палестинца — Дейр-эль-Балах",
+          "impact": 15
         },
         {
           "driver": "Негативный сдвиг",
@@ -240,26 +341,26 @@
         {
           "horizon": "30d",
           "label": "30 дней",
-          "score": 80,
+          "score": 82,
           "state": "critical",
           "state_ru": "Критическая эскалация",
-          "delta_from_current": 2
+          "delta_from_current": -1
         },
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 86,
-          "state": "critical",
-          "state_ru": "Критическая эскалация",
-          "delta_from_current": 8
+          "score": 89,
+          "state": "cascade",
+          "state_ru": "Каскадный кризис",
+          "delta_from_current": 6
         },
         {
           "horizon": "180d",
           "label": "180 дней",
-          "score": 92,
+          "score": 95,
           "state": "cascade",
           "state_ru": "Каскадный кризис",
-          "delta_from_current": 14
+          "delta_from_current": 12
         },
         {
           "horizon": "365d",
@@ -267,10 +368,10 @@
           "score": 95,
           "state": "cascade",
           "state_ru": "Каскадный кризис",
-          "delta_from_current": 17
+          "delta_from_current": 12
         }
       ],
-      "evolved_probability": 22.8,
+      "evolved_probability": 26.8,
       "evolved_confidence": 25,
       "evolution_delta": -0.2,
       "status": "retiring"
@@ -279,31 +380,31 @@
       "type": "worst",
       "name": "Worst Case",
       "name_ru": "Худший сценарий",
-      "probability": 21,
-      "score": 82,
-      "delta_from_current": 4,
-      "state": "critical",
-      "state_ru": "Критическая эскалация",
+      "probability": 32,
+      "score": 84,
+      "delta_from_current": 1,
+      "state": "cascade",
+      "state_ru": "Каскадный кризис",
       "impact": "catastrophic",
       "impact_ru": "Катастрофический",
-      "velocity": "fast",
-      "velocity_ru": "Быстрый",
-      "recovery_days": 448,
-      "future_pressure": 69,
-      "future_resilience": 33,
-      "future_probability": 21,
+      "velocity": "explosive",
+      "velocity_ru": "Взрывной",
+      "recovery_days": 465,
+      "future_pressure": 71,
+      "future_resilience": 32,
+      "future_probability": 32,
       "drivers": [
         {
+          "driver": "Израиль убивает палестинцев — блокада помощи ",
+          "impact": 21
+        },
+        {
           "driver": "Израиль убивает палестинца — Дейр-эль-Балах",
-          "impact": 20
+          "impact": 21
         },
         {
           "driver": "Туман: Долина Израиля, Западный Негев, Северо",
-          "impact": 20
-        },
-        {
-          "driver": "OPt: Экологические военные преступления: Как ",
-          "impact": 20
+          "impact": 21
         },
         {
           "driver": "Каскадный эффект",
@@ -315,15 +416,15 @@
         {
           "horizon": "30d",
           "label": "30 дней",
-          "score": 82,
+          "score": 84,
           "state": "critical",
           "state_ru": "Критическая эскалация",
-          "delta_from_current": 4
+          "delta_from_current": 1
         },
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 89,
+          "score": 94,
           "state": "cascade",
           "state_ru": "Каскадный кризис",
           "delta_from_current": 11
@@ -334,7 +435,7 @@
           "score": 95,
           "state": "cascade",
           "state_ru": "Каскадный кризис",
-          "delta_from_current": 17
+          "delta_from_current": 12
         },
         {
           "horizon": "365d",
@@ -342,25 +443,25 @@
           "score": 95,
           "state": "cascade",
           "state_ru": "Каскадный кризис",
-          "delta_from_current": 17
+          "delta_from_current": 12
         }
       ],
-      "evolved_probability": 20.9,
+      "evolved_probability": 32.6,
       "evolved_confidence": 25,
-      "evolution_delta": -0.1,
+      "evolution_delta": 0.6,
       "status": "retiring"
     }
   ],
   "retired_count": 4,
   "sub_scores": {
-    "fc_acc": 67,
+    "fc_acc": 66,
     "sc_val": 100,
     "prob_cal": 0,
-    "adapt": 65,
+    "adapt": 95,
     "stability": 52
   },
   "history_depth": 4,
-  "risk_score": 78,
-  "delta": 0,
-  "domain": "geopolitics"
+  "risk_score": 83,
+  "delta": 5,
+  "domain": "climate"
 }
