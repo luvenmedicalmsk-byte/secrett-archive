@@ -31612,6 +31612,39 @@ def save_enriched(events, previous_snapshot=None):
             # присвоены. Слой читает результаты других шагов, поэтому обязан идти
             # ПОСЛЕ них — непосредственно перед записью файла.
             _sev_finalize(enriched["events"])          # IDR-013: разложение веса
+            # HUB_WX_SHADOW_2411 (24.11.2026, Мия): ТОЛЬКО ЖУРНАЛ. Транспортные последствия
+            # погоды в крупном хабе («Росавиация: корректировки расписания в московских
+            # аэропортах из-за снегопада» получила 38 при 62 у самого предупреждения
+            # Гидрометцентра). Severity не меняется: журнал для решения о правиле.
+            try:
+                import re as _hw
+                _hw_tr = _hw.compile(r'аэропорт|авиарейс|рейс(?:ов|ы|а)\b|расписани|росавиаци|airport|flights?\b', _hw.I)
+                _hw_wx = _hw.compile(r'снегопад|снег|метел|циклон|туман|гололед|гололёд|ледян|шторм|ураган|гроз|blizzard|snow|storm|fog|typhoon|тайфун', _hw.I)
+                _hw_hub = _hw.compile(r'москв|московск|шереметьев|внуков|домодедов|пулков|петербург|стамбул|istanbul|анкар|алмат|астан|минск|ташкент|дубай|dubai|heathrow|хитроу|франкфурт|frankfurt|париж|paris|нью-йорк|new york|пекин|beijing|токио|tokyo', _hw.I)
+                _hw_txt = lambda e: '%s %s' % (e.get('title') or '', e.get('summary') or '')
+                _hw_par = {}
+                for _e in enriched["events"]:
+                    _t = _hw_txt(_e)
+                    if _hw_wx.search(_t) and not _hw_tr.search(_t):
+                        _k = (_e.get('event_country') or _e.get('country_code'), str(_e.get('date') or '')[:10])
+                        _hw_par[_k] = max(_hw_par.get(_k, 0), int(_e.get('severity') or 0))
+                _hw_rows = []
+                for _e in enriched["events"]:
+                    _t = _hw_txt(_e)
+                    if not (_hw_tr.search(_t) and _hw_wx.search(_t)): continue
+                    _cur = int(_e.get('severity') or 0)
+                    _par = _hw_par.get((_e.get('event_country') or _e.get('country_code'), str(_e.get('date') or '')[:10]), 0)
+                    _hub = bool(_hw_hub.search(_t))
+                    _prop = max(_cur, (_par - 7) if _par else 0, 50 if _hub else 0)
+                    _hw_rows.append((_prop - _cur, _cur, _prop, _par, _hub, _e))
+                _hw_up = [r for r in _hw_rows if r[0] > 0]
+                print('  [HUB-WX-SHADOW] транспорт + погода: %d, правило подняло бы: %d' % (len(_hw_rows), len(_hw_up)), file=sys.stderr)
+                for _d, _cur, _prop, _par, _hub, _e in sorted(_hw_rows, key=lambda r: -r[0])[:40]:
+                    print('    - %s → %s (+%d) | погода в стране за день %s | хаб %s | %s | %s | %s' % (
+                        _cur, _prop, _d, _par or '-', 'да' if _hub else 'нет', _e.get('domain'),
+                        _e.get('source'), str(_e.get('title') or '')[:110]), file=sys.stderr)
+            except Exception as _hwe:
+                print('  [HUB-WX-SHADOW] ошибка: %s' % _hwe, file=sys.stderr)
             _attach_decision_basis(enriched["events"])
             # STAGE 3 §9: status + confidence. Строго после basis — слой читает
             # его разложение (см. урок IDR-006 выше о месте вызова).
