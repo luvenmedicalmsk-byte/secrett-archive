@@ -3686,6 +3686,26 @@ def _global_health(signals, prev_global=None):
          'system_temperature':temp}
     if prev_global and prev_global.get('global_pressure'):
         out['pressure_change_pct']=round(100*(gp-prev_global['global_pressure'])/max(1,prev_global['global_pressure']),1)
+    # 22.11.2026 (Мия): изменение за 24 часа. pressure_change_pct сравнивает с прошлым прогоном
+    # (около 20 минут) и почти всегда 0%. Журнал значений за 26 ч хранится в самом global_health;
+    # формула global_pressure не меняется.
+    try:
+        from datetime import datetime as _dt, timezone as _tz, timedelta as _td
+        _now = _dt.now(_tz.utc)
+        _log = [x for x in ((prev_global or {}).get('pressure_log') or [])
+                if isinstance(x, list) and len(x) == 2]
+        _log.append([_now.strftime('%Y-%m-%dT%H:%M:%SZ'), gp])
+        _cut = _now - _td(hours=26)
+        _log = [x for x in _log if _dt.strptime(x[0], '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=_tz.utc) >= _cut]
+        out['pressure_log'] = _log
+        _base = None
+        for t, v in _log:
+            if _dt.strptime(t, '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=_tz.utc) <= _now - _td(hours=23, minutes=30):
+                _base = v
+        if _base:
+            out['pressure_change_24h_pct'] = round(100 * (gp - _base) / max(1, _base), 1)
+    except Exception:
+        pass
     return out
 
 def enrich_v15(signals, prev_global=None):

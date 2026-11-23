@@ -84,7 +84,7 @@ DERIVED_FIELDS = ("preview_only", "evidence", "timeline", "explain", "included_p
                   "explanation", "importance", "system_role", "relationships",
                   "forecast", "velocity", "pressure_history") + EXTRA_FIELDS
 ALLOWED = set(FREE_FIELDS) | set(DERIVED_FIELDS)
-TOP_HEALTH = ("global_pressure", "pressure_change_pct")
+TOP_HEALTH = ("global_pressure", "pressure_change_pct", "pressure_change_24h_pct")
 
 
 def _pick(obj, fields):
