@@ -2,7 +2,7 @@
   "country": "ID",
   "date": "2026-11-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-23T17:50:25.684568+00:00",
+  "generated_at": "2026-11-23T18:11:20.869635+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-ID",
       "type": "Country",
       "label": "ID",
-      "score": 52,
+      "score": 56,
       "props": {
-        "risk_score": 52
+        "risk_score": 56
       }
     },
     {
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 69,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-technology",
@@ -47,7 +47,7 @@
       "id": "DOMAIN-ID-social",
       "type": "Domain",
       "label": "social",
-      "score": 40,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,24 +80,24 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-ID-Гроза:_Цен",
+      "type": "Signal",
+      "label": "Гроза: Центральный Сулавеси, Центральный",
+      "severity": 56,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-ID-Индонезия:",
+      "type": "Signal",
+      "label": "Индонезия: Еженедельное обновление по бе",
+      "severity": 44,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-ID-Пожарная_а",
       "type": "Signal",
       "label": "Пожарная активность — Индонезия",
       "severity": 69,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-ID-Социальный",
-      "type": "Signal",
-      "label": "Социальный процесс — Юго-Восточная Азия",
-      "severity": 54,
-      "domain": "social"
-    },
-    {
-      "id": "SIGNAL-ID-Шторм_—_Ин",
-      "type": "Signal",
-      "label": "Шторм — Индонезия",
-      "severity": 56,
       "domain": "climate"
     }
   ],
@@ -130,7 +130,7 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-social",
       "type": "CORRELATES",
-      "weight": 0.4
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-ID",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-ID-climate",
-      "to": "DOMAIN-ID-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-ID-economic",
-      "to": "DOMAIN-ID-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-ID-social",
-      "to": "DOMAIN-ID-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-ID-climate",
       "to": "DOMAIN-ID-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -205,22 +184,43 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-ID-climate",
+      "to": "DOMAIN-ID-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ID-economic",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-ID-social",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "SIGNAL-ID-Гроза:_Цен",
+      "to": "DOMAIN-ID-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.56
+    },
+    {
+      "from": "SIGNAL-ID-Индонезия:",
+      "to": "DOMAIN-ID-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.44
+    },
+    {
       "from": "SIGNAL-ID-Пожарная_а",
       "to": "DOMAIN-ID-climate",
       "type": "AMPLIFIES",
       "weight": 0.69
-    },
-    {
-      "from": "SIGNAL-ID-Социальный",
-      "to": "DOMAIN-ID-social",
-      "type": "AMPLIFIES",
-      "weight": 0.54
-    },
-    {
-      "from": "SIGNAL-ID-Шторм_—_Ин",
-      "to": "DOMAIN-ID-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.56
     }
   ]
 }
