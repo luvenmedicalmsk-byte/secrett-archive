@@ -2,7 +2,7 @@
   "country": "VN",
   "date": "2026-11-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-23T21:09:40.300375+00:00",
+  "generated_at": "2026-11-23T21:28:24.054137+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -10,59 +10,64 @@
       "id": "COUNTRY-VN",
       "type": "Country",
       "label": "VN",
-      "score": 45,
+      "score": 74,
       "props": {
-        "risk_score": 45
+        "risk_score": 74
       }
     },
     {
       "id": "DOMAIN-VN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 62,
-      "trend": "stable"
+      "score": 71,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-VN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 42,
-      "trend": "stable"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-VN-climate",
       "type": "Domain",
       "label": "climate",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-VN-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-VN-social",
       "type": "Domain",
       "label": "social",
-      "score": 40,
-      "trend": "stable"
+      "score": 74,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-VN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-VN-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
+    },
+    {
+      "id": "DRIVER-VN-social",
+      "type": "Driver",
+      "label": "social"
     },
     {
       "id": "DRIVER-VN-geopolitical",
@@ -75,9 +80,18 @@
       "label": "economic"
     },
     {
-      "id": "DRIVER-VN-social",
-      "type": "Driver",
-      "label": "social"
+      "id": "SIGNAL-VN-Во_Вьетнам",
+      "type": "Signal",
+      "label": "Во Вьетнаме наблюдается вспышка лихорадк",
+      "severity": 74,
+      "domain": "social"
+    },
+    {
+      "id": "SIGNAL-VN-Эпидемиоло",
+      "type": "Signal",
+      "label": "Эпидемиологический риск — Вьетнам",
+      "severity": 74,
+      "domain": "social"
     },
     {
       "id": "SIGNAL-VN-Социальный",
@@ -85,20 +99,6 @@
       "label": "Социальный процесс — Юго-Восточная Азия",
       "severity": 54,
       "domain": "social"
-    },
-    {
-      "id": "SIGNAL-VN-Геополитич",
-      "type": "Signal",
-      "label": "Геополитический процесс — Вьетнам",
-      "severity": 62,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-VN-Валютный_р",
-      "type": "Signal",
-      "label": "Валютный рынок — Юго-Восточная Азия",
-      "severity": 56,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.62
+      "weight": 0.71
     },
     {
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-economic",
       "type": "CORRELATES",
-      "weight": 0.42
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-VN",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-social",
       "type": "CORRELATES",
-      "weight": 0.4
+      "weight": 0.74
     },
     {
       "from": "COUNTRY-VN",
@@ -145,6 +145,12 @@
       "weight": 0.05
     },
     {
+      "from": "DRIVER-VN-social",
+      "to": "COUNTRY-VN",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-VN-geopolitical",
       "to": "COUNTRY-VN",
       "type": "CAUSES",
@@ -152,12 +158,6 @@
     },
     {
       "from": "DRIVER-VN-economic",
-      "to": "COUNTRY-VN",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
-      "from": "DRIVER-VN-social",
       "to": "COUNTRY-VN",
       "type": "CAUSES",
       "weight": 0.8
@@ -184,22 +184,22 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-VN-Во_Вьетнам",
+      "to": "DOMAIN-VN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.74
+    },
+    {
+      "from": "SIGNAL-VN-Эпидемиоло",
+      "to": "DOMAIN-VN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.74
+    },
+    {
       "from": "SIGNAL-VN-Социальный",
       "to": "DOMAIN-VN-social",
       "type": "AMPLIFIES",
       "weight": 0.54
-    },
-    {
-      "from": "SIGNAL-VN-Геополитич",
-      "to": "DOMAIN-VN-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.62
-    },
-    {
-      "from": "SIGNAL-VN-Валютный_р",
-      "to": "DOMAIN-VN-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.56
     }
   ]
 }
