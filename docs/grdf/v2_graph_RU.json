@@ -2,7 +2,7 @@
   "country": "RU",
   "date": "2026-11-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-23T06:30:18.174881+00:00",
+  "generated_at": "2026-11-23T06:51:34.556418+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -10,17 +10,17 @@
       "id": "COUNTRY-RU",
       "type": "Country",
       "label": "RU",
-      "score": 90,
+      "score": 92,
       "props": {
-        "risk_score": 90
+        "risk_score": 92
       }
     },
     {
       "id": "DOMAIN-RU-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 88,
-      "trend": "stable"
+      "score": 98,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-economic",
@@ -41,7 +41,7 @@
       "type": "Domain",
       "label": "technology",
       "score": 83,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-social",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-RU-Ночью_масс",
+      "type": "Signal",
+      "label": "Ночью массированной атаке беспилотников ",
+      "severity": 90,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-RU-PHP_предуп",
       "type": "Signal",
       "label": "PHP предупреждает о критических уязвимос",
@@ -92,13 +99,6 @@
       "label": "Зеленский сообщил о спасении ребёнка из-",
       "severity": 80,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-RU-Эстония_св",
-      "type": "Signal",
-      "label": "Эстония связывает удар дрона по российск",
-      "severity": 80,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.88
+      "weight": 0.98
     },
     {
       "from": "COUNTRY-RU",
@@ -184,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-RU-Ночью_масс",
+      "to": "DOMAIN-RU-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.9
+    },
+    {
       "from": "SIGNAL-RU-PHP_предуп",
       "to": "DOMAIN-RU-technology",
       "type": "AMPLIFIES",
@@ -191,12 +197,6 @@
     },
     {
       "from": "SIGNAL-RU-Зеленский_",
-      "to": "DOMAIN-RU-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.8
-    },
-    {
-      "from": "SIGNAL-RU-Эстония_св",
       "to": "DOMAIN-RU-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.8
