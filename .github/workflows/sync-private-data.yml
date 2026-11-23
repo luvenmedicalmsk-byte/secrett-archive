@@ -1,9 +1,13 @@
 name: Sync premium data to private repo
 
+# P0.7-prep шаг 1b (23.11.2026): расписание отключено. Платные данные пишет
+# в приватный scripts/private_write.sh после каждой публикации, срез ADR-039C -
+# там же (шаг 1a). Эта синхронизация копировала public -> private с
+# rsync --delete и после P0.6b (private - источник истины) больше не нужна.
+# Ручной запуск оставлен только на время наблюдения.
+# ОТКАТ: вернуть блок schedule с cron '30 */4 * * *'.
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '30 */4 * * *'
 
 jobs:
   sync:
