@@ -89,6 +89,21 @@ def main(pub_docs, priv_docs):
             for l in f:
                 try: seen.add(json.loads(l).get('ts'))
                 except: pass
+    # P0.7-prep (23.11.2026): срез переезжает из sync-private-data.yml (раз в 4 ч)
+    # в scripts/private_write.sh (каждый прогон, раз в 20 мин). Чтобы история
+    # сохранила прежний шаг, строка добавляется не чаще ADR039C_MIN_HOURS часов
+    # (по умолчанию 0 - без ограничения, как раньше).
+    min_h = float(os.environ.get('ADR039C_MIN_HOURS') or 0)
+    if min_h > 0 and seen:
+        try:
+            last = max(datetime.strptime(t, '%Y-%m-%dT%H:%M').replace(tzinfo=timezone.utc)
+                       for t in seen if t)
+            age_h = (datetime.now(timezone.utc) - last).total_seconds() / 3600
+            if age_h < min_h:
+                print('[ADR-039C] последняя строка %.1f ч назад (< %g ч), пропуск' % (age_h, min_h))
+                return
+        except ValueError:
+            pass
     if row['ts'] not in seen:
         with open(hist, 'a', encoding='utf-8') as f:
             f.write(json.dumps(row, ensure_ascii=False) + '\n')
