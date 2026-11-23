@@ -32057,8 +32057,12 @@ if __name__ == '__main__':
             print('  [CAP-GATE-SHADOW] отсечено официальных предупреждений: %d (%s)'
                   % (len(_cg_lost), ', '.join('%s %d' % kv for kv in _cg_by.most_common())), file=sys.stderr)
             for _cgx in _cg_lost[:60]:
-                print('    - %s | %s | %s' % (_cgx.get('source'), _cgx.get('domain'),
-                                             str(_cgx.get('title') or '')[:110]), file=sys.stderr)
+                _cgm = _cgx.get('meta') or {}
+                # уровень службы: MeteoAlarm - level (yellow/orange/red), хабы и Росгидромет - severity
+                # (moderate/severe/extreme), MGM - color; плюс индекс записи
+                _cgl = _cgm.get('level') or _cgm.get('severity') or _cgm.get('color') or '-'
+                print('    - %s | %s | уровень %s · индекс %s | %s' % (_cgx.get('source'), _cgx.get('domain'), _cgl,
+                                             _cgx.get('severity'), str(_cgx.get('title') or '')[:110]), file=sys.stderr)
         except Exception as _cge:
             print('  [CAP-GATE-SHADOW] ошибка: %s' % _cge, file=sys.stderr)
         if LINEAGE:
