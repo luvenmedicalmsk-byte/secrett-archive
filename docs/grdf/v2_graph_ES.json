@@ -2,7 +2,7 @@
   "country": "ES",
   "date": "2026-11-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-23T23:09:16.500639+00:00",
+  "generated_at": "2026-11-23T23:27:14.992459+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,59 +10,59 @@
       "id": "COUNTRY-ES",
       "type": "Country",
       "label": "ES",
-      "score": 51,
+      "score": 72,
       "props": {
-        "risk_score": 51
+        "risk_score": 72
       }
     },
     {
       "id": "DOMAIN-ES-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 94,
-      "trend": "stable"
+      "score": 70,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 50,
-      "trend": "stable"
+      "score": 72,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-ES-Geopolitical",
@@ -80,25 +80,25 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-ES-Ливень:_Юг",
+      "id": "SIGNAL-ES-Явления_на",
       "type": "Signal",
-      "label": "Ливень: Юго-запад Ла-Коруньи, Западная ч",
+      "label": "Явления на побережье: Коста - побережье ",
+      "severity": 72,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-ES-Снег:_Гора",
+      "type": "Signal",
+      "label": "Снег: Гора Луго, Юго-западная Астурия, М",
       "severity": 50,
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-ES-Ветер:_Сев",
+      "id": "SIGNAL-ES-Ветер:_Дол",
       "type": "Signal",
-      "label": "Ветер: Северный внутренний район Кастель",
+      "label": "Ветер: Долина Альмансора и Лос-Велес, Се",
       "severity": 50,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-ES-Военные_уд",
-      "type": "Signal",
-      "label": "Военные удары — Испания",
-      "severity": 94,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.94
+      "weight": 0.7
     },
     {
       "from": "COUNTRY-ES",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-climate",
       "type": "CORRELATES",
-      "weight": 0.5
+      "weight": 0.72
     },
     {
       "from": "COUNTRY-ES",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-ES-geopolitical",
-      "to": "DOMAIN-ES-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-ES-infrastructure",
-      "to": "DOMAIN-ES-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-ES-economic",
-      "to": "DOMAIN-ES-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "DOMAIN-ES-climate",
       "to": "DOMAIN-ES-infrastructure",
       "type": "ESCALATES",
@@ -226,22 +205,43 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-ES-Ливень:_Юг",
+      "from": "DOMAIN-ES-geopolitical",
+      "to": "DOMAIN-ES-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-ES-infrastructure",
+      "to": "DOMAIN-ES-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ES-economic",
+      "to": "DOMAIN-ES-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-ES-Явления_на",
+      "to": "DOMAIN-ES-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.72
+    },
+    {
+      "from": "SIGNAL-ES-Снег:_Гора",
       "to": "DOMAIN-ES-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-ES-Ветер:_Сев",
+      "from": "SIGNAL-ES-Ветер:_Дол",
       "to": "DOMAIN-ES-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-ES-Военные_уд",
-      "to": "DOMAIN-ES-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.94
     }
   ]
 }
