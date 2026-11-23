@@ -2,67 +2,67 @@
   "country": "KZ",
   "date": "2026-11-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-23T09:10:04.354384+00:00",
+  "generated_at": "2026-11-23T09:28:43.175643+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-KZ",
       "type": "Country",
       "label": "KZ",
-      "score": 58,
+      "score": 74,
       "props": {
-        "risk_score": 58
+        "risk_score": 74
       }
     },
     {
       "id": "DOMAIN-KZ-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 52,
-      "trend": "stable"
+      "score": 80,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 48,
-      "trend": "stable"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "stable"
+      "score": 74,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-social",
       "type": "Domain",
       "label": "social",
       "score": 58,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-KZ-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-KZ-Ветер:_Арш",
+      "type": "Signal",
+      "label": "Ветер: Аршалынский район (Акмолинская об",
+      "severity": 74,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-KZ-Роспотребн",
       "type": "Signal",
       "label": "Роспотребнадзор запросил у Минздрава Каз",
@@ -92,13 +99,6 @@
       "label": "Шестиклассник пытался прокатиться на пер",
       "severity": 49,
       "domain": "social"
-    },
-    {
-      "id": "SIGNAL-KZ-Деньги_дол",
-      "type": "Signal",
-      "label": "Деньги должны оставаться в Казахстане: Б",
-      "severity": 48,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,19 +106,19 @@
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.52
+      "weight": 0.8
     },
     {
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-economic",
       "type": "CORRELATES",
-      "weight": 0.48
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.74
     },
     {
       "from": "COUNTRY-KZ",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-KZ-climate",
+      "to": "DOMAIN-KZ-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-KZ-economic",
+      "to": "DOMAIN-KZ-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-KZ-social",
+      "to": "DOMAIN-KZ-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-KZ-geopolitical",
       "to": "DOMAIN-KZ-infrastructure",
       "type": "ESCALATES",
@@ -184,6 +205,33 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-KZ-climate",
+      "to": "DOMAIN-KZ-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-KZ-infrastructure",
+      "to": "DOMAIN-KZ-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-KZ-economic",
+      "to": "DOMAIN-KZ-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-KZ-Ветер:_Арш",
+      "to": "DOMAIN-KZ-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.74
+    },
+    {
       "from": "SIGNAL-KZ-Роспотребн",
       "to": "DOMAIN-KZ-social",
       "type": "AMPLIFIES",
@@ -194,12 +242,6 @@
       "to": "DOMAIN-KZ-social",
       "type": "AMPLIFIES",
       "weight": 0.49
-    },
-    {
-      "from": "SIGNAL-KZ-Деньги_дол",
-      "to": "DOMAIN-KZ-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.48
     }
   ]
 }
