@@ -2,39 +2,39 @@
   "country": "CA",
   "date": "2026-11-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-23T18:11:20.868155+00:00",
+  "generated_at": "2026-11-23T18:28:41.440890+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-CA",
       "type": "Country",
       "label": "CA",
-      "score": 69,
+      "score": 72,
       "props": {
-        "risk_score": 69
+        "risk_score": 72
       }
     },
     {
       "id": "DOMAIN-CA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
-      "trend": "stable"
+      "score": 57,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-economic",
       "type": "Domain",
       "label": "economic",
       "score": 60,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-climate",
       "type": "Domain",
       "label": "climate",
       "score": 56,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-technology",
@@ -87,16 +87,16 @@
       "domain": "economic"
     },
     {
-      "id": "SIGNAL-CA-Сильный_ве",
+      "id": "SIGNAL-CA-Ребёнок_по",
       "type": "Signal",
-      "label": "Сильный ветер: район Гранд-Вале, Восточн",
-      "severity": 56,
-      "domain": "climate"
+      "label": "Ребёнок погиб — авария с участием внедор",
+      "severity": 57,
+      "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-CA-Дождь:_Бур",
+      "id": "SIGNAL-CA-Weather:_И",
       "type": "Signal",
-      "label": "Дождь: Буржо - Рамеа, Восточный Ванкувер",
+      "label": "Weather: Иннисфил - Новый Текумсет - Энг",
       "severity": 56,
       "domain": "climate"
     }
@@ -106,7 +106,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.57
     },
     {
       "from": "COUNTRY-CA",
@@ -205,19 +205,40 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-CA-geopolitical",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-CA-Курс_битко",
       "to": "DOMAIN-CA-economic",
       "type": "AMPLIFIES",
       "weight": 0.6
     },
     {
-      "from": "SIGNAL-CA-Сильный_ве",
-      "to": "DOMAIN-CA-climate",
+      "from": "SIGNAL-CA-Ребёнок_по",
+      "to": "DOMAIN-CA-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.56
+      "weight": 0.57
     },
     {
-      "from": "SIGNAL-CA-Дождь:_Бур",
+      "from": "SIGNAL-CA-Weather:_И",
       "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
       "weight": 0.56
