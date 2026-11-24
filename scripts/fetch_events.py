@@ -29675,6 +29675,36 @@ _S29_EPI = re.compile(r'эбол|холер|марбург|оспа|чум[аы]
 _S29_CASES = re.compile(r'(\d{1,3}(?:[\s ,]\d{3})+|\d+)\s+(?:подтвержд\w*\s+)?(?:случа|заболевш|заражени)', re.I)
 _S29_EPI_DEAD = re.compile(r'(\d{1,3}(?:[\s ,]\d{3})+|\d+)\s+(?:подтвержд\w*\s+)?(?:смерт|погибш|умерш|летальн)', re.I)
 _S29_GAS = re.compile(r'газ\w*\D{0,60}?\$\s?(\d[\d\s ]{2,6})', re.I)
+# 25.11.2026 · GAS_FLOOR_SHADOW_2511 (решение Мии 25.11): ценовой шок газа в Европе,
+# заданный не в $ за тыс. м³, а ростом в % за год, «максимумом за N лет» или ценой
+# в евро за МВт·ч. Только отчёт docs/_gas_floor_shadow.json, severity НЕ меняется.
+# Production-включение - отдельным решением. Откат: GAS_FLOOR_SHADOW_2511 = False.
+GAS_FLOOR_SHADOW_2511 = True
+_GF_GAS = re.compile(r'(?<![а-яё])газ|\bttf\b', re.I)
+_GF_EU = re.compile(r'европ|\bttf\b', re.I)
+_GF_PCT = re.compile(r'(?:выросл|вырос|подорожал|подскочил|рост\w*)[^.]{0,60}?на\s+(\d{2,4})\s*%', re.I)
+_GF_MAX = re.compile(r'(?:(трех|тр[её]х|четыр[её]х|пяти|шести|семи|восьми|десяти|\d{1,2})[\s-]*летн\w*\s+максимум|максимум\w*\s+(?:за|с)\s+(\d{1,2}|тр[её]х|четыр[её]х|пяти|шести)\s+(?:лет|год))', re.I)
+_GF_EUR = re.compile(r'(?:€\s?(\d{2,3})(?:[.,]\d+)?\s*(?:/|за)\s*мвт|(\d{2,3})(?:[.,]\d+)?\s*(?:€|евро)\s*(?:/|за)\s*мвт)', re.I)
+_GF_MODAL = re.compile(r'может|могут|прогноз|ожида|риск\w*\s+(?:роста|подорож)|сценари', re.I)
+_GF_NUMW = {'трех':3,'трёх':3,'тре':3,'четырех':4,'четырёх':4,'пяти':5,'шести':6,'семи':7,'восьми':8,'десяти':10}
+GAS_FLOOR_SHADOW_LOG = []
+def _gf_signal(t, sm):
+    txt = (t or '') + ' ' + (sm or '')
+    if not (_GF_GAS.search(txt) and _GF_EU.search(txt)) or _GF_MODAL.search(t or ''):
+        return None
+    m = _GF_PCT.search(txt)
+    if m and int(m.group(1)) >= 100:
+        return 'рост %s%%' % m.group(1)
+    m = _GF_MAX.search(txt)
+    if m:
+        w = (m.group(1) or m.group(2) or '').lower()
+        n = int(w) if w.isdigit() else next((v for k, v in _GF_NUMW.items() if w.startswith(k)), 0)
+        if n >= 3:
+            return 'максимум за период от %d лет' % n
+    m = _GF_EUR.search(txt)
+    if m and int(m.group(1) or m.group(2)) >= 90:
+        return '%s евро за МВт·ч' % (m.group(1) or m.group(2))
+    return None
 _SF_CLICK = re.compile(r'^что-то\s|бьют\s+тревогу$|факап|порци\w*\s+позитив|удивительн\w*\s+на\s+этой\s+неделе|^вот\s+(?:почему|что)\b', re.I)
 _SF_NOISE = re.compile(r'продан\w*\s+на\s+аукцион|аукцион\w*\s+(?:sotheby|christie)|лошад\w*|табун\w*|'
                        r'^восстановлени\w*\s+(?:\S+\s+){0,2}лес|климатическ\w*\s+преимуществ', re.I)
@@ -30311,10 +30341,27 @@ def _feed_hygiene(events):
                             new, why = 62, 'газ в Европе выше $1000'
                     except Exception:
                         pass
+                # GAS_FLOOR_SHADOW_2511: только запись в отчёт
+                if GAS_FLOOR_SHADOW_2511 and new < 62:
+                    try:
+                        _gfs = _gf_signal(t, sm)
+                        if _gfs:
+                            GAS_FLOOR_SHADOW_LOG.append({'id': e.get('id'), 'title': t[:160], 'source': src,
+                                                         'severity_now': new, 'would_be': 62, 'signal': _gfs})
+                    except Exception:
+                        pass
             if new != cur:
                 e['severity_hygiene_from'] = cur
                 e['severity'] = new
                 cnt['индекс: ' + why] = cnt.get('индекс: ' + why, 0) + 1
+    if GAS_FLOOR_SHADOW_2511:
+        try:
+            import json as _gfj
+            with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'docs', '_gas_floor_shadow.json'), 'w', encoding='utf-8') as _gff:
+                _gfj.dump({'generated_utc': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'), 'production': False,
+                           'count': len(GAS_FLOOR_SHADOW_LOG), 'items': GAS_FLOOR_SHADOW_LOG[:200]}, _gff, ensure_ascii=False, indent=1)
+        except Exception as _gfe:
+            print('gas_floor_shadow:', _gfe)
     if FEED_DEDUP_2410:
         _kept = []
         _vis2 = [e for e in events if e.get('feed_visible') is not False and not e.get('alerts_only')]
