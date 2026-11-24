@@ -28905,6 +28905,103 @@ def _u7_floor(e, t):
     return 0, ''
 
 
+# 25.11.2026 · MARKET_SHOCK_2511 (решение Мии 25.11, сразу в production).
+# Ценовые и рыночные шоки получали 32-34 и не проходили порог ленты 35:
+# «За один час Nasdaq потерял 1 трлн долларов» - 34, «Биткоин упал до 63 тысяч» - 34,
+# «Цены на газ в Европе выросли на 163% за год» - 52. Правило только ПОДНИМАЕТ индекс.
+# Запись, скрытая только из-за порога ленты, после подъёма возвращается в ленту.
+# Прогнозы и условные формулировки в заголовке не трогаются. Откат: MARKET_SHOCK_2511 = False.
+MARKET_SHOCK_2511 = True
+_MS_DOWN = r'(?:упал|упали|упало|обвал|рухнул|снизил|снизились|потерял|потеряли|просел|просели|обрушил|опустил|подешевел|теряет|падает|уходит\s+вниз)'
+_MS_UP = r'(?:вырос|выросл|подорожал|подскочил|взлетел|прибавил|рост)'
+_MS_IDX = re.compile(r'nasdaq|s&p|dow\b|доу|nikkei|никкей|dax|ftse|cac\b|hang\s*seng|kospi|мосбирж|imoex|индекс\w*\s+(?:ммвб|мосбиржи|ртс)|\bртс\b|фондов\w*\s+рын|бирж\w*\s+индекс|stoxx', re.I)
+_MS_CRYPTO = re.compile(r'биткоин|bitcoin|\bbtc\b|криптовалют\w*\s+рын|крипторын|эфириум|ethereum', re.I)
+_MS_COMMOD = re.compile(r'нефт|brent|газ\w*|\bttf\b|золот|серебр|мед[иь]\b|алюмини|никел|пшениц|зерн|кофе|какао|сахар|удобрен|уран|лити|рис\b|кукуруз', re.I)
+_MS_PCT_DOWN = re.compile(_MS_DOWN + r'[^.]{0,50}?(?:на\s+)?(\d{1,3}(?:[.,]\d+)?)\s*%', re.I)
+_MS_PCT_UP = re.compile(_MS_UP + r'[^.]{0,50}?(?:на\s+)?(\d{1,4}(?:[.,]\d+)?)\s*%', re.I)
+_MS_TRLN = re.compile(r'(?:потерял|потеряли|лишил|испарил|обнулил|стёр|стер)\w*[^.]{0,40}?\$?\s?(\d+(?:[.,]\d+)?)\s*трлн', re.I)
+_MS_BLN = re.compile(r'(?:потерял|потеряли|испарил|обнулил)\w*[^.]{0,40}?\$?\s?(\d{2,4})\s*млрд', re.I)
+_MS_YEAR = re.compile(r'за\s+год|год\s+к\s+году|к\s+прошлому\s+году|по\s+сравнению\s+с\s+(?:\w+\s+)?20\d\d|г/г|годов', re.I)
+_MS_MODAL = re.compile(r'может|могут|прогноз|ожида|сценари|если\b|риск\w*\s+(?:обвал|падени|роста)|грозит|предупрежда', re.I)
+def _ms_num(x):
+    try:
+        return float(str(x).replace(',', '.'))
+    except Exception:
+        return 0.0
+def _market_shock_floor(t, sm):
+    """Возвращает (floor, why) или (0, None). t - заголовок, sm - начало описания."""
+    if _MS_MODAL.search(t or ''):
+        return 0, None
+    txt = (t or '') + ' ' + (sm or '')
+    best = (0, None)
+    def up(f, w):
+        nonlocal best
+        if f > best[0]:
+            best = (f, w)
+    # газ в Европе: та же планка, что у правила «выше $1000 за тыс. м³»
+    try:
+        _g = _gf_signal(t, sm)
+        if _g:
+            up(62, 'газ в Европе: ' + _g)
+    except Exception:
+        pass
+    if _MS_IDX.search(txt):
+        m = _MS_PCT_DOWN.search(txt)
+        if m:
+            v = _ms_num(m.group(1))
+            if v >= 5: up(55, 'фондовый индекс -%s%%' % m.group(1))
+            elif v >= 3: up(50, 'фондовый индекс -%s%%' % m.group(1))
+    m = _MS_TRLN.search(txt)
+    if m and _ms_num(m.group(1)) >= 1:
+        up(50, 'потеря капитализации $%s трлн' % m.group(1))
+    if _MS_CRYPTO.search(txt):
+        m = _MS_PCT_DOWN.search(txt)
+        if m and _ms_num(m.group(1)) >= 10:
+            up(45, 'криптовалюты -%s%%' % m.group(1))
+        m = _MS_BLN.search(txt)
+        if m and _ms_num(m.group(1)) >= 100:
+            up(45, 'крипторынок потерял $%s млрд' % m.group(1))
+        _pm = _MS_PCT_DOWN.search(txt)
+        if (re.search(r'биткоин\w*[^.]{0,30}(?:резко\s+упал|обвал|рухнул)', txt, re.I)
+                and not (_pm and _ms_num(_pm.group(1)) < 5)):
+            up(45, 'обвал биткоина')
+    if _MS_COMMOD.search(txt) and _MS_YEAR.search(txt):
+        m = _MS_PCT_UP.search(txt)
+        if m and _ms_num(m.group(1)) >= 50:
+            up(50, 'сырьё +%s%% за год' % m.group(1))
+    return best
+def _market_shock_2511(events):
+    if not MARKET_SHOCK_2511:
+        return
+    n_up = n_show = 0
+    for e in events or []:
+        try:
+            if e.get('domain') != 'economy' or e.get('alerts_only'):
+                continue
+            t = e.get('title') or ''
+            sm = (e.get('summary') or '')[:300]
+            fl, why = _market_shock_floor(t, sm)
+            cur = e.get('severity') or 0
+            if not fl or cur >= fl:
+                continue
+            e['severity_market_from'] = cur
+            e['severity'] = fl
+            e['market_shock'] = why
+            n_up += 1
+            if e.get('feed_visible') is False:
+                rs = e.get('hide_reasons') if isinstance(e.get('hide_reasons'), list) else []
+                prod = [x for x in rs if isinstance(x, dict) and x.get('src') == 'production']
+                if prod and all(x.get('code') == 'below_feed_threshold' for x in prod) and fl >= 35:
+                    e['hide_reasons'] = [x for x in rs if not (isinstance(x, dict) and x.get('code') == 'below_feed_threshold')]
+                    e.pop('hide_reason', None)
+                    e['feed_visible'] = True
+                    e['unhidden_by'] = 'market_shock_2511'
+                    n_show += 1
+        except Exception:
+            continue
+    print('  market_shock_2511: поднято %d, возвращено в ленту %d' % (n_up, n_show))
+
+
 def _sev_post_hyg_0511(events):
     if not SEV_POST_HYG_0511:
         return 0
@@ -31512,6 +31609,7 @@ def save_enriched(events, previous_snapshot=None):
                 # перевода и в первой публикации не сработали: заголовки ещё английские)
                 for _e in enriched["events"]:
                     _fix_gaza_tail(_e)
+                _market_shock_2511(enriched["events"])   # MARKET_SHOCK_2511
                 _feed_hygiene(enriched["events"])
                 _sev_post_hyg_0511(enriched["events"])
                 # склейка дублей ПОСЛЕ _feed_hygiene: она меняет feed_visible, и карточка,
