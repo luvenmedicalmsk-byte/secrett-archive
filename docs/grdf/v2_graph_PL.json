@@ -2,7 +2,7 @@
   "country": "PL",
   "date": "2026-11-24",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-24T08:48:15.363051+00:00",
+  "generated_at": "2026-11-24T09:11:18.018314+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -19,14 +19,14 @@
       "id": "DOMAIN-PL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 42,
+      "score": 60,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-PL-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-PL-«Если_бы_р",
+      "type": "Signal",
+      "label": "«Если бы российский дрон угрожал Польше,",
+      "severity": 52,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-PL-Ветер:_Цен",
       "type": "Signal",
       "label": "Ветер: Центральная прибрежная зона, Вост",
@@ -92,13 +99,6 @@
       "label": "Снег: Кельце повят, Влощовский повят, Ст",
       "severity": 50,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-PL-Консорциум",
-      "type": "Signal",
-      "label": "Консорциум под руководством FedEx заверш",
-      "severity": 32,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.42
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-PL",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-PL-climate",
-      "to": "DOMAIN-PL-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-PL-infrastructure",
-      "to": "DOMAIN-PL-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-PL-economic",
-      "to": "DOMAIN-PL-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-PL-climate",
       "to": "DOMAIN-PL-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -203,6 +182,27 @@
       "type": "AMPLIFIES",
       "weight": 0.65,
       "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-PL-climate",
+      "to": "DOMAIN-PL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-PL-infrastructure",
+      "to": "DOMAIN-PL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-PL-economic",
+      "to": "DOMAIN-PL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-PL-geopolitical",
@@ -226,6 +226,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-PL-«Если_бы_р",
+      "to": "DOMAIN-PL-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.52
+    },
+    {
       "from": "SIGNAL-PL-Ветер:_Цен",
       "to": "DOMAIN-PL-climate",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-PL-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-PL-Консорциум",
-      "to": "DOMAIN-PL-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.32
     }
   ]
 }
