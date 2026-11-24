@@ -2,7 +2,7 @@
   "country": "ID",
   "date": "2026-11-24",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-24T10:08:50.695291+00:00",
+  "generated_at": "2026-11-24T10:30:07.586450+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-ID",
       "type": "Country",
       "label": "ID",
-      "score": 56,
+      "score": 52,
       "props": {
-        "risk_score": 56
+        "risk_score": 52
       }
     },
     {
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 69,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ID-technology",
@@ -47,8 +47,8 @@
       "id": "DOMAIN-ID-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
-      "trend": "stable"
+      "score": 40,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ID-infrastructure",
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-ID-Гроза_затр",
-      "type": "Signal",
-      "label": "Гроза затронула Джакарту, Лампунг, Север",
-      "severity": 56,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-ID-Старейшины",
       "type": "Signal",
       "label": "Старейшины — Бали возобновляют борьбу пр",
@@ -99,6 +92,13 @@
       "label": "Пожарная активность — Индонезия",
       "severity": 69,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-ID-Социальный",
+      "type": "Signal",
+      "label": "Социальный процесс — Юго-Восточная Азия",
+      "severity": 54,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -130,7 +130,7 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-ID",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-ID-climate",
-      "to": "DOMAIN-ID-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-ID-infrastructure",
-      "to": "DOMAIN-ID-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-ID-economic",
-      "to": "DOMAIN-ID-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-ID-climate",
       "to": "DOMAIN-ID-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,10 +184,25 @@
       "lag_days": 90
     },
     {
-      "from": "SIGNAL-ID-Гроза_затр",
-      "to": "DOMAIN-ID-climate",
+      "from": "DOMAIN-ID-climate",
+      "to": "DOMAIN-ID-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-ID-infrastructure",
+      "to": "DOMAIN-ID-economic",
       "type": "AMPLIFIES",
-      "weight": 0.56
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ID-economic",
+      "to": "DOMAIN-ID-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "SIGNAL-ID-Старейшины",
@@ -221,6 +215,12 @@
       "to": "DOMAIN-ID-climate",
       "type": "AMPLIFIES",
       "weight": 0.69
+    },
+    {
+      "from": "SIGNAL-ID-Социальный",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.54
     }
   ]
 }
