@@ -13,8 +13,8 @@ jobs:
       - uses: actions/checkout@v4
       - run: pip install -q openpyxl
       - run: python3 scripts/infra/build_aqueduct.py
-      - uses: actions/upload-artifact@v4
-        with:
-          name: aqueduct
-          path: docs/infra/aqueduct_v4.json
-          retention-days: 7
+      - run: |
+          ls -la docs/infra/aqueduct_v4.json
+          echo "AQB64_BEGIN"
+          gzip -9c docs/infra/aqueduct_v4.json | base64 -w 0 | fold -w 3000 | sed 's/^/AQB64:/'
+          echo "AQB64_END"
