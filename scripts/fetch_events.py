@@ -19118,7 +19118,7 @@ JMA_WARN_ON = False
 JMA_WARN_SHADOW = True
 _JMA_FEED = 'https://www.data.jma.go.jp/developer/xml/feed/extra.xml'
 _JMA_BUDGET_S = 45
-_JMA_MAX_DOCS = 70
+_JMA_MAX_DOCS = 260   # 24.11: в ленте ~430 записей, 70 последних не покрывают все префектуры
 _JMA_PREF = {  # префектура: (название, широта, долгота)
  '北海道':('Хоккайдо',43.06,141.35),'青森':('Аомори',40.82,140.74),'岩手':('Иватэ',39.70,141.15),
  '宮城':('Мияги',38.27,140.87),'秋田':('Акита',39.72,140.10),'山形':('Ямагата',38.24,140.36),
@@ -19204,12 +19204,12 @@ def fetch_jma_warnings():
                 if _jma_local(c) == 'link' and c.get('href'): href = c.get('href'); break
             log['заголовки'][title] = log['заголовки'].get(title, 0) + 1
             if '気象' in title and '警報' in title and href:
-                ents.append((upd, href, _jma_txt(e, 'name')))
+                ents.append((upd, href, title))
         log['записей в ленте'] = len(ents)
         ents.sort(reverse=True)
         best = {}   # префектура -> {вид: (уровень, балл, имя, район)}
         seen_area = set()
-        for upd, href, author in ents[:_JMA_MAX_DOCS]:
+        for upd, href, etitle in ents[:_JMA_MAX_DOCS]:
             if time.time() - t0 > _JMA_BUDGET_S: log['пропущено по времени'] = True; break
             doc = fetch_url(href, timeout=12)
             if not doc: log['ошибок'] += 1; continue
@@ -19225,8 +19225,10 @@ def fetch_jma_warnings():
                     area = ''
                     for ar in it.iter():
                         if _jma_local(ar) == 'Area': area = _jma_txt(ar, 'Name'); break
-                    if not area or area in seen_area: continue
-                    seen_area.add(area)   # документы идут от новых к старым: первый - актуальный
+                    # Ключ - район и тип документа: с 2026 года JMA выпускает и сводный документ (Н27),
+                    # и отдельные по явлению (Р06: 暴風, 波浪, 土砂...). Новейший документ каждого типа - актуальный.
+                    if not area or (area, etitle) in seen_area: continue
+                    seen_area.add((area, etitle))
                     pref = _jma_pref(area)
                     if not pref:
                         if len(log['неизвестные районы']) < 20: log['неизвестные районы'].append(area)
