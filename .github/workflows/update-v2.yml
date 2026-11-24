@@ -312,6 +312,8 @@ jobs:
           # в файл: генератор читает JSON, а не хранилище.
           python scripts/sync_zones.py || true
           python scripts/build_zone.py docs/country_zones.json docs/reports || true
+          # 24.11.2026: профили с полями обложки (cover_*) пересобираются в формате EWS
+          python scripts/build_zone_ews.py docs/country_zones.json docs/reports || true
           ls -la docs/reports/ || true
 
       # Точечные экспертизы Tier 1. Отдельный шаг от зон, а не строка в том

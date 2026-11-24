@@ -1,0 +1,628 @@
+# -*- coding: utf-8 -*-
+import re
+"""Atlas Intelligence · генератор PDF комплексного профиля риска в формате EWS.
+
+Отличие от build_zone.py: обложка «Система раннего предупреждения EWS»
+(карточки Atlas Index и сезонного сценария, ключевой вывод, горизонт
+анализа) по полям cover_* записи. Внутренние страницы те же, что у
+мини-разбора: обоснования уровня и сценарии идут в инженерном комментарии.
+
+Исходное описание build_zone.py:
+
+Данные читаются из JSON, в коде текста нет. Один запуск собирает
+PDF для каждой записи в docs/country_zones.json.
+
+Обложка воспроизводит эталон: логотип и надпись Atlas Intelligence
+берутся из растра atlas_logo.png, координаты текста сверены
+с исходным документом (расхождение < 0.05pt), вертикальные
+интервалы увеличены для читаемости.
+"""
+import json, sys
+from pathlib import Path
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.lib.styles import ParagraphStyle
+from reportlab.platypus import Paragraph, Table, TableStyle
+
+BASE = Path(__file__).resolve().parent
+# Логотип и шрифты лежат в scripts/assets. При локальном запуске
+# из папки разработки они могут быть рядом с генератором — проверяем оба.
+ASSETS = BASE / "assets" if (BASE / "assets").is_dir() else BASE
+W, H = A4
+
+NAVY  = colors.HexColor("#15233A")
+CYAN  = colors.HexColor("#20A9C9")
+MUTED = colors.HexColor("#8191A8")
+GOLD  = colors.HexColor("#C9AE68")
+LINE  = colors.HexColor("#DCE5EC")
+PALE  = colors.HexColor("#F0F5F8")
+PGOLD = colors.HexColor("#F7F4EA")
+
+pdfmetrics.registerFont(TTFont("Noto", str(ASSETS/"NotoSans-Regular-full.ttf")))
+pdfmetrics.registerFont(TTFont("Noto-Bold", str(ASSETS/"NotoSans-Bold-full.ttf")))
+
+# БЕЗ ЭТОЙ СТРОКИ ТЕГ <b> НЕ РАБОТАЕТ, и он здесь есть: названием пары
+# доменов в разделе «Где пересекаются домены» (строка с <b>%s</b>).
+# Проверено 23.09.2026: Paragraph со стилем fontName="Noto" и разметкой
+# «обычный <b>жирный</b> текст» отдаёт ОДИН фрагмент шрифтом Noto, то
+# есть выделение пропадает молча, без ошибки. reportlab ищет жирное
+# начертание в семействе шрифтов, а регистрация двух отдельных TTFont
+# семейства не создаёт: имя «-Bold» само по себе ничего не связывает.
+# Значит, во всех ранее собранных разборах зон названия пар доменов шли
+# обычным начертанием, хотя код требовал жирного. При следующем прогоне
+# они пересоберутся и станут выделенными - это и было задумано.
+pdfmetrics.registerFontFamily("Noto", normal="Noto", bold="Noto-Bold",
+                              italic="Noto", boldItalic="Noto-Bold")
+
+body      = ParagraphStyle("body", fontName="Noto", fontSize=9.4, leading=13.2,
+                           textColor=colors.HexColor("#4E6075"))
+body_dark = ParagraphStyle("body_dark", parent=body, textColor=colors.HexColor("#35465B"))
+small     = ParagraphStyle("small", fontName="Noto", fontSize=7.8, leading=10.4, textColor=MUTED)
+head      = ParagraphStyle("head", fontName="Noto-Bold", fontSize=12.0, leading=14.8, textColor=NAVY)
+subhead   = ParagraphStyle("subhead", fontName="Noto-Bold", fontSize=10.2, leading=12.8, textColor=NAVY)
+boldbody  = ParagraphStyle("boldbody", parent=body, fontName="Noto-Bold", textColor=NAVY)
+mono      = ParagraphStyle("mono", fontName="Noto", fontSize=8.8, leading=12.6,
+                           textColor=colors.HexColor("#35465B"))
+
+
+def clean(t):
+    """Нормализация текста под шрифт и правила Atlas.
+
+    Длинные тире заменяются дефисом по правилу клиентских текстов.
+    Стрелки и типографские значки, которых нет в подмножестве шрифта,
+    заменяются на точку-разделитель: иначе reportlab рисует пустой
+    глиф и в тексте появляется \x00.
+
+    23.09.2026. Таблица была неполной: стрелка вправо и указатели
+    обрабатывались, а знаки \u2260 \u2191 \u2193 \u2190 \u221e \u25cf нет. Проверка шрифта
+    показала, что их в нём тоже нет, и в разборе энергетики РФ стрелка
+    вниз печаталась пустым местом. Таблица приведена к той же, что в
+    генераторе точечных экспертиз. Знак "не равно" разворачивается
+    словами: точка-разделитель на его месте перевернула бы смысл
+    фразы на противоположный.
+    """
+    s = str(t)
+    # 12.11.2026: голый амперсанд (S&P) reportlab читал как сущность и
+    # печатал "S&P;". Экранируем всё, что не является готовой сущностью.
+    s = re.sub(r'&(?!#?\w+;)', '&amp;', s)
+    for a, b in _SUBST:
+        if a in s:
+            s = s.replace(a, b)
+    _note_missing(s)
+    return s
+
+
+_SUBST = [
+    ("—", "-"), ("–", "-"), ("−", "-"), ("\u00a0", " "),
+    ("≠", " это не "),
+    ("∞", "бессрочно"),
+    ("→", "·"), ("←", "·"), ("↑", "·"), ("↓", "·"),
+    ("⇒", "·"), ("▸", "·"), ("►", "·"),
+    ("●", ""), ("○", ""), ("✅", ""), ("\U0001F4CC", ""),
+]
+
+_CMAP = None
+_MISSING = set()
+
+
+def _note_missing(s):
+    """Копит знаки, которых нет в шрифте: молча они рисуются пустотой."""
+    global _CMAP
+    if _CMAP is None:
+        try:
+            _CMAP = set(pdfmetrics.getFont("Noto").face.charToGlyph.keys())
+        except Exception:
+            _CMAP = set()
+    if not _CMAP:
+        return
+    for ch in s:
+        o = ord(ch)
+        if o > 0x2000 and o not in _CMAP and ch not in _MISSING:
+            _MISSING.add(ch)
+
+
+def P_height(text, width, style):
+    """Высота абзаца без отрисовки: нужна для проверки места."""
+    return Paragraph(clean(text), style).wrap(width, 10000)[1]
+
+
+def P(c, text, x, top, width, style, nl=None, state=None):
+    """Абзац с автопереносом. top отсчитывается сверху, возвращает новый top.
+
+    nl и state передаются вместе: длинный абзац разбивается по страницам,
+    а не рисуется целиком. Без этого перечень источников на второй странице
+    заезжал на колонтитул: проверка места стояла только перед секцией, а
+    сам абзац переносить было нечем (02.09.2026).
+    """
+    p = Paragraph(clean(text), style)
+    if nl is None or state is None:
+        w, h = p.wrap(width, 10000)
+        p.drawOn(c, x, H - top - h)
+        return top + h
+    while True:
+        avail = H - BOT - state['top']
+        w, h = p.wrap(width, 10000)
+        if h <= avail:
+            p.drawOn(c, x, H - state['top'] - h)
+            state['top'] += h
+            return state['top']
+        parts = p.split(width, avail)
+        if not parts or len(parts) < 2:
+            nl(min(h, H - BOT - TOP))          # целиком не влезает — начинаем страницу
+            continue
+        head_p, rest = parts[0], parts[1]
+        hw, hh = head_p.wrap(width, 10000)
+        head_p.drawOn(c, x, H - state['top'] - hh)
+        state['top'] += hh
+        nl(H)                                   # безусловный перенос страницы
+        p = rest
+
+
+def table_height(rows, widths, font=8.2, header=True):
+    """Высота таблицы без отрисовки: нужна, чтобы решить о переносе."""
+    data = [[Paragraph(clean(v), ParagraphStyle(
+                "tdm", fontName=("Noto-Bold" if (header and i == 0) else "Noto"),
+                fontSize=font, leading=font*1.42))
+             for v in r] for i, r in enumerate(rows)]
+    t = Table(data, colWidths=widths)
+    return t.wrap(sum(widths), 10000)[1]
+
+
+def table(c, rows, x, top, widths, font=8.2, header=True):
+    data = [[Paragraph(clean(v), ParagraphStyle(
+                "td", fontName=("Noto-Bold" if (header and i == 0) else "Noto"),
+                fontSize=font, leading=font*1.42,
+                textColor=(NAVY if (header and i == 0) else colors.HexColor("#4E6075"))))
+             for v in r] for i, r in enumerate(rows)]
+    t = Table(data, colWidths=widths)
+    st = [("VALIGN", (0,0), (-1,-1), "TOP"),
+          ("LINEBELOW", (0,0), (-1,-2), 0.4, LINE),
+          ("TOPPADDING", (0,0), (-1,-1), 4),
+          ("BOTTOMPADDING", (0,0), (-1,-1), 4),
+          ("LEFTPADDING", (0,0), (-1,-1), 5),
+          ("RIGHTPADDING", (0,0), (-1,-1), 5)]
+    if header:
+        st += [("BACKGROUND", (0,0), (-1,0), PALE),
+               ("LINEBELOW", (0,0), (-1,0), 0.7, CYAN)]
+    t.setStyle(TableStyle(st))
+    w, h = t.wrap(sum(widths), 10000)
+    t.drawOn(c, x, H - top - h)
+    return top + h
+
+
+def callout_height(text, width, style=None):
+    """Высота врезки без отрисовки: нужна для проверки места."""
+    p = Paragraph(clean(text), style or body_dark)
+    return p.wrap(width - 22, 10000)[1] + 14
+
+
+def callout(c, text, x, top, width, accent=CYAN, bg=PALE, style=None):
+    """Врезка с цветной полосой слева."""
+    st = style or body_dark
+    p = Paragraph(clean(text), st)
+    w, h = p.wrap(width - 22, 10000)
+    c.setFillColor(bg); c.setStrokeColor(bg)
+    c.rect(x, H - top - h - 14, width, h + 14, stroke=0, fill=1)
+    c.setFillColor(accent); c.setStrokeColor(accent)
+    c.rect(x, H - top - h - 14, 2.6, h + 14, stroke=0, fill=1)
+    p.drawOn(c, x + 14, H - top - h - 7)
+    return top + h + 14
+
+
+def bullets(c, items, x, top, width, style=None, nl=None, state=None):
+    """Список пунктов.
+
+    nl и state передаются вместе: перед каждым пунктом проверяется место
+    под него, и при переносе на новую страницу top читается из state.
+    Без этого длинные списки налезали на колонтитул: проверка стояла
+    только перед секцией целиком.
+    """
+    st = style or body
+    for it in items:
+        if nl and state is not None:
+            nl(P_height("• " + it, width, st) + 6)
+            top = state['top']
+        top = P(c, "• " + it, x, top, width, st) + 2.5
+        if state is not None:
+            state['top'] = top
+    return top
+
+
+def footer(c, z, page):
+    c.setFont("Noto", 7.1); c.setFillColor(MUTED)
+    _parts = [z['country']] + ([z['region']] if z.get('region') and z['region'] != z['country'] else []) + [z['date_h']]
+    c.drawString(78, 24, "Atlas Intelligence · " + " · ".join(_parts))
+    c.drawRightString(W - 78, 24, str(page))
+
+
+def make_cover(c, z):
+    """Обложка EWS по эталону PT-profile-2026-10-28: шапка-растр
+    «Система раннего предупреждения EWS», золотая линия, заголовок,
+    две карточки, стрессовый сценарий, ключевой вывод, горизонт анализа.
+    Координаты сняты с эталона (верх блока в пунктах от верха листа)."""
+    L, R = 62.0, 533.3
+    def Y(top, size): return H - top - size * 0.707
+    def S(x, top, size, font, col, txt, cs=0.0):
+        c.setFont(font, size); c.setFillColor(col)
+        c.drawString(x, Y(top, size), txt, charSpace=cs)
+    c.setFillColor(colors.white); c.rect(0, 0, W, H, stroke=0, fill=1)
+    c.drawImage(str(ASSETS/"ews_header.png"), L, H - 134.3, width=R - L, height=82.3, mask='auto')
+    c.setStrokeColor(GOLD); c.setLineWidth(1.1); c.line(L, H - 172.3, R, H - 172.3)
+    S(L, 217.9, 19, "Noto-Bold", NAVY, clean(z.get('cover_title') or 'Комплексный профиль риска').upper(), 1.2)
+    c.setFont("Noto-Bold", 10.6); c.setFillColor(CYAN)
+    c.drawString(L, Y(249.5, 10.6), clean(z.get('cover_kicker', '')))
+    c.setFont("Noto", 9.8); c.setFillColor(colors.HexColor("#4E6075"))
+    for i, m in enumerate(z.get("cover_meta", [])[:4]):
+        c.drawString(L, Y(273.2 + 18 * i, 9.8), clean(m))
+    # карточки
+    for i, card in enumerate(z.get('cover_cards', [])[:2]):
+        x0 = L if i == 0 else 304.6; x1 = 290.6 if i == 0 else R
+        c.setFillColor(PALE); c.setStrokeColor(LINE); c.setLineWidth(0.6)
+        c.roundRect(x0, H - 460.3, x1 - x0, 112.0, 6, stroke=1, fill=1)
+        c.setFillColor(CYAN); c.rect(x0, H - 460.3, 3.0, 112.0, stroke=0, fill=1)
+        S(x0 + 16, 364.7, 8.2, "Noto-Bold", MUTED, clean(card[0]), 1.6)
+        c.setFont("Noto-Bold", 34); c.setFillColor(CYAN); c.drawString(x0 + 16, Y(390.3, 34), clean(card[1]))
+        sst = ParagraphStyle("s", fontName="Noto", fontSize=9.0, leading=11.4, textColor=NAVY)
+        pp = Paragraph(clean(card[2]), sst); _, h2 = pp.wrap(x1 - x0 - 30, 40)
+        pp.drawOn(c, x0 + 16, H - 437.0 - h2 + 3.2)
+    st = ParagraphStyle("st", fontName="Noto", fontSize=8.8, leading=12.4, textColor=colors.HexColor("#4E6075"))
+    p = Paragraph(clean(z.get('cover_stress', '')), st); _, ph = p.wrap(R - L, 200)
+    p.drawOn(c, L, H - 476.9 - ph + 3.2)
+    # ключевой вывод
+    S(L, 536.1, 8.6, "Noto-Bold", GOLD, clean(z.get('cover_conclusion_title') or 'КЛЮЧЕВОЙ ВЫВОД'), 1.8)
+    rows = z.get('cover_conclusion', [])
+    paras = []
+    for j, r in enumerate(rows):
+        last = (j == len(rows) - 1)
+        stl = ParagraphStyle("cr%d" % j, fontName="Noto-Bold" if last else "Noto", fontSize=10.0, leading=13.0,
+                             textColor=NAVY if last else colors.HexColor("#35465B"))
+        pr = Paragraph("<b>%s:</b> %s" % (clean(r[0]), clean(r[1])), stl)
+        _, hh = pr.wrap(R - 80 - 14, 200); paras.append((pr, hh))
+    box_h = 16 + sum(max(hh, 13) + 10 for _, hh in paras) + 2
+    box_h = max(box_h, 110.0)
+    c.setFillColor(PGOLD); c.roundRect(L, H - 551.5 - box_h, R - L, box_h, 5, stroke=0, fill=1)
+    c.setFillColor(GOLD); c.rect(L, H - 551.5 - box_h, 3.0, box_h, stroke=0, fill=1)
+    yy = 564.3
+    for pr, hh in paras:
+        pr.drawOn(c, 80, H - yy - hh); yy += max(hh, 13) + 10
+    # горизонт анализа
+    S(L, 702.1, 8.6, "Noto-Bold", GOLD, "ГОРИЗОНТ АНАЛИЗА", 1.8)
+    S(L, 720.2, 12.5, "Noto-Bold", NAVY, clean(z.get('horizon_upper', '')), 1.0)
+    ms = z.get('horizon_months', []) or ['']
+    gap = 4.0; seg = (531.3 - L - gap * (len(ms) - 1)) / len(ms)
+    for i, m in enumerate(ms):
+        x = L + i * (seg + gap)
+        c.setFillColor(CYAN if i == 0 else colors.HexColor("#BFE6F0"))
+        c.rect(x, H - 748.5, seg, 6.0, stroke=0, fill=1)
+        c.setFont("Noto-Bold", 8.6); c.setFillColor(NAVY)
+        c.drawCentredString(x + seg / 2, Y(759.1, 8.6), clean(m))
+    c.setStrokeColor(LINE); c.setLineWidth(0.5); c.line(L, H - 795.9, R, H - 795.9)
+    c.setFont("Noto", 7.4); c.setFillColor(MUTED)
+    c.drawString(L, Y(804.7, 7.4), clean(z.get('cover_footer') or ('Atlas Intelligence · ' + z['country'])))
+    c.drawRightString(R, Y(804.7, 7.4), z['date_h'])
+    c.showPage()
+
+
+X, CW = 78, 439          # левое поле и ширина колонки
+TOP, BOT = 62, 60        # верх и низ полосы набора
+
+
+def make_body(c, z):
+    """Пять страниц разбора. Верстка идёт потоком: если блок
+    не помещается до нижней границы, начинается новая страница."""
+    state = {'page': 2, 'top': TOP}
+
+    def nl(need):
+        """Проверка места. need — высота блока в пунктах."""
+        if state['top'] + need > H - BOT:
+            footer(c, z, state['page']); c.showPage()
+            state['page'] += 1; state['top'] = TOP
+
+    state['n'] = 0
+
+    def sec(title, need=80):
+        """Заголовок секции со сквозной нумерацией.
+
+        Номер выдаётся счётчиком в момент вызова, а не задаётся вручную:
+        при пропуске незаполненной секции нумерация не рвётся. Прежняя
+        жёсткая нумерация давала «8, 10, 11, 12, 13» с пустыми заголовками.
+
+        Заголовок не остаётся внизу страницы без содержимого: резервируем
+        место под него и первые строки.
+        """
+        state['n'] += 1
+        nl(need)
+        state['top'] = P(c, "%d. %s" % (state['n'], title),
+                         X, state['top'], CW, head) + 8
+
+    # ── 1 · Ключевые параметры ────────────────────────────────────
+    # Сводка над таблицей: индекс, зона и уровень крупно. Читатель видит
+    # главное, не разбирая таблицу параметров.
+    sec("Ключевые параметры оценки", need=150)
+    _y = state['top']
+    c.setFillColor(PALE); c.setStrokeColor(colors.HexColor("#DCE5EC"))
+    c.roundRect(X, H - _y - 58, CW, 58, 7, stroke=1, fill=1)
+    c.setFont("Noto-Bold", 27); c.setFillColor(CYAN)
+    c.drawString(X + 15, H - _y - 33, "%d/100" % z['index'])
+    # 23.09.2026. Раньше здесь стоял drawString фиксированным кеглем 11
+    # без проверки ширины: длинное имя зоны молча уезжало за правый край
+    # плашки и за край страницы. Кегль подбирается под доступную ширину,
+    # ниже 7 пунктов не опускается: если не влезло и там, имя переносится
+    # на вторую строку, но не обрезается.
+    _zn = clean(z['zone']).upper()
+    _zw = CW - 132 - 12
+    _fs = 11
+    while _fs > 7 and pdfmetrics.stringWidth(_zn, "Noto-Bold", _fs) > _zw:
+        _fs -= 0.5
+    c.setFillColor(NAVY)
+    if pdfmetrics.stringWidth(_zn, "Noto-Bold", _fs) > _zw:
+        _cut = len(_zn)
+        while _cut > 1 and pdfmetrics.stringWidth(_zn[:_cut], "Noto-Bold", _fs) > _zw:
+            _cut -= 1
+        _sp = _zn.rfind(" ", 0, _cut)
+        _cut = _sp if _sp > 0 else _cut
+        c.setFont("Noto-Bold", _fs)
+        c.drawString(X + 132, H - _y - 21, _zn[:_cut])
+        c.drawString(X + 132, H - _y - 21 - _fs - 2, _zn[_cut:].lstrip())
+    else:
+        c.setFont("Noto-Bold", _fs)
+        c.drawString(X + 132, H - _y - 30, _zn)
+    c.setFont("Noto", 8.6); c.setFillColor(MUTED)
+    c.drawString(X + 15, H - _y - 47, "Индекс риска")
+    c.drawString(X + 132, H - _y - 47, clean(z.get('index_label') or ''))
+    state['top'] = _y + 58 + 12
+
+    rows = [["Параметр", "Значение"],
+            ["Регион", z['country'] if z['region'] == z['country']
+                       else ("%s, %s" % (z['country'], z['region']))],
+            ["Главная зона риска", z['zone']],
+            ["Тип зависимости", z['dependency']],
+            ["Релевантные домены Atlas", z['domains_h']],
+            ["Инженерная оговорка", z['engineering_note']]]
+    kw = [120, CW - 120]
+    # 11.11.2026. Ячейка таблицы не переносится на следующую страницу:
+    # длинная инженерная оговорка выходила за колонтитул. Если таблица не
+    # помещается до низа страницы, оговорка печатается абзацем после неё.
+    _eng_after = False
+    if state['top'] + table_height(rows, kw) + 20 > H - BOT:
+        rows[-1] = ["Инженерная оговорка", "приведена ниже, после таблицы"]
+        _eng_after = True
+    nl(table_height(rows, kw) + 20)
+    state['top'] = table(c, rows, X, state['top'], kw) + 10
+    if _eng_after:
+        state['top'] = P(c, "<b>Инженерная оговорка.</b> " + z['engineering_note'],
+                         X, state['top'], CW, body, nl, state) + 16
+    else:
+        state['top'] += 6
+
+    # ── 2 · Триггер ───────────────────────────────────────────────
+    sec("Текущее событие - триггер индекса")
+    state['top'] = P(c, z['trigger'], X, state['top'], CW, body, nl, state) + 8
+    state['top'] = P(c, "Источники: " + z['sources'], X, state['top'], CW, small, nl, state) + 8
+    # Место под врезку проверяется заранее (02.09.2026): при длинном тексте
+    # «Связь с индексом» уезжала на колонтитул. callout_height существовал,
+    # но здесь не вызывался.
+    nl(callout_height("Связь с индексом: " + z['index_link'], CW))
+    state['top'] = callout(c, "Связь с индексом: " + z['index_link'],
+                           X, state['top'], CW) + 16
+
+    # ── 3 · Динамика ──────────────────────────────────────────────
+    # Только при наличии точек: у прогнозных разборов прослеженной
+    # динамики может не быть вовсе, и раньше печаталась таблица из
+    # одной строки заголовков.
+    if z.get('history'):
+        rows = [["Дата", "Индекс", "Событие-триггер"]] + [list(r) for r in z['history']]
+        _nh = max(len(r) for r in rows)
+        hw = ([62, 46, CW - 108] if _nh >= 3 else [80, CW - 80])
+        sec("Динамика индекса", need=table_height(rows, hw) + 46)
+        state['top'] = table(c, rows, X, state['top'], hw) + 16
+
+    # ── 4 · Пересечения ───────────────────────────────────────────
+    # Секция целиком опускается без пар: иначе оставался заголовок и
+    # висящая врезка без анализа, к которому она относится.
+    if z.get('crossings'):
+      sec("Где пересекаются домены")
+      for pair, txt in z['crossings']:
+          nl(34)
+          state['top'] = P(c, "<b>%s</b> &#160;·&#160; %s" % (pair, txt), X, state['top'], CW, body, nl, state) + 5
+      state['top'] += 4
+      if z.get('crossings_note'):
+          nl(callout_height(z['crossings_note'], CW))
+          state['top'] = callout(c, z['crossings_note'], X, state['top'], CW,
+                                 accent=GOLD, bg=PGOLD) + 16
+
+    # ── 5 · Каскад ────────────────────────────────────────────────
+    sec("Важно смотреть не отдельную новость, а цепочку",
+        need=len(z['cascade']) * 13 + 70)
+    for i, line in enumerate(z['cascade']):
+        state['top'] = P(c, line, X + 6, state['top'], CW - 6,
+                         boldbody if i == 0 else mono) + 1
+    state['top'] += 6
+    nl(callout_height(z['cascade_note'], CW))
+    state['top'] = callout(c, z['cascade_note'], X, state['top'], CW) + 16
+
+    # ── 6 · Проявления ────────────────────────────────────────────
+    sec("Риск может проявляться как")
+    state['top'] = bullets(c, z['manifest'], X, state['top'], CW, nl=nl, state=state) + 12
+
+    # ── 7 · Расшифровка индекса ───────────────────────────────────
+    sec("Расшифровка индекса %d/100" % z['index'],
+        need=P_height(z['decode'], CW, body) + 46)
+    state['top'] = P(c, z['decode'], X, state['top'], CW, body, nl, state) + 16
+
+    # ── 8 · Таблица диапазонов ────────────────────────────────────
+    # Таблица выводится только при наличии строк: у зоны интернета
+    # табличных данных нет, и пустой Table ломал сборку.
+    if z.get('table_rows'):
+      rows = [z.get('table_head') or []] + [list(r) for r in z['table_rows']]
+      if not rows[0]:
+        rows = rows[1:]
+      # Ширины по фактическому числу колонок. Раньше задавались жёстко
+      # на две: при трёх колонках, как в разборе по России, третья
+      # уходила за правый край и текст обрезался.
+      _nc = max(len(r) for r in rows)
+      if _nc >= 3:
+          tw = [116, 62, CW - 178]        # название · значение · комментарий
+      else:
+          tw = [110, CW - 110]
+      sec(z['table_title'], need=table_height(rows, tw) + 60)
+      state['top'] = table(c, rows, X, state['top'], tw) + 6
+      state['top'] = P(c, z['table_note'], X, state['top'], CW, small, nl, state) + 16
+
+    # ── 9-12 · Списки ─────────────────────────────────────────────
+    # Списки выводятся только при наличии данных: пустая секция раньше
+    # давала заголовок с номером и без содержимого.
+    if z.get('options'):
+        sec(z.get('options_title') or 'Варианты')
+        state['top'] = bullets(c, z['options'], X, state['top'], CW, nl=nl, state=state) + 12
+    if z.get('filter'):
+        sec(z.get('filter_title') or 'Фильтр', need=callout_height(z['filter'], CW) + 46)
+        nl(callout_height(z['filter'], CW))
+        state['top'] = callout(c, z['filter'], X, state['top'], CW,
+                               accent=GOLD, bg=PGOLD) + 16
+    if z.get('anchors'):
+        sec(z.get('anchors_title') or 'Ключевые показатели')
+        state['top'] = bullets(c, z['anchors'], X, state['top'], CW, nl=nl, state=state) + 12
+    if z.get('requirements'):
+        sec(z.get('requirements_title') or 'Требования')
+        state['top'] = bullets(c, z['requirements'], X, state['top'], CW, nl=nl, state=state) + 12
+
+    # ── Мониторинг ────────────────────────────────────────────────
+    sec(z['watch_title'])
+    state['top'] = bullets(c, z['watch'], X, state['top'], CW, nl=nl, state=state) + 12
+
+    # ── Практический вывод: перевод оценки в бытовое действие ────
+    # Отдельный блок между мониторингом и заключением: читатель уже знает,
+    # что отслеживать, и получает ответ на прикладной вопрос до того,
+    # как перейдёт к инженерному выводу.
+    if z.get('practical'):
+        sec(z.get('practical_title') or 'Практический вывод',
+            need=P_height(z['practical'], CW, body) + 60)
+        state['top'] = P(c, z['practical'], X, state['top'], CW, body, nl, state) + 14
+
+    # ── Практический выход: людям и бизнесу ──────────────────────
+    # После мониторинга и перед выводом: сначала читатель понимает,
+    # что отслеживать, затем что делать, и только потом заключение.
+    # После мониторинга и перед выводом: сначала читатель понимает,
+    # что отслеживать, затем что делать, и только потом заключение.
+    # Два отдельных раздела: рекомендации различаются по адресату
+    # и смешивать их нельзя. Выводятся только при наличии данных.
+    if z.get('for_people'):
+        sec(z.get('for_people_title') or 'Для людей')
+        state['top'] = bullets(c, z['for_people'], X, state['top'], CW,
+                               nl=nl, state=state) + 12
+    if z.get('for_business'):
+        sec(z.get('for_business_title') or 'Для бизнеса')
+        state['top'] = bullets(c, z['for_business'], X, state['top'], CW,
+                               nl=nl, state=state) + 12
+
+
+    # ── 13 · Инженерный комментарий ───────────────────────────────
+    # Блоки без содержания пропускаются: у прогнозных разборов бывает
+    # заполнен только один из трёх, и пустой подзаголовок с двоеточием
+    # выглядел в готовом документе как потерянный текст. Сама секция
+    # выводится, только если заполнен хотя бы один блок (та же логика,
+    # что у списков ниже по потоку).
+    _cmt = [(tk, ik) for tk, ik in (('comment_low_title', 'comment_low'),
+                                    ('comment_high_title', 'comment_high'),
+                                    ('comment_under_title', 'comment_under'))
+            if (z.get(ik) or [])]
+    if _cmt:
+        sec("Инженерный комментарий")
+        for tk, ik in _cmt:
+            nl(50)
+            state['top'] = P(c, (z.get(tk) or '') + ":", X, state['top'], CW, subhead, nl, state) + 5
+            state['top'] = bullets(c, z[ik], X, state['top'], CW, nl=nl, state=state) + 9
+        state['top'] += 6
+
+    # ── 14 · Расшифровка для пользователя ─────────────────────────
+    sec("Расшифровка для пользователя")
+    state['top'] = P(c, z['user_note'], X, state['top'], CW, body, nl, state) + 8
+    # Врезка переносится целиком: раньше налезала на колонтитул.
+    nl(callout_height(z['user_indicator'], CW) + 10)
+    state['top'] = callout(c, z['user_indicator'], X, state['top'], CW) + 16
+
+    # ── 15 · Градиент ─────────────────────────────────────────────
+    # Только при наличии строк: у разборов без территориальной или
+    # групповой разбивки таблица сводилась к одному заголовку.
+    if z.get('gradient'):
+        rows = [z.get('gradient_head') or []] + [list(r) for r in z['gradient']]
+        if not rows[0]:
+            rows = rows[1:]
+        _ng = max(len(r) for r in rows)
+        gw = ([128, CW - 128 - 58, 58] if _ng >= 3 else [140, CW - 140])
+        sec(z.get('gradient_title') or 'Разбивка', need=table_height(rows, gw) + 46)
+        state['top'] = table(c, rows, X, state['top'], gw, header=True) + 16
+
+    # ── 16-17 · Мини и мониторинг ─────────────────────────────────
+    sec("Мини-информация", need=P_height(z['mini'], CW, body) + 46)
+    state['top'] = P(c, z['mini'], X, state['top'], CW, body, nl, state) + 16
+
+    # ── 18 · Про Atlas ────────────────────────────────────────────
+    # Связь с Atlas как системой: место разбора в собственной картине
+    # платформы. Выводится перед общим объяснением о доменах.
+    if z.get('atlas_link'):
+        sec(z.get('atlas_link_title') or 'Связь с Atlas как системой',
+            need=P_height(z['atlas_link'], CW, body) + 50)
+        state['top'] = P(c, z['atlas_link'], X, state['top'], CW, body, nl, state) + 14
+
+    sec("Atlas здесь полезен тем, что показывает",
+        need=P_height(z['atlas_note'], CW, body) + 50)
+    state['top'] = P(c, z['atlas_note'], X, state['top'], CW, body, nl, state) + 6
+    nl(14)
+    # Подпись поддержки кликабельна: reportlab понимает тег <a href>,
+    # и ссылка остаётся рабочей при открытии PDF в браузере и читалках.
+    _sup = z.get('support', '')
+    _url = z.get('support_url', '')
+    if _url:
+        _sup = '<a href="%s" color="#20A9C9">%s</a>' % (_url, _sup)
+    state['top'] = P(c, _sup, X, state['top'], CW, small, nl, state)
+
+    footer(c, z, state['page'])
+    c.showPage()
+
+
+def prepare(z):
+    """Производные поля, чтобы шаблон не считал их сам."""
+    d = z['date'].split('-')
+    z['date_h'] = "%s.%s.%s" % (d[2], d[1], d[0])
+    z['title'] = z.get('cover_title') or "Комплексный профиль риска"
+    z['subtitle'] = "%s · %s · зона риска: %s" % (z['country'], z['region'], z['zone'])
+    z['domains_h'] = " · ".join(z['domains'])
+    return z
+
+
+def build(zone, outdir):
+    z = prepare(dict(zone))
+    out = Path(outdir) / ("%s-%s.pdf" % (z['id'], z['date']))
+    c = canvas.Canvas(str(out), pagesize=A4)
+    c.setTitle("Atlas Intelligence · %s · %s · %s" % (z['country'], z['region'], z['zone']))
+    c.setAuthor("Atlas Intelligence · EWS")
+    make_cover(c, z)
+    make_body(c, z)
+    c.save()
+    return out
+
+
+if __name__ == "__main__":
+    src = Path(sys.argv[1]) if len(sys.argv) > 1 else BASE.parent / "docs" / "country_zones.json"
+    outdir = Path(sys.argv[2]) if len(sys.argv) > 2 else BASE
+    outdir.mkdir(parents=True, exist_ok=True)
+    data = json.loads(src.read_text(encoding="utf-8"))
+    zones = data if isinstance(data, list) else [data]
+    # 24.11.2026 (Мия): в конвейере генератор EWS собирает только записи с обложкой
+    # (cover_cards). Остальные зоны остаются в формате build_zone.py; файл с тем же
+    # именем перезаписывается, поэтому порядок шагов: сначала build_zone.py, потом этот.
+    for zz in zones:
+        if not zz.get('cover_cards'):
+            continue
+        p = build(zz, outdir)
+        print("  собрано (EWS): %s" % p.name)
+    if _MISSING:
+        # Не молчим: знак без глифа рисуется пустым местом, и на готовой
+        # странице это видно только глазами.
+        print("  [zone] ВНИМАНИЕ, нет в шрифте: %s"
+              % " ".join("U+%04X (%s)" % (ord(ch), ch) for ch in sorted(_MISSING)))

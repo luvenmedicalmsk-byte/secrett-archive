@@ -18,7 +18,10 @@ OUT = Path(__file__).resolve().parent.parent / "docs" / "country_zones.json"
 # Страны опрашиваются точечно: у KV нет запроса «все зоны», список
 # строится по префиксу zone:{CC}:, а префикс требует кода страны.
 COUNTRIES = ["CN", "RU", "US", "DE", "TR", "AE", "KZ", "IN", "GB", "FR",
-             "IT", "ES", "JP", "KR", "SA", "IL", "IR", "EG", "BR", "MX"]
+             "IT", "ES", "JP", "KR", "SA", "IL", "IR", "EG", "BR", "MX",
+             # 24.11.2026: страны с комплексными профилями, которых не было в списке
+             "UA", "HR", "GR", "PL", "BY", "SK", "ME", "RO", "RS", "GE", "PT",
+             "KG", "AM", "AZ", "MD", "BG", "CY", "CZ", "CA", "LB", "ID", "AU"]
 
 
 def fetch(cc):
