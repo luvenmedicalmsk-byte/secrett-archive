@@ -17620,7 +17620,15 @@ def fetch_gdacs():
         print("  GDACS: недоступен", file=sys.stderr)
         return []
     try:
-        root = ET.fromstring(data)
+        # GDACS_XML_2511: в ленте GDACS встречаются неэкранированные «&» в тексте
+        # («not well-formed (invalid token)») - лента целиком давала 0 событий.
+        try:
+            root = ET.fromstring(data)
+        except ET.ParseError:
+            _gx = data.decode('utf-8', 'replace') if isinstance(data, (bytes, bytearray)) else str(data)
+            _gx = re.sub(r'&(?!(?:amp|lt|gt|quot|apos|#\d+|#x[0-9a-fA-F]+);)', '&amp;', _gx)
+            root = ET.fromstring(_gx.encode('utf-8'))
+            print("  GDACS: XML исправлен (неэкранированные &)", file=sys.stderr)
         ns = {
             'gdacs': 'http://www.gdacs.org',
             'geo': 'http://www.w3.org/2003/01/geo/wgs84_pos#'
@@ -21875,7 +21883,11 @@ def fetch_climate_rss():
         {'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)'},
         {'User-Agent': 'feedparser/6.0'},
         {'User-Agent': 'ArchiveBot/2.0 (+https://secrett-archive.com)'},
+        # CLIM_RSS_UA_2511: The Watchers отвечает 403 на ботовые User-Agent
+        {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
+         'Accept': 'application/rss+xml, application/xml;q=0.9, */*;q=0.8'},
     ]
+    _per_src = {}
 
     for url, src_name, domain in sources:
         if url in seen_urls:
@@ -21929,6 +21941,13 @@ def fetch_climate_rss():
             print(f'  [WARN] {src_name}: {e}', file=sys.stderr)
             continue
 
+    try:
+        _pc = {}
+        for _it in items:
+            _pc[_it.get('source')] = _pc.get(_it.get('source'), 0) + 1
+        print('  Климат RSS по источникам: ' + ', '.join('%s %d' % kv for kv in sorted(_pc.items())), file=sys.stderr)
+    except Exception:
+        pass
     # Убираем дубликаты по заголовку
     seen = set()
     unique = []
