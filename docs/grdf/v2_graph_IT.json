@@ -2,67 +2,67 @@
   "country": "IT",
   "date": "2026-11-24",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-24T11:55:45.409193+00:00",
+  "generated_at": "2026-11-24T12:10:23.562970+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-IT",
       "type": "Country",
       "label": "IT",
-      "score": 83,
+      "score": 72,
       "props": {
-        "risk_score": 83
+        "risk_score": 72
       }
     },
     {
       "id": "DOMAIN-IT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 77,
-      "trend": "up"
+      "score": 34,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IT-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IT-climate",
       "type": "Domain",
       "label": "climate",
       "score": 72,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IT-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IT-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IT-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IT-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DRIVER-IT-Geopolitical",
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IT-Гроза:_Сиц",
-      "type": "Signal",
-      "label": "Гроза: Сицилия, Кампания, Лацио и ещё 6 ",
-      "severity": 72,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-IT-Ветер:_Сар",
       "type": "Signal",
       "label": "Ветер: Сардиния, Базиликата, Сицилия и е",
@@ -99,6 +92,13 @@
       "label": "Ливень: Базиликата, Апулия, Кампания и е",
       "severity": 50,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-IT-Снег:_Трен",
+      "type": "Signal",
+      "label": "Снег: Трентино-Альто-Адидже, Пьемонт, До",
+      "severity": 50,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.77
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-IT",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-IT-geopolitical",
-      "to": "DOMAIN-IT-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-IT-infrastructure",
-      "to": "DOMAIN-IT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-IT-economic",
-      "to": "DOMAIN-IT-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "DOMAIN-IT-climate",
       "to": "DOMAIN-IT-infrastructure",
       "type": "ESCALATES",
@@ -226,12 +205,6 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-IT-Гроза:_Сиц",
-      "to": "DOMAIN-IT-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.72
-    },
-    {
       "from": "SIGNAL-IT-Ветер:_Сар",
       "to": "DOMAIN-IT-climate",
       "type": "AMPLIFIES",
@@ -239,6 +212,12 @@
     },
     {
       "from": "SIGNAL-IT-Ливень:_Ба",
+      "to": "DOMAIN-IT-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
+      "from": "SIGNAL-IT-Снег:_Трен",
       "to": "DOMAIN-IT-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
