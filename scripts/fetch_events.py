@@ -19192,6 +19192,84 @@ def _jma_kind_ru(name):
             return ru
     return 'Опасное явление'
 
+# FOOD_EW_2511 (решение Мии 25.11): продовольственные предупреждения - GEOGLAM Crop Monitor for
+# Early Warning (ежемесячно) и FAO GIEWS (GIEWS Updates, Special Alerts). Это сигналы о неурожае и
+# продовольственном кризисе: домен social. Отчёт docs/_food_ew_shadow.json. Откат: FOOD_EW_ON = False.
+FOOD_EW_ON = True
+_FEW_CM_URL = 'https://cropmonitor.org/crop-monitor-for-early-warning'
+_FEW_GIEWS_URL = 'https://www.fao.org/giews/'
+_FEW_REG = [  # (ключ в заголовке региона, регион Atlas, lat, lng)
+    ('EAST AFRICA', 'Африка', 5.0, 38.0), ('WEST AFRICA', 'Африка', 13.0, 0.0), ('SOUTHERN AFRICA', 'Африка', -18.0, 27.0),
+    ('CENTRAL AFRICA', 'Африка', 2.0, 20.0), ('NORTH AFRICA', 'Ближний Восток', 30.0, 10.0), ('MIDDLE EAST', 'Ближний Восток', 30.0, 40.0),
+    ('CENTRAL & SOUTH ASIA', 'Азия', 33.0, 67.0), ('CENTRAL AND SOUTH ASIA', 'Азия', 33.0, 67.0), ('SOUTH ASIA', 'Азия', 25.0, 78.0),
+    ('SOUTHEAST ASIA', 'Азия', 13.0, 103.0), ('CENTRAL AMERICA', 'Латинская Америка', 14.0, -87.0), ('SOUTH AMERICA', 'Латинская Америка', -15.0, -60.0),
+    ('CARIBBEAN', 'Латинская Америка', 18.5, -72.3)]
+_FEW_BAD = re.compile(r'failure|poor|drought|concern|deficit|below[- ](?:average|normal)|flood|conflict|shortfall|dry conditions', re.I)
+_FEW_MON = {m: i for i, m in enumerate(['january','february','march','april','may','june','july','august','september','october','november','december'], 1)}
+def _few_txt(h):
+    h = re.sub(r'(?is)<(script|style)[^>]*>.*?</\1>', ' ', h or '')
+    h = re.sub(r'<[^>]+>', ' ', h)
+    try:
+        h = html.unescape(h)
+    except Exception:
+        pass
+    return re.sub(r'\s+', ' ', h).strip()
+def fetch_food_early_warning():
+    if not FOOD_EW_ON:
+        return []
+    items = []; log = {'дата': datetime.now(timezone.utc).isoformat(timespec='seconds'), 'crop_monitor': {}, 'giews': [], 'ошибки': []}
+    # 1) GEOGLAM Crop Monitor for Early Warning
+    try:
+        raw = fetch_url(_FEW_CM_URL, timeout=20)
+        page = raw.decode('utf-8', 'replace') if isinstance(raw, (bytes, bytearray)) else (raw or '')
+        if page:
+            txt = _few_txt(page)
+            mno = re.search(r'No\.\s*(\d{2,4})', txt)
+            mpub = re.search(r'Published\s+([A-Z][a-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(20\d\d)', txt)
+            pub = None
+            if mpub and mpub.group(1).lower() in _FEW_MON:
+                pub = datetime(int(mpub.group(3)), _FEW_MON[mpub.group(1).lower()], int(mpub.group(2)), 12, tzinfo=timezone.utc)
+            log['crop_monitor'] = {'номер': mno.group(1) if mno else None, 'дата': pub.isoformat() if pub else None, 'регионы': []}
+            if pub:
+                for m in re.finditer(r'(?is)<p[^>]*>\s*<(?:strong|b)[^>]*>\s*([A-Z][A-Z &,\-]{3,60}?)\s*:?\s*</(?:strong|b)>\s*:?(.*?)</p>', page):
+                    head = re.sub(r'\s+', ' ', m.group(1)).strip().rstrip(':').upper()
+                    body = _few_txt(m.group(2))
+                    reg = next((r for r in _FEW_REG if r[0] in head), None)
+                    if not reg or len(body) < 60 or not _FEW_BAD.search(body):
+                        continue
+                    first = re.split(r'(?<=[.!?])\s', body, 1)[0][:220]
+                    items.append({'title': 'Crop Monitor: %s - %s' % (head.title(), first), 'desc': body[:600],
+                                  'url': _FEW_CM_URL, 'date': pub.strftime('%Y-%m-%dT%H:%M:%SZ'), 'source': 'GEOGLAM Crop Monitor',
+                                  'domain': 'social', '_domain': 'social', 'source_bias': 4,
+                                  '_lat': reg[2], '_lng': reg[3], '_coord_origin': 'dictionary', '_region': reg[1]})
+                    log['crop_monitor']['регионы'].append({'регион': head, 'фраза': first})
+    except Exception as e:
+        log['ошибки'].append('crop_monitor: %s' % e)
+    # 2) FAO GIEWS: Updates и Special Alerts с главной страницы
+    try:
+        raw = fetch_url(_FEW_GIEWS_URL, timeout=20)
+        page = raw.decode('utf-8', 'replace') if isinstance(raw, (bytes, bytearray)) else (raw or '')
+        if page:
+            txt = _few_txt(page)
+            for m in re.finditer(r'(GIEWS (?:Updates|Special Alerts)):\s*(.{10,260}?)\s+((?:January|February|March|April|May|June|July|August|September|October|November|December))\s+(20\d\d)', txt):
+                kind, title, mon, yr = m.group(1), m.group(2).strip(), m.group(3), int(m.group(4))
+                d = datetime(yr, _FEW_MON[mon.lower()], 1, 12, tzinfo=timezone.utc)
+                items.append({'title': '%s: %s' % (kind, title), 'desc': '%s: %s (%s %d). FAO GIEWS.' % (kind, title, mon, yr),
+                              'url': _FEW_GIEWS_URL, 'date': d.strftime('%Y-%m-%dT%H:%M:%SZ'), 'source': 'FAO GIEWS',
+                              'domain': 'social', '_domain': 'social', 'source_bias': 5})
+                log['giews'].append({'вид': kind, 'заголовок': title, 'месяц': '%s %d' % (mon, yr)})
+    except Exception as e:
+        log['ошибки'].append('giews: %s' % e)
+    log['записей'] = len(items)
+    try:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'docs', '_food_ew_shadow.json'), 'w', encoding='utf-8') as f:
+            json.dump(log, f, ensure_ascii=False, indent=1)
+    except Exception:
+        pass
+    print('  FOOD_EW: Crop Monitor %d, GIEWS %d' % (len(log['crop_monitor'].get('регионы', [])), len(log['giews'])), file=sys.stderr)
+    return items
+
+
 def fetch_jma_warnings():
     """Предупреждения JMA по префектурам (警報 и выше). Тень: JMA_WARN_ON=False."""
     if not (JMA_WARN_ON or JMA_WARN_SHADOW):
@@ -32312,6 +32390,7 @@ if __name__ == '__main__':
             ('mideast_cap',        fetch_mideast_cap),
             ('global_cap',         fetch_global_cap),
             ('wmo_alerthub',       fetch_wmo_alerthub),   # WMO_ALERTHUB_ON=False -> пустой список, отчёт в тени
+            ('food_ew',            fetch_food_early_warning),   # FOOD_EW_2511
             ('jma_warn',           fetch_jma_warnings),   # JMA_WARN_2411: JMA_WARN_ON=False -> пустой список, отчёт в тени
             ('notam',              fetch_notam),   # NOTAM_GATE=False -> пустой список
             ('mgm_turkey',         fetch_mgm_turkey),
