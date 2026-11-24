@@ -2,17 +2,17 @@
   "country": "RS",
   "date": "2026-11-24",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-24T13:30:14.229622+00:00",
+  "generated_at": "2026-11-24T13:49:18.767904+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-RS",
       "type": "Country",
       "label": "RS",
-      "score": 80,
+      "score": 72,
       "props": {
-        "risk_score": 80
+        "risk_score": 72
       }
     },
     {
@@ -20,54 +20,49 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 62,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-RS-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-RS-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 72,
-      "trend": "stable"
+      "score": 5,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-RS-technology",
       "type": "Domain",
       "label": "technology",
       "score": 72,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-RS-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-RS-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-RS-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
-    },
-    {
-      "id": "DRIVER-RS-climate",
-      "type": "Driver",
-      "label": "climate"
+      "trend": "down"
     },
     {
       "id": "DRIVER-RS-technology",
@@ -80,6 +75,11 @@
       "label": "geopolitical"
     },
     {
+      "id": "DRIVER-RS-economic",
+      "type": "Driver",
+      "label": "economic"
+    },
+    {
       "id": "SIGNAL-RS-Падение_ин",
       "type": "Signal",
       "label": "Падение интернет-связи: Сербия",
@@ -87,18 +87,18 @@
       "domain": "technology"
     },
     {
-      "id": "SIGNAL-RS-Снег:_Вост",
+      "id": "SIGNAL-RS-Отключение",
       "type": "Signal",
-      "label": "Снег: Восточная Сербия, Сербия",
+      "label": "Отключение интернета — Сербия",
       "severity": 72,
-      "domain": "climate"
+      "domain": "technology"
     },
     {
-      "id": "SIGNAL-RS-Ветер:_Вос",
+      "id": "SIGNAL-RS-Военные_уд",
       "type": "Signal",
-      "label": "Ветер: Восточная Сербия, Сербия",
-      "severity": 50,
-      "domain": "climate"
+      "label": "Военные удары — Сербия",
+      "severity": 62,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-RS",
       "to": "DOMAIN-RS-climate",
       "type": "CORRELATES",
-      "weight": 0.72
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-RS",
@@ -145,12 +145,6 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-RS-climate",
-      "to": "COUNTRY-RS",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
       "from": "DRIVER-RS-technology",
       "to": "COUNTRY-RS",
       "type": "CAUSES",
@@ -163,46 +157,10 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-RS-climate",
-      "to": "DOMAIN-RS-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-RS-economic",
-      "to": "DOMAIN-RS-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-RS-social",
-      "to": "DOMAIN-RS-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-RS-climate",
-      "to": "DOMAIN-RS-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-RS-infrastructure",
-      "to": "DOMAIN-RS-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-RS-economic",
-      "to": "DOMAIN-RS-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
+      "from": "DRIVER-RS-economic",
+      "to": "COUNTRY-RS",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DOMAIN-RS-geopolitical",
@@ -232,16 +190,16 @@
       "weight": 0.72
     },
     {
-      "from": "SIGNAL-RS-Снег:_Вост",
-      "to": "DOMAIN-RS-climate",
+      "from": "SIGNAL-RS-Отключение",
+      "to": "DOMAIN-RS-technology",
       "type": "AMPLIFIES",
       "weight": 0.72
     },
     {
-      "from": "SIGNAL-RS-Ветер:_Вос",
-      "to": "DOMAIN-RS-climate",
+      "from": "SIGNAL-RS-Военные_уд",
+      "to": "DOMAIN-RS-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.5
+      "weight": 0.62
     }
   ]
 }
