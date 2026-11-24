@@ -2,9 +2,9 @@
   "country": "EE",
   "date": "2026-11-24",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-24T15:53:42.671018+00:00",
+  "generated_at": "2026-11-24T16:10:51.984216+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-EE",
@@ -33,14 +33,14 @@
       "id": "DOMAIN-EE-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 50,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-EE-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 65,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -65,9 +65,9 @@
       "trend": "stable"
     },
     {
-      "id": "DRIVER-EE-technology",
+      "id": "DRIVER-EE-climate",
       "type": "Driver",
-      "label": "technology"
+      "label": "climate"
     },
     {
       "id": "DRIVER-EE-social",
@@ -87,18 +87,18 @@
       "domain": "social"
     },
     {
-      "id": "SIGNAL-EE-Социальный",
+      "id": "SIGNAL-EE-Ветер:_Вос",
       "type": "Signal",
-      "label": "Социальный процесс — Эстония",
+      "label": "Ветер: Восточный залив Финского залива, ",
       "severity": 50,
-      "domain": "social"
+      "domain": "climate"
     },
     {
-      "id": "SIGNAL-EE-Промышленн",
+      "id": "SIGNAL-EE-Снег:_Уезд",
       "type": "Signal",
-      "label": "Промышленная авария — Эстония",
-      "severity": 65,
-      "domain": "technology"
+      "label": "Снег: Уезд Сааремаа, Уезд Хийумаа, Уезд ",
+      "severity": 50,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -118,13 +118,13 @@
       "from": "COUNTRY-EE",
       "to": "DOMAIN-EE-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-EE",
       "to": "DOMAIN-EE-technology",
       "type": "CORRELATES",
-      "weight": 0.65
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-EE",
@@ -145,7 +145,7 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-EE-technology",
+      "from": "DRIVER-EE-climate",
       "to": "COUNTRY-EE",
       "type": "CAUSES",
       "weight": 0.8
@@ -163,22 +163,64 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-EE-climate",
+      "to": "DOMAIN-EE-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-EE-economic",
+      "to": "DOMAIN-EE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-EE-social",
+      "to": "DOMAIN-EE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-EE-climate",
+      "to": "DOMAIN-EE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-EE-infrastructure",
+      "to": "DOMAIN-EE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-EE-economic",
+      "to": "DOMAIN-EE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-EE-Жители_Эст",
       "to": "DOMAIN-EE-social",
       "type": "AMPLIFIES",
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-EE-Социальный",
-      "to": "DOMAIN-EE-social",
+      "from": "SIGNAL-EE-Ветер:_Вос",
+      "to": "DOMAIN-EE-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-EE-Промышленн",
-      "to": "DOMAIN-EE-technology",
+      "from": "SIGNAL-EE-Снег:_Уезд",
+      "to": "DOMAIN-EE-climate",
       "type": "AMPLIFIES",
-      "weight": 0.65
+      "weight": 0.5
     }
   ]
 }
