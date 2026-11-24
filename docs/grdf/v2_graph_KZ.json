@@ -2,7 +2,7 @@
   "country": "KZ",
   "date": "2026-11-24",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-24T14:11:44.744587+00:00",
+  "generated_at": "2026-11-24T14:30:14.739895+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -47,7 +47,7 @@
       "id": "DOMAIN-KZ-social",
       "type": "Domain",
       "label": "social",
-      "score": 58,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -87,16 +87,16 @@
       "domain": "economic"
     },
     {
-      "id": "SIGNAL-KZ-Роспотребн",
-      "type": "Signal",
-      "label": "Роспотребнадзор запросил у Минздрава Каз",
-      "severity": 58,
-      "domain": "social"
-    },
-    {
       "id": "SIGNAL-KZ-Дождь_со_с",
       "type": "Signal",
       "label": "Дождь со снегом накроет почти весь Казах",
+      "severity": 49,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-KZ-Непогода_о",
+      "type": "Signal",
+      "label": "Непогода ожидается почти по всему Казахс",
       "severity": 49,
       "domain": "climate"
     }
@@ -130,7 +130,7 @@
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-social",
       "type": "CORRELATES",
-      "weight": 0.58
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-KZ",
@@ -161,6 +161,27 @@
       "to": "COUNTRY-KZ",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-KZ-climate",
+      "to": "DOMAIN-KZ-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-KZ-infrastructure",
+      "to": "DOMAIN-KZ-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-KZ-economic",
+      "to": "DOMAIN-KZ-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-KZ-climate",
@@ -205,40 +226,19 @@
       "lag_days": 45
     },
     {
-      "from": "DOMAIN-KZ-climate",
-      "to": "DOMAIN-KZ-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-KZ-infrastructure",
-      "to": "DOMAIN-KZ-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-KZ-economic",
-      "to": "DOMAIN-KZ-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "SIGNAL-KZ-Задача_бан",
       "to": "DOMAIN-KZ-economic",
       "type": "AMPLIFIES",
       "weight": 0.62
     },
     {
-      "from": "SIGNAL-KZ-Роспотребн",
-      "to": "DOMAIN-KZ-social",
+      "from": "SIGNAL-KZ-Дождь_со_с",
+      "to": "DOMAIN-KZ-climate",
       "type": "AMPLIFIES",
-      "weight": 0.58
+      "weight": 0.49
     },
     {
-      "from": "SIGNAL-KZ-Дождь_со_с",
+      "from": "SIGNAL-KZ-Непогода_о",
       "to": "DOMAIN-KZ-climate",
       "type": "AMPLIFIES",
       "weight": 0.49
