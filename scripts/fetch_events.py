@@ -19114,7 +19114,7 @@ def _wmo_accept(event, sevkey, msgtype):
 # (панель «Предупреждения», вне квот ленты, CAP-фильтры).
 # Порядок: JMA_WARN_ON = False - только отчёт docs/_jma_warn_shadow.json.
 # Откат: JMA_WARN_ON = False, JMA_WARN_SHADOW = False.
-JMA_WARN_ON = False
+JMA_WARN_ON = True    # 24.11.2026 21:00 (Мия): включено после тени
 JMA_WARN_SHADOW = True
 _JMA_FEED = 'https://www.data.jma.go.jp/developer/xml/feed/extra.xml'
 _JMA_BUDGET_S = 45
