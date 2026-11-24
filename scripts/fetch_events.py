@@ -32094,8 +32094,18 @@ if __name__ == '__main__':
                 # уровень службы: MeteoAlarm - level (yellow/orange/red), хабы и Росгидромет - severity
                 # (moderate/severe/extreme), MGM - color; плюс индекс записи
                 _cgl = _cgm.get('level') or _cgm.get('severity') or _cgm.get('color') or '-'
-                print('    - %s | %s | уровень %s · индекс %s | %s' % (_cgx.get('source'), _cgx.get('domain'), _cgl,
-                                             _cgx.get('severity'), str(_cgx.get('title') or '')[:110]), file=sys.stderr)
+                # CAP_GATE_P1_SHADOW_2411 (24.11.2026, Мия): причина отсечения и кандидат P1
+                # (уровень severe/extreme/orange/red или активация Copernicus EMS). Только журнал.
+                _cgb = ((_cgx.get('title') or '') + ' ' + (_cgx.get('summary') or '')[:300]).lower()
+                _cgd = _cgx.get('domain') or ''
+                if _cgd == 'climate':
+                    _cgr = 'signal-word' if not any(w in _cgb for w in _CLIM_SIGNAL) else 'другое'
+                else:
+                    _cgr = 'domain' if not _SIG_RE.search(_cgb) else 'другое'
+                _cgp1 = (str(_cgl).lower() in ('severe', 'extreme', 'orange', 'red')) or _cgm.get('kind') == 'cems'
+                print('    - %s | %s | уровень %s · индекс %s | причина %s | P1 %s | %s' % (_cgx.get('source'), _cgd, _cgl,
+                                             _cgx.get('severity'), _cgr, 'пропустил бы' if _cgp1 else 'нет',
+                                             str(_cgx.get('title') or '')[:110]), file=sys.stderr)
         except Exception as _cge:
             print('  [CAP-GATE-SHADOW] ошибка: %s' % _cge, file=sys.stderr)
         if LINEAGE:
