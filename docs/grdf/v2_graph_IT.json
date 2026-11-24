@@ -2,7 +2,7 @@
   "country": "IT",
   "date": "2026-11-24",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-24T15:09:01.132996+00:00",
+  "generated_at": "2026-11-24T15:29:45.303179+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,59 +10,59 @@
       "id": "COUNTRY-IT",
       "type": "Country",
       "label": "IT",
-      "score": 84,
+      "score": 75,
       "props": {
-        "risk_score": 84
+        "risk_score": 75
       }
     },
     {
       "id": "DOMAIN-IT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 85,
-      "trend": "up"
+      "score": 64,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IT-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IT-climate",
       "type": "Domain",
       "label": "climate",
       "score": 72,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IT-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IT-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IT-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IT-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DRIVER-IT-Geopolitical",
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-IT-Ветер:_Сар",
-      "type": "Signal",
-      "label": "Ветер: Сардиния, Базиликата, Сицилия и е",
-      "severity": 72,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-IT-Италия_выр",
       "type": "Signal",
       "label": "Италия выражает обеспокоенность по повод",
       "severity": 56,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-IT-Ливень:_Ба",
+      "type": "Signal",
+      "label": "Ливень: Базиликата, Апулия, Кампания и е",
+      "severity": 50,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.85
+      "weight": 0.64
     },
     {
       "from": "COUNTRY-IT",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-IT-geopolitical",
-      "to": "DOMAIN-IT-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-IT-infrastructure",
-      "to": "DOMAIN-IT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-IT-economic",
-      "to": "DOMAIN-IT-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "DOMAIN-IT-climate",
       "to": "DOMAIN-IT-infrastructure",
       "type": "ESCALATES",
@@ -226,13 +205,28 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-IT-Гроза:_Сиц",
-      "to": "DOMAIN-IT-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.72
+      "from": "DOMAIN-IT-geopolitical",
+      "to": "DOMAIN-IT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
     },
     {
-      "from": "SIGNAL-IT-Ветер:_Сар",
+      "from": "DOMAIN-IT-infrastructure",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IT-Гроза:_Сиц",
       "to": "DOMAIN-IT-climate",
       "type": "AMPLIFIES",
       "weight": 0.72
@@ -242,6 +236,12 @@
       "to": "DOMAIN-IT-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.56
+    },
+    {
+      "from": "SIGNAL-IT-Ливень:_Ба",
+      "to": "DOMAIN-IT-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
     }
   ]
 }
