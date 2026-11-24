@@ -19103,6 +19103,179 @@ def _wmo_accept(event, sevkey, msgtype):
     return _rej('уровень %s' % (sevkey or '-'))
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# JMA_WARN_2411 24.11.2026 (Мия): предупреждения Японского метеоагентства по стране.
+# Лента «JMA CAP» из списка global_cap - это региональный центр ВМО в Токио
+# (тайфуны), обычные предупреждения по префектурам (ливни, снег, ветер, волны,
+# оползни) в Atlas не приходили. Источник - JMA XML (developer/xml/feed/extra.xml),
+# документы «気象警報・注意報» (府県予報区等). Берутся только 警報 (оранжевый),
+# 危険警報 и 特別警報 (красный); 注意報 (жёлтый, advisory) - нет, как у MeteoAlarm.
+# Источник подписан «JMA CAP»: тот же класс официальных служб, что CAP-ленты
+# (панель «Предупреждения», вне квот ленты, CAP-фильтры).
+# Порядок: JMA_WARN_ON = False - только отчёт docs/_jma_warn_shadow.json.
+# Откат: JMA_WARN_ON = False, JMA_WARN_SHADOW = False.
+JMA_WARN_ON = False
+JMA_WARN_SHADOW = True
+_JMA_FEED = 'https://www.data.jma.go.jp/developer/xml/feed/extra.xml'
+_JMA_BUDGET_S = 45
+_JMA_MAX_DOCS = 70
+_JMA_PREF = {  # префектура: (название, широта, долгота)
+ '北海道':('Хоккайдо',43.06,141.35),'青森':('Аомори',40.82,140.74),'岩手':('Иватэ',39.70,141.15),
+ '宮城':('Мияги',38.27,140.87),'秋田':('Акита',39.72,140.10),'山形':('Ямагата',38.24,140.36),
+ '福島':('Фукусима',37.75,140.47),'茨城':('Ибараки',36.34,140.45),'栃木':('Тотиги',36.57,139.88),
+ '群馬':('Гумма',36.39,139.06),'埼玉':('Сайтама',35.86,139.65),'千葉':('Тиба',35.61,140.12),
+ '東京':('Токио',35.69,139.69),'神奈川':('Канагава',35.45,139.64),'新潟':('Ниигата',37.90,139.02),
+ '富山':('Тояма',36.70,137.21),'石川':('Исикава',36.59,136.63),'福井':('Фукуи',36.07,136.22),
+ '山梨':('Яманаси',35.66,138.57),'長野':('Нагано',36.65,138.18),'岐阜':('Гифу',35.39,136.72),
+ '静岡':('Сидзуока',34.98,138.38),'愛知':('Айти',35.18,136.91),'三重':('Миэ',34.73,136.51),
+ '滋賀':('Сига',35.00,135.87),'京都':('Киото',35.02,135.76),'大阪':('Осака',34.69,135.52),
+ '兵庫':('Хёго',34.69,135.18),'奈良':('Нара',34.69,135.83),'和歌山':('Вакаяма',34.23,135.17),
+ '鳥取':('Тоттори',35.50,134.24),'島根':('Симанэ',35.47,133.05),'岡山':('Окаяма',34.66,133.93),
+ '広島':('Хиросима',34.40,132.46),'山口':('Ямагути',34.19,131.47),'徳島':('Токусима',34.07,134.56),
+ '香川':('Кагава',34.34,134.04),'愛媛':('Эхимэ',33.84,132.77),'高知':('Коти',33.56,133.53),
+ '福岡':('Фукуока',33.61,130.42),'佐賀':('Сага',33.25,130.30),'長崎':('Нагасаки',32.74,129.87),
+ '熊本':('Кумамото',32.79,130.74),'大分':('Оита',33.24,131.61),'宮崎':('Миядзаки',31.91,131.42),
+ '鹿児島':('Кагосима',31.56,130.56),'沖縄':('Окинава',26.21,127.68)}
+_JMA_HOKKAIDO = ('石狩','空知','後志','網走','北見','紋別','釧路','根室','十勝','胆振','日高','渡島','檜山','上川','留萌','宗谷')
+_JMA_OKINAWA = ('大東島','宮古島','八重山')
+_JMA_KIND = [('土砂','Оползни'),('暴風雪','Метель'),('暴風','Сильный ветер'),('大雪','Снегопад'),
+             ('大雨','Сильный дождь'),('洪水','Наводнение'),('氾濫','Наводнение'),('波浪','Высокие волны'),
+             ('高潮','Штормовой нагон')]
+_JMA_LOG = {}
+
+def _jma_local(el):
+    return el.tag.rsplit('}', 1)[-1]
+
+def _jma_kids(el, name):
+    return [c for c in list(el) if _jma_local(c) == name]
+
+def _jma_txt(el, name):
+    for c in el.iter():
+        if _jma_local(c) == name:
+            return (c.text or '').strip()
+    return ''
+
+def _jma_pref(area):
+    a = area or ''
+    for k, v in _JMA_PREF.items():
+        if a.startswith(k):
+            return v
+    if any(x in a for x in _JMA_HOKKAIDO):
+        return _JMA_PREF['北海道']
+    if any(x in a for x in _JMA_OKINAWA) or a.startswith('沖縄'):
+        return _JMA_PREF['沖縄']
+    if '奄美' in a:
+        return _JMA_PREF['鹿児島']
+    return None
+
+def _jma_level(name):
+    if '特別警報' in name: return 'extreme', 92
+    if '危険警報' in name: return 'severe', 80
+    if name.endswith('警報'): return 'severe', 74
+    return None, 0
+
+def _jma_kind_ru(name):
+    for k, ru in _JMA_KIND:
+        if k in name:
+            return ru
+    return 'Опасное явление'
+
+def fetch_jma_warnings():
+    """Предупреждения JMA по префектурам (警報 и выше). Тень: JMA_WARN_ON=False."""
+    if not (JMA_WARN_ON or JMA_WARN_SHADOW):
+        return []
+    t0 = time.time(); now = datetime.now(timezone.utc)
+    log = {'дата': now.isoformat(timespec='seconds'), 'режим': 'В ЛЕНТУ' if JMA_WARN_ON else 'ТЕНЬ',
+           'записей в ленте': 0, 'документов': 0, 'ошибок': 0, 'заголовки': {}, 'виды': {}, 'неизвестные районы': [],
+           'карточки': []}
+    items = []
+    try:
+        feed = fetch_url(_JMA_FEED, timeout=20)
+        if not feed:
+            print('  [SKIP] JMA: лента недоступна', file=sys.stderr); log['ошибка'] = 'лента недоступна'
+            return []
+        root = ET.fromstring(feed.strip().lstrip('﻿'))
+        ents = []
+        for e in root.iter():
+            if _jma_local(e) != 'entry': continue
+            title = _jma_txt(e, 'title'); upd = _jma_txt(e, 'updated')
+            href = ''
+            for c in e.iter():
+                if _jma_local(c) == 'link' and c.get('href'): href = c.get('href'); break
+            log['заголовки'][title] = log['заголовки'].get(title, 0) + 1
+            if '気象' in title and '警報' in title and href:
+                ents.append((upd, href, _jma_txt(e, 'name')))
+        log['записей в ленте'] = len(ents)
+        ents.sort(reverse=True)
+        best = {}   # префектура -> {вид: (уровень, балл, имя, район)}
+        seen_area = set()
+        for upd, href, author in ents[:_JMA_MAX_DOCS]:
+            if time.time() - t0 > _JMA_BUDGET_S: log['пропущено по времени'] = True; break
+            doc = fetch_url(href, timeout=12)
+            if not doc: log['ошибок'] += 1; continue
+            log['документов'] += 1
+            try:
+                d = ET.fromstring(doc.strip().lstrip('﻿'))
+            except Exception:
+                log['ошибок'] += 1; continue
+            if _jma_txt(d, 'InfoType') == '取消': continue
+            for w in d.iter():
+                if _jma_local(w) != 'Warning' or '府県予報区' not in (w.get('type') or ''): continue
+                for it in _jma_kids(w, 'Item'):
+                    area = ''
+                    for ar in it.iter():
+                        if _jma_local(ar) == 'Area': area = _jma_txt(ar, 'Name'); break
+                    if not area or area in seen_area: continue
+                    seen_area.add(area)   # документы идут от новых к старым: первый - актуальный
+                    pref = _jma_pref(area)
+                    if not pref:
+                        if len(log['неизвестные районы']) < 20: log['неизвестные районы'].append(area)
+                        continue
+                    for k in _jma_kids(it, 'Kind'):
+                        nm = _jma_txt(k, 'Name'); st = _jma_txt(k, 'Status')
+                        log['виды'][nm + ' / ' + st] = log['виды'].get(nm + ' / ' + st, 0) + 1
+                        if st not in ('発表', '継続') and '特別警報' not in st and not st.endswith('警報'): continue
+                        lvl, sc = _jma_level(nm)
+                        if not lvl: continue
+                        ru = _jma_kind_ru(nm)
+                        cur = best.setdefault(pref[0], {})
+                        if ru not in cur or cur[ru][1] < sc:
+                            cur[ru] = (lvl, sc, nm, area, pref)
+        for pname, kinds in best.items():
+            ordered = sorted(kinds.items(), key=lambda kv: -kv[1][1])
+            lvl, sc, nm, area, pref = ordered[0][1]
+            ev_ru = ', '.join(k if i == 0 else k.lower() for i, (k, _) in enumerate(ordered[:3]))
+            place = 'префектура ' + pname if pname not in ('Хоккайдо', 'Токио', 'Осака', 'Киото') else pname
+            title = (ev_ru[:1].upper() + ev_ru[1:]) + ': ' + place + ', Япония'
+            if lvl == 'extreme': title = 'Особое предупреждение. ' + title
+            desc = 'Японское метеоагентство (JMA): ' + '; '.join(k + (' - особое предупреждение' if v[0] == 'extreme' else ' - предупреждение') for k, v in ordered) + ' (' + ', '.join(v[2] for _, v in ordered) + ').'
+            items.append({
+                'title': title[:130], 'desc': desc, 'date': now.strftime('%Y-%m-%d'), 'source': 'JMA CAP',
+                '_lat': pref[1], '_lng': pref[2], '_coord_origin': 'capital',
+                '_region': place + ', Япония', '_domain': 'climate', '_force_severity': sc, '_country_code': 'JP',
+                '_meta': {'kind': 'cap_hub', 'verified': True, 'place': place + ', Япония', 'service': 'JMA',
+                          'event': ordered[0][0], 'severity': lvl, 'area': area},
+            })
+        items.sort(key=lambda x: -x['_force_severity'])
+        items = items[:25]
+        log['карточки'] = [{'title': x['title'], 'балл': x['_force_severity']} for x in items]
+        log['время, с'] = round(time.time() - t0, 1)
+        print(f"  JMA Япония: документов {log['документов']}, префектур с предупреждениями {len(items)}", file=sys.stderr)
+    except Exception as e:
+        log['ошибка'] = str(e)[:200]
+        print(f'  [WARN] JMA: {e}', file=sys.stderr)
+        items = []
+    finally:
+        if JMA_WARN_SHADOW:
+            try:
+                log['заголовки'] = dict(sorted(log['заголовки'].items(), key=lambda kv: -kv[1])[:30])
+                with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'docs', '_jma_warn_shadow.json'), 'w', encoding='utf-8') as f:
+                    json.dump(log, f, ensure_ascii=False, indent=1)
+            except Exception:
+                pass
+    return items if JMA_WARN_ON else []
+
+
 def fetch_wmo_alerthub():
     """Официальные предупреждения из Alert Hub ВМО по странам вне текущего охвата Atlas."""
     if not (WMO_ALERTHUB_ON or WMO_ALERTHUB_SHADOW):
@@ -31969,6 +32142,7 @@ if __name__ == '__main__':
             ('mideast_cap',        fetch_mideast_cap),
             ('global_cap',         fetch_global_cap),
             ('wmo_alerthub',       fetch_wmo_alerthub),   # WMO_ALERTHUB_ON=False -> пустой список, отчёт в тени
+            ('jma_warn',           fetch_jma_warnings),   # JMA_WARN_2411: JMA_WARN_ON=False -> пустой список, отчёт в тени
             ('notam',              fetch_notam),   # NOTAM_GATE=False -> пустой список
             ('mgm_turkey',         fetch_mgm_turkey),
             ('cbr_russia',         fetch_cbr_russia),
