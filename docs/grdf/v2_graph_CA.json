@@ -2,9 +2,9 @@
   "country": "CA",
   "date": "2026-11-25",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-25T15:53:08.989236+00:00",
+  "generated_at": "2026-11-25T16:13:37.817862+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-CA",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-CA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 64,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CA-Один_челов",
-      "type": "Signal",
-      "label": "Один человек погиб в результате стрельбы",
-      "severity": 56,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-CA-Дождь:_Вос",
       "type": "Signal",
       "label": "Дождь: Восточный Ванкуверский остров - Д",
@@ -99,6 +92,13 @@
       "label": "Сильный ветер: Восточный Ванкуверский ос",
       "severity": 56,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-CA-Метель:_Де",
+      "type": "Signal",
+      "label": "Метель: Демпстер, Канада",
+      "severity": 56,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.64
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CA",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-CA-climate",
-      "to": "DOMAIN-CA-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-CA-economic",
-      "to": "DOMAIN-CA-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-CA-social",
-      "to": "DOMAIN-CA-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-CA-climate",
       "to": "DOMAIN-CA-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -205,31 +184,25 @@
       "lag_days": 30
     },
     {
-      "from": "DOMAIN-CA-geopolitical",
-      "to": "DOMAIN-CA-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-CA-infrastructure",
+      "from": "DOMAIN-CA-climate",
       "to": "DOMAIN-CA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-CA-economic",
       "to": "DOMAIN-CA-social",
       "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
+      "weight": 0.7,
+      "lag_days": 60
     },
     {
-      "from": "SIGNAL-CA-Один_челов",
-      "to": "DOMAIN-CA-geopolitical",
+      "from": "DOMAIN-CA-social",
+      "to": "DOMAIN-CA-social",
       "type": "AMPLIFIES",
-      "weight": 0.56
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "SIGNAL-CA-Дождь:_Вос",
@@ -239,6 +212,12 @@
     },
     {
       "from": "SIGNAL-CA-Сильный_ве",
+      "to": "DOMAIN-CA-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.56
+    },
+    {
+      "from": "SIGNAL-CA-Метель:_Де",
       "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
       "weight": 0.56
