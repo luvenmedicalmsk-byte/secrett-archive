@@ -29539,6 +29539,73 @@ def _clim_confirm_shadow_2511(events):
     print('  clim_confirm_shadow_2511: предупреждений с подтверждением %d, стран %d' % (rep['count'], len(rep['countries'])))
 
 
+# 26.11.2026 · DUPE_TOLL_2511 + ROAD_SOCIAL_2511 (решение Мии 26.11 «включай оба»).
+# 1) Одно событие из разных источников с разными заголовками: совпадают страна, дата и число
+#    погибших/раненых в заголовке (от 3) -> остаётся одна карточка (точнее место, затем выше индекс),
+#    остальные скрываются из ленты с hide_reason dupe_toll. Египет 25.11: «переворот топливного
+#    грузовика» (Daily Sabah) и «дорожная авария, Большой Каир» (Bloomberg) - одна авария.
+# 2) ДТП и транспортные аварии с погибшими - домен «социум», а не экономика из-за слова «топливный».
+# Откат: DUPE_TOLL_2511 = False / ROAD_SOCIAL_2511 = False.
+DUPE_TOLL_2511 = True
+ROAD_SOCIAL_2511 = True
+_DT_NUM = re.compile(r'(\d{1,4})\s*(?:человек|погибш|жертв|ранен|пострадав|детей|пассажир)', re.I)
+_DT_HARM = re.compile(r'погиб|жертв|унесл\w* жизн|убит|ранен|пострадав', re.I)
+_RS_ROAD = re.compile(r'\bДТП\b|дорожн\w+\s+(?:авари|происшеств|катастроф)|автокатастроф|автомобильн\w+\s+авари|(?:перевернул\w*|переворот\w*|опрокинул\w*|столкнул\w*|столкновени\w*)[^.]{0,40}(?:автобус|грузовик|бензовоз|автоцистерн|микроавтобус|маршрутк|фур)|(?:автобус|грузовик|бензовоз|маршрутк|микроавтобус)\w*[^.]{0,30}(?:упал|сорвал|опрокинул|перевернул|врезал|столкнул)', re.I)
+_RS_NOT = re.compile(r'удар|атак|обстрел|беспилот|БПЛА|ракет|взрыв\w* (?:бомб|снаряд)|теракт', re.I)
+def _dupe_toll_2511(events):
+    n_d = n_r = 0
+    if ROAD_SOCIAL_2511:
+        for e in events or []:
+            try:
+                t = e.get('title') or ''
+                if e.get('alerts_only') or e.get('domain') == 'social':
+                    continue
+                if _RS_ROAD.search(t) and _DT_HARM.search(t + ' ' + (e.get('summary') or '')[:200]) and not _RS_NOT.search(t):
+                    e['domain_road_from'] = e.get('domain'); e['domain'] = 'social'; n_r += 1
+            except Exception:
+                continue
+    if DUPE_TOLL_2511:
+        grp = {}
+        for e in events or []:
+            try:
+                if e.get('alerts_only') or e.get('feed_visible') is False:
+                    continue
+                t = e.get('title') or ''
+                if not _DT_HARM.search(t):
+                    continue
+                m = _DT_NUM.search(t)
+                if not m or int(m.group(1)) < 3:
+                    continue
+                cc = str(e.get('primary_country') or e.get('country_code') or '')
+                if not cc:
+                    continue
+                grp.setdefault((cc, str(e.get('date') or '')[:10], m.group(1)), []).append(e)
+            except Exception:
+                continue
+        for k, v in grp.items():
+            if len(v) < 2:
+                continue
+            def _rank(x):
+                reg = str(x.get('region') or ''); prec = 1 if reg and reg not in _IH_COUNTRY_LEVEL else 0
+                _tl = re.split(r'\s[\u2014-]\s', str(x.get('title') or ''))
+                _tail = _tl[-1].strip() if len(_tl) > 1 else ''
+                if _tail and _tail != reg and _tail not in _IH_COUNTRY_LEVEL and len(_tail) < 40:
+                    prec += 1                     # место точнее страны в хвосте заголовка: «— Большой Каир»
+                return (prec, x.get('severity') or 0, -len(str(x.get('first_seen') or '')))
+            v.sort(key=_rank, reverse=True)
+            keep = v[0]
+            for x in v[1:]:
+                x['feed_visible'] = False
+                x.setdefault('hide_reasons', []).append({'code': 'dupe_toll', 'src': 'production', 'keep': keep.get('id')})
+                x['hide_reason'] = 'dupe_toll'
+                x['merged_into'] = keep.get('id')
+                keep.setdefault('also_reported_by', [])
+                if x.get('source') and x.get('source') not in keep['also_reported_by']:
+                    keep['also_reported_by'].append(x.get('source'))
+                n_d += 1
+    print('  dupe_toll_2511: скрыто дублей %d, ДТП -> социум %d' % (n_d, n_r))
+
+
 # 25.11.2026 · INFRA_HITS_2511 (решение Мии 25.11): какие объекты инфраструктуры фигурировали
 # в сигналах Atlas за 30 дней. Только файл docs/infra_hits.json для карты; лента и индексы не меняются.
 # Совпадение: название объекта (+ слово его типа: НПЗ / АЭС / порт / терминал) или точка сигнала
@@ -32343,6 +32410,10 @@ def save_enriched(events, previous_snapshot=None):
                     pass
                 try:
                     _clim_confirm_shadow_2511(enriched["events"])   # CLIM_CONFIRM_SHADOW_2511 (только отчёт)
+                except Exception:
+                    pass
+                try:
+                    _dupe_toll_2511(enriched["events"])   # DUPE_TOLL_2511 + ROAD_SOCIAL_2511 (Мия 26.11)
                 except Exception:
                     pass
                 try:
