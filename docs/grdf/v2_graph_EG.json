@@ -2,7 +2,7 @@
   "country": "EG",
   "date": "2026-11-25",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-25T22:09:14.394860+00:00",
+  "generated_at": "2026-11-25T22:28:24.609236+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,23 +10,23 @@
       "id": "COUNTRY-EG",
       "type": "Country",
       "label": "EG",
-      "score": 79,
+      "score": 80,
       "props": {
-        "risk_score": 79
+        "risk_score": 80
       }
     },
     {
       "id": "DOMAIN-EG-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 62,
-      "trend": "stable"
+      "score": 70,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-EG-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 70,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 70,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-EG-technology",
@@ -48,7 +48,7 @@
       "type": "Domain",
       "label": "social",
       "score": 73,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-EG-infrastructure",
@@ -87,18 +87,18 @@
       "domain": "social"
     },
     {
-      "id": "SIGNAL-EG-Пожар_на_ш",
+      "id": "SIGNAL-EG-Более_30_ч",
       "type": "Signal",
-      "label": "Пожар на шоссе в Египте унес 30 жизней п",
+      "label": "Более 30 человек погибли при пожаре посл",
       "severity": 70,
       "domain": "climate"
     },
     {
       "id": "SIGNAL-EG-По_меньшей",
       "type": "Signal",
-      "label": "По меньшей мере 30 человек погибли — Еги",
+      "label": "По меньшей мере 30 человек погибли в рез",
       "severity": 70,
-      "domain": "economic"
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-EG",
       "to": "DOMAIN-EG-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.62
+      "weight": 0.7
     },
     {
       "from": "COUNTRY-EG",
       "to": "DOMAIN-EG-economic",
       "type": "CORRELATES",
-      "weight": 0.7
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-EG",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-EG-climate",
-      "to": "DOMAIN-EG-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-EG-infrastructure",
-      "to": "DOMAIN-EG-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-EG-economic",
-      "to": "DOMAIN-EG-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-EG-geopolitical",
       "to": "DOMAIN-EG-infrastructure",
       "type": "ESCALATES",
@@ -226,20 +205,41 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-EG-climate",
+      "to": "DOMAIN-EG-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-EG-infrastructure",
+      "to": "DOMAIN-EG-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-EG-economic",
+      "to": "DOMAIN-EG-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-EG-30_погибши",
       "to": "DOMAIN-EG-social",
       "type": "AMPLIFIES",
       "weight": 0.73
     },
     {
-      "from": "SIGNAL-EG-Пожар_на_ш",
+      "from": "SIGNAL-EG-Более_30_ч",
       "to": "DOMAIN-EG-climate",
       "type": "AMPLIFIES",
       "weight": 0.7
     },
     {
       "from": "SIGNAL-EG-По_меньшей",
-      "to": "DOMAIN-EG-economic",
+      "to": "DOMAIN-EG-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.7
     }
