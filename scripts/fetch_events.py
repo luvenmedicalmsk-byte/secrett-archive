@@ -4872,7 +4872,7 @@ def fetch_c3s_pulse():
             tail = ""
         title = "Глобальная температура: %s°C к доиндустриальному уровню%s%s" % (vs, tail, ", рекорд наблюдений" if record else "")
         desc = ("Суточная средняя глобальная температура приземного воздуха %s по ERA5 (Copernicus Climate Pulse) - %s°C "
-                "к уровню 1850-1900 годов. Предыдущий максимум ряда %s°C. Порог Парижского соглашения +1,5°C "
+                "к уровню 1850-1900 годов. Предыдущий максимум ряда %s°C. Климатический порог +1,5°C "
                 "оценивается по многолетнему среднему, а не по отдельным дням." % (d_last, vs, ('%+.2f' % prev_max).replace('.', ',')))
         items.append({
             'title': title, 'desc': desc, 'date': d_last,
@@ -16647,6 +16647,16 @@ def _apply_geo_contract(events):
         e.pop('_coord_origin', None)
         ppt = gc.process_place_type
         _imp = [c for c in (gc.impact_countries or ()) if c]
+        # GEO_PARIS_2511 (Мия 25.11): «Парижское соглашение», «Минские соглашения», «Женевская конвенция» -
+        # договор, а не страна. Карточка глобальной температуры получала «на кого влияет: Франция».
+        if _imp:
+            try:
+                _tx_tr = ((e.get('title') or '') + ' ' + (e.get('summary') or e.get('desc') or ''))
+                for _tcc, (_trx, _realrx) in _GEO_TREATY.items():
+                    if _tcc in _imp and _trx.search(_tx_tr) and not _realrx.search(_trx.sub(' ', _tx_tr)):
+                        _imp = [c for c in _imp if c != _tcc]
+            except Exception:
+                pass
         if ppt == 'country':
             st['country'] += 1; st[gc.precision] = st.get(gc.precision, 0) + 1
             e['lat'], e['lng'] = gc.lat, gc.lng
@@ -27550,6 +27560,13 @@ def _sic_ext_kind(t):
 
 
 _SIC_LEX_TITLE_2511 = re.compile(r'рухнул|обрушил\w*\s+(?:\w+\s+){0,2}(?:рын|цен|курс|котиров|индекс|акци)|останови\w*\s+(?:\w+\s+){0,2}(?:производ|печь|печи|завод|выплавк|добыч|работ|отгрузк|поставк|линию|блок|энергоблок)|останавлива\w*|простой\\b|простои\\b|простоя\\b', re.I)
+_GEO_TREATY_TAIL = r'\s+(?:климатическ\w*\s+)?(?:соглашени|договор|клуб|конвенци|формат|протокол|декларац|процесс|переговор|цел|порог)\w*'
+_GEO_TREATY = {
+    'FR': (re.compile(r'Парижск\w*' + _GEO_TREATY_TAIL + r'|Paris\s+(?:Agreement|Accord|Club)', re.I), re.compile(r'Франци|француз|Париж|Марсел|Лион|Ницц|Тулуз|Бордо|Страсбург|Макрон|Елисейск|France|French|Paris', re.I)),
+    'BY': (re.compile(r'Минск\w*' + _GEO_TREATY_TAIL, re.I), re.compile(r'Беларус|Белорус|Минск|Лукашенк|Belarus|Minsk', re.I)),
+    'CH': (re.compile(r'Женевск\w*' + _GEO_TREATY_TAIL + r'|Geneva\s+Convention', re.I), re.compile(r'Швейцар|Женев|Берн|Цюрих|Switzerland|Swiss|Geneva', re.I)),
+    'TR': (re.compile(r'Стамбульск\w*' + _GEO_TREATY_TAIL, re.I), re.compile(r'Турци|турецк|Стамбул|Анкар|Эрдоган|Turkey|Türkiye|Istanbul', re.I)),
+}
 def _sic_class(title, summary='', canon_type=None):
     """SIC-интент. READ-ONLY чистая функция. → EVENT|PROCESS|COMMENTARY|FEATURE|BACKGROUND."""
     low = ((title or '') + ' ' + (summary or '')).strip().lower()
