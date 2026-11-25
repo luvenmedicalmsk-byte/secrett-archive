@@ -2,7 +2,7 @@
   "country": "CH",
   "date": "2026-11-25",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-25T13:53:09.415899+00:00",
+  "generated_at": "2026-11-25T14:09:46.982861+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,59 +10,59 @@
       "id": "COUNTRY-CH",
       "type": "Country",
       "label": "CH",
-      "score": 50,
+      "score": 59,
       "props": {
-        "risk_score": 50
+        "risk_score": 59
       }
     },
     {
       "id": "DOMAIN-CH-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 18,
-      "trend": "down"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 50,
-      "trend": "down"
+      "score": 62,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-social",
       "type": "Domain",
       "label": "social",
-      "score": 60,
-      "trend": "down"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DRIVER-CH-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-CH-Снег:_Менд",
+      "type": "Signal",
+      "label": "Снег: Мендризио, Луганезе, Беллинцонезе ",
+      "severity": 50,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-CH-Ливень:_Же",
       "type": "Signal",
       "label": "Ливень: Женева, Долина Жу, Сен-Серж и ещ",
@@ -92,13 +99,6 @@
       "label": "Климатический сигнал — Швейцария",
       "severity": 50,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-CH-Социальный",
-      "type": "Signal",
-      "label": "Социальный процесс — Швейцария",
-      "severity": 60,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CH",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-climate",
       "type": "CORRELATES",
-      "weight": 0.5
+      "weight": 0.62
     },
     {
       "from": "COUNTRY-CH",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-social",
       "type": "CORRELATES",
-      "weight": 0.6
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CH",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-CH-climate",
-      "to": "DOMAIN-CH-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-CH-economic",
-      "to": "DOMAIN-CH-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-CH-social",
-      "to": "DOMAIN-CH-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-CH-climate",
       "to": "DOMAIN-CH-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -205,6 +184,33 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-CH-climate",
+      "to": "DOMAIN-CH-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-CH-economic",
+      "to": "DOMAIN-CH-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-CH-social",
+      "to": "DOMAIN-CH-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "SIGNAL-CH-Снег:_Менд",
+      "to": "DOMAIN-CH-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
       "from": "SIGNAL-CH-Ливень:_Же",
       "to": "DOMAIN-CH-climate",
       "type": "AMPLIFIES",
@@ -215,12 +221,6 @@
       "to": "DOMAIN-CH-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-CH-Социальный",
-      "to": "DOMAIN-CH-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6
     }
   ]
 }
