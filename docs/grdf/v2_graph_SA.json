@@ -2,67 +2,67 @@
   "country": "SA",
   "date": "2026-11-25",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-25T06:50:06.431924+00:00",
+  "generated_at": "2026-11-25T07:09:09.820246+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-SA",
       "type": "Country",
       "label": "SA",
-      "score": 58,
+      "score": 74,
       "props": {
-        "risk_score": 58
+        "risk_score": 74
       }
     },
     {
       "id": "DOMAIN-SA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 63,
-      "trend": "stable"
+      "score": 80,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
-      "trend": "stable"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "stable"
+      "score": 74,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-SA-Geopolitical",
@@ -80,11 +80,11 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-SA-Импорт_Сау",
+      "id": "SIGNAL-SA-Дождь:_Сар",
       "type": "Signal",
-      "label": "Импорт Саудовской Аравии в годовом исчис",
-      "severity": 32,
-      "domain": "economic"
+      "label": "Дождь: Сарат Абидех (Асир), Абха (Асир),",
+      "severity": 74,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-SA-Санкционно",
@@ -106,19 +106,19 @@
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.63
+      "weight": 0.8
     },
     {
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.74
     },
     {
       "from": "COUNTRY-SA",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-SA-climate",
+      "to": "DOMAIN-SA-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-SA-economic",
+      "to": "DOMAIN-SA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-SA-social",
+      "to": "DOMAIN-SA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-SA-climate",
+      "to": "DOMAIN-SA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-SA-infrastructure",
+      "to": "DOMAIN-SA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-SA-economic",
+      "to": "DOMAIN-SA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "DOMAIN-SA-geopolitical",
       "to": "DOMAIN-SA-infrastructure",
       "type": "ESCALATES",
@@ -184,10 +226,10 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-SA-Импорт_Сау",
-      "to": "DOMAIN-SA-economic",
+      "from": "SIGNAL-SA-Дождь:_Сар",
+      "to": "DOMAIN-SA-climate",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.74
     },
     {
       "from": "SIGNAL-SA-Санкционно",
