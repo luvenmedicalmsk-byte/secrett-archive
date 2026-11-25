@@ -29103,6 +29103,8 @@ _FF_CUMUL = re.compile(r'с начала (?:войны|вторжения|кон
 _FF_BIG = re.compile(r'\d{3}[\s ,.]?\d{3}|\d+[,.]?\d*\s*(?:тыс|тысяч|млн)|с начала (?:войны|вторжения|конфликта|СВО)', re.I)
 _FF_LAT_OK = set('https http www html email online covid'.split())
 _FF_EV = re.compile(r'атак|удар|нпз|беспилот|бпла|дрон|взрыв|эбол|вымогател|сухогруз|наводн|пожар|землетряс|погиб|жертв|санкц|утечк|gps|блэкаут')
+_FF_E_RESTRICT = {'RU', 'BY', 'IR'}
+_FF_E_CORR = re.compile(r'отключени\w* (мобильн\w* )?интернет|мобильн\w* интернет|белы\w* списк|перебо\w* (со )?связ|сбо\w* (мобильн\w* )?(интернет|связ)|замедлени\w* (интернет|мессендж|telegram|youtube)|internet (shutdown|outage|blackout|disruption)|whitelist', re.I)
 def _parse_any_dt(x):
     return datetime.fromisoformat(str(x).replace('Z', '+00:00')[:25])
 def _feed_fix_shadow_2511(events):
@@ -29114,6 +29116,35 @@ def _feed_fix_shadow_2511(events):
     _loss = []
     vis = [e for e in (events or []) if e.get('feed_visible') is not False and not e.get('alerts_only')]
     cf_cc = set(str(e.get('country_code') or e.get('primary_country') or '') for e in vis if 'Cloudflare' in str(e.get('source') or ''))
+    ioda_corr, ioda_art = set(), set()
+    try:
+        _now = datetime.utcnow()
+        for x in (events or []):
+            if x.get('source') == 'IODA':
+                continue
+            _xc = str(x.get('primary_country') or x.get('country_code') or '')
+            if not _xc or not _FF_E_CORR.search((x.get('title') or '') + ' ' + (x.get('summary') or '')[:400]):
+                continue
+            try:
+                _dt = _parse_any_dt(x.get('last_update') or x.get('first_seen') or x.get('date'))
+                if _dt.tzinfo: _dt = _dt.replace(tzinfo=None)
+                if (_now - _dt).total_seconds() > 86400 + 86400 * (len(str(x.get('last_update') or x.get('first_seen') or x.get('date') or '')) <= 10):
+                    continue
+            except Exception:
+                continue
+            ioda_corr.add(_xc)
+        _io = [(str(x.get('primary_country') or x.get('country_code') or ''), (x.get('meta') or {}).get('duration_h'), (x.get('meta') or {}).get('score'))
+               for x in (events or []) if x.get('source') == 'IODA']
+        for c1, d1, s1 in _io:
+            if not isinstance(d1, (int, float)) or not isinstance(s1, (int, float)) or s1 <= 0:
+                continue
+            peers = [c2 for c2, d2, s2 in _io if c2 != c1 and isinstance(d2, (int, float)) and isinstance(s2, (int, float))
+                     and abs(d2 - d1) <= 6 and abs(s2 - s1) / s1 <= 0.15]
+            if len(peers) >= 2:
+                ioda_art.add(c1)
+    except Exception:
+        pass
+    rep['E_context'] = {'restrict_exempt': sorted(_FF_E_RESTRICT), 'corroborated': sorted(ioda_corr), 'artifact_cluster': sorted(ioda_art)}
     for e in vis:
         try:
             t = e.get('title') or ''; sm = (e.get('summary') or '')[:300]; tx = t + ' ' + sm
@@ -29149,10 +29180,23 @@ def _feed_fix_shadow_2511(events):
                     e['hide_reason'] = 'feed_fix_noise'
                     continue
             # E. IODA без подтверждения Cloudflare -> 55
-            if src == 'IODA' and sev > 55 and cc not in cf_cc:
-                rep['E_ioda'].append(dict(row, would_sev=55, why='только IODA, без подтверждения Cloudflare Radar'))
-                if 'E' in FEED_FIX_PROD_2511:
-                    _ff_mark(e, 'E', sev); e['severity'] = 55; sev = 55
+            # E2 (Mia 25.11): не снижать при систематических ограничениях (RU/BY/IR - мобильные
+            # отключения и белые списки Cloudflare на уровне страны не видит) и при независимом
+            # подтверждении за 24 ч; синхронный кластер IODA (3+ стран, та же длительность и score) -> 55
+            if src == 'IODA' and sev > 55:
+                _e_why = None
+                if cc in _FF_E_RESTRICT:
+                    pass
+                elif cc in ioda_corr:
+                    pass
+                elif cc in ioda_art:
+                    _e_why = 'синхронный кластер IODA (3+ стран, одинаковые длительность и score): вероятный артефакт измерения'
+                elif cc not in cf_cc:
+                    _e_why = 'только IODA, без подтверждения Cloudflare Radar'
+                if _e_why:
+                    rep['E_ioda'].append(dict(row, would_sev=55, why=_e_why))
+                    if 'E' in FEED_FIX_PROD_2511:
+                        _ff_mark(e, 'E', sev); e['severity'] = 55; sev = 55
             # G. накопленные потери с начала войны -> коридор 70-75, класс «отчёт»
             if _FF_LOSS.search(tx) and _FF_CUMUL.search(tx) and _FF_BIG.search(tx):
                 _loss.append(e)
