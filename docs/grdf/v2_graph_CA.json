@@ -2,7 +2,7 @@
   "country": "CA",
   "date": "2026-11-25",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-25T10:49:49.553888+00:00",
+  "generated_at": "2026-11-25T12:09:15.082725+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -47,7 +47,7 @@
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
-      "score": 56,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,23 +80,23 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CA-Air_qualit",
+      "id": "SIGNAL-CA-Метель:_Де",
       "type": "Signal",
-      "label": "Air quality: Карибу - север, включая Кес",
-      "severity": 56,
-      "domain": "social"
-    },
-    {
-      "id": "SIGNAL-CA-Сильный_ве",
-      "type": "Signal",
-      "label": "Сильный ветер: Большой Виктория, Западны",
+      "label": "Метель: Демпстер, Канада",
       "severity": 56,
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-CA-Наводнение",
+      "id": "SIGNAL-CA-Сильный_ве",
       "type": "Signal",
-      "label": "Наводнение: Северное побережье Хайда Гва",
+      "label": "Сильный ветер: Западный Ванкуверский ост",
+      "severity": 56,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-CA-Дождь:_Сев",
+      "type": "Signal",
+      "label": "Дождь: Северный Ванкувер, От моря до неб",
       "severity": 56,
       "domain": "climate"
     }
@@ -130,7 +130,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-social",
       "type": "CORRELATES",
-      "weight": 0.56
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CA",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-CA-climate",
-      "to": "DOMAIN-CA-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-CA-economic",
-      "to": "DOMAIN-CA-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-CA-social",
-      "to": "DOMAIN-CA-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-CA-climate",
       "to": "DOMAIN-CA-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -205,8 +184,29 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-CA-Air_qualit",
+      "from": "DOMAIN-CA-climate",
+      "to": "DOMAIN-CA-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-CA-economic",
       "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-CA-social",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "SIGNAL-CA-Метель:_Де",
+      "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
       "weight": 0.56
     },
@@ -217,7 +217,7 @@
       "weight": 0.56
     },
     {
-      "from": "SIGNAL-CA-Наводнение",
+      "from": "SIGNAL-CA-Дождь:_Сев",
       "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
       "weight": 0.56
