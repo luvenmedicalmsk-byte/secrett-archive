@@ -29577,6 +29577,21 @@ def _infra_hits_2511(events):
     print('  infra_hits_2511: объектов с сигналами %d' % len(objects))
 
 
+def _clim_pulse_floor_2511(events):
+    """CLIM_PULSE_2511: лексическая оценка давала карточке глобальной температуры 52.
+    Шкала: +2,0°C - 66, плюс 2 за каждый день серии (до 5), рекорд наблюдений - плюс 4; потолок 80."""
+    for e in events or []:
+        if e.get('source') != 'Copernicus C3S':
+            continue
+        t = e.get('title') or ''
+        m = re.search(r'(\d+)\s*дн\.\s*подряд', t)
+        streak = int(m.group(1)) if m else (1 if 'выше +2°C' in t else 0)
+        fl = (66 + 2 * min(streak, 5) if streak else 58) + (4 if 'рекорд' in t else 0)
+        fl = min(80, fl)
+        if (e.get('severity') or 0) < fl:
+            e['severity_pulse_from'] = e.get('severity')
+            e['severity'] = fl
+
 def _btc_price_2511(tx):
     m = re.search(r'(?:ниже|до|к|около|у|отметк\w*)\s+\$?\s?(\d{2,3})(?:[.,\s\u00a0]000\b|\s*тыс)', tx, re.I) or re.search(r'\$\s?(\d{2,3})[.,\s\u00a0]?000\b', tx)
     if not m:
@@ -32270,6 +32285,10 @@ def save_enriched(events, previous_snapshot=None):
                 for _e in enriched["events"]:
                     _fix_gaza_tail(_e)
                 _market_shock_2511(enriched["events"])   # MARKET_SHOCK_2511
+                try:
+                    _clim_pulse_floor_2511(enriched["events"])   # CLIM_PULSE_2511: индекс карточки температуры
+                except Exception:
+                    pass
                 _feed_hygiene(enriched["events"])
                 _sev_post_hyg_0511(enriched["events"])
                 try:
