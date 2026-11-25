@@ -26779,6 +26779,8 @@ _SIC_EVENT = _re_sic.compile(r'('
   r'сход с рельс|вторжен|захват|наступлен|прорыв|штурм|выброс|разлив|'
   r'утечк\w+ (?:нефт|газ|хими|радиа|топлив)|заражен|вспышк\w+ (?:боле|вир|инфек|холер|лихорад)|'
   r'дефолт|обвал|крах|заморож\w+ актив|'
+  # SIC_LEX_2511 (Мия 25.11): «Биткоин рухнул», «завод вынужден останавливать печь» уходили в контекст
+  r'рухнул|обрушил\w*\s+(?:\w+\s+){0,2}(?:рын|цен|курс|котиров|индекс|акци)|останови\w*\s+(?:\w+\s+){0,2}(?:производ|печь|печи|завод|выплавк|добыч|работ|отгрузк|поставк|линию|блок|энергоблок)|останавлива\w*|простой\b|простои\b|простоя\b|'
   # СОСТОЯВШЕЕСЯ ФИНАНСОВОЕ ДЕЙСТВИЕ (01.09.2026). Словарь событийной лексики
   # построен на катастрофах и кинетике: у размещения облигаций, закрытия сделки
   # или выхода на биржу нет ни одного признака происшествия, и такие записи
@@ -29130,16 +29132,22 @@ def _market_shock_floor(t, sm):
     if m and _ms_num(m.group(1)) >= 1:
         up(50, 'потеря капитализации $%s трлн' % m.group(1))
     if _MS_CRYPTO.search(txt):
+        # MARKET_SHOCK_CRYPTO_2511 (Мия 25.11): 45 -> 50/60/65, «люди теряют деньги»
         m = _MS_PCT_DOWN.search(txt)
         if m and _ms_num(m.group(1)) >= 10:
-            up(45, 'криптовалюты -%s%%' % m.group(1))
+            up(60, 'криптовалюты -%s%%' % m.group(1))
         m = _MS_BLN.search(txt)
         if m and _ms_num(m.group(1)) >= 100:
-            up(45, 'крипторынок потерял $%s млрд' % m.group(1))
+            up(55, 'крипторынок потерял $%s млрд' % m.group(1))
+        m = re.search(r'(?:от|с)\s+(?:своего\s+)?(?:историческ\w+\s+)?(?:максимум\w*|пик\w*|рекорд\w*)[^.]{0,40}?(\d{2})\s*%|(\d{2})\s*%[^.]{0,40}?от\s+(?:историческ\w+\s+)?(?:максимум|пик)|вдвое\s+(?:ниже|от)\s+(?:историческ\w+\s+)?(?:максимум|пик|рекорд)', txt, re.I)
+        if m and (not (m.group(1) or m.group(2)) or _ms_num(m.group(1) or m.group(2)) >= 30):
+            up(65, 'криптовалюты: -30%+ от пика')
+        if re.search(r'минимум\w*\s+(?:с\s+начала\s+)?(?:года|20\d\d|за\s+(?:год|\d+\s+(?:месяц|лет|год)))', txt, re.I):
+            up(60, 'криптовалюты: минимум года')
         _pm = _MS_PCT_DOWN.search(txt)
         if (re.search(r'биткоин\w*[^.]{0,30}(?:резко\s+упал|обвал|рухнул)', txt, re.I)
                 and not (_pm and _ms_num(_pm.group(1)) < 5)):
-            up(45, 'обвал биткоина')
+            up(50, 'обвал биткоина')
     if _MS_COMMOD.search(txt) and _MS_YEAR.search(txt):
         m = _MS_PCT_UP.search(txt)
         if m and _ms_num(m.group(1)) >= 50:
@@ -29569,10 +29577,35 @@ def _infra_hits_2511(events):
     print('  infra_hits_2511: объектов с сигналами %d' % len(objects))
 
 
+def _btc_price_2511(tx):
+    m = re.search(r'(?:ниже|до|к|около|у|отметк\w*)\s+\$?\s?(\d{2,3})(?:[.,\s\u00a0]000\b|\s*тыс)', tx, re.I) or re.search(r'\$\s?(\d{2,3})[.,\s\u00a0]?000\b', tx)
+    if not m:
+        return 0
+    v = int(m.group(1))
+    return v if 10 <= v <= 300 else 0
 def _market_shock_2511(events):
     if not MARKET_SHOCK_2511:
         return
     n_up = n_show = 0
+    # MARKET_SHOCK_CRYPTO_2511: новый минимум биткоина среди цен, названных в карточках за 30 дней -> 60
+    _btc = []
+    try:
+        _now = datetime.utcnow()
+        for x in events or []:
+            _tx = (x.get('title') or '') + ' ' + (x.get('summary') or '')[:200]
+            if not re.search(r'биткоин|bitcoin|\bbtc\b', _tx, re.I):
+                continue
+            _p = _btc_price_2511(_tx)
+            if not _p:
+                continue
+            try:
+                if (_now - _parse_any_dt(x.get('date') or '').replace(tzinfo=None)).days > 30:
+                    continue
+            except Exception:
+                continue
+            _btc.append((x.get('id'), _p))
+    except Exception:
+        _btc = []
     for e in events or []:
         try:
             if e.get('domain') != 'economy' or e.get('alerts_only'):
@@ -29580,6 +29613,14 @@ def _market_shock_2511(events):
             t = e.get('title') or ''
             sm = (e.get('summary') or '')[:300]
             fl, why = _market_shock_floor(t, sm)
+            try:
+                if re.search(r'биткоин|bitcoin|\bbtc\b', t, re.I) and re.search(_MS_DOWN + r'|ниже|минимум', t, re.I) and not _MS_MODAL.search(t):
+                    _p = _btc_price_2511(t + ' ' + sm)
+                    _others = [p for i, p in _btc if i != e.get('id')]
+                    if _p and len(_others) >= 1 and _p < min(_others) and fl < 60:
+                        fl, why = 60, 'биткоин: новый минимум за 30 дней ($%d тыс.)' % _p
+            except Exception:
+                pass
             cur = e.get('severity') or 0
             if not fl or cur >= fl:
                 continue
@@ -31374,6 +31415,22 @@ def _adr039a_shadow_report(events, outdir):
              rep_data['by_reason'].get('STRONG', 0), rep_data['by_reason'].get('MIXED+LEXICAL', 0)))
 
 
+# 25.11.2026 · OFFICIAL_MARKET_2511 (решение Мии 25.11): заявление официального лица о ТЕКУЩЕМ
+# состоянии критичного рынка (топливо, энергия, продовольствие, лекарства) - сигнал, а не контекст.
+# «Ситуация на рынке топлива напряжённая, ряд НПЗ в ремонте, - Новак» уходила в контекст.
+# Прогнозы и условные формулировки остаются контекстом. Откат: OFFICIAL_MARKET_2511 = False.
+OFFICIAL_MARKET_2511 = True
+_OM_WHO = re.compile(r'Новак|Мишустин|Силуанов|Решетников|Набиуллин|Песков|Цивилев|Патрушев|Мурашко|Минэнерго|Минфин|Минэкономразвития|Минсельхоз|Минздрав|ЦБ\b|Банк России|ФАС\b|Росстат|вице-премьер|министр|правительств|Кремл|губернатор', re.I)
+_OM_MKT = re.compile(r'топлив|бензин|дизел|солярк|НПЗ|нефтепродукт|электроэнерг|энергосистем|газоснабж|продовольств|зерн|продукт\w* питани|лекарств|медикамент', re.I)
+_OM_STATE = re.compile(r'напряж[её]нн|напряжен|дефицит|нехватк|перебо|ажиотаж|сбо[ий]\w* поставок|в ремонте|остановлен|рост цен|подорожан', re.I)
+_OM_FUT = re.compile(r'может|могут|прогноз|ожида|если\b|в случае|не исключ|в (?:следующем|будущем) год|к 20\d\d', re.I)
+def _OFFMKT_2511(e):
+    if not OFFICIAL_MARKET_2511:
+        return False
+    t = e.get('title') or ''
+    tx = t + ' ' + (e.get('summary') or '')[:300]
+    return bool(_OM_WHO.search(tx) and _OM_MKT.search(t) and _OM_STATE.search(t) and not _OM_FUT.search(t))
+
 def _sic_shadow_pass(events):
     """Добавляет e['sic_class'] каждому событию. Ничего больше не меняет (READ-ONLY инвариант)."""
     for e in events:
@@ -31381,6 +31438,8 @@ def _sic_shadow_pass(events):
                                     e.get('canon_type'))
         if e.get('source') == 'Copernicus C3S':
             e['sic_class'] = 'EVENT'   # CLIM_PULSE_2511: измерение ERA5, а не комментарий
+        elif e['sic_class'] == 'COMMENTARY' and _OFFMKT_2511(e):
+            e['sic_class'] = 'EVENT'   # OFFICIAL_MARKET_2511: официальное лицо о текущем состоянии критичного рынка
         # ADR-039A shadow: production-поле sic_class НЕ меняется
         _sc, _reason, _match = _report_shadow_eval(e)
         if SIC_SOURCE_AXIS_SHADOW:
