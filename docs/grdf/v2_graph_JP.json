@@ -2,25 +2,25 @@
   "country": "JP",
   "date": "2026-11-25",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-25T08:50:03.660657+00:00",
+  "generated_at": "2026-11-25T09:22:32.652379+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-JP",
       "type": "Country",
       "label": "JP",
-      "score": 70,
+      "score": 66,
       "props": {
-        "risk_score": 70
+        "risk_score": 66
       }
     },
     {
       "id": "DOMAIN-JP-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
-      "trend": "stable"
+      "score": 52,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-JP-economic",
@@ -41,7 +41,7 @@
       "type": "Domain",
       "label": "technology",
       "score": 58,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-JP-social",
@@ -87,18 +87,18 @@
       "domain": "technology"
     },
     {
-      "id": "SIGNAL-JP-Японская_O",
-      "type": "Signal",
-      "label": "Японская Osaki Electric остановила произ",
-      "severity": 58,
-      "domain": "technology"
-    },
-    {
       "id": "SIGNAL-JP-Японский_п",
       "type": "Signal",
       "label": "Японский платёжный сервис Payどん останови",
       "severity": 56,
       "domain": "technology"
+    },
+    {
+      "id": "SIGNAL-JP-Японский_ф",
+      "type": "Signal",
+      "label": "Японский флагман на коленях",
+      "severity": 52,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.52
     },
     {
       "from": "COUNTRY-JP",
@@ -163,13 +163,28 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-JP-Атака_прог",
-      "to": "DOMAIN-JP-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.58
+      "from": "DOMAIN-JP-geopolitical",
+      "to": "DOMAIN-JP-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
     },
     {
-      "from": "SIGNAL-JP-Японская_O",
+      "from": "DOMAIN-JP-infrastructure",
+      "to": "DOMAIN-JP-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-JP-economic",
+      "to": "DOMAIN-JP-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-JP-Атака_прог",
       "to": "DOMAIN-JP-technology",
       "type": "AMPLIFIES",
       "weight": 0.58
@@ -179,6 +194,12 @@
       "to": "DOMAIN-JP-technology",
       "type": "AMPLIFIES",
       "weight": 0.56
+    },
+    {
+      "from": "SIGNAL-JP-Японский_ф",
+      "to": "DOMAIN-JP-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.52
     }
   ]
 }
