@@ -29090,6 +29090,10 @@ def _ff_tokens(t):
     t = re.sub(r'^\S+\s*', '', (t or '').strip())   # первое слово предложения - не имя собственное
     t = re.sub(r'([.!?:—-]\s+)\S+', r'\1', t)
     return set(w.lower()[:7] for w in re.findall(r'[А-ЯЁA-Z][а-яёa-z]{4,}|[A-Z]{2,}[a-z]*', t) if w.lower() not in _FF_STOP)
+_FF_LOSS = re.compile(r'погиб|убит|гибел|потер[ьия]|жертв', re.I)
+_FF_CUMUL = re.compile(r'с начала (?:войны|вторжения|конфликта|СВО|спецоперации|боевых)|за (?:время|годы) войны|за все время войны|утечк\w+ .{0,40}(?:данн|документ)|данн\w+ Росстата|\d{3}[\s ]?\d{3} (?:российских )?(?:солдат|военн|россиян|убитых)', re.I)
+_FF_BIG = re.compile(r'\d{3}[\s ,.]?\d{3}|\d+[,.]?\d*\s*(?:тыс|тысяч|млн)|с начала (?:войны|вторжения|конфликта|СВО)', re.I)
+_FF_LAT_OK = set('https http www html email online covid'.split())
 _FF_EV = re.compile(r'атак|удар|нпз|беспилот|бпла|дрон|взрыв|эбол|вымогател|сухогруз|наводн|пожар|землетряс|погиб|жертв|санкц|утечк|gps|блэкаут')
 def _parse_any_dt(x):
     return datetime.fromisoformat(str(x).replace('Z', '+00:00')[:25])
@@ -29097,7 +29101,9 @@ def _feed_fix_shadow_2511(events):
     if not FEED_FIX_SHADOW_2511:
         return
     rep = {'generated_utc': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'), 'production': False,
-           'A_geo': [], 'B_cap45': [], 'C_noise': [], 'D_dupes': [], 'E_ioda': [], 'F_natdis': []}
+           'A_geo': [], 'B_cap45': [], 'C_noise': [], 'D_dupes': [], 'E_ioda': [], 'F_natdis': [],
+           'G_losses_70_75': [], 'H_losses_merge': [], 'I_domain_leak': [], 'J_retranslate': []}
+    _loss = []
     vis = [e for e in (events or []) if e.get('feed_visible') is not False and not e.get('alerts_only')]
     cf_cc = set(str(e.get('country_code') or e.get('primary_country') or '') for e in vis if 'Cloudflare' in str(e.get('source') or ''))
     for e in vis:
@@ -29125,11 +29131,27 @@ def _feed_fix_shadow_2511(events):
             # E. IODA без подтверждения Cloudflare -> 55
             if src == 'IODA' and sev > 55 and cc not in cf_cc:
                 rep['E_ioda'].append(dict(row, would_sev=55, why='только IODA, без подтверждения Cloudflare Radar'))
+            # G. накопленные потери с начала войны -> коридор 70-75, класс «отчёт»
+            if _FF_LOSS.search(tx) and _FF_CUMUL.search(tx) and _FF_BIG.search(tx):
+                _loss.append(e)
+                if sev < 70 or sev > 75:
+                    rep['G_losses_70_75'].append(dict(row, would_sev=min(75, max(70, sev)), would_class='REPORT'))
+                # I. «утечка/данные» о гибели - не технологии
+                if e.get('domain') == 'technology':
+                    rep['I_domain_leak'].append(dict(row, would_domain='geopolitics'))
+            # J. в русском тексте остались английские слова -> перевести повторно
+            lat = [w for w in re.findall(r'(?<![A-Za-z@/.])[a-z]{5,}(?![A-Za-z./])', tx) if w not in _FF_LAT_OK]
+            if lat:
+                rep['J_retranslate'].append(dict(row, words=lat[:5]))
             # F. национальная катастрофа -> не ниже 60
             if _FF_NATDIS.search(tx) and sev < 60:
                 rep['F_natdis'].append(dict(row, would_sev=60))
         except Exception:
             continue
+    # H. одна утечка о потерях - одна карточка (оставить с наибольшим индексом)
+    if len(_loss) > 1:
+        g = sorted(_loss, key=lambda e: -(e.get('severity') or 0))
+        rep['H_losses_merge'].append({'keep': g[0].get('title', '')[:120], 'would_merge': [x.get('title', '')[:120] for x in g[1:]]})
     # D. дубли: та же страна, общие имена собственные, 24 ч
     try:
         items = []
