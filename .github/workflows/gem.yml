@@ -1,0 +1,16 @@
+name: Global Energy Monitor (разовая выгрузка)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install -q shapely
+      - run: python3 scripts/infra/build_gem.py
+      - run: |
+          ls -la docs/infra/gem_v1.json
+          gzip -9c docs/infra/gem_v1.json | base64 -w 0 | fold -w 3000 | sed 's/^/GEMB64:/'
