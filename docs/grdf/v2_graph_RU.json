@@ -2,9 +2,9 @@
   "country": "RU",
   "date": "2026-11-25",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-25T18:10:02.157098+00:00",
+  "generated_at": "2026-11-25T18:29:54.675838+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-RU",
@@ -33,7 +33,7 @@
       "id": "DOMAIN-RU-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 92,
       "trend": "stable"
     },
     {
@@ -87,17 +87,17 @@
       "domain": "geopolitical"
     },
     {
+      "id": "SIGNAL-RU-Сильный_до",
+      "type": "Signal",
+      "label": "Сильный дождь: Сочи, Россия",
+      "severity": 92,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-RU-Ночью_масс",
       "type": "Signal",
       "label": "Ночью массированной атаке беспилотников ",
       "severity": 90,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-RU-Два_НПЗ_ат",
-      "type": "Signal",
-      "label": "Два НПЗ атакованы в Самарской области",
-      "severity": 89,
       "domain": "geopolitical"
     }
   ],
@@ -118,7 +118,7 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.92
     },
     {
       "from": "COUNTRY-RU",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-RU-climate",
+      "to": "DOMAIN-RU-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-RU-economic",
+      "to": "DOMAIN-RU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-RU-social",
+      "to": "DOMAIN-RU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-RU-geopolitical",
       "to": "DOMAIN-RU-infrastructure",
       "type": "ESCALATES",
@@ -184,22 +205,43 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-RU-climate",
+      "to": "DOMAIN-RU-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-RU-infrastructure",
+      "to": "DOMAIN-RU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-RU-economic",
+      "to": "DOMAIN-RU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-RU-Самарская_",
       "to": "DOMAIN-RU-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.95
     },
     {
+      "from": "SIGNAL-RU-Сильный_до",
+      "to": "DOMAIN-RU-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.92
+    },
+    {
       "from": "SIGNAL-RU-Ночью_масс",
       "to": "DOMAIN-RU-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.9
-    },
-    {
-      "from": "SIGNAL-RU-Два_НПЗ_ат",
-      "to": "DOMAIN-RU-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.89
     }
   ]
 }
