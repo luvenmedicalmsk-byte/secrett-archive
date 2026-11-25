@@ -2,28 +2,28 @@
   "country": "EG",
   "country_name": "Египет",
   "date": "2026-11-25",
-  "generated_at": "2026-11-25T20:48:33.036320+00:00",
-  "evolution_score": 72,
-  "grade": "B",
-  "grade_ru": "Стабильная эволюция",
+  "generated_at": "2026-11-25T21:10:41.810530+00:00",
+  "evolution_score": 78,
+  "grade": "A",
+  "grade_ru": "Высокая эволюция",
   "active_scenarios": [
     {
       "type": "best",
       "name": "Best Case",
       "name_ru": "Лучший сценарий",
-      "probability": 32,
+      "probability": 31,
       "score": 63,
-      "delta_from_current": -15,
+      "delta_from_current": -17,
       "state": "escalating",
       "state_ru": "Эскалация",
       "impact": "significant",
       "impact_ru": "Значительный",
       "velocity": "explosive",
       "velocity_ru": "Взрывной",
-      "recovery_days": 344,
+      "recovery_days": 346,
       "future_pressure": 45,
-      "future_resilience": 46,
-      "future_probability": 32,
+      "future_resilience": 45,
+      "future_probability": 31,
       "drivers": [
         {
           "driver": "Деэскалация",
@@ -38,7 +38,7 @@
           "score": 63,
           "state": "escalating",
           "state_ru": "Эскалация",
-          "delta_from_current": -15
+          "delta_from_current": -17
         },
         {
           "horizon": "90d",
@@ -46,7 +46,7 @@
           "score": 56,
           "state": "contained",
           "state_ru": "Контролируемо",
-          "delta_from_current": -22
+          "delta_from_current": -24
         },
         {
           "horizon": "180d",
@@ -54,7 +54,7 @@
           "score": 50,
           "state": "contained",
           "state_ru": "Контролируемо",
-          "delta_from_current": -28
+          "delta_from_current": -30
         },
         {
           "horizon": "365d",
@@ -62,12 +62,12 @@
           "score": 44,
           "state": "contained",
           "state_ru": "Контролируемо",
-          "delta_from_current": -34
+          "delta_from_current": -36
         }
       ],
-      "evolved_probability": 34.2,
-      "evolved_confidence": 31.5,
-      "evolution_delta": 2.2,
+      "evolved_probability": 30.3,
+      "evolved_confidence": 30.5,
+      "evolution_delta": -0.7,
       "status": "active"
     },
     {
@@ -75,41 +75,93 @@
       "type": "escalation_branch",
       "name": "Ветвь эскалации: deteriorating",
       "trigger": "Тренд: нарастание давления",
-      "score": 88,
+      "score": 90,
       "probability": 18,
       "confidence": 50,
       "trend_strength": 65,
       "status": "emerging",
       "source": "recommendation_shift",
       "domain": "social"
+    },
+    {
+      "id": "ASE-CRIT-WORST",
+      "type": "critical_branch",
+      "name": "Критический каскад (ветвь КРИТИЧЕСКИХ рисков)",
+      "trigger": "Критический уровень риска: 80",
+      "score": 95,
+      "probability": 12,
+      "confidence": 60,
+      "trend_strength": 80,
+      "status": "emerging",
+      "source": "critical_risk",
+      "domain": "social"
     }
   ],
-  "active_count": 2,
+  "active_count": 3,
   "emerging_scenarios": [
     {
       "id": "ASE-ESC-DETE",
       "type": "escalation_branch",
       "name": "Ветвь эскалации: deteriorating",
       "trigger": "Тренд: нарастание давления",
-      "score": 88,
+      "score": 90,
       "probability": 18,
       "confidence": 50,
       "trend_strength": 65,
       "status": "emerging",
       "source": "recommendation_shift",
       "domain": "social"
+    },
+    {
+      "id": "ASE-CRIT-WORST",
+      "type": "critical_branch",
+      "name": "Критический каскад (ветвь КРИТИЧЕСКИХ рисков)",
+      "trigger": "Критический уровень риска: 80",
+      "score": 95,
+      "probability": 12,
+      "confidence": 60,
+      "trend_strength": 80,
+      "status": "emerging",
+      "source": "critical_risk",
+      "domain": "social"
     }
   ],
-  "convergences": [],
-  "divergences": [],
+  "convergences": [
+    {
+      "scenario_a": "escalation_branch",
+      "scenario_b": "critical_branch",
+      "score_gap": 5,
+      "prob_gap": 6,
+      "label": "Сближение: Ветвь эскалации: deteriorating ↔ Критический каскад (ветвь КРИТИЧЕСКИХ рисков)"
+    }
+  ],
+  "divergences": [
+    {
+      "scenario_a": "best",
+      "scenario_b": "escalation_branch",
+      "score_gap": 27,
+      "label": "Расхождение: Best Case ↔ Ветвь эскалации: deteriorating"
+    }
+  ],
   "ranked_pathways": [
+    {
+      "id": "ASE-CRIT-WORST",
+      "name": "Критический каскад (ветвь КРИТИЧЕСКИХ рисков)",
+      "type": "critical_branch",
+      "status": "emerging",
+      "probability": 19.9,
+      "score": 95,
+      "confidence": 60,
+      "trend_strength": 80,
+      "scenario_score": 60
+    },
     {
       "id": "ASE-ESC-DETE",
       "name": "Ветвь эскалации: deteriorating",
       "type": "escalation_branch",
       "status": "emerging",
-      "probability": 34.5,
-      "score": 88,
+      "probability": 29.9,
+      "score": 90,
       "confidence": 50,
       "trend_strength": 65,
       "scenario_score": 56
@@ -119,46 +171,52 @@
       "name": "Best Case",
       "type": "best",
       "status": "active",
-      "probability": 65.5,
+      "probability": 50.2,
       "score": 63,
-      "confidence": 31.5,
+      "confidence": 30.5,
       "trend_strength": 50,
-      "scenario_score": 47
+      "scenario_score": 42
     }
   ],
-  "pathway_count": 2,
+  "pathway_count": 3,
   "future_landscape": {
-    "dominant_pathway": "Ветвь эскалации: deteriorating",
-    "dominant_prob": 34.5,
-    "dominant_score": 88,
-    "outlook": "stable",
-    "narrative": "Базовый сценарий 'Ветвь эскалации: deteriorating' (34%) — ситуация стабильна. Скор 88.",
-    "n_convergences": 0,
-    "n_divergences": 0,
-    "landscape_complexity": 20
+    "dominant_pathway": "Критический каскад (ветвь КРИТИЧЕСКИХ рисков)",
+    "dominant_prob": 19.9,
+    "dominant_score": 95,
+    "outlook": "deteriorating",
+    "narrative": "Доминирующий сценарий 'Критический каскад (ветвь КРИТИЧЕСКИХ рисков)' (20%) указывает на ухудшение — скор 95. Риск системной эскалации.",
+    "n_convergences": 1,
+    "n_divergences": 1,
+    "landscape_complexity": 45
   },
-  "diagnostics": [],
-  "diagnostic_count": 0,
-  "scenario_diversity_index": 50,
-  "future_stability_index": 62,
+  "diagnostics": [
+    {
+      "type": "narrative_collapse",
+      "label": "Распад нарратива",
+      "detail": "Доминирующий сценарий набирает лишь 20% — нарратив раздроблен"
+    }
+  ],
+  "diagnostic_count": 1,
+  "scenario_diversity_index": 64,
+  "future_stability_index": 40,
   "retired_scenarios": [
     {
       "type": "base",
       "name": "Base Case",
       "name_ru": "Базовый сценарий",
-      "probability": 23,
-      "score": 68,
-      "delta_from_current": -10,
+      "probability": 21,
+      "score": 69,
+      "delta_from_current": -11,
       "state": "escalating",
       "state_ru": "Эскалация",
       "impact": "severe",
       "impact_ru": "Тяжёлый",
       "velocity": "explosive",
       "velocity_ru": "Взрывной",
-      "recovery_days": 371,
-      "future_pressure": 51,
-      "future_resilience": 43,
-      "future_probability": 23,
+      "recovery_days": 379,
+      "future_pressure": 52,
+      "future_resilience": 42,
+      "future_probability": 21,
       "drivers": [
         {
           "driver": "30 погибших, 15 раненых — пожар бензовоза — Г",
@@ -174,37 +232,37 @@
         {
           "horizon": "30d",
           "label": "30 дней",
-          "score": 68,
+          "score": 69,
           "state": "escalating",
           "state_ru": "Эскалация",
-          "delta_from_current": -10
+          "delta_from_current": -11
         },
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 65,
-          "state": "escalating",
-          "state_ru": "Эскалация",
-          "delta_from_current": -13
+          "score": 74,
+          "state": "critical",
+          "state_ru": "Критическая эскалация",
+          "delta_from_current": -6
         },
         {
           "horizon": "180d",
           "label": "180 дней",
-          "score": 62,
-          "state": "escalating",
-          "state_ru": "Эскалация",
-          "delta_from_current": -16
+          "score": 79,
+          "state": "critical",
+          "state_ru": "Критическая эскалация",
+          "delta_from_current": -1
         },
         {
           "horizon": "365d",
           "label": "365 дней",
-          "score": 59,
-          "state": "escalating",
-          "state_ru": "Эскалация",
-          "delta_from_current": -19
+          "score": 84,
+          "state": "critical",
+          "state_ru": "Критическая эскалация",
+          "delta_from_current": 4
         }
       ],
-      "evolved_probability": 22.5,
+      "evolved_probability": 20.5,
       "evolved_confidence": 25,
       "evolution_delta": -0.5,
       "status": "retiring"
@@ -213,8 +271,8 @@
       "type": "stress",
       "name": "Stress Case",
       "name_ru": "Стресс-сценарий",
-      "probability": 23,
-      "score": 70,
+      "probability": 24,
+      "score": 72,
       "delta_from_current": -8,
       "state": "escalating",
       "state_ru": "Эскалация",
@@ -222,10 +280,10 @@
       "impact_ru": "Тяжёлый",
       "velocity": "explosive",
       "velocity_ru": "Взрывной",
-      "recovery_days": 382,
-      "future_pressure": 54,
-      "future_resilience": 40,
-      "future_probability": 23,
+      "recovery_days": 396,
+      "future_pressure": 57,
+      "future_resilience": 39,
+      "future_probability": 24,
       "drivers": [
         {
           "driver": "30 погибших, 15 раненых — пожар бензовоза — Г",
@@ -245,7 +303,7 @@
         {
           "horizon": "30d",
           "label": "30 дней",
-          "score": 70,
+          "score": 72,
           "state": "escalating",
           "state_ru": "Эскалация",
           "delta_from_current": -8
@@ -253,7 +311,7 @@
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 75,
+          "score": 77,
           "state": "critical",
           "state_ru": "Критическая эскалация",
           "delta_from_current": -3
@@ -261,31 +319,31 @@
         {
           "horizon": "180d",
           "label": "180 дней",
-          "score": 80,
+          "score": 83,
           "state": "critical",
           "state_ru": "Критическая эскалация",
-          "delta_from_current": 2
+          "delta_from_current": 3
         },
         {
           "horizon": "365d",
           "label": "365 дней",
-          "score": 86,
-          "state": "critical",
-          "state_ru": "Критическая эскалация",
-          "delta_from_current": 8
+          "score": 89,
+          "state": "cascade",
+          "state_ru": "Каскадный кризис",
+          "delta_from_current": 9
         }
       ],
-      "evolved_probability": 22.5,
+      "evolved_probability": 23.4,
       "evolved_confidence": 25,
-      "evolution_delta": -0.5,
+      "evolution_delta": -0.6,
       "status": "retiring"
     },
     {
       "type": "worst",
       "name": "Worst Case",
       "name_ru": "Худший сценарий",
-      "probability": 22,
-      "score": 73,
+      "probability": 24,
+      "score": 75,
       "delta_from_current": -5,
       "state": "critical",
       "state_ru": "Критическая эскалация",
@@ -293,10 +351,10 @@
       "impact_ru": "Тяжёлый",
       "velocity": "fast",
       "velocity_ru": "Быстрый",
-      "recovery_days": 399,
-      "future_pressure": 60,
-      "future_resilience": 33,
-      "future_probability": 22,
+      "recovery_days": 412,
+      "future_pressure": 62,
+      "future_resilience": 32,
+      "future_probability": 24,
       "drivers": [
         {
           "driver": "30 погибших, 15 раненых — пожар бензовоза — Г",
@@ -307,7 +365,7 @@
           "impact": 20
         },
         {
-          "driver": "Не менее 30 человек погибли после переворота ",
+          "driver": "По меньшей мере 30 человек погибли — Египет —",
           "impact": 20
         },
         {
@@ -320,7 +378,7 @@
         {
           "horizon": "30d",
           "label": "30 дней",
-          "score": 73,
+          "score": 75,
           "state": "critical",
           "state_ru": "Критическая эскалация",
           "delta_from_current": -5
@@ -328,7 +386,7 @@
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 80,
+          "score": 82,
           "state": "critical",
           "state_ru": "Критическая эскалация",
           "delta_from_current": 2
@@ -336,10 +394,10 @@
         {
           "horizon": "180d",
           "label": "180 дней",
-          "score": 87,
-          "state": "critical",
-          "state_ru": "Критическая эскалация",
-          "delta_from_current": 9
+          "score": 90,
+          "state": "cascade",
+          "state_ru": "Каскадный кризис",
+          "delta_from_current": 10
         },
         {
           "horizon": "365d",
@@ -347,25 +405,25 @@
           "score": 95,
           "state": "cascade",
           "state_ru": "Каскадный кризис",
-          "delta_from_current": 17
+          "delta_from_current": 15
         }
       ],
-      "evolved_probability": 21.5,
+      "evolved_probability": 25.7,
       "evolved_confidence": 25,
-      "evolution_delta": -0.5,
+      "evolution_delta": 1.7,
       "status": "retiring"
     }
   ],
   "retired_count": 3,
   "sub_scores": {
     "fc_acc": 83,
-    "sc_val": 50,
+    "sc_val": 67,
     "prob_cal": 95,
-    "adapt": 65,
+    "adapt": 80,
     "stability": 64
   },
   "history_depth": 4,
-  "risk_score": 78,
-  "delta": -1,
+  "risk_score": 80,
+  "delta": 2,
   "domain": "social"
 }
