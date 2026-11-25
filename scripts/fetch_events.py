@@ -29067,6 +29067,108 @@ def _market_shock_floor(t, sm):
         if m and _ms_num(m.group(1)) >= 50:
             up(50, 'сырьё +%s%% за год' % m.group(1))
     return best
+# 25.11.2026 · FEED_FIX_SHADOW_2511 (аудит ленты 25.11, решение Мии «делай»): 6 правил A-F
+# в ТЕСТОВОМ режиме. Ничего в ленте не меняется - только отчёт docs/_feed_fix_shadow.json:
+# что правило сделало бы с каждой записью. Production - отдельным решением после отчёта.
+FEED_FIX_SHADOW_2511 = True
+_FF_ATK = r'(?:атак\w*|удар\w*|обстрел\w*|налёт\w*|налет\w*|сбит\w*|поражен\w*|попал\w* под)'
+_FF_BY_RU = re.compile(r'ВС РФ|российск\w+ (?:дрон|беспилотник|БПЛА|ракет|войск|арм|авиац|удар)|арми\w+ России|Росси\w+ (?:атаковал|нанесл|ударил)', re.I)
+_FF_BY_UA = re.compile(r'ВСУ|украинск\w+ (?:дрон|беспилотник|БПЛА|ракет|войск|арм|удар)|Украин\w+ (?:атаковал|нанесл|ударил)', re.I)
+_FF_UA_PLACE = re.compile(r'Украин[аеуыо]\b|Киев|Київ|Днепр|Днипр|Одесс|Харьков|Запорож|Херсон|Николаев|Сумск|Сумы|Чернигов|Полтав|Кривой Рог|Дымер|Вышгород|Житомир|Львов|Ровно|Луцк|Винниц|Черкас|Кременчуг|Измаил', re.I)
+_FF_RU_PLACE = re.compile(r'Росси[ияю]\b|Москв|Подмосков|Самар|Сызран|Ростов|Новошахтинск|Краснодар|Кубан|Перм|Татарстан|Башкир|Брянск|Курск|Белгород|Воронеж|Саратов|Волгоград|Тул[аье]|Рязан|Орл|Смоленск|Ленинград|Петербург|Новороссийск|Туапсе|Крым|Севастопол|Удмурт|Ярослав', re.I)
+_FF_CITY = [(re.compile(r'Владикавказ', re.I), 'RU', 'Северная Осетия'), (re.compile(r'Бенгази|Ливи[ия]', re.I), 'LY', 'Ливия'),
+            (re.compile(r'Бахрейн|Авали|Эр-Рифаа', re.I), 'BH', 'Бахрейн'),
+            (re.compile(r'воздушное пространство Польши|в Польше|Польш\w+ (?:воздушн|границ)', re.I), 'PL', 'Польша'),
+            (re.compile(r'эстонск\w+ (?:дипломат|МИД|министр)|Эстони', re.I), 'EE', 'Эстония')]
+_FF_STAT = re.compile(r'(?:за (?:20\d\d|этот|прошл\w+|весь) год|в 20\d\d году|в этом году|с начала (?:года|20\d\d)|каждый час|ежегодно|за год)', re.I)
+_FF_SCI_SRC = re.compile(r'Phys\.org|New Scientist|ScienceDaily|Nature|EurekAlert|Science News|Atlantic Council', re.I)
+_FF_COMM = re.compile(r'репортаж из 20\d\d|что важно знать|как .{3,40} меняет|что будет с|мнение:|колонка|«[^»]{0,40}»\.\s|может (?:ударять|начаться|уже начал)|возможно, уже', re.I)
+_FF_NOISE = re.compile(r'^18\+|иностранн\w+ агент|кто имеет право|поздравил\w*|проводит совещани|идёт на поправку|идет на поправку|заставил ИИ|на коленях|вот так проходит|ожидают пересадки|скин\w* CS2|жена главы|репортаж из 20\d\d', re.I)
+_FF_NATDIS = re.compile(r'национальн\w+ (?:катастроф|бедстви|чрезвычайн)|национальной катастроф|national (?:disaster|emergency)|режим ЧС федерального', re.I)
+_FF_STOP = set('атака атаки атаку удара удары ударов после россии россия украины украина области области результате человек погибли погиб ранены сообщает сообщил ночью около более против время новые новых данные заявил'.split())
+def _ff_tokens(t):
+    t = re.sub(r'^\S+\s*', '', (t or '').strip())   # первое слово предложения - не имя собственное
+    t = re.sub(r'([.!?:—-]\s+)\S+', r'\1', t)
+    return set(w.lower()[:7] for w in re.findall(r'[А-ЯЁA-Z][а-яёa-z]{4,}|[A-Z]{2,}[a-z]*', t) if w.lower() not in _FF_STOP)
+_FF_EV = re.compile(r'атак|удар|нпз|беспилот|бпла|дрон|взрыв|эбол|вымогател|сухогруз|наводн|пожар|землетряс|погиб|жертв|санкц|утечк|gps|блэкаут')
+def _parse_any_dt(x):
+    return datetime.fromisoformat(str(x).replace('Z', '+00:00')[:25])
+def _feed_fix_shadow_2511(events):
+    if not FEED_FIX_SHADOW_2511:
+        return
+    rep = {'generated_utc': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'), 'production': False,
+           'A_geo': [], 'B_cap45': [], 'C_noise': [], 'D_dupes': [], 'E_ioda': [], 'F_natdis': []}
+    vis = [e for e in (events or []) if e.get('feed_visible') is not False and not e.get('alerts_only')]
+    cf_cc = set(str(e.get('country_code') or e.get('primary_country') or '') for e in vis if 'Cloudflare' in str(e.get('source') or ''))
+    for e in vis:
+        try:
+            t = e.get('title') or ''; sm = (e.get('summary') or '')[:300]; tx = t + ' ' + sm
+            sev = e.get('severity') or 0; cc = str(e.get('primary_country') or e.get('country_code') or '')
+            src = str(e.get('source') or ''); row = {'id': e.get('id'), 'title': t[:140], 'sev': sev, 'cc': cc, 'domain': e.get('domain'), 'source': src}
+            # A. гео: цель удара, а не атакующий; словарь мест
+            want = None
+            for rx, c2, nm in _FF_CITY:
+                if rx.search(t): want = (c2, nm); break
+            if not want and re.search(_FF_ATK, tx, re.I):
+                if _FF_BY_RU.search(tx) and _FF_UA_PLACE.search(t) and not _FF_RU_PLACE.search(t): want = ('UA', 'удар ВС РФ по Украине')
+                elif _FF_BY_UA.search(tx) and _FF_RU_PLACE.search(t) and not _FF_UA_PLACE.search(t): want = ('RU', 'удар ВСУ по России')
+            if want and want[0] != cc:
+                rep['A_geo'].append(dict(row, would_cc=want[0], why=want[1]))
+            # B. годовая статистика / наука / комментарий -> не выше 45 и «Контекст»
+            why = 'годовая статистика' if _FF_STAT.search(t) else 'научный источник' if _FF_SCI_SRC.search(src) else 'комментарий/сценарий' if _FF_COMM.search(t) else None
+            if why and sev > 45:
+                rep['B_cap45'].append(dict(row, would_sev=45, would_class='COMMENTARY', why=why))
+            # C. шум -> скрыть
+            m = _FF_NOISE.search(t)
+            if m:
+                rep['C_noise'].append(dict(row, would='hide', match=m.group(0)))
+            # E. IODA без подтверждения Cloudflare -> 55
+            if src == 'IODA' and sev > 55 and cc not in cf_cc:
+                rep['E_ioda'].append(dict(row, would_sev=55, why='только IODA, без подтверждения Cloudflare Radar'))
+            # F. национальная катастрофа -> не ниже 60
+            if _FF_NATDIS.search(tx) and sev < 60:
+                rep['F_natdis'].append(dict(row, would_sev=60))
+        except Exception:
+            continue
+    # D. дубли: та же страна, общие имена собственные, 24 ч
+    try:
+        items = []
+        for e in vis:
+            items.append((e, _ff_tokens(e.get('title') or ''), str(e.get('primary_country') or e.get('country_code') or e.get('region') or '')))
+        used = set(); clusters = []
+        for i, (a, ta, ca) in enumerate(items):
+            if i in used or not ta: continue
+            grp = [i]
+            for j in range(i + 1, len(items)):
+                if j in used: continue
+                b, tb, cb = items[j]
+                if not tb or (ca and cb and ca != cb): continue
+                try:
+                    if abs((_parse_any_dt(a.get('first_seen') or a.get('date')) - _parse_any_dt(b.get('first_seen') or b.get('date'))).total_seconds()) > 86400: continue
+                except Exception:
+                    pass
+                inter = ta & tb
+                sa = set(_FF_EV.findall((a.get('title') or '').lower())); sb = set(_FF_EV.findall((b.get('title') or '').lower()))
+                if not (sa & sb): continue
+                if len(inter) >= 2 or (len(inter) == 1 and len(next(iter(inter))) >= 6 and (ca or cb)):
+                    grp.append(j)
+            if len(grp) > 1:
+                used.update(grp)
+                g = sorted((items[k][0] for k in grp), key=lambda e: -(e.get('severity') or 0))
+                clusters.append({'keep': g[0].get('title', '')[:120], 'keep_sev': g[0].get('severity'),
+                                 'would_merge': [x.get('title', '')[:120] for x in g[1:]]})
+        rep['D_dupes'] = clusters
+    except Exception as ex:
+        rep['D_err'] = str(ex)
+    rep['counts'] = {k: len(v) for k, v in rep.items() if isinstance(v, list)}
+    try:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'docs', '_feed_fix_shadow.json'), 'w', encoding='utf-8') as f:
+            json.dump(rep, f, ensure_ascii=False, indent=1)
+    except Exception:
+        pass
+    print('  feed_fix_shadow_2511: ' + ', '.join('%s %d' % kv for kv in rep['counts'].items()))
+
+
 def _market_shock_2511(events):
     if not MARKET_SHOCK_2511:
         return
@@ -31709,6 +31811,10 @@ def save_enriched(events, previous_snapshot=None):
                 _market_shock_2511(enriched["events"])   # MARKET_SHOCK_2511
                 _feed_hygiene(enriched["events"])
                 _sev_post_hyg_0511(enriched["events"])
+                try:
+                    _feed_fix_shadow_2511(enriched["events"])   # FEED_FIX_SHADOW_2511 (только отчёт)
+                except Exception:
+                    pass
                 # склейка дублей ПОСЛЕ _feed_hygiene: она меняет feed_visible, и карточка,
                 # скрытая на момент склейки, потом возвращалась в ленту дублем (Hurriyet,
                 # «кибератаки на холодильники», 10.11 13:51 UTC)
