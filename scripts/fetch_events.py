@@ -29169,6 +29169,86 @@ def _feed_fix_shadow_2511(events):
     print('  feed_fix_shadow_2511: ' + ', '.join('%s %d' % kv for kv in rep['counts'].items()))
 
 
+# 25.11.2026 · INFRA_HITS_2511 (решение Мии 25.11): какие объекты инфраструктуры фигурировали
+# в сигналах Atlas за 30 дней. Только файл docs/infra_hits.json для карты; лента и индексы не меняются.
+# Совпадение: название объекта (+ слово его типа: НПЗ / АЭС / порт / терминал) или точка сигнала
+# в 30 км от объекта + слово типа. Накопительно: прошлые попадания хранятся в том же файле.
+INFRA_HITS_ON = True
+_IH_COUNTRY_LEVEL = set('Россия Украина Беларусь Казахстан США Китай Иран Турция Израиль Германия Франция Польша Япония Индия Глобально Европа Ближний Восток Азия Африка Международное'.split()) | {'Ближний Восток', 'Латинская Америка'}
+def _infra_hits_2511(events):
+    if not INFRA_HITS_ON:
+        return
+    base = os.path.join(os.path.dirname(os.path.abspath(__file__)))
+    cfg = json.load(open(os.path.join(base, 'infra', 'infra_objects.json'), encoding='utf-8'))
+    TY = {k: (re.compile(v, re.I) if v else None) for k, v in cfg['types'].items()}
+    objs = []
+    for o in cfg['objects']:
+        rx = re.compile('|'.join('(?<![а-яёА-ЯЁa-zA-Z])(?:%s)' % a for a in o['al']), re.I) if o['al'] else None
+        objs.append((o, rx))
+    out_p = os.path.join(base, '..', 'docs', 'infra_hits.json')
+    try:
+        prev = json.load(open(out_p, encoding='utf-8')).get('objects', {})
+    except Exception:
+        prev = {}
+    now = datetime.now(timezone.utc); cut = (now - timedelta(days=30)).isoformat()
+    store = {k: {h['id']: h for h in v.get('hits', []) if str(h.get('date', '')) >= cut} for k, v in prev.items()}
+    meta = {o['k']: o for o, _ in objs}
+    for e in events or []:
+        if e.get('feed_visible') is False and not e.get('map_visible'):
+            continue
+        t = e.get('title') or ''; tx = t + ' ' + (e.get('summary') or '')[:160]
+        # метеопредупреждения не считаются (в них перечислены области и побережья)
+        if re.match(r'^(?:Ветер|Гроза|Дождь|Снег|Туман|Жара|Мороз|Гололёд|Гололед|Шторм|Ливень|Метель)\b', t):
+            continue
+        hits = []
+        for o, rx in objs:
+            ty = TY.get(o['t']) if o['t'] in TY else None
+            if rx and rx.search(t):   # название - только в заголовке (в описаниях бывают дайджесты чужих новостей)
+                aliases_have_type = ty is not None and all(ty.search(a.replace('\\w*', '')) for a in o['al'])
+                if o['t'] in ('ref', 'npp', 'port') and ty is not None and not aliases_have_type and not ty.search(tx):
+                    continue
+                hits.append(o['k'])
+        reg = str(e.get('region') or '')
+        if not hits and reg and reg not in _IH_COUNTRY_LEVEL and reg != str(e.get('event_country') or ''):
+            # точка сигнала - не центр страны: ближайший объект нужного типа в 30 км
+            try:
+                la, ln = float(e.get('lat')), float(e.get('lng')); best = None
+                for o, rx in objs:
+                    if not o.get('near'): continue
+                    ty = TY.get(o['t'])
+                    if not ty or not ty.search(tx): continue
+                    if abs(la - o['lat']) < 0.3 and abs(ln - o['lng']) < 0.45:
+                        dkm = 111.2 * ((la - o['lat']) ** 2 + ((ln - o['lng']) * math.cos(math.radians(la))) ** 2) ** 0.5
+                        if dkm <= 30 and (best is None or dkm < best[0]): best = (dkm, o['k'])
+                if best: hits.append(best[1])
+            except Exception:
+                pass
+        if not hits:
+            continue
+        d = str(e.get('first_seen') or e.get('date') or now.isoformat())
+        if d < cut:
+            continue
+        rec = {'id': e.get('id') or t[:60], 'title': t[:160], 'date': d[:19], 'sev': e.get('severity') or 0, 'src': str(e.get('source') or '')[:40]}
+        for k in set(hits):
+            store.setdefault(k, {})[rec['id']] = rec
+    objects = {}
+    for k, hm in store.items():
+        hs = sorted(hm.values(), key=lambda h: h['date'], reverse=True)
+        # один сюжет несколько раз: одинаковое начало заголовка в тот же день - считается 1 раз
+        seen = set(); uniq = []
+        for h in hs:
+            sig = (h['date'][:10], re.sub(r'\W+', '', h['title'].lower())[:40])
+            if sig in seen: continue
+            seen.add(sig); uniq.append(h)
+        if not uniq or k not in meta:
+            continue
+        objects[k] = {'n': meta[k]['n'], 't': meta[k]['t'], 'count': len(uniq), 'last': uniq[0]['date'],
+                      'max_sev': max(h['sev'] for h in uniq), 'hits': uniq[:12]}
+    json.dump({'updated': now.strftime('%Y-%m-%dT%H:%M:%SZ'), 'window_days': 30, 'objects': objects},
+              open(out_p, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
+    print('  infra_hits_2511: объектов с сигналами %d' % len(objects))
+
+
 def _market_shock_2511(events):
     if not MARKET_SHOCK_2511:
         return
@@ -31815,6 +31895,10 @@ def save_enriched(events, previous_snapshot=None):
                     _feed_fix_shadow_2511(enriched["events"])   # FEED_FIX_SHADOW_2511 (только отчёт)
                 except Exception:
                     pass
+                try:
+                    _infra_hits_2511(enriched["events"])   # INFRA_HITS_2511 (только файл для карты)
+                except Exception as _ihe:
+                    print('  infra_hits_2511 ошибка:', _ihe)
                 # склейка дублей ПОСЛЕ _feed_hygiene: она меняет feed_visible, и карточка,
                 # скрытая на момент склейки, потом возвращалась в ленту дублем (Hurriyet,
                 # «кибератаки на холодильники», 10.11 13:51 UTC)
