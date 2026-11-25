@@ -2,67 +2,77 @@
   "country": "MY",
   "date": "2026-11-25",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-25T05:28:37.767500+00:00",
+  "generated_at": "2026-11-25T05:49:01.234012+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-MY",
       "type": "Country",
       "label": "MY",
-      "score": 45,
+      "score": 58,
       "props": {
-        "risk_score": 45
+        "risk_score": 58
       }
     },
     {
       "id": "DOMAIN-MY-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
-      "trend": "stable"
+      "score": 64,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MY-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 42,
-      "trend": "stable"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MY-climate",
       "type": "Domain",
       "label": "climate",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MY-technology",
       "type": "Domain",
       "label": "technology",
       "score": 56,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MY-social",
       "type": "Domain",
       "label": "social",
-      "score": 40,
-      "trend": "stable"
+      "score": 58,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MY-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MY-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
+    },
+    {
+      "id": "DRIVER-MY-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
+    },
+    {
+      "id": "DRIVER-MY-social",
+      "type": "Driver",
+      "label": "social"
     },
     {
       "id": "DRIVER-MY-technology",
@@ -70,14 +80,11 @@
       "label": "technology"
     },
     {
-      "id": "DRIVER-MY-economic",
-      "type": "Driver",
-      "label": "economic"
-    },
-    {
-      "id": "DRIVER-MY-social",
-      "type": "Driver",
-      "label": "social"
+      "id": "SIGNAL-MY-Вопрос_гра",
+      "type": "Signal",
+      "label": "Вопрос грамматики на базовом экзамене по",
+      "severity": 58,
+      "domain": "social"
     },
     {
       "id": "SIGNAL-MY-Социальный",
@@ -92,13 +99,6 @@
       "label": "Отключение интернета — Малайзия",
       "severity": 56,
       "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-MY-Валютный_р",
-      "type": "Signal",
-      "label": "Валютный рынок — Юго-Восточная Азия",
-      "severity": 56,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-MY",
       "to": "DOMAIN-MY-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.64
     },
     {
       "from": "COUNTRY-MY",
       "to": "DOMAIN-MY-economic",
       "type": "CORRELATES",
-      "weight": 0.42
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-MY",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-MY",
       "to": "DOMAIN-MY-social",
       "type": "CORRELATES",
-      "weight": 0.4
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-MY",
@@ -145,13 +145,7 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-MY-technology",
-      "to": "COUNTRY-MY",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
-      "from": "DRIVER-MY-economic",
+      "from": "DRIVER-MY-geopolitical",
       "to": "COUNTRY-MY",
       "type": "CAUSES",
       "weight": 0.8
@@ -163,6 +157,39 @@
       "weight": 0.8
     },
     {
+      "from": "DRIVER-MY-technology",
+      "to": "COUNTRY-MY",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-MY-geopolitical",
+      "to": "DOMAIN-MY-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-MY-infrastructure",
+      "to": "DOMAIN-MY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-MY-economic",
+      "to": "DOMAIN-MY-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-MY-Вопрос_гра",
+      "to": "DOMAIN-MY-social",
+      "type": "AMPLIFIES",
+      "weight": 0.58
+    },
+    {
       "from": "SIGNAL-MY-Социальный",
       "to": "DOMAIN-MY-social",
       "type": "AMPLIFIES",
@@ -171,12 +198,6 @@
     {
       "from": "SIGNAL-MY-Отключение",
       "to": "DOMAIN-MY-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.56
-    },
-    {
-      "from": "SIGNAL-MY-Валютный_р",
-      "to": "DOMAIN-MY-economic",
       "type": "AMPLIFIES",
       "weight": 0.56
     }
