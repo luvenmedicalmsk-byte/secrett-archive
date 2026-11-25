@@ -1,9 +1,9 @@
 {
-  "generated": "2026-11-25T21:26:33Z",
+  "generated": "2026-11-25T21:45:45Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
-    "PASS_FACT": 1222,
+    "PASS_FACT": 1220,
     "DENY_COMMENTARY": 380,
     "DENY_FEATURE": 6,
     "DENY_STATE_ONLY": 3,
@@ -12,8 +12,8 @@
     "UNMATCHED": 3
   },
   "kpi": {
-    "processes_total": 1617,
-    "matched": 1614,
+    "processes_total": 1615,
+    "matched": 1612,
     "unmatched": 3,
     "coverage_pct": 99.8,
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
@@ -26,14 +26,14 @@
   "shadow_reliability": {
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
-      "processes": 536,
-      "sample": 1892,
-      "agreement_pct": 87.8,
-      "decision_agreement_pct": 88.2,
-      "critical_errors": 223,
+      "processes": 533,
+      "sample": 1889,
+      "agreement_pct": 88.0,
+      "decision_agreement_pct": 88.5,
+      "critical_errors": 218,
       "truth_ratio_pct": 99.8,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 197,
+        "FACT_EVENT→COMMENTARY": 192,
         "STATE_CONFIRMATION→COMMENTARY": 2,
         "COMMENTARY→FACT_EVENT": 19,
         "FEATURE→COMMENTARY": 4,
@@ -44,13 +44,13 @@
       }
     },
     "historical": {
-      "processes": 1617,
-      "sample": 4458,
-      "agreement_pct": 89.2,
-      "decision_agreement_pct": 89.4,
-      "critical_errors": 471,
+      "processes": 1615,
+      "sample": 4455,
+      "agreement_pct": 89.3,
+      "decision_agreement_pct": 89.5,
+      "critical_errors": 467,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 413,
+        "FACT_EVENT→COMMENTARY": 409,
         "STATE_CONFIRMATION→COMMENTARY": 2,
         "COMMENTARY→FACT_EVENT": 45,
         "FEATURE→COMMENTARY": 5,
@@ -62,12 +62,12 @@
       }
     },
     "events_stream": {
-      "sample": 550,
-      "agreement_pct": 87.5,
-      "decision_agreement_pct": 88.0,
-      "critical_errors": 66,
+      "sample": 548,
+      "agreement_pct": 88.0,
+      "decision_agreement_pct": 88.5,
+      "critical_errors": 63,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 59,
+        "FACT_EVENT→COMMENTARY": 56,
         "COMMENTARY→FACT_EVENT": 6,
         "STATE_CONFIRMATION→COMMENTARY": 1,
         "FEATURE→COMMENTARY": 2,
@@ -82,19 +82,23 @@
     }
   },
   "class_source": {
-    "evidence_sic": 4458,
+    "evidence_sic": 4455,
     "shadow_title_summary": 4
   },
   "truth_ratio_pct": 99.9,
   "domain_statistics": {
     "geopolitics": {
-      "pass": 272,
+      "pass": 270,
       "deny": 91
     },
     "climate": {
       "pass": 405,
       "deny": 90,
       "unmatched": 3
+    },
+    "social": {
+      "pass": 136,
+      "deny": 56
     },
     "economy": {
       "pass": 265,
@@ -103,10 +107,6 @@
     "technology": {
       "pass": 144,
       "deny": 29
-    },
-    "social": {
-      "pass": 136,
-      "deny": 56
     }
   },
   "deny_impact": [
@@ -831,6 +831,21 @@
       "reason": "no FACT_EVENT in evidence"
     },
     {
+      "signal_id": "soci-социальный-европа-216f",
+      "title": "Социальный процесс — Европа",
+      "domain": "social",
+      "severity": 58,
+      "pressure": 64,
+      "first_seen": "2026-09-21",
+      "evidence_count": 2,
+      "evidence_classes": {
+        "COMMENTARY": 2
+      },
+      "status": "active",
+      "causal_links": 0,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
       "signal_id": "soci-эпидемиоло-европа-0eb3",
       "title": "Эпидемиологический риск — Европа",
       "domain": "social",
@@ -994,21 +1009,6 @@
       "status": "archived",
       "causal_links": 6,
       "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "clim-климатичес-краснояр-ba54",
-      "title": "Климатический сигнал — Красноярский край",
-      "domain": "climate",
-      "severity": 56,
-      "pressure": 56,
-      "first_seen": "2026-09-15",
-      "evidence_count": 2,
-      "evidence_classes": {
-        "COMMENTARY": 2
-      },
-      "status": "active",
-      "causal_links": 6,
-      "reason": "no FACT_EVENT in evidence"
     }
   ],
   "report_log": [],
@@ -1017,6 +1017,13 @@
       "signal_id": "clim-климатичес-япония-2219",
       "domain": "climate",
       "legacy": 92,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "soci-социальный-европа-216f",
+      "domain": "social",
+      "legacy": 58,
       "shadow": null,
       "delta": null
     },
@@ -1147,6 +1154,13 @@
       "delta": null
     },
     {
+      "signal_id": "tech-уязвимость-сша-f6e8",
+      "domain": "technology",
+      "legacy": 52,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "clim-климатичес-китай-6396",
       "domain": "climate",
       "legacy": 74,
@@ -1182,9 +1196,9 @@
       "delta": null
     },
     {
-      "signal_id": "tech-уязвимость-сша-f6e8",
-      "domain": "technology",
-      "legacy": 52,
+      "signal_id": "clim-климатичес-индия-80ae",
+      "domain": "climate",
+      "legacy": 35,
       "shadow": null,
       "delta": null
     },
@@ -1192,13 +1206,6 @@
       "signal_id": "econ-экономичес-китай-3eea",
       "domain": "economy",
       "legacy": 74,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "clim-климатичес-индия-80ae",
-      "domain": "climate",
-      "legacy": 35,
       "shadow": null,
       "delta": null
     },
@@ -1231,13 +1238,6 @@
       "delta": null
     },
     {
-      "signal_id": "econ-инфляция-россия-927a",
-      "domain": "economy",
-      "legacy": 46,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "clim-климатичес-сша-acd2",
       "domain": "climate",
       "legacy": 44,
@@ -1262,6 +1262,13 @@
       "signal_id": "clim-климатичес-великобр-5ad9",
       "domain": "climate",
       "legacy": 32,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "econ-инфляция-россия-927a",
+      "domain": "economy",
+      "legacy": 46,
       "shadow": null,
       "delta": null
     },
@@ -1350,13 +1357,6 @@
       "delta": null
     },
     {
-      "signal_id": "soci-социальный-европа-216f",
-      "domain": "social",
-      "legacy": 22,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "clim-шторм-ингушети-aa91",
       "domain": "climate",
       "legacy": 56,
@@ -1435,9 +1435,9 @@
     }
   ],
   "deny_by_severity": {
-    "0-30": 3,
+    "0-30": 2,
     "31-50": 231,
-    "51-70": 148,
+    "51-70": 149,
     "71-90": 9,
     "91-100": 1
   }
