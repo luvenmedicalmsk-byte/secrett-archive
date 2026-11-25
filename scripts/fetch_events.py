@@ -27549,6 +27549,7 @@ def _sic_ext_kind(t):
     return None
 
 
+_SIC_LEX_TITLE_2511 = re.compile(r'рухнул|обрушил\w*\s+(?:\w+\s+){0,2}(?:рын|цен|курс|котиров|индекс|акци)|останови\w*\s+(?:\w+\s+){0,2}(?:производ|печь|печи|завод|выплавк|добыч|работ|отгрузк|поставк|линию|блок|энергоблок)|останавлива\w*|простой\\b|простои\\b|простоя\\b', re.I)
 def _sic_class(title, summary='', canon_type=None):
     """SIC-интент. READ-ONLY чистая функция. → EVENT|PROCESS|COMMENTARY|FEATURE|BACKGROUND."""
     low = ((title or '') + ' ' + (summary or '')).strip().lower()
@@ -27759,6 +27760,13 @@ def _sic_class(title, summary='', canon_type=None):
         if b in ('EVENT', 'PROCESS'):
             return b
     # 4) аналитическое предупреждение о возможном будущем (нет accomplished, нет операц.алерта) → COMMENTARY.
+    # SIC_LEX_2511 (Мия 25.11): операционный факт в ЗАГОЛОВКЕ (рухнул, остановка производства, простой)
+    # перевешивает мнения и предупреждения экспертов в теле. Feralpi: «завод вынужден останавливать
+    # электропечь» уходил в контекст из-за «профессор допускает... призывает» в описании.
+    if _SIC_LEX_TITLE_2511.search(_title_low) and not _SIC_INTENT.search(_title_low) and not _SIC_WARN.search(_title_low):
+        b = _base()
+        if b in ('EVENT', 'PROCESS'):
+            return b
     if SIC_EVENT_EXT:
         _xk = _sic_ext_kind(_title_low) if not _SIC_WARN.search(_title_low) else None
         if not _xk and _sic_ext_kind(low) == 'MEASURE':
