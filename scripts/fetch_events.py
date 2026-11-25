@@ -4864,7 +4864,8 @@ def fetch_c3s_pulse():
             return items
         vs = ('%+.2f' % v_last).replace('.', ',')
         if streak >= 2:
-            tail = " - %d дн. подряд выше +2°C" % streak
+            _w = 'день' if streak % 10 == 1 and streak % 100 != 11 else 'дня' if streak % 10 in (2, 3, 4) and streak % 100 not in (12, 13, 14) else 'дней'
+            tail = " - %d %s подряд выше +2°C" % (streak, _w)
         elif streak == 1:
             tail = " - выше +2°C"
         else:
@@ -29584,7 +29585,7 @@ def _clim_pulse_floor_2511(events):
         if e.get('source') != 'Copernicus C3S':
             continue
         t = e.get('title') or ''
-        m = re.search(r'(\d+)\s*дн\.\s*подряд', t)
+        m = re.search(r'(\d+)\s*(?:дн\.|день|дня|дней)\s*подряд', t)
         streak = int(m.group(1)) if m else (1 if 'выше +2°C' in t else 0)
         fl = (66 + 2 * min(streak, 5) if streak else 58) + (4 if 'рекорд' in t else 0)
         fl = min(80, fl)
