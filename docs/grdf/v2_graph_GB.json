@@ -2,67 +2,67 @@
   "country": "GB",
   "date": "2026-11-25",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-25T07:29:22.827848+00:00",
+  "generated_at": "2026-11-25T07:49:32.174718+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-GB",
       "type": "Country",
       "label": "GB",
-      "score": 84,
+      "score": 91,
       "props": {
-        "risk_score": 84
+        "risk_score": 91
       }
     },
     {
       "id": "DOMAIN-GB-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
-      "trend": "stable"
+      "score": 74,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-economic",
       "type": "Domain",
       "label": "economic",
       "score": 73,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-climate",
       "type": "Domain",
       "label": "climate",
       "score": 72,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
-      "trend": "stable"
+      "score": 74,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-GB-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-GB-Злоумышлен",
+      "type": "Signal",
+      "label": "Злоумышленники украли у жителей Великобр",
+      "severity": 74,
+      "domain": "social"
+    },
+    {
       "id": "SIGNAL-GB-Забастовка",
       "type": "Signal",
       "label": "Забастовка на шотландском складе ядерног",
@@ -92,13 +99,6 @@
       "label": "Наводнение: Река Хейл от Релаббуса до Се",
       "severity": 72,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-GB-Инфляция_в",
-      "type": "Signal",
-      "label": "Инфляция в UK: Паузы в движении наверх п",
-      "severity": 48,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.74
     },
     {
       "from": "COUNTRY-GB",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.74
     },
     {
       "from": "COUNTRY-GB",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-GB-climate",
-      "to": "DOMAIN-GB-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-GB-infrastructure",
-      "to": "DOMAIN-GB-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-GB-economic",
-      "to": "DOMAIN-GB-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-GB-climate",
       "to": "DOMAIN-GB-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,6 +184,54 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-GB-geopolitical",
+      "to": "DOMAIN-GB-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-GB-infrastructure",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GB-economic",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "DOMAIN-GB-climate",
+      "to": "DOMAIN-GB-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-GB-infrastructure",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GB-economic",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-GB-Злоумышлен",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.74
+    },
+    {
       "from": "SIGNAL-GB-Забастовка",
       "to": "DOMAIN-GB-economic",
       "type": "AMPLIFIES",
@@ -215,12 +242,6 @@
       "to": "DOMAIN-GB-climate",
       "type": "AMPLIFIES",
       "weight": 0.72
-    },
-    {
-      "from": "SIGNAL-GB-Инфляция_в",
-      "to": "DOMAIN-GB-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.48
     }
   ]
 }
