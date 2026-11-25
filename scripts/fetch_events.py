@@ -26451,6 +26451,10 @@ def _signal_quality_pass(events):
                         if RECOVERY_GUARD and _fl and _is_recovery_phase(e.get('title')):
                             _fl = 0
                         _fl = _sa_scale_floor(e, _bt, _fl)
+                        # THREAT_CAP_2511 (Мия 25.11): угроза - не случившееся бедствие.
+                        # «Шторм угрожает 1,76 млн палестинцев» поднимался 72 -> 92 по числу людей.
+                        if _fl and _fl > 80 and _THREAT_TITLE_2511.search(e.get('title') or ''):
+                            _fl = 80
                         if _fl and _fl > (e.get('severity') or 0):
                             # Подпись правила исправлена 22.09.2026: в журнале стояло
                             # «инфраструктурный объект в тексте», хотя это пересчёт по
@@ -27567,6 +27571,7 @@ _GEO_TREATY = {
     'CH': (re.compile(r'Женевск\w*' + _GEO_TREATY_TAIL + r'|Geneva\s+Convention', re.I), re.compile(r'Швейцар|Женев|Берн|Цюрих|Switzerland|Swiss|Geneva', re.I)),
     'TR': (re.compile(r'Стамбульск\w*' + _GEO_TREATY_TAIL, re.I), re.compile(r'Турци|турецк|Стамбул|Анкар|Эрдоган|Turkey|Türkiye|Istanbul', re.I)),
 }
+_THREAT_TITLE_2511 = re.compile(r'угрожа\w*|грозит|может\b|могут\b|рискует|под угрозой|предупрежда\w*|ожида\w*', re.I)
 def _sic_class(title, summary='', canon_type=None):
     """SIC-интент. READ-ONLY чистая функция. → EVENT|PROCESS|COMMENTARY|FEATURE|BACKGROUND."""
     low = ((title or '') + ' ' + (summary or '')).strip().lower()
@@ -29186,11 +29191,13 @@ FEED_FIX_SHADOW_2511 = True
 # 25.11.2026 (решение Мии «включай»): в production правила A (гео), C (шум), E (IODA),
 # F (нацкатастрофа), I (домен утечек о потерях), J (допереводы). B, D, G, H - только отчёт.
 # Откат: FEED_FIX_PROD_2511 = set().
-FEED_FIX_PROD_2511 = {'A', 'C', 'E', 'F', 'I', 'J'}
+FEED_FIX_PROD_2511 = {'A', 'C', 'E', 'F', 'G', 'I', 'J'}   # G добавлено 25.11 (Мия): накопленные потери 70-75
 _FF_CC_POINT = {'RU': ('Россия', 55.75, 37.62), 'UA': ('Украина', 50.45, 30.52), 'LY': ('Ливия', 32.12, 20.07),
                 'BH': ('Бахрейн', 26.07, 50.55), 'PL': ('Польша', 52.23, 21.01), 'EE': ('Эстония', 59.44, 24.75)}
 def _ff_mark(e, rule, before):
-    e.setdefault('feed_fix', []).append({'rule': 'FEED_FIX_2511_' + rule, 'before': before})
+    _l = e.setdefault('feed_fix', [])
+    if not any(isinstance(x, dict) and x.get('rule') == 'FEED_FIX_2511_' + rule for x in _l):
+        _l.append({'rule': 'FEED_FIX_2511_' + rule, 'before': before})
 _FF_ATK = r'(?:атак\w*|удар\w*|обстрел\w*|налёт\w*|налет\w*|сбит\w*|поражен\w*|попал\w* под)'
 _FF_BY_RU = re.compile(r'ВС РФ|российск\w+ (?:дрон|беспилотник|БПЛА|ракет|войск|арм|авиац|удар)|арми\w+ России|Росси\w+ (?:атаковал|нанесл|ударил)', re.I)
 _FF_BY_UA = re.compile(r'ВСУ|украинск\w+ (?:дрон|беспилотник|БПЛА|ракет|войск|арм|удар)|Украин\w+ (?:атаковал|нанесл|ударил)', re.I)
@@ -29314,6 +29321,8 @@ def _feed_fix_shadow_2511(events):
                 _loss.append(e)
                 if sev < 70 or sev > 75:
                     rep['G_losses_70_75'].append(dict(row, would_sev=min(75, max(70, sev)), would_class='REPORT'))
+                    if 'G' in FEED_FIX_PROD_2511:
+                        _ff_mark(e, 'G', sev); e['severity'] = min(75, max(70, sev)); sev = e['severity']
                 # I. «утечка/данные» о гибели - не технологии
                 if e.get('domain') == 'technology':
                     rep['I_domain_leak'].append(dict(row, would_domain='geopolitics'))
@@ -29390,6 +29399,9 @@ def _feed_fix_shadow_2511(events):
 # гололёд, заморозки) -> не выше 74; 90+ остаётся, если в ленте есть сигнал о погибших или
 # разрушениях в той же стране за 48 ч». Лента и индексы не меняются. Откат: CAP92_SHADOW_2511 = False.
 CAP92_SHADOW_2511 = True
+# 25.11.2026 (Мия «делай»): в production только слабые явления (туман, мгла, гололёд, заморозки) Extreme -> 74.
+# Сильные (ливень, ветер, шторм, наводнение) остаются 92 как раннее предупреждение. Откат: False.
+CAP92_WEAK_PROD_2511 = True
 _C92_WEAK = re.compile(r'туман|мгла|гололёд|гололед|гололедиц|заморозк|изморозь|fog|frost', re.I)
 _C92_HARM = re.compile(r'погиб|жертв|разрушен|ущерб|эвакуир|пострада', re.I)
 def _cap92_shadow_2511(events):
@@ -29425,6 +29437,10 @@ def _cap92_shadow_2511(events):
                 would, why = sev, 'есть сигнал о последствиях в той же стране за 48 ч'
             elif _C92_WEAK.search(ev):
                 would, why = 74, 'слабое явление'
+                if CAP92_WEAK_PROD_2511:
+                    e['severity_cap92_from'] = sev
+                    e['severity'] = 74
+                    why += ' (production)'
             else:
                 would, why = 80, 'Extreme без подтверждённых последствий'
             rows.append({'id': e.get('id'), 'title': (e.get('title') or '')[:140], 'source': e.get('source'),
