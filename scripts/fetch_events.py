@@ -31379,6 +31379,8 @@ def _sic_shadow_pass(events):
     for e in events:
         e['sic_class'] = _sic_class(e.get('title', ''), e.get('summary', '') or e.get('description', ''),
                                     e.get('canon_type'))
+        if e.get('source') == 'Copernicus C3S':
+            e['sic_class'] = 'EVENT'   # CLIM_PULSE_2511: измерение ERA5, а не комментарий
         # ADR-039A shadow: production-поле sic_class НЕ меняется
         _sc, _reason, _match = _report_shadow_eval(e)
         if SIC_SOURCE_AXIS_SHADOW:
