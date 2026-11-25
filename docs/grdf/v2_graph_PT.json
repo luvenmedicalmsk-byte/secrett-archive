@@ -1,8 +1,8 @@
 {
   "country": "PT",
-  "date": "2026-11-24",
+  "date": "2026-11-25",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-24T23:47:47.546313+00:00",
+  "generated_at": "2026-11-25T00:08:22.572975+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-PT",
       "type": "Country",
       "label": "PT",
-      "score": 50,
+      "score": 54,
       "props": {
-        "risk_score": 50
+        "risk_score": 54
       }
     },
     {
@@ -20,13 +20,13 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 74,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 59,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 50,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-technology",
@@ -70,14 +70,14 @@
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-PT-economic",
-      "type": "Driver",
-      "label": "economic"
-    },
-    {
       "id": "DRIVER-PT-climate",
       "type": "Driver",
       "label": "climate"
+    },
+    {
+      "id": "DRIVER-PT-economic",
+      "type": "Driver",
+      "label": "economic"
     },
     {
       "id": "SIGNAL-PT-Снег:_Каст",
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
+      "id": "SIGNAL-PT-Явления_на",
+      "type": "Signal",
+      "label": "Явления на побережье: Лейрия, Авейру, Ко",
+      "severity": 50,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-PT-Геополитич",
       "type": "Signal",
       "label": "Геополитический процесс — Португалия",
       "severity": 74,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-PT-Рынок_труд",
-      "type": "Signal",
-      "label": "Рынок труда — Португалия",
-      "severity": 59,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-economic",
       "type": "CORRELATES",
-      "weight": 0.59
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-PT",
@@ -151,37 +151,16 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-PT-economic",
-      "to": "COUNTRY-PT",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
       "from": "DRIVER-PT-climate",
       "to": "COUNTRY-PT",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-PT-climate",
-      "to": "DOMAIN-PT-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-PT-infrastructure",
-      "to": "DOMAIN-PT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-PT-economic",
-      "to": "DOMAIN-PT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
+      "from": "DRIVER-PT-economic",
+      "to": "COUNTRY-PT",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DOMAIN-PT-climate",
@@ -226,7 +205,34 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-PT-climate",
+      "to": "DOMAIN-PT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-PT-infrastructure",
+      "to": "DOMAIN-PT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-PT-economic",
+      "to": "DOMAIN-PT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-PT-Снег:_Каст",
+      "to": "DOMAIN-PT-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
+      "from": "SIGNAL-PT-Явления_на",
       "to": "DOMAIN-PT-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
@@ -236,12 +242,6 @@
       "to": "DOMAIN-PT-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.74
-    },
-    {
-      "from": "SIGNAL-PT-Рынок_труд",
-      "to": "DOMAIN-PT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.59
     }
   ]
 }
