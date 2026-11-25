@@ -2,9 +2,9 @@
   "country": "EG",
   "date": "2026-11-25",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-25T16:13:37.808481+00:00",
+  "generated_at": "2026-11-25T16:51:01.380345+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-EG",
@@ -26,14 +26,14 @@
       "id": "DOMAIN-EG-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
+      "score": 47,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-EG-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 47,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-EG-Уровень_ин",
-      "type": "Signal",
-      "label": "Уровень инфляции в Египте",
-      "severity": 32,
-      "domain": "economic"
-    },
-    {
       "id": "SIGNAL-EG-Технологич",
       "type": "Signal",
       "label": "Технологический сигнал — Египет",
@@ -99,6 +92,13 @@
       "label": "Социальный процесс — Египет",
       "severity": 49,
       "domain": "social"
+    },
+    {
+      "id": "SIGNAL-EG-Геополитич",
+      "type": "Signal",
+      "label": "Геополитический процесс — Египет",
+      "severity": 48,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -112,13 +112,13 @@
       "from": "COUNTRY-EG",
       "to": "DOMAIN-EG-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.47
     },
     {
       "from": "COUNTRY-EG",
       "to": "DOMAIN-EG-climate",
       "type": "CORRELATES",
-      "weight": 0.47
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-EG",
@@ -163,27 +163,6 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-EG-climate",
-      "to": "DOMAIN-EG-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-EG-economic",
-      "to": "DOMAIN-EG-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-EG-social",
-      "to": "DOMAIN-EG-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
       "from": "DOMAIN-EG-geopolitical",
       "to": "DOMAIN-EG-infrastructure",
       "type": "ESCALATES",
@@ -205,33 +184,6 @@
       "lag_days": 45
     },
     {
-      "from": "DOMAIN-EG-climate",
-      "to": "DOMAIN-EG-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-EG-infrastructure",
-      "to": "DOMAIN-EG-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-EG-economic",
-      "to": "DOMAIN-EG-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "SIGNAL-EG-Уровень_ин",
-      "to": "DOMAIN-EG-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.32
-    },
-    {
       "from": "SIGNAL-EG-Технологич",
       "to": "DOMAIN-EG-technology",
       "type": "AMPLIFIES",
@@ -242,6 +194,12 @@
       "to": "DOMAIN-EG-social",
       "type": "AMPLIFIES",
       "weight": 0.49
+    },
+    {
+      "from": "SIGNAL-EG-Геополитич",
+      "to": "DOMAIN-EG-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.48
     }
   ]
 }
