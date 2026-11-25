@@ -29071,6 +29071,14 @@ def _market_shock_floor(t, sm):
 # в ТЕСТОВОМ режиме. Ничего в ленте не меняется - только отчёт docs/_feed_fix_shadow.json:
 # что правило сделало бы с каждой записью. Production - отдельным решением после отчёта.
 FEED_FIX_SHADOW_2511 = True
+# 25.11.2026 (решение Мии «включай»): в production правила A (гео), C (шум), E (IODA),
+# F (нацкатастрофа), I (домен утечек о потерях), J (допереводы). B, D, G, H - только отчёт.
+# Откат: FEED_FIX_PROD_2511 = set().
+FEED_FIX_PROD_2511 = {'A', 'C', 'E', 'F', 'I', 'J'}
+_FF_CC_POINT = {'RU': ('Россия', 55.75, 37.62), 'UA': ('Украина', 50.45, 30.52), 'LY': ('Ливия', 32.12, 20.07),
+                'BH': ('Бахрейн', 26.07, 50.55), 'PL': ('Польша', 52.23, 21.01), 'EE': ('Эстония', 59.44, 24.75)}
+def _ff_mark(e, rule, before):
+    e.setdefault('feed_fix', []).append({'rule': 'FEED_FIX_2511_' + rule, 'before': before})
 _FF_ATK = r'(?:атак\w*|удар\w*|обстрел\w*|налёт\w*|налет\w*|сбит\w*|поражен\w*|попал\w* под)'
 _FF_BY_RU = re.compile(r'ВС РФ|российск\w+ (?:дрон|беспилотник|БПЛА|ракет|войск|арм|авиац|удар)|арми\w+ России|Росси\w+ (?:атаковал|нанесл|ударил)', re.I)
 _FF_BY_UA = re.compile(r'ВСУ|украинск\w+ (?:дрон|беспилотник|БПЛА|ракет|войск|арм|удар)|Украин\w+ (?:атаковал|нанесл|ударил)', re.I)
@@ -29100,7 +29108,7 @@ def _parse_any_dt(x):
 def _feed_fix_shadow_2511(events):
     if not FEED_FIX_SHADOW_2511:
         return
-    rep = {'generated_utc': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'), 'production': False,
+    rep = {'generated_utc': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'), 'production': sorted(FEED_FIX_PROD_2511),
            'A_geo': [], 'B_cap45': [], 'C_noise': [], 'D_dupes': [], 'E_ioda': [], 'F_natdis': [],
            'G_losses_70_75': [], 'H_losses_merge': [], 'I_domain_leak': [], 'J_retranslate': []}
     _loss = []
@@ -29120,6 +29128,12 @@ def _feed_fix_shadow_2511(events):
                 elif _FF_BY_UA.search(tx) and _FF_RU_PLACE.search(t) and not _FF_UA_PLACE.search(t): want = ('RU', 'удар ВСУ по России')
             if want and want[0] != cc:
                 rep['A_geo'].append(dict(row, would_cc=want[0], why=want[1]))
+                if 'A' in FEED_FIX_PROD_2511:
+                    _nm, _la, _lo = _FF_CC_POINT.get(want[0], (None, None, None))
+                    if _la is not None:
+                        _ff_mark(e, 'A', cc)
+                        _gr9_set(e, want[0], want[1] if want[0] == 'RU' and want[1] == 'Северная Осетия' else _nm, _la, _lo, 'FEED_FIX_2511_A: ' + want[1], sync=True)
+                        e['primary_country'] = e['country_code'] = e['event_country'] = want[0]
             # B. годовая статистика / наука / комментарий -> не выше 45 и «Контекст»
             why = 'годовая статистика' if _FF_STAT.search(t) else 'научный источник' if _FF_SCI_SRC.search(src) else 'комментарий/сценарий' if _FF_COMM.search(t) else None
             if why and sev > 45:
@@ -29128,9 +29142,17 @@ def _feed_fix_shadow_2511(events):
             m = _FF_NOISE.search(t)
             if m:
                 rep['C_noise'].append(dict(row, would='hide', match=m.group(0)))
+                if 'C' in FEED_FIX_PROD_2511:
+                    _ff_mark(e, 'C', 'visible')
+                    e['feed_visible'] = False
+                    e.setdefault('hide_reasons', []).append({'code': 'feed_fix_noise', 'src': 'production'})
+                    e['hide_reason'] = 'feed_fix_noise'
+                    continue
             # E. IODA без подтверждения Cloudflare -> 55
             if src == 'IODA' and sev > 55 and cc not in cf_cc:
                 rep['E_ioda'].append(dict(row, would_sev=55, why='только IODA, без подтверждения Cloudflare Radar'))
+                if 'E' in FEED_FIX_PROD_2511:
+                    _ff_mark(e, 'E', sev); e['severity'] = 55; sev = 55
             # G. накопленные потери с начала войны -> коридор 70-75, класс «отчёт»
             if _FF_LOSS.search(tx) and _FF_CUMUL.search(tx) and _FF_BIG.search(tx):
                 _loss.append(e)
@@ -29139,13 +29161,27 @@ def _feed_fix_shadow_2511(events):
                 # I. «утечка/данные» о гибели - не технологии
                 if e.get('domain') == 'technology':
                     rep['I_domain_leak'].append(dict(row, would_domain='geopolitics'))
+                    if 'I' in FEED_FIX_PROD_2511:
+                        _ff_mark(e, 'I', 'technology'); e['domain'] = 'geopolitics'
             # J. в русском тексте остались английские слова -> перевести повторно
             lat = [w for w in re.findall(r'(?<![A-Za-z@/.])[a-z]{5,}(?![A-Za-z./])', tx) if w not in _FF_LAT_OK]
             if lat:
                 rep['J_retranslate'].append(dict(row, words=lat[:5]))
+                if 'J' in FEED_FIX_PROD_2511:
+                    try:
+                        for _fk in ('title', 'summary'):
+                            _fv = e.get(_fk) or ''
+                            if _fv and re.search(r'(?<![A-Za-z@/.])[a-z]{5,}(?![A-Za-z./])', _fv):
+                                _nv = translate_batch([_fv], force=True)[0]
+                                if _nv and _nv != _fv and re.search(r'[А-Яа-яЁё]', _nv):
+                                    _ff_mark(e, 'J', _fk); e[_fk] = _nv
+                    except Exception:
+                        pass
             # F. национальная катастрофа -> не ниже 60
             if _FF_NATDIS.search(tx) and sev < 60:
                 rep['F_natdis'].append(dict(row, would_sev=60))
+                if 'F' in FEED_FIX_PROD_2511:
+                    _ff_mark(e, 'F', sev); e['severity'] = 60
         except Exception:
             continue
     # H. одна утечка о потерях - одна карточка (оставить с наибольшим индексом)
@@ -29189,6 +29225,64 @@ def _feed_fix_shadow_2511(events):
     except Exception:
         pass
     print('  feed_fix_shadow_2511: ' + ', '.join('%s %d' % kv for kv in rep['counts'].items()))
+
+
+# 25.11.2026 · CAP92_SHADOW_2511 (решение Мии 25.11): официальные предупреждения уровня
+# Extreme получают 92 механически (_CAP_SEV), без учёта последствий: ветер Казгидромета в
+# степи, туман NCM в Саудовской Аравии. Отчёт docs/_cap92_shadow.json: что было бы при
+# правиле «Extreme без подтверждённых последствий -> 80; слабые явления (туман, мгла,
+# гололёд, заморозки) -> не выше 74; 90+ остаётся, если в ленте есть сигнал о погибших или
+# разрушениях в той же стране за 48 ч». Лента и индексы не меняются. Откат: CAP92_SHADOW_2511 = False.
+CAP92_SHADOW_2511 = True
+_C92_WEAK = re.compile(r'туман|мгла|гололёд|гололед|гололедиц|заморозк|изморозь|fog|frost', re.I)
+_C92_HARM = re.compile(r'погиб|жертв|разрушен|ущерб|эвакуир|пострада', re.I)
+def _cap92_shadow_2511(events):
+    if not CAP92_SHADOW_2511:
+        return
+    rows = []
+    try:
+        now = datetime.now(timezone.utc)
+        harm_cc = set()
+        for e in events or []:
+            if e.get('alerts_only') or e.get('feed_visible') is False:
+                continue
+            if (e.get('meta') or {}).get('kind') in ('mgm', 'rosgidromet_cap', 'cap', 'cap_hub'):
+                continue
+            if e.get('domain') != 'climate' or not _C92_HARM.search((e.get('title') or '') + ' ' + (e.get('summary') or '')[:200]):
+                continue
+            try:
+                if (now - _parse_any_dt(e.get('date') or e.get('ts') or '')).total_seconds() > 48 * 3600:
+                    continue
+            except Exception:
+                pass
+            harm_cc.add(str(e.get('primary_country') or e.get('country_code') or e.get('region') or ''))
+        for e in events or []:
+            m = e.get('meta') or {}
+            if m.get('kind') not in ('mgm', 'rosgidromet_cap', 'cap', 'cap_hub'):
+                continue
+            sev = e.get('severity') or 0
+            if sev < 90:
+                continue
+            cc = str(e.get('primary_country') or e.get('country_code') or e.get('region') or '')
+            ev = str(m.get('event') or e.get('title') or '')
+            if cc in harm_cc:
+                would, why = sev, 'есть сигнал о последствиях в той же стране за 48 ч'
+            elif _C92_WEAK.search(ev):
+                would, why = 74, 'слабое явление'
+            else:
+                would, why = 80, 'Extreme без подтверждённых последствий'
+            rows.append({'id': e.get('id'), 'title': (e.get('title') or '')[:140], 'source': e.get('source'),
+                         'cc': cc, 'event': ev[:60], 'sev': sev, 'would_sev': would, 'why': why})
+    except Exception as _c9e:
+        rows.append({'error': str(_c9e)[:200]})
+    rep = {'generated_utc': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'), 'mode': 'тень, лента и индексы не меняются',
+           'count': len(rows), 'changed': sum(1 for r in rows if r.get('would_sev') not in (None, r.get('sev'))), 'items': rows}
+    try:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'docs', '_cap92_shadow.json'), 'w', encoding='utf-8') as f:
+            json.dump(rep, f, ensure_ascii=False, indent=1)
+    except Exception:
+        pass
+    print('  cap92_shadow_2511: 90+ предупреждений %d, изменилось бы %d' % (rep['count'], rep['changed']))
 
 
 # 25.11.2026 · INFRA_HITS_2511 (решение Мии 25.11): какие объекты инфраструктуры фигурировали
@@ -30077,7 +30171,7 @@ _S29_GAS = re.compile(r'газ\w*\D{0,60}?\$\s?(\d[\d\s ]{2,6})', re.I)
 # заданный не в $ за тыс. м³, а ростом в % за год, «максимумом за N лет» или ценой
 # в евро за МВт·ч. Только отчёт docs/_gas_floor_shadow.json, severity НЕ меняется.
 # Production-включение - отдельным решением. Откат: GAS_FLOOR_SHADOW_2511 = False.
-GAS_FLOOR_SHADOW_2511 = True
+GAS_FLOOR_SHADOW_2511 = False   # 25.11.2026 выключен (Мия): заменён MARKET_SHOCK_2511 в production
 _GF_GAS = re.compile(r'(?<![а-яё])газ|\bttf\b', re.I)
 _GF_EU = re.compile(r'европ|\bttf\b', re.I)
 _GF_PCT = re.compile(r'(?:выросл|вырос|подорожал|подскочил|рост\w*)[^.]{0,60}?на\s+(\d{2,4})\s*%', re.I)
@@ -31914,7 +32008,11 @@ def save_enriched(events, previous_snapshot=None):
                 _feed_hygiene(enriched["events"])
                 _sev_post_hyg_0511(enriched["events"])
                 try:
-                    _feed_fix_shadow_2511(enriched["events"])   # FEED_FIX_SHADOW_2511 (только отчёт)
+                    _feed_fix_shadow_2511(enriched["events"])   # FEED_FIX_2511: отчёт + production A C E F I J
+                except Exception:
+                    pass
+                try:
+                    _cap92_shadow_2511(enriched["events"])   # CAP92_SHADOW_2511 (только отчёт)
                 except Exception:
                     pass
                 try:

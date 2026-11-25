@@ -27,7 +27,7 @@ import urllib.request
 from collections import Counter
 from datetime import datetime, timezone
 
-GDELT_SHADOW = True
+GDELT_SHADOW = False   # 25.11.2026 выключен (Мия): 0 статей, источник не отвечает
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, '..', 'docs', '_gdelt_shadow.json')
 FETCH_SRC = os.path.join(HERE, 'fetch_events.py')
