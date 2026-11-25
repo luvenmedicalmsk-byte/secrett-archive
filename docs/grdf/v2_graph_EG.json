@@ -2,24 +2,24 @@
   "country": "EG",
   "date": "2026-11-25",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-25T19:28:58.752781+00:00",
+  "generated_at": "2026-11-25T19:50:07.385745+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-EG",
       "type": "Country",
       "label": "EG",
-      "score": 73,
+      "score": 77,
       "props": {
-        "risk_score": 73
+        "risk_score": 77
       }
     },
     {
       "id": "DOMAIN-EG-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 80,
+      "score": 76,
       "trend": "up"
     },
     {
@@ -27,13 +27,13 @@
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-EG-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 70,
       "trend": "up"
     },
     {
@@ -55,14 +55,14 @@
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-EG-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-EG-Geopolitical",
@@ -75,9 +75,9 @@
       "label": "Economic"
     },
     {
-      "id": "DRIVER-EG-Social",
+      "id": "DRIVER-EG-Economic",
       "type": "Driver",
-      "label": "Social"
+      "label": "Economic"
     },
     {
       "id": "SIGNAL-EG-30_погибши",
@@ -87,18 +87,18 @@
       "domain": "social"
     },
     {
+      "id": "SIGNAL-EG-Пожар_на_ш",
+      "type": "Signal",
+      "label": "Пожар на шоссе в Египте унес 30 жизней п",
+      "severity": 70,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-EG-Технологич",
       "type": "Signal",
       "label": "Технологический сигнал — Египет",
       "severity": 55,
       "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-EG-Социальный",
-      "type": "Signal",
-      "label": "Социальный процесс — Египет",
-      "severity": 49,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-EG",
       "to": "DOMAIN-EG-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.8
+      "weight": 0.76
     },
     {
       "from": "COUNTRY-EG",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-EG",
       "to": "DOMAIN-EG-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.7
     },
     {
       "from": "COUNTRY-EG",
@@ -157,10 +157,31 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-EG-Social",
+      "from": "DRIVER-EG-Economic",
       "to": "COUNTRY-EG",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-EG-climate",
+      "to": "DOMAIN-EG-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-EG-economic",
+      "to": "DOMAIN-EG-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-EG-social",
+      "to": "DOMAIN-EG-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "DOMAIN-EG-geopolitical",
@@ -184,22 +205,43 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-EG-climate",
+      "to": "DOMAIN-EG-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-EG-infrastructure",
+      "to": "DOMAIN-EG-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-EG-economic",
+      "to": "DOMAIN-EG-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-EG-30_погибши",
       "to": "DOMAIN-EG-social",
       "type": "AMPLIFIES",
       "weight": 0.73
     },
     {
+      "from": "SIGNAL-EG-Пожар_на_ш",
+      "to": "DOMAIN-EG-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.7
+    },
+    {
       "from": "SIGNAL-EG-Технологич",
       "to": "DOMAIN-EG-technology",
       "type": "AMPLIFIES",
       "weight": 0.55
-    },
-    {
-      "from": "SIGNAL-EG-Социальный",
-      "to": "DOMAIN-EG-social",
-      "type": "AMPLIFIES",
-      "weight": 0.49
     }
   ]
 }

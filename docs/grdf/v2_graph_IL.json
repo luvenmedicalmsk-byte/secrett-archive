@@ -2,9 +2,9 @@
   "country": "IL",
   "date": "2026-11-25",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-25T19:28:58.758740+00:00",
+  "generated_at": "2026-11-25T19:50:07.392386+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-IL",
@@ -33,7 +33,7 @@
       "id": "DOMAIN-IL-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 50,
       "trend": "stable"
     },
     {
@@ -94,11 +94,11 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-IL-Айзенкот_з",
+      "id": "SIGNAL-IL-Явления_на",
       "type": "Signal",
-      "label": "Айзенкот заключил первое коалиционное со",
-      "severity": 34,
-      "domain": "geopolitical"
+      "label": "Явления на побережье: Море - Юг, Море - ",
+      "severity": 50,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-IL",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IL-climate",
+      "to": "DOMAIN-IL-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IL-economic",
+      "to": "DOMAIN-IL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-IL-social",
+      "to": "DOMAIN-IL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-IL-geopolitical",
       "to": "DOMAIN-IL-infrastructure",
       "type": "ESCALATES",
@@ -184,6 +205,27 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-IL-climate",
+      "to": "DOMAIN-IL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-IL-infrastructure",
+      "to": "DOMAIN-IL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IL-economic",
+      "to": "DOMAIN-IL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-IL-OPt:_Эколо",
       "to": "DOMAIN-IL-geopolitical",
       "type": "AMPLIFIES",
@@ -196,10 +238,10 @@
       "weight": 0.54
     },
     {
-      "from": "SIGNAL-IL-Айзенкот_з",
-      "to": "DOMAIN-IL-geopolitical",
+      "from": "SIGNAL-IL-Явления_на",
+      "to": "DOMAIN-IL-climate",
       "type": "AMPLIFIES",
-      "weight": 0.34
+      "weight": 0.5
     }
   ]
 }
