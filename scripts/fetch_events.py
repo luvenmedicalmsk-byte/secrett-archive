@@ -29210,7 +29210,7 @@ _FF_CITY = [(re.compile(r'Владикавказ', re.I), 'RU', 'Северна�
 _FF_STAT = re.compile(r'(?:за (?:20\d\d|этот|прошл\w+|весь) год|в 20\d\d году|в этом году|с начала (?:года|20\d\d)|каждый час|ежегодно|за год)', re.I)
 _FF_SCI_SRC = re.compile(r'Phys\.org|New Scientist|ScienceDaily|Nature|EurekAlert|Science News|Atlantic Council', re.I)
 _FF_COMM = re.compile(r'репортаж из 20\d\d|что важно знать|как .{3,40} меняет|что будет с|мнение:|колонка|«[^»]{0,40}»\.\s|может (?:ударять|начаться|уже начал)|возможно, уже', re.I)
-_FF_NOISE = re.compile(r'^18\+|иностранн\w+ агент|кто имеет право|поздравил\w*|проводит совещани|идёт на поправку|идет на поправку|заставил ИИ|на коленях|вот так проходит|ожидают пересадки|скин\w* CS2|жена главы|репортаж из 20\d\d', re.I)
+_FF_NOISE = re.compile(r'(?:^|[,.]\s)ага[.,]|\b100500\b|наверно,\s+опять|^18\+|иностранн\w+ агент|кто имеет право|поздравил\w*|проводит совещани|идёт на поправку|идет на поправку|заставил ИИ|на коленях|вот так проходит|ожидают пересадки|скин\w* CS2|жена главы|репортаж из 20\d\d', re.I)
 _FF_NATDIS = re.compile(r'национальн\w+ (?:катастроф|бедстви|чрезвычайн)|национальной катастроф|national (?:disaster|emergency)|режим ЧС федерального', re.I)
 _FF_STOP = set('атака атаки атаку удара удары ударов после россии россия украины украина области области результате человек погибли погиб ранены сообщает сообщил ночью около более против время новые новых данные заявил'.split())
 def _ff_tokens(t):
@@ -29234,6 +29234,15 @@ def _feed_fix_shadow_2511(events):
            'G_losses_70_75': [], 'H_losses_merge': [], 'I_domain_leak': [], 'J_retranslate': []}
     _loss = []
     vis = [e for e in (events or []) if e.get('feed_visible') is not False and not e.get('alerts_only')]
+    # C для вкладки «Контекст» (Мия 26.11): шум, уже скрытый фильтром контекста, не показывается и там
+    if 'C' in FEED_FIX_PROD_2511:
+        for _ce in (events or []):
+            try:
+                if _ce.get('context_only') and _FF_NOISE.search(_ce.get('title') or ''):
+                    _ce['context_only'] = False
+                    _ff_mark(_ce, 'C', 'context')
+            except Exception:
+                pass
     cf_cc = set(str(e.get('country_code') or e.get('primary_country') or '') for e in vis if 'Cloudflare' in str(e.get('source') or ''))
     ioda_corr, ioda_art = set(), set()
     try:
@@ -29295,6 +29304,7 @@ def _feed_fix_shadow_2511(events):
                 if 'C' in FEED_FIX_PROD_2511:
                     _ff_mark(e, 'C', 'visible')
                     e['feed_visible'] = False
+                    e['context_only'] = False   # шум не показывается и во вкладке «Контекст»
                     e.setdefault('hide_reasons', []).append({'code': 'feed_fix_noise', 'src': 'production'})
                     e['hide_reason'] = 'feed_fix_noise'
                     continue
