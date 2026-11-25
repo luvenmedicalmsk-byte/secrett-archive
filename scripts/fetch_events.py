@@ -4812,6 +4812,78 @@ def fetch_eonet_ice():
     return items
 
 
+def fetch_c3s_pulse():
+    """CLIM_PULSE_2511 (Мия 25.11). Copernicus Climate Pulse (ERA5): суточная глобальная
+    температура приземного воздуха. Карточка только при рекорде или аномалии >= +2,0°C
+    к доиндустриальному уровню (1850-1900), иначе ничего - без ежедневного шума."""
+    items = []
+    try:
+        url = "https://sites.ecmwf.int/data/climatepulse/data/series/era5_daily_series_2t_global.csv"
+        data = fetch_url(url, timeout=25)
+        if not data:
+            print("  C3S Climate Pulse: нет данных", file=sys.stderr)
+            return items
+        hdr = None; rows = []
+        for ln in data.splitlines():
+            ln = ln.strip()
+            if not ln or ln.startswith('#'):
+                continue
+            p = [x.strip() for x in ln.split(',')]
+            if hdr is None:
+                hdr = [h.lower() for h in p]; continue
+            rows.append(p)
+        if not hdr or len(rows) < 400:
+            return items
+        i_d = 0
+        i_pi = next((i for i, h in enumerate(hdr) if 'pi' in h or '1850' in h), None)
+        i_91 = next((i for i, h in enumerate(hdr) if h.startswith('ano') and '91' in h), None)
+        ser = []
+        for p in rows:
+            try:
+                if i_pi is not None:
+                    v = float(p[i_pi])
+                elif i_91 is not None:
+                    v = float(p[i_91]) + 0.88   # смещение C3S: 1991-2020 -> 1850-1900
+                else:
+                    continue
+                ser.append((p[i_d][:10], v))
+            except (ValueError, IndexError):
+                continue
+        if len(ser) < 400:
+            return items
+        ser.sort()
+        d_last, v_last = ser[-1]
+        prev_max = max(v for _, v in ser[:-1])
+        streak = 0
+        for _, v in reversed(ser):
+            if v >= 2.0: streak += 1
+            else: break
+        record = v_last > prev_max
+        if not (record or streak >= 1):
+            print("  C3S Climate Pulse: %s %+.2f°C, без карточки" % (d_last, v_last), file=sys.stderr)
+            return items
+        vs = ('%+.2f' % v_last).replace('.', ',')
+        if streak >= 2:
+            tail = " - %d дн. подряд выше +2°C" % streak
+        elif streak == 1:
+            tail = " - выше +2°C"
+        else:
+            tail = ""
+        title = "Глобальная температура: %s°C к доиндустриальному уровню%s%s" % (vs, tail, ", рекорд наблюдений" if record else "")
+        desc = ("Суточная средняя глобальная температура приземного воздуха %s по ERA5 (Copernicus Climate Pulse) - %s°C "
+                "к уровню 1850-1900 годов. Предыдущий максимум ряда %s°C. Порог Парижского соглашения +1,5°C "
+                "оценивается по многолетнему среднему, а не по отдельным дням." % (d_last, vs, ('%+.2f' % prev_max).replace('.', ',')))
+        items.append({
+            'title': title, 'desc': desc, 'date': d_last,
+            'source': 'Copernicus C3S', 'source_bias': min(20, 10 + 2 * streak + (4 if record else 0)),
+            '_domain': 'climate',
+        })
+    except Exception as e:
+        print(f"  [WARN] C3S Climate Pulse: {e}", file=sys.stderr)
+    print(f"  C3S Climate Pulse: {len(items)} событий", file=sys.stderr)
+    return items
+
+
 def fetch_nsidc_seaice():
     """NSIDC Sea Ice Index — суточная площадь морского льда (Арктика+Антарктика).
     Сигнал «аномалия площади» = отклонение от климат-нормы того же дня года (± 3 дня),
@@ -9908,6 +9980,10 @@ def process_events(raw_items):
             _evd = ev.get('domain','')
             # S36.4: economy/social -- до 7 дней (институц. ленты редки); аналитика -- 3; новости -- сегодня
             max_days = 21 if _evd in ('technology','social') else 14 if _evd == 'climate' else 10 if _evd == 'economy' else 3  # S36.4 + институц.аналитика (Мия 21.07)
+            # CLIM_FRESH_2511 (Мия 25.11): активное бедствие не устаревает по дате начала.
+            # ReliefWeb Disasters запрашивается со status=current - бедствие идёт сейчас; GDACS - дата последнего обновления.
+            if source == 'ReliefWeb Disasters': max_days = max(max_days, 45)
+            elif source == 'GDACS Floods': max_days = max(max_days, 30)
             if days_old > max_days:
                 _trace(_obs_id(ev),'FRESHNESS','removed',reason='fresh'); _lost('fresh', ev); continue
         except:
@@ -21953,6 +22029,8 @@ def fetch_climate_rss():
         ('https://grist.org/feed/', 'Grist', 'climate'),
         ('https://phys.org/rss-feed/earth-news/environment/', 'Phys.org Climate', 'climate'),
         ('https://www.sciencedaily.com/rss/earth_climate/climate.xml', 'ScienceDaily Climate', 'climate'),
+        # CLIM_SRC_2511 (Мия 25.11): раздел «Окружающая среда» - рекорды температуры, COP, крупные климатические сюжеты
+        ('https://www.theguardian.com/environment/rss', 'The Guardian', 'climate'),
     ]
 
     items = []
@@ -29329,6 +29407,88 @@ def _cap92_shadow_2511(events):
     print('  cap92_shadow_2511: 90+ предупреждений %d, изменилось бы %d' % (rep['count'], rep['changed']))
 
 
+# 25.11.2026 · CLIM_CONFIRM_SHADOW_2511 (решение Мии 25.11): официальное предупреждение (CAP)
+# + подтверждённые последствия в той же стране за 48 ч -> карточка вышла бы в ленту.
+# Сейчас предупреждения живут только в слое предупреждений (alerts_only), и крупные события
+# (Флорида, юг Франции, Бразилия) в ленту не попадают. Отчёт docs/_clim_confirm_shadow.json,
+# лента не меняется. Откат: CLIM_CONFIRM_SHADOW_2511 = False.
+CLIM_CONFIRM_SHADOW_2511 = True
+_CC_HARM = re.compile(r'погиб|жертв|разрушен|ущерб|эвакуир|пострада|пропал\w* без вести|без крова|без электричеств|обесточ|затоплен\w* дом|рекордн\w* уров', re.I)
+_CC_FAM = [('вода', re.compile(r'наводн|паводк|затоплен|ливн|дожд|осадк|разлив|подтоплен|flood', re.I)),
+           ('ветер', re.compile(r'ветер|шторм|ураган|смерч|торнадо|циклон|тайфун|гроз|град', re.I)),
+           ('холод', re.compile(r'снег|метел|гололёд|гололед|мороз|низк\w* температур|холод|лавин', re.I)),
+           ('жара', re.compile(r'жара|зно|высок\w* температур|засух', re.I)),
+           ('огонь', re.compile(r'пожар|пожароопасн', re.I))]
+_CC_BIG = {'RU', 'US', 'BR', 'CN', 'CA', 'AU', 'IN', 'KZ', 'AR', 'MX', 'ID'}
+def _cc_fams(t):
+    return set(n for n, rx in _CC_FAM if rx.search(t or ''))
+def _cc_places(t):
+    t = re.sub(r'^[^:]{0,40}:\s*', '', t or '')
+    t = re.split(r',\s*(США|Россия|Бразилия|Китай|Канада|Австралия|Индия|Казахстан)\b', t)[0]
+    return [w for w in re.findall(r'[А-ЯЁA-Z][а-яёa-z\-]{3,}', t) if w.lower() not in ('районов', 'район', 'область', 'республика', 'край', 'штата', 'штаты', 'центральная', 'северный', 'южный', 'западный', 'восточный')]
+def _clim_confirm_shadow_2511(events):
+    if not CLIM_CONFIRM_SHADOW_2511:
+        return
+    rows = []
+    try:
+        now = datetime.now(timezone.utc)
+        harm = {}
+        for e in events or []:
+            if e.get('alerts_only') or (e.get('meta') or {}).get('kind') in ('mgm', 'rosgidromet_cap', 'cap', 'cap_hub'):
+                continue
+            if e.get('domain') != 'climate':
+                continue
+            tx = (e.get('title') or '') + ' ' + (e.get('summary') or '')[:300]
+            if not _CC_HARM.search(tx):
+                continue
+            try:
+                _dt = _parse_any_dt(e.get('last_update') or e.get('date') or '')
+                if _dt.tzinfo is None: _dt = _dt.replace(tzinfo=timezone.utc)
+                if (now - _dt).total_seconds() > 72 * 3600:
+                    continue
+            except Exception:
+                continue
+            cc = str(e.get('primary_country') or e.get('country_code') or '')
+            if cc:
+                harm.setdefault(cc, []).append({'id': e.get('id'), 'title': (e.get('title') or '')[:120], 'sev': e.get('severity'),
+                                                'visible': e.get('feed_visible') is not False, 'source': e.get('source'),
+                                                '_tx': tx.lower(), '_fam': _cc_fams(tx)})
+        for e in events or []:
+            m = e.get('meta') or {}
+            if m.get('kind') not in ('mgm', 'rosgidromet_cap', 'cap', 'cap_hub') and not e.get('alerts_only'):
+                continue
+            if e.get('domain') != 'climate':
+                continue
+            sev = e.get('severity') or 0
+            cc = str(e.get('primary_country') or e.get('country_code') or '')
+            if sev < 56 or not cc or cc not in harm:
+                continue
+            at = e.get('title') or ''
+            afam = _cc_fams(at + ' ' + str(m.get('event') or ''))
+            places = [p.lower()[:6] for p in _cc_places(at)]
+            conf = []
+            for h in harm[cc]:
+                if not (afam & h['_fam']):
+                    continue                      # другое явление
+                if cc in _CC_BIG and not any(p in h['_tx'] for p in places):
+                    continue                      # большая страна: нужен тот же регион
+                conf.append({k: v for k, v in h.items() if not k.startswith('_')})
+            if not conf:
+                continue
+            rows.append({'id': e.get('id'), 'title': at[:140], 'source': e.get('source'), 'cc': cc,
+                         'sev': sev, 'would': 'в ленту', 'confirm': conf[:3]})
+    except Exception as _cce:
+        rows.append({'error': str(_cce)[:200]})
+    rep = {'generated_utc': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'), 'mode': 'тень, лента не меняется',
+           'count': len(rows), 'countries': sorted(set(r.get('cc', '') for r in rows if r.get('cc'))), 'items': rows}
+    try:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'docs', '_clim_confirm_shadow.json'), 'w', encoding='utf-8') as f:
+            json.dump(rep, f, ensure_ascii=False, indent=1)
+    except Exception:
+        pass
+    print('  clim_confirm_shadow_2511: предупреждений с подтверждением %d, стран %d' % (rep['count'], len(rep['countries'])))
+
+
 # 25.11.2026 · INFRA_HITS_2511 (решение Мии 25.11): какие объекты инфраструктуры фигурировали
 # в сигналах Atlas за 30 дней. Только файл docs/infra_hits.json для карты; лента и индексы не меняются.
 # Совпадение: название объекта (+ слово его типа: НПЗ / АЭС / порт / терминал) или точка сигнала
@@ -32060,6 +32220,10 @@ def save_enriched(events, previous_snapshot=None):
                 except Exception:
                     pass
                 try:
+                    _clim_confirm_shadow_2511(enriched["events"])   # CLIM_CONFIRM_SHADOW_2511 (только отчёт)
+                except Exception:
+                    pass
+                try:
                     _infra_hits_2511(enriched["events"])   # INFRA_HITS_2511 (только файл для карты)
                 except Exception as _ihe:
                     print('  infra_hits_2511 ошибка:', _ihe)
@@ -32736,6 +32900,7 @@ if __name__ == '__main__':
             ('nasa_eonet',         fetch_nasa_eonet),
             # ('eonet_ice', fetch_eonet_ice),  # айсберги живут в крио-вкладке (EONET напрямую), из общей ленты убраны
             ('nsidc_seaice',       fetch_nsidc_seaice),
+            ('c3s_pulse',          fetch_c3s_pulse),
             ('gdacs',              fetch_gdacs),
             ('gdacs_floods',       fetch_flood_observatory),
             ('usgs',               fetch_usgs_earthquakes),
