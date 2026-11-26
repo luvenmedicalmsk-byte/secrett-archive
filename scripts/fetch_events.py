@@ -11180,7 +11180,7 @@ def _lin_removed(removed, survivors, stage, reason, winner_of=None):
 # основ ≥0.25 (≥0.4, если общие якоря только прилагательные «…ской»).
 # Кластер собирается полной связью: новая запись должна подходить ко ВСЕМ членам.
 # Откат: EVENT_CLUSTER_SHADOW = False.
-EVENT_CLUSTER_SHADOW = True
+EVENT_CLUSTER_SHADOW = False   # 26.11.2026 (Мия): выключен, склейка - STORY_MERGE_2611
 _ECS_STOP = ('россия', 'россий', 'украин', 'сша', 'китай', 'иран', 'израил', 'европ', 'мир', 'презид',
              'правит', 'трамп', 'путин', 'зеленс', 'нетань', 'минобо', 'монито', 'сегодн', 'ночью', 'кроме', 'также')
 _ECS_MACHINE = {'GPSJam', 'IODA', 'Cloudflare Radar', 'EUROCONTROL NOTAM', 'JTWC', 'USGS', 'GDACS',
@@ -29191,7 +29191,8 @@ FEED_FIX_SHADOW_2511 = True
 # 25.11.2026 (решение Мии «включай»): в production правила A (гео), C (шум), E (IODA),
 # F (нацкатастрофа), I (домен утечек о потерях), J (допереводы). B, D, G, H - только отчёт.
 # Откат: FEED_FIX_PROD_2511 = set().
-FEED_FIX_PROD_2511 = {'A', 'C', 'E', 'F', 'G', 'I', 'J'}   # G добавлено 25.11 (Мия): накопленные потери 70-75
+FEED_FIX_PROD_2511 = {'A', 'C', 'E', 'F', 'G', 'H', 'I', 'J'}   # H добавлено 26.11 (Мия)
+FF_D_REPORT_2511 = False   # 26.11 (Мия): отчёт D выключен, склейка - STORY_MERGE_2611   # G добавлено 25.11 (Мия): накопленные потери 70-75
 _FF_CC_POINT = {'RU': ('Россия', 55.75, 37.62), 'UA': ('Украина', 50.45, 30.52), 'LY': ('Ливия', 32.12, 20.07),
                 'BH': ('Бахрейн', 26.07, 50.55), 'PL': ('Польша', 52.23, 21.01), 'EE': ('Эстония', 59.44, 24.75)}
 def _ff_mark(e, rule, before):
@@ -29363,8 +29364,19 @@ def _feed_fix_shadow_2511(events):
     if len(_loss) > 1:
         g = sorted(_loss, key=lambda e: -(e.get('severity') or 0))
         rep['H_losses_merge'].append({'keep': g[0].get('title', '')[:120], 'would_merge': [x.get('title', '')[:120] for x in g[1:]]})
-    # D. дубли: та же страна, общие имена собственные, 24 ч
+        if 'H' in FEED_FIX_PROD_2511:
+            _hd = g[0]; _hs = list(_hd.get('dup_sources') or [])
+            for x in g[1:]:
+                _hide_mark(x, 'losses_merge'); x['incident_of'] = _hd.get('id')
+                if x.get('source') and x.get('source') != _hd.get('source') and x.get('source') not in _hs:
+                    _hs.append(x.get('source'))
+            _hd['incident_count'] = (_hd.get('incident_count') or 1) + len(g) - 1
+            _hd['dup_count'] = (_hd.get('dup_count') or 0) + len(g) - 1
+            _hd['dup_sources'] = _hs[:8]
+    # D. дубли: та же страна, общие имена собственные, 24 ч (отчёт выключен 26.11)
     try:
+        if not FF_D_REPORT_2511:
+            raise StopIteration
         items = []
         for e in vis:
             items.append((e, _ff_tokens(e.get('title') or ''), str(e.get('primary_country') or e.get('country_code') or e.get('region') or '')))
@@ -29391,6 +29403,8 @@ def _feed_fix_shadow_2511(events):
                 clusters.append({'keep': g[0].get('title', '')[:120], 'keep_sev': g[0].get('severity'),
                                  'would_merge': [x.get('title', '')[:120] for x in g[1:]]})
         rep['D_dupes'] = clusters
+    except StopIteration:
+        pass
     except Exception as ex:
         rep['D_err'] = str(ex)
     rep['counts'] = {k: len(v) for k, v in rep.items() if isinstance(v, list)}
@@ -29412,6 +29426,9 @@ CAP92_SHADOW_2511 = True
 # 25.11.2026 (Мия «делай»): в production только слабые явления (туман, мгла, гололёд, заморозки) Extreme -> 74.
 # Сильные (ливень, ветер, шторм, наводнение) остаются 92 как раннее предупреждение. Откат: False.
 CAP92_WEAK_PROD_2511 = True
+# 26.11.2026 (Мия «делай»): сильные явления Extreme без подтверждённых последствий в стране за 48 ч -> 80.
+# С последствиями остаётся 90+. Откат: False.
+CAP92_STRONG_PROD_2611 = True
 _C92_WEAK = re.compile(r'туман|мгла|гололёд|гололед|гололедиц|заморозк|изморозь|fog|frost', re.I)
 _C92_HARM = re.compile(r'погиб|жертв|разрушен|ущерб|эвакуир|пострада', re.I)
 def _cap92_shadow_2511(events):
@@ -29453,6 +29470,10 @@ def _cap92_shadow_2511(events):
                     why += ' (production)'
             else:
                 would, why = 80, 'Extreme без подтверждённых последствий'
+                if CAP92_STRONG_PROD_2611:
+                    e['severity_cap92_from'] = sev
+                    e['severity'] = 80
+                    why += ' (production)'
             rows.append({'id': e.get('id'), 'title': (e.get('title') or '')[:140], 'source': e.get('source'),
                          'cc': cc, 'event': ev[:60], 'sev': sev, 'would_sev': would, 'why': why})
     except Exception as _c9e:
@@ -29565,7 +29586,7 @@ _RS_NOT = re.compile(r'удар|атак|обстрел|беспилот|БПЛ�
 # 26.11.2026 · FEED_AUDIT3_2611 (решение Мии 26.11 «да делай», аудит ленты 3, P1-P8).
 # Идёт после арбитра доменов, до записи файла. Откат: FEED_AUDIT3_2611 = False.
 FEED_AUDIT3_2611 = True
-_A3_FEATURE_SRC = re.compile(r'^(?:Phys\.org|ScienceDaily|Mongabay|Grist|Inside Climate|Yale E360|Carbon Brief|Atlantic Council|Foreign Affairs|Wildfire Today|Cloudflare Blog)', re.I)
+_A3_FEATURE_SRC = re.compile(r'^(?:Phys\.org|ScienceDaily|Mongabay|Grist|Inside Climate|Yale E360|Carbon Brief|Atlantic Council|Foreign Affairs|Wildfire Today|Cloudflare Blog|Nature / IPCC)', re.I)
 _A3_FEATURE_TTL = re.compile(r'^(?:Что |Как |Почему |Зачем |Итоги |Исследовател|Учёные |Ученые |Понимание |Пора |Мнение|Анализ )|И это всего лишь|меняет правила игры|«Карточный домик|отслеживает активность|предлагает модель|- Анализ ситуации|— Анализ ситуации', re.I)
 _A3_HARD = re.compile(r'погиб|убит|жертв|ранен|эвакуир|атак|удар|обстрел|взрыв|ДТП|авари', re.I)
 _A3_CYBER_ACT = re.compile(r'под активной атакой|активн\w+ (?:атак|эксплуат)|эксплуатиру\w+|используют (?:\w+\s+){0,3}уязвимост|использовали (?:\w+\s+){0,3}уязвимост|нарушив работу|нарушил\w* работу|нарушает работу|получили доступ|взломал\w*|подтвердил\w* кибератак', re.I)
@@ -29894,6 +29915,72 @@ def _strike_merge_2611(events):
         head['dup_count'] = (head.get('dup_count') or 0) + len(g['m']) - 1
         head['dup_sources'] = srcs[:8]
     print('  strike_merge_2611: свёрнуто %d' % n)
+
+
+# 26.11.2026 · STORY_MERGE_2611 (Мия «делай»): склейка одного сюжета из разных источников в
+# production. Основа - STORY_SHADOW_1211 (scripts/story_shadow.py), ужесточено по проверке 26.11:
+# - только один домен (рост цены нефти не клеится к взрывам танкеров);
+# - сводки («Мониторинг…», «в то время как», «…, а …») не участвуют;
+# - если общий якорь - только название страны (Аравия, Ливия, Египет), нужен общий
+#   конкретный тип происшествия, «атака/удар» не считается (хуситы: два разных удара).
+# Главная - с наибольшим индексом, остальные скрыты (incident_of), «+ ещё N».
+# Откат: STORY_MERGE_2611 = False.
+STORY_MERGE_2611 = True
+_SM_COMPOSITE = re.compile(r'Мониторинг|в то время как|тогда как|дайджест|главное за|обзор|,\s+а\s+[А-ЯЁ]', re.I)
+_SM_CTRY = ('арав', 'ливи', 'егип', 'сири', 'ирак', 'лива', 'иорд', 'катa', 'ката', 'кувe', 'куве', 'омaн', 'бахр', 'афга', 'мьян', 'сома', 'эфио', 'кени', 'ниге', 'мали', 'чада', 'брaз', 'браз', 'арге', 'мекс', 'колу', 'вене', 'перу', 'чили', 'куба', 'гаит', 'грец', 'итал', 'испа', 'порт', 'швец', 'норв', 'дани', 'швей', 'авст', 'венг', 'чехи', 'слов', 'румы', 'болг', 'серб', 'хорв', 'молд', 'груз', 'арме', 'азер', 'узбе', 'кирг', 'тадж', 'турк', 'монг', 'корe', 'коре', 'вьет', 'таил', 'фили', 'индо', 'мала', 'банг', 'непа', 'шри-')
+def _story_merge_2611(events):
+    if not STORY_MERGE_2611:
+        return
+    import importlib.util as _ilu
+    _sp = _ilu.spec_from_file_location('story_shadow', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'story_shadow.py'))
+    ss = _ilu.module_from_spec(_sp); _sp.loader.exec_module(ss)
+    vis = [e for e in events or [] if e.get('feed_visible') is not False and not e.get('context_only') and not e.get('alerts_only')
+           and not any(m in str(e.get('source') or '') for m in ss.MACHINE)
+           and not str(e.get('source') or '').endswith('CAP')
+           and not _SM_COMPOSITE.search(e.get('title') or '')]
+    AF = {id(e): ss.anchors(e.get('title')) for e in vis}
+    A = {k: v[0] | v[1] for k, v in AF.items()}
+    import collections as _co
+    df = _co.Counter(a for e in vis for a in A[id(e)])
+    cc = lambda e: str(e.get('primary_country') or e.get('country_code') or '')
+    order = sorted(vis, key=lambda e: (-ss.sev(e), str(e.get('id'))))
+    used, n, ng = set(), 0, 0
+    for h in order:
+        if id(h) in used:
+            continue
+        used.add(id(h)); grp = []
+        for e in order:
+            if id(e) in used or e.get('domain') != h.get('domain'):
+                continue
+            dh, de = ss.day(h.get('date')), ss.day(e.get('date'))
+            if dh is None or de is None or abs(dh - de) > 1:
+                continue
+            if cc(h) and cc(e) and cc(h) != cc(e) and not ({cc(h), cc(e)} <= {'RU', 'UA'}):
+                continue
+            rare = [a for a in A[id(h)] & A[id(e)] if df[a] <= 8 and (a in AF[id(h)][0] or a in AF[id(e)][0])]
+            if not rare:
+                continue
+            kk = ss.kinds(h.get('title')) & ss.kinds(e.get('title'))
+            ov = len(ss.words(h.get('title')) & ss.words(e.get('title')))
+            if all(a.startswith(_SM_CTRY) for a in rare):
+                if not (kk - {2}):
+                    continue
+            elif not (kk or ov >= 3):
+                continue
+            grp.append(e); used.add(id(e))
+        if not grp:
+            continue
+        ng += 1
+        srcs = list(h.get('dup_sources') or [])
+        for e in grp:
+            _hide_mark(e, 'story_merge'); e['incident_of'] = h.get('id'); n += 1
+            s_ = str(e.get('source') or '')
+            if s_ and s_ != h.get('source') and s_ not in srcs:
+                srcs.append(s_)
+        h['incident_count'] = (h.get('incident_count') or 1) + len(grp)
+        h['dup_count'] = (h.get('dup_count') or 0) + len(grp)
+        h['dup_sources'] = srcs[:8]
+    print('  story_merge_2611: сюжетов %d, скрыто %d' % (ng, n))
 
 # 25.11.2026 · INFRA_HITS_2511 (решение Мии 25.11): какие объекты инфраструктуры фигурировали
 # в сигналах Atlas за 30 дней. Только файл docs/infra_hits.json для карты; лента и индексы не меняются.
@@ -32722,6 +32809,10 @@ def save_enriched(events, previous_snapshot=None):
                     _strike_merge_2611(enriched["events"])   # STRIKE_MERGE_2611: одна атака на регион - одна карточка
                 except Exception as _sme:
                     print('  strike_merge_2611 ошибка:', _sme)
+                try:
+                    _story_merge_2611(enriched["events"])   # STORY_MERGE_2611: один сюжет - одна карточка
+                except Exception as _sme2:
+                    print('  story_merge_2611 ошибка:', _sme2)
                 # склейка дублей ПОСЛЕ _feed_hygiene: она меняет feed_visible, и карточка,
                 # скрытая на момент склейки, потом возвращалась в ленту дублем (Hurriyet,
                 # «кибератаки на холодильники», 10.11 13:51 UTC)
