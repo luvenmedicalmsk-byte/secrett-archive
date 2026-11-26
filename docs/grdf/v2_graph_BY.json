@@ -2,9 +2,9 @@
   "country": "BY",
   "date": "2026-11-26",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-26T16:03:27.118387+00:00",
+  "generated_at": "2026-11-26T16:28:18.395001+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-BY",
@@ -33,7 +33,7 @@
       "id": "DOMAIN-BY-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 47,
       "trend": "stable"
     },
     {
@@ -94,11 +94,11 @@
       "domain": "social"
     },
     {
-      "id": "SIGNAL-BY-Отключение",
+      "id": "SIGNAL-BY-В_Минске_з",
       "type": "Signal",
-      "label": "Отключение интернета — Беларусь",
-      "severity": 72,
-      "domain": "technology"
+      "label": "В Минске загорелось СТО - есть пострадав",
+      "severity": 47,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-BY",
       "to": "DOMAIN-BY-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.47
     },
     {
       "from": "COUNTRY-BY",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-BY-climate",
+      "to": "DOMAIN-BY-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-BY-economic",
+      "to": "DOMAIN-BY-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-BY-social",
+      "to": "DOMAIN-BY-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-BY-geopolitical",
       "to": "DOMAIN-BY-infrastructure",
       "type": "ESCALATES",
@@ -184,6 +205,27 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-BY-climate",
+      "to": "DOMAIN-BY-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-BY-infrastructure",
+      "to": "DOMAIN-BY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-BY-economic",
+      "to": "DOMAIN-BY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-BY-Падение_ин",
       "to": "DOMAIN-BY-technology",
       "type": "AMPLIFIES",
@@ -196,10 +238,10 @@
       "weight": 0.58
     },
     {
-      "from": "SIGNAL-BY-Отключение",
-      "to": "DOMAIN-BY-technology",
+      "from": "SIGNAL-BY-В_Минске_з",
+      "to": "DOMAIN-BY-climate",
       "type": "AMPLIFIES",
-      "weight": 0.72
+      "weight": 0.47
     }
   ]
 }
