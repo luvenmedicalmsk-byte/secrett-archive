@@ -10038,7 +10038,7 @@ def process_events(raw_items):
             continue
         quota = DOMAIN_QUOTA.get(d, MAX_EVENTS)
         _r1b_qrec(ev, d, _r1b_prio(ev))   # R1_BYPASS_SHADOW_0911: только отчёт
-        if domain_counts.get(d, 0) < quota:
+        if domain_counts.get(d, 0) < quota or ev.get('source') == 'Copernicus C3S':   # 26.11: карточка температуры вне квоты
             _trace(ev.get('_obs_tid'),'BUILT',domain=d, severity=ev.get('severity'),
                    canon_type=ev.get('canon_type'), source=ev.get('source'))
             balanced.append(ev)
@@ -10925,7 +10925,9 @@ def _dom_trace(events, stage):
             continue
         _dd = e.get('domain_decision')
         if isinstance(_dd, dict):
-            _dd.setdefault('trace', []).append(_step)
+            _tr = _dd.setdefault('trace', []); _tr.append(_step)
+            if len(_tr) > 12:   # 26.11.2026: след не растёт бесконечно от прогона к прогону
+                del _tr[1:len(_tr) - 11]
         else:
             e.setdefault('_dom_pre', []).append(_step)
     return events
@@ -29580,8 +29582,8 @@ def _clim_confirm_shadow_2511(events):
 DUPE_TOLL_2511 = True
 ROAD_SOCIAL_2511 = True
 _DT_NUM = re.compile(r'(\d{1,4})\s*(?:человек|погибш|жертв|ранен|пострадав|детей|пассажир)', re.I)
-_DT_HARM = re.compile(r'погиб|жертв|унесл\w* жизн|убит|ранен|пострадав', re.I)
-_RS_ROAD = re.compile(r'\bДТП\b|авари\w*\s+(?:\w+\s+){0,2}(?:автобус|грузовик|бензовоз|автоцистерн|микроавтобус|маршрутк|фур)|авари\w*\s+танкер\w*[^.]{0,60}(?:шоссе|трасс|дорог)|дорожн\w+\s+(?:авари|происшеств|катастроф)|автокатастроф|автомобильн\w+\s+авари|(?:перевернул\w*|переворот\w*|опрокинул\w*|столкнул\w*|столкновени\w*)[^.]{0,40}(?:автобус|грузовик|бензовоз|автоцистерн|микроавтобус|маршрутк|фур)|(?:автобус|грузовик|бензовоз|маршрутк|микроавтобус)\w*[^.]{0,30}(?:упал|сорвал|опрокинул|перевернул|врезал|столкнул)', re.I)
+_DT_HARM = re.compile(r'погиб|жертв|унес\w* жизн|убит|ранен|пострадав', re.I)   # 26.11: «унес жизни»
+_RS_ROAD = re.compile(r'\bДТП\b|авари\w*\s+(?:\w+\s+){0,2}(?:автобус|грузовик|бензовоз|автоцистерн|микроавтобус|маршрутк|фур)|авари\w*\s+танкер\w*[^.]{0,60}(?:шоссе|трасс|дорог)|дорожн\w+\s+(?:авари|происшеств|катастроф)|автокатастроф|автомобильн\w+\s+авари|(?:перевернул\w*|переворот\w*|опрокинул\w*|столкнул\w*|столкновени\w*)[^.]{0,40}(?:автобус|грузовик|бензовоз|автоцистерн|микроавтобус|маршрутк|фур)|(?:автобус|грузовик|бензовоз|маршрутк|микроавтобус)\w*[^.]{0,30}(?:упал|сорвал|опрокинул|перевернул|врезал|столкнул)|авари\w*\s+с\s+(?:\w+\s+){0,2}(?:танкер|бензовоз|автоцистерн|автобус|грузовик)|(?:переворот\w*|перевернул\w*)\s+(?:\w+\s+){0,2}(?:танкер|бензовоз|автоцистерн)', re.I)
 _RS_NOT = re.compile(r'удар|атак|обстрел|беспилот|БПЛА|ракет|взрыв\w* (?:бомб|снаряд)|теракт', re.I)
 # 26.11.2026 · FEED_AUDIT3_2611 (решение Мии 26.11 «да делай», аудит ленты 3, P1-P8).
 # Идёт после арбитра доменов, до записи файла. Откат: FEED_AUDIT3_2611 = False.
@@ -29616,6 +29618,21 @@ def _a3_show(e, why):
     e.pop('hide_reason', None)
     e['hide_reasons'] = [x for x in (e.get('hide_reasons') or []) if not (isinstance(x, dict) and x.get('code') in ('context_gate',))]
     e.setdefault('audit3', []).append(why)
+
+# 26.11.2026 · FEED_AUDIT4_2611 (Мия «включай», аудит ленты 26.11 18:00). Откат: False.
+FEED_AUDIT4_2611 = True
+_A4_GAZA = re.compile(r'\bГаз[аеыу]\b|сектор\w* Газа|Gaza', re.I)
+_A4_UA_PLACE = re.compile(r'Украин|Киев|Харьков|Одесс|Днепр|Запорож|Херсон|Сумы|Сумск|Чернигов|Львов|Николаев|Полтав|Житомир|Винниц|Донецк|Луганск|Славянск(?!\w* НПЗ)|Краматорск')
+_A4_DECLARE_DEAD = re.compile(r'(?:объяв\w+|призна\w+)\s+(?:\w+\s+){0,2}погибш\w+[\s\S]{0,140}пропавш|пропавш\w+ без вести[^.]{0,80}(?:объяв|призна)\w+ погибш', re.I)
+_A4_AID = re.compile(r'(?:отправля|направля|доставля|отправил|доставил|направил)\w*\s+(?:[\d,.]+\s*(?:тонн\w*|т\b)|груз|партию)[^.]{0,40}(?:помощ|медикамент)', re.I)
+_A4_REPORT = re.compile(r'Справочник|Handbook|Финальный отч[её]т|Final Report|Операция DREF|\bDREF\b|месяц\w* спустя|цифров\w+ двойник|Оценка рисков и укрепление', re.I)
+_A4_SCIENCE = re.compile(r'предупреждают учёные|предупреждают ученые|учёные (?:выяснили|обнаружили|установили)|исследовани\w+ показал', re.I)
+_A4_HOWTO = re.compile(r'(?:^|[.!?]\s)Как я (?:нашел|нашёл|взломал|обнаружил)', re.I)
+_A4_TONIGHT = re.compile(r'сегодня ночью готов|готовят массированный удар', re.I)
+_A4_WILD = re.compile(r'лесн|природн|степн|ландшафтн|wildfire|гектар|\bга\b|травы|сухостой', re.I)
+_A4_INDUSTRIAL = re.compile(r'ОЭЗ|завод|предприяти|склад|терминал|цех|комбинат|НПЗ|ТЭЦ|промзон|производств', re.I)
+_A4_HOUSE = re.compile(r'жил\w+ дом|частн\w+ дом|квартир|общежити|многоэтаж|многоквартир|в доме\b', re.I)
+
 def _a3_ctx(e, why):
     e['feed_visible'] = False; e['context_only'] = True; e['hide_reason'] = 'context_gate'
     e.setdefault('hide_reasons', []).append({'code': 'context_gate', 'src': 'audit3', 'why': why})
@@ -29626,11 +29643,22 @@ def _feed_audit3_2611(events):
         return
     n = {}
     def inc(k): n[k] = n.get(k, 0) + 1
+    # FEED_AUDIT4_2611 P6: если в ленте есть карточка Copernicus C3S, новости о том же показателе
+    # (глобальная температура к доиндустриальному уровню) сворачиваются в неё.
+    _c3s = [x for x in (events or []) if x.get('source') == 'Copernicus C3S' and x.get('feed_visible') is not False]
     for e in events or []:
         try:
             if e.get('alerts_only'):
                 continue
             t = e.get('title') or ''; src = str(e.get('source') or '')
+            if FEED_AUDIT4_2611 and _c3s and src != 'Copernicus C3S' and e.get('feed_visible') is not False \
+                    and re.search(r'доиндустриальн', t, re.I) and re.search(r'2\s*°\s*C|\+2|двух градус', t, re.I):
+                _h = _c3s[0]
+                _hide_mark(e, 'dup_of'); e['incident_of'] = _h.get('id'); e['merged_into'] = _h.get('id')
+                _h['dup_count'] = (_h.get('dup_count') or 0) + 1
+                _h.setdefault('dup_sources', [])
+                if src not in _h['dup_sources']: _h['dup_sources'].append(src)
+                inc('A4_C3S'); continue
             vis = e.get('feed_visible') is not False
             if vis and (_A3_FEATURE_SRC.search(src) or _A3_FEATURE_TTL.search(t)) and not (_A3_HARD.search(t) and not _A3_FEATURE_TTL.search(t)):
                 _a3_ctx(e, 'P1 очерк/наука/аналитика'); inc('P1'); vis = False
@@ -29659,6 +29687,39 @@ def _feed_audit3_2611(events):
                 e['domain_audit3_from'] = d0; e['domain'] = 'geopolitics'; inc('DOM')
             elif d0 == 'geopolitics' and _A3_DOM_TEC.search(t) and not _A3_STRIKE.search(t):
                 e['domain_audit3_from'] = d0; e['domain'] = 'technology'; inc('DOM')
+            # FEED_AUDIT4_2611 (Мия 26.11 «включай»): P3 гео, P4 индексы и домены, P5 контекст
+            if FEED_AUDIT4_2611:
+                _cc0 = str(e.get('primary_country') or e.get('country_code') or '')
+                if _A4_GAZA.search(t) and _cc0 in ('IL', ''):
+                    _gr9_set(e, 'PS', 'Газа', 31.45, 34.39, 'AUDIT4_GEO: Газа -> Палестина', sync=True); inc('A4_GEO')
+                elif _cc0 in ('UA', 'FI', '') and not _A4_UA_PLACE.search(t):
+                    _pl = _rp_places(t)
+                    if len(_pl) == 1 and _pl[0][0] != 'Крым' and _pl[0][0] in _GR9_RU:
+                        _la, _lo = _pl[0][1] or _GR9_RU[_pl[0][0]]
+                        _gr9_set(e, 'RU', _pl[0][0], _la, _lo, 'AUDIT4_GEO: регион РФ в заголовке', sync=True); inc('A4_GEO')
+                _sm = (e.get('summary') or e.get('description') or '')[:250]
+                if vis and _A4_DECLARE_DEAD.search(t + ' ' + _sm) and (e.get('severity') or 0) > 74:
+                    e['severity_audit4_from'] = e.get('severity'); e['severity'] = 74; inc('A4_DEAD')
+                if vis and _A4_AID.search(t):
+                    _a3_ctx(e, 'A4 отправка гуманитарной помощи'); inc('A4_AID'); vis = False
+                if vis and _A4_REPORT.search(t) and (src.startswith('ReliefWeb') or 'DREF' in t or 'MDR' in t):
+                    _a3_ctx(e, 'A4 отчёт / справочник ReliefWeb'); inc('A4_RW'); vis = False
+                if vis and src.startswith('Telegram') and _A4_SCIENCE.search(t):
+                    _a3_ctx(e, 'A4 обзор исследования'); inc('A4_SCI'); vis = False
+                if vis and _A4_HOWTO.search(t):
+                    _a3_ctx(e, 'A4 авторский разбор'); inc('A4_HOW'); vis = False
+                if vis and _A4_TONIGHT.search(t):
+                    try:
+                        from datetime import date as _dd2, datetime as _dt2
+                        if (_dt2.utcnow().date() - _dd2.fromisoformat(str(e.get('date'))[:10])).days >= 1:
+                            _a3_ctx(e, 'A4 устаревшее «сегодня ночью»'); inc('A4_OLD'); vis = False
+                    except Exception:
+                        pass
+                if e.get('domain') == 'climate' and re.search(r'пожар', t, re.I) and not _A4_WILD.search(t + ' ' + _sm):
+                    if _A4_INDUSTRIAL.search(t):
+                        e['domain_audit3_from'] = 'climate'; e['domain'] = 'technology'; inc('A4_DOM')
+                    elif _A4_HOUSE.search(t + ' ' + _sm):
+                        e['domain_audit3_from'] = 'climate'; e['domain'] = 'social'; inc('A4_DOM')
             sev = e.get('severity') or 0
             if _A3_REPORT_PERIOD.search(t) and _A3_REPORT_STAT.search(t) and (sev > 65 or sev < 55):
                 e['severity_audit3_from'] = sev; e['severity'] = min(65, max(55, sev)); inc('P5'); sev = e['severity']
@@ -29681,7 +29742,7 @@ def _feed_audit3_2611(events):
             cc = str(e.get('primary_country') or e.get('country_code') or '')
             if not m or int(m.group(1)) < 3 or not cc:
                 continue
-            grp.setdefault((cc, str(e.get('date') or '')[:10]), []).append((int(m.group(1)), e))
+            grp.setdefault(cc, []).append((int(m.group(1)), e))   # 26.11: страна, окно +-1 сутки (ниже)
         for k, v in grp.items():
             if len(v) < 2:
                 continue
@@ -29691,9 +29752,15 @@ def _feed_audit3_2611(events):
                 if id(ei) in used:
                     continue
                 for nj, ej in v[i + 1:]:
-                    if id(ej) in used or ni == nj:
+                    if id(ej) in used:   # 26.11: равные числа тоже (разные домены обходили DUPE_TOLL)
                         continue
                     close = abs(ni - nj) <= max(1, round(0.1 * max(ni, nj)))
+                    try:
+                        from datetime import date as _dd
+                        if abs((_dd.fromisoformat(str(ei.get('date'))[:10]) - _dd.fromisoformat(str(ej.get('date'))[:10])).days) > 1:
+                            continue
+                    except Exception:
+                        continue
                     same = (_RS_ROAD.search(ei.get('title') or '') and _RS_ROAD.search(ej.get('title') or '')) or (ei.get('canon_type') and ei.get('canon_type') == ej.get('canon_type'))
                     if close and same:
                         ej['feed_visible'] = False; ej['hide_reason'] = 'dupe_toll'
@@ -29807,6 +29874,7 @@ _RP_CITY = [
     (r'Липецк', 'Липецкая область', None), (r'Тамбов', 'Тамбовская область', None), (r'Пенз', 'Пензенская область', None),
     (r'Ульяновск', 'Ульяновская область', None), (r'Оренбург|Орск', 'Оренбургская область', None), (r'Удмурт|Ижевск', 'Удмуртия', None),
     (r'Чебоксар|Чуваш', 'Чувашия', None), (r'Астрахан', 'Астраханская область', None), (r'Ставрополь', 'Ставропольский край', None),
+    (r'Петербург', 'Санкт-Петербург', None),
     (r'Ленинградск|Кириш|Усть-Луг|Приморск\b', 'Ленинградская область', None), (r'Твер', 'Тверская область', None),
     (r'Белгород', 'Белгородская область', None), (r'Курск', 'Курская область', None), (r'Брянск', 'Брянская область', None),
     (r'Крым|Севастопол|Феодоси', 'Крым', None), (r'Мордов|Саранск', 'Мордовия', None),
@@ -33284,6 +33352,9 @@ def save_enriched(events, previous_snapshot=None):
                         # именно он был неверен.
                         _dd = _e.get('domain_decision') or {}
                         if _dd.get('arbiter'):
+                            continue
+                        # 26.11.2026 (аудит): решения правила ДТП и аудитов ленты не перезаписываются
+                        if _e.get('domain_road_from') or _e.get('domain_audit3_from'):
                             continue
                         if _cd in _CANARY_DOMAINS and _e.get('domain') != _cd:
                             _saved_dom[_i] = _e.get('domain'); _e['domain'] = _cd
