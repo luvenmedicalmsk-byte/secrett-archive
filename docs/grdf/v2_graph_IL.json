@@ -2,9 +2,9 @@
   "country": "IL",
   "date": "2026-11-26",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-26T15:30:13.631284+00:00",
+  "generated_at": "2026-11-26T16:03:27.126582+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-IL",
@@ -19,28 +19,28 @@
       "id": "DOMAIN-IL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 74,
+      "score": 62,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-IL-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 71,
+      "score": 5,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-IL-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 50,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-IL-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
+      "score": 34,
       "trend": "stable"
     },
     {
@@ -80,25 +80,25 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IL-Израиль_уб",
+      "id": "SIGNAL-IL-Явления_на",
       "type": "Signal",
-      "label": "Израиль убил еще 8 человек — Газа, включ",
-      "severity": 74,
+      "label": "Явления на побережье: Море - Юг, Море - ",
+      "severity": 50,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-IL-Айзенкот_з",
+      "type": "Signal",
+      "label": "Айзенкот заключил первое коалиционное со",
+      "severity": 34,
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-IL-Израиль_пр",
+      "id": "SIGNAL-IL-Эмиратская",
       "type": "Signal",
-      "label": "Израиль превратил Газу в 'токсичную пуст",
-      "severity": 71,
-      "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-IL-Более_99_п",
-      "type": "Signal",
-      "label": "Более 99 процентов Газы показывают призн",
-      "severity": 54,
-      "domain": "geopolitical"
+      "label": "Эмиратская авиакомпания Flydubai возобно",
+      "severity": 34,
+      "domain": "technology"
     }
   ],
   "edges": [
@@ -106,25 +106,25 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.74
+      "weight": 0.62
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-economic",
       "type": "CORRELATES",
-      "weight": 0.71
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-IL",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IL-climate",
+      "to": "DOMAIN-IL-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IL-economic",
+      "to": "DOMAIN-IL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-IL-social",
+      "to": "DOMAIN-IL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-IL-climate",
+      "to": "DOMAIN-IL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-IL-infrastructure",
+      "to": "DOMAIN-IL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IL-economic",
+      "to": "DOMAIN-IL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "DOMAIN-IL-geopolitical",
       "to": "DOMAIN-IL-infrastructure",
       "type": "ESCALATES",
@@ -184,22 +226,22 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-IL-Израиль_уб",
-      "to": "DOMAIN-IL-geopolitical",
+      "from": "SIGNAL-IL-Явления_на",
+      "to": "DOMAIN-IL-climate",
       "type": "AMPLIFIES",
-      "weight": 0.74
+      "weight": 0.5
     },
     {
-      "from": "SIGNAL-IL-Израиль_пр",
-      "to": "DOMAIN-IL-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.71
-    },
-    {
-      "from": "SIGNAL-IL-Более_99_п",
+      "from": "SIGNAL-IL-Айзенкот_з",
       "to": "DOMAIN-IL-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.54
+      "weight": 0.34
+    },
+    {
+      "from": "SIGNAL-IL-Эмиратская",
+      "to": "DOMAIN-IL-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.34
     }
   ]
 }
