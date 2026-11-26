@@ -2,7 +2,7 @@
   "country": "CA",
   "country_name": "Канада",
   "date": "2026-11-26",
-  "generated_at": "2026-11-26T10:31:35.448205+00:00",
+  "generated_at": "2026-11-26T10:48:39.548086+00:00",
   "srs_score": 60,
   "srs_grade": "C",
   "srs_grade_ru": "Умеренная",
@@ -10,28 +10,19 @@
     {
       "id": "R-01",
       "category": "CRITICAL",
-      "title": "Критический уровень риска: 92",
-      "detail": "Скор риска 92 превышает критический порог 80. Доминирующий домен: climate.",
-      "metric_value": 92,
+      "title": "Критический уровень риска: 89",
+      "detail": "Скор риска 89 превышает критический порог 80. Доминирующий домен: climate.",
+      "metric_value": 89,
       "urgency": 95,
       "source": "risk_score"
-    },
-    {
-      "id": "R-02",
-      "category": "HIGH_PRIORITY",
-      "title": "Быстрая эскалация: Δ=+18/день",
-      "detail": "Скорость ухудшения 18 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
-      "metric_value": 18,
-      "urgency": 90,
-      "source": "delta"
     },
     {
       "id": "R-03",
       "category": "HIGH_PRIORITY",
       "title": "Системное смещение прогнозов: -4.3pt",
       "detail": "Систематическая ошибка прогнозов -4.3pt снижает достоверность сценарного анализа.",
-      "metric_value": -4.34,
-      "urgency": 61.7,
+      "metric_value": -4.32,
+      "urgency": 61.6,
       "source": "validation_bias"
     },
     {
@@ -44,7 +35,7 @@
       "source": "decision_bias"
     }
   ],
-  "risk_count": 4,
+  "risk_count": 3,
   "priority_opportunities": [
     {
       "id": "O-05",
@@ -54,9 +45,18 @@
       "metric_value": 2,
       "impact": 60,
       "source": "high_alpha"
+    },
+    {
+      "id": "O-04",
+      "category": "WATCHLIST",
+      "title": "Тренд деэскалации: Δ=-3/день",
+      "detail": "Риск снижается со скоростью 3 пунктов в сутки. Возможность для стратегической деэскалации.",
+      "metric_value": -3,
+      "impact": 55,
+      "source": "delta_trend"
     }
   ],
-  "opp_count": 1,
+  "opp_count": 2,
   "emerging_shifts": [
     {
       "type": "improving",
@@ -90,19 +90,19 @@
       "id": "R-01",
       "type": "risk",
       "priority": "CRITICAL",
-      "title": "Критический уровень риска: 92",
+      "title": "Критический уровень риска: 89",
       "rec_score": 61,
-      "metric_value": 92,
+      "metric_value": 89,
       "source": "risk_score"
     },
     {
-      "id": "R-02",
+      "id": "R-03",
       "type": "risk",
       "priority": "HIGH_PRIORITY",
-      "title": "Быстрая эскалация: Δ=+18/день",
-      "rec_score": 58,
-      "metric_value": 18,
-      "source": "delta"
+      "title": "Системное смещение прогнозов: -4.3pt",
+      "rec_score": 44,
+      "metric_value": -4.32,
+      "source": "validation_bias"
     },
     {
       "id": "O-05",
@@ -114,20 +114,20 @@
       "source": "high_alpha"
     },
     {
-      "id": "R-03",
-      "type": "risk",
-      "priority": "HIGH_PRIORITY",
-      "title": "Системное смещение прогнозов: -4.3pt",
-      "rec_score": 43,
-      "metric_value": -4.34,
-      "source": "validation_bias"
+      "id": "O-04",
+      "type": "opportunity",
+      "priority": "WATCHLIST",
+      "title": "Тренд деэскалации: Δ=-3/день",
+      "rec_score": 42,
+      "metric_value": -3,
+      "source": "delta_trend"
     },
     {
       "id": "R-05",
       "type": "risk",
       "priority": "STRATEGIC",
       "title": "Смещения в принятии решений (2)",
-      "rec_score": 39,
+      "rec_score": 40,
       "metric_value": 2,
       "source": "decision_bias"
     }
@@ -136,18 +136,10 @@
     {
       "id": "ACT-R-01",
       "priority": "CRITICAL",
-      "action": "Реагировать: Критический уровень риска: 92",
-      "rationale": "Скор риска 92 превышает критический порог 80. Доминирующий домен: climate.",
+      "action": "Реагировать: Критический уровень риска: 89",
+      "rationale": "Скор риска 89 превышает критический порог 80. Доминирующий домен: climate.",
       "deadline": "немедленно",
       "source": "risk_score"
-    },
-    {
-      "id": "ACT-R-02",
-      "priority": "CRITICAL",
-      "action": "Реагировать: Быстрая эскалация: Δ=+18/день",
-      "rationale": "Скорость ухудшения 18 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
-      "deadline": "немедленно",
-      "source": "delta"
     },
     {
       "id": "ACT-R-03",
@@ -158,19 +150,35 @@
       "source": "validation_bias"
     },
     {
+      "id": "ACT-R-05",
+      "priority": "STRATEGIC",
+      "action": "Реагировать: Смещения в принятии решений (2)",
+      "rationale": "Выявлено 2 смещений: Гиперреакция, Недостаточная реакция. Рекомендуется рекалибровка стратегии.",
+      "deadline": "7 дней",
+      "source": "decision_bias"
+    },
+    {
       "id": "ACT-O-05",
       "priority": "WATCHLIST",
       "action": "Использовать: Высокоэффективные действия доступны (2)",
       "rationale": "Идентифицировано 2 действий с альфой выше порога. Их приоритизация улучшит стратегический результат.",
       "deadline": "30 дней",
       "source": "high_alpha"
+    },
+    {
+      "id": "ACT-O-04",
+      "priority": "WATCHLIST",
+      "action": "Использовать: Тренд деэскалации: Δ=-3/день",
+      "rationale": "Риск снижается со скоростью 3 пунктов в сутки. Возможность для стратегической деэскалации.",
+      "deadline": "30 дней",
+      "source": "delta_trend"
     }
   ],
-  "action_count": 4,
+  "action_count": 5,
   "rec_diagnostics": [],
   "diagnostic_count": 0,
-  "risk_score": 92,
-  "delta": 18,
+  "risk_score": 89,
+  "delta": -3,
   "domain": "climate",
   "history_depth": 182
 }
