@@ -2,9 +2,9 @@
   "country": "MY",
   "date": "2026-11-26",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-26T04:46:57.629245+00:00",
+  "generated_at": "2026-11-26T05:07:48.515318+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-MY",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-MY-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
+      "score": 44,
       "trend": "stable"
     },
     {
@@ -40,7 +40,7 @@
       "id": "DOMAIN-MY-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 56,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -65,9 +65,9 @@
       "trend": "stable"
     },
     {
-      "id": "DRIVER-MY-technology",
+      "id": "DRIVER-MY-geopolitical",
       "type": "Driver",
-      "label": "technology"
+      "label": "geopolitical"
     },
     {
       "id": "DRIVER-MY-social",
@@ -75,9 +75,16 @@
       "label": "social"
     },
     {
-      "id": "DRIVER-MY-geopolitical",
+      "id": "DRIVER-MY-climate",
       "type": "Driver",
-      "label": "geopolitical"
+      "label": "climate"
+    },
+    {
+      "id": "SIGNAL-MY-Камбоджа_п",
+      "type": "Signal",
+      "label": "Камбоджа протестует против работ на тайс",
+      "severity": 44,
+      "domain": "geopolitical"
     },
     {
       "id": "SIGNAL-MY-Ночные_сто",
@@ -92,13 +99,6 @@
       "label": "Социальный процесс — Юго-Восточная Азия",
       "severity": 54,
       "domain": "social"
-    },
-    {
-      "id": "SIGNAL-MY-Отключение",
-      "type": "Signal",
-      "label": "Отключение интернета — Малайзия",
-      "severity": 56,
-      "domain": "technology"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-MY",
       "to": "DOMAIN-MY-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-MY",
@@ -124,7 +124,7 @@
       "from": "COUNTRY-MY",
       "to": "DOMAIN-MY-technology",
       "type": "CORRELATES",
-      "weight": 0.56
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-MY",
@@ -145,7 +145,7 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-MY-technology",
+      "from": "DRIVER-MY-geopolitical",
       "to": "COUNTRY-MY",
       "type": "CAUSES",
       "weight": 0.8
@@ -157,10 +157,37 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-MY-geopolitical",
+      "from": "DRIVER-MY-climate",
       "to": "COUNTRY-MY",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-MY-geopolitical",
+      "to": "DOMAIN-MY-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-MY-infrastructure",
+      "to": "DOMAIN-MY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-MY-economic",
+      "to": "DOMAIN-MY-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-MY-Камбоджа_п",
+      "to": "DOMAIN-MY-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.44
     },
     {
       "from": "SIGNAL-MY-Ночные_сто",
@@ -173,12 +200,6 @@
       "to": "DOMAIN-MY-social",
       "type": "AMPLIFIES",
       "weight": 0.54
-    },
-    {
-      "from": "SIGNAL-MY-Отключение",
-      "to": "DOMAIN-MY-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.56
     }
   ]
 }
