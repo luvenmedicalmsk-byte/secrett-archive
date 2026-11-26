@@ -29759,11 +29759,148 @@ def _dupe_toll_2511(events):
     print('  dupe_toll_2511: скрыто дублей %d, ДТП -> социум %d' % (n_d, n_r))
 
 
+
+# 26.11.2026 · RU_PIN_2611 + STRIKE_MERGE_2611 (решение Мии 26.11, сразу в production).
+# 1) Удар по региону РФ стоял в точке «Россия по умолчанию» (Москва) или в случайной точке
+#    за сотни км от названного региона («Самарская область этой ночью…», «ВСУ атаковали НПЗ
+#    в Сызрани», bne «Удары по двум НПЗ Роснефти — Самара» в Кировской области).
+#    Точка переносится в названный регион/город. Москва в тексте - не трогается.
+# 2) Одна ночная атака на регион давала 6 карточек 52-95. Удары по одному субъекту РФ
+#    за <=1 сутки сворачиваются в карточку с наибольшим индексом (+ ещё N).
+#    Белгородская, Курская, Брянская области не сворачиваются: там ежедневные отдельные обстрелы.
+# Откат: RU_PIN_2611 = False / STRIKE_MERGE_2611 = False.
+RU_PIN_2611 = True
+STRIKE_MERGE_2611 = True
+_RP_CITY = [
+    (r'Сызран', 'Самарская область', (53.16, 48.47)), (r'Новокуйбышевск', 'Самарская область', (53.1, 49.95)),
+    (r'Тольятти', 'Самарская область', (53.51, 49.42)), (r'Самар[аеуыо]\b|Самарск', 'Самарская область', None),
+    (r'Саратов', 'Саратовская область', None), (r'Энгельс', 'Саратовская область', (51.48, 46.12)),
+    (r'Волгоград', 'Волгоградская область', None), (r'Новошахтинск', 'Ростовская область', (47.76, 39.93)),
+    (r'Таганрог', 'Ростовская область', (47.21, 38.9)), (r'Ростов', 'Ростовская область', None),
+    (r'Туапсе', 'Краснодарский край', (44.1, 39.08)), (r'Новороссийск', 'Краснодарский край', (44.72, 37.77)),
+    (r'Краснодар|Кубан', 'Краснодарский край', None), (r'Перм[ьиcс]|Пермск', 'Пермский край', None),
+    (r'\bУф[аеуы]\b|Башкир', 'Башкортостан', None), (r'Казан|Татарстан', 'Татарстан', None),
+    (r'Нижн\w* Новгород|Нижегородск|Кстов', 'Нижегородская область', None), (r'Ярослав', 'Ярославская область', None),
+    (r'Рязан', 'Рязанская область', None), (r'Воронеж', 'Воронежская область', None), (r'Тул[аеуы]\b|Тульск', 'Тульская область', None),
+    (r'Смоленск', 'Смоленская область', None), (r'Калуг|Калужск', 'Калужская область', None), (r'Орл[ауеоё]\b|Орёл|Орловск', 'Орловская область', None),
+    (r'Липецк', 'Липецкая область', None), (r'Тамбов', 'Тамбовская область', None), (r'Пенз', 'Пензенская область', None),
+    (r'Ульяновск', 'Ульяновская область', None), (r'Оренбург|Орск', 'Оренбургская область', None), (r'Удмурт|Ижевск', 'Удмуртия', None),
+    (r'Чебоксар|Чуваш', 'Чувашия', None), (r'Астрахан', 'Астраханская область', None), (r'Ставрополь', 'Ставропольский край', None),
+    (r'Ленинградск|Кириш|Усть-Луг|Приморск\b', 'Ленинградская область', None), (r'Твер', 'Тверская область', None),
+    (r'Белгород', 'Белгородская область', None), (r'Курск', 'Курская область', None), (r'Брянск', 'Брянская область', None),
+    (r'Крым|Севастопол|Феодоси', 'Крым', None), (r'Мордов|Саранск', 'Мордовия', None),
+]
+_RP_CITY = [(re.compile(a), b, c) for a, b, c in _RP_CITY]
+_RP_KIN = re.compile(r'удар|атак|обстрел|ракет|взрыв|беспилот|дрон|бпла|бомб|подверг|поражен|сбит|сбил|ПВО', re.I)
+_RP_MOSCOW = re.compile(r'Москв|Подмосков|Московск', re.I)
+_SM_NOMERGE = {'Белгородская область', 'Курская область', 'Брянская область'}
+
+def _rp_places(txt):
+    out = []
+    for rx, reg, pt in _RP_CITY:
+        if rx.search(txt) and reg not in [x[0] for x in out]:
+            out.append((reg, pt))
+    return out
+
+def _ru_pin_2611(events):
+    if not RU_PIN_2611:
+        return
+    n = 0
+    for e in events or []:
+        try:
+            if str(e.get('primary_country') or e.get('country_code') or '') != 'RU' or e.get('alerts_only'):
+                continue
+            t = e.get('title') or ''
+            if _RP_MOSCOW.search(t):
+                continue
+            la, ln = float(e.get('lat')), float(e.get('lng'))
+            reg = str(e.get('region') or '')
+            at_moscow = abs(la - 55.75) < 0.05 and abs(ln - 37.62) < 0.05
+            pl = _rp_places(t)
+            if not pl and at_moscow and reg in ('', 'Россия') and _RP_KIN.search(t):
+                sm = (e.get('summary') or e.get('description') or '')[:200]
+                if not _RP_MOSCOW.search(sm):
+                    pl = _rp_places(sm)
+            if len(pl) != 1:
+                continue
+            nreg, pt = pl[0]
+            c = _GR9_RU.get(nreg)
+            if not c:
+                continue
+            far = False
+            if reg in _GR9_RU and reg == nreg and not at_moscow and ln < 60:
+                cl, cn = _GR9_RU[reg]
+                far = 111.2 * ((la - cl) ** 2 + ((ln - cn) * math.cos(math.radians(la))) ** 2) ** 0.5 > 250
+            if not (at_moscow and reg in ('', 'Россия', nreg, 'Москва')) and not far:
+                continue
+            tla, tln = pt or c
+            e['geo_pin_2611'] = {'from': [la, ln, reg], 'to': nreg}
+            e['lat'], e['lng'], e['region'] = tla, tln, nreg
+            g = e.get('geo') if isinstance(e.get('geo'), dict) else None
+            if g is not None:
+                g['lat'], g['lng'], g['region'] = tla, tln, nreg
+                g['precision'] = 'city' if pt else 'region'
+                g['coord_origin'] = 'dictionary'
+            n += 1
+        except Exception:
+            continue
+    print('  ru_pin_2611: перенесено точек %d' % n)
+
+def _strike_merge_2611(events):
+    if not STRIKE_MERGE_2611:
+        return
+    from datetime import date as _d
+    cand = []
+    for e in events or []:
+        try:
+            if e.get('feed_visible') is False or e.get('context_only') or e.get('alerts_only') or e.get('domain') != 'geopolitics':
+                continue
+            if str(e.get('primary_country') or e.get('country_code') or '') != 'RU':
+                continue
+            reg = str(e.get('region') or '')
+            if reg not in _GR9_RU or reg in _SM_NOMERGE or reg in ('Москва', 'Московская область'):
+                continue
+            t = e.get('title') or ''
+            if not _RP_KIN.search(t):
+                continue
+            _pl = _rp_places(t)
+            if len(_pl) != 1 or _pl[0][0] != reg:
+                continue                      # в заголовке должен быть назван ровно этот регион
+            cand.append((e, reg, _d.fromisoformat(str(e.get('date') or e.get('first_seen'))[:10])))
+        except Exception:
+            continue
+    cand.sort(key=lambda x: (-(x[0].get('severity') or 0), str(x[0].get('id'))))
+    groups = []
+    for e, reg, dd in cand:
+        for g in groups:
+            if g['r'] == reg and abs((g['d'] - dd).days) <= 1:
+                g['m'].append(e); break
+        else:
+            groups.append({'r': reg, 'd': dd, 'm': [e]})
+    n = 0
+    for g in groups:
+        if len(g['m']) < 2:
+            continue
+        head = g['m'][0]
+        srcs = list(head.get('dup_sources') or [])
+        for e in g['m'][1:]:
+            _hide_mark(e, 'strike_merge')
+            e['incident_of'] = head.get('id')
+            s_ = str(e.get('source') or '')
+            if s_ and s_ != head.get('source') and s_ not in srcs:
+                srcs.append(s_)
+            n += 1
+        head['incident_count'] = (head.get('incident_count') or 1) + len(g['m']) - 1
+        head['dup_count'] = (head.get('dup_count') or 0) + len(g['m']) - 1
+        head['dup_sources'] = srcs[:8]
+    print('  strike_merge_2611: свёрнуто %d' % n)
+
 # 25.11.2026 · INFRA_HITS_2511 (решение Мии 25.11): какие объекты инфраструктуры фигурировали
 # в сигналах Atlas за 30 дней. Только файл docs/infra_hits.json для карты; лента и индексы не меняются.
 # Совпадение: название объекта (+ слово его типа: НПЗ / АЭС / порт / терминал) или точка сигнала
 # в 30 км от объекта + слово типа. Накопительно: прошлые попадания хранятся в том же файле.
 INFRA_HITS_ON = True
+INFRA_DESC_2611 = True
 _IH_COUNTRY_LEVEL = set('Россия Украина Беларусь Казахстан США Китай Иран Турция Израиль Германия Франция Польша Япония Индия Глобально Европа Ближний Восток Азия Африка Международное'.split()) | {'Ближний Восток', 'Латинская Америка'}
 def _infra_hits_2511(events):
     if not INFRA_HITS_ON:
@@ -29793,7 +29930,11 @@ def _infra_hits_2511(events):
         hits = []
         for o, rx in objs:
             ty = TY.get(o['t']) if o['t'] in TY else None
-            if rx and rx.search(t):   # название - только в заголовке (в описаниях бывают дайджесты чужих новостей)
+            # INFRA_DESC_2611 (Мия 26.11): «Два НПЗ атакованы в Самарской области» - заводы названы
+            # только в описании. Описание учитывается, если в заголовке удар + слово типа объекта.
+            _desc_ok = (INFRA_DESC_2611 and rx is not None and ty is not None and ty.search(t) and _IC_KIN.search(t)
+                        and rx.search((e.get('summary') or e.get('description') or '')[:400]))
+            if rx and (rx.search(t) or _desc_ok):   # название - в заголовке; в описании - только при ударе (дайджесты чужих новостей)
                 aliases_have_type = ty is not None and all(ty.search(a.replace('\\w*', '')) for a in o['al'])
                 if o['t'] in ('ref', 'npp', 'port') and ty is not None and not aliases_have_type and not ty.search(tx):
                     continue
@@ -32570,9 +32711,17 @@ def save_enriched(events, previous_snapshot=None):
                 except Exception:
                     pass
                 try:
+                    _ru_pin_2611(enriched["events"])   # RU_PIN_2611: точка удара в названный регион РФ
+                except Exception as _rpe:
+                    print('  ru_pin_2611 ошибка:', _rpe)
+                try:
                     _infra_hits_2511(enriched["events"])   # INFRA_HITS_2511 (только файл для карты)
                 except Exception as _ihe:
                     print('  infra_hits_2511 ошибка:', _ihe)
+                try:
+                    _strike_merge_2611(enriched["events"])   # STRIKE_MERGE_2611: одна атака на регион - одна карточка
+                except Exception as _sme:
+                    print('  strike_merge_2611 ошибка:', _sme)
                 # склейка дублей ПОСЛЕ _feed_hygiene: она меняет feed_visible, и карточка,
                 # скрытая на момент склейки, потом возвращалась в ленту дублем (Hurriyet,
                 # «кибератаки на холодильники», 10.11 13:51 UTC)
@@ -32902,6 +33051,10 @@ def save_enriched(events, previous_snapshot=None):
                 pass
             try:
                 _feed_audit3_2611(enriched["events"])    # FEED_AUDIT3_2611: P1-P8 аудита ленты 26.11
+            except Exception:
+                pass
+            try:
+                _ru_pin_2611(enriched["events"])         # RU_PIN_2611 повторно: после арбитра и аудита
             except Exception:
                 pass
             _sev_finalize(enriched["events"])          # IDR-013: разложение веса
