@@ -29562,6 +29562,130 @@ _DT_NUM = re.compile(r'(\d{1,4})\s*(?:человек|погибш|жертв|р�
 _DT_HARM = re.compile(r'погиб|жертв|унесл\w* жизн|убит|ранен|пострадав', re.I)
 _RS_ROAD = re.compile(r'\bДТП\b|авари\w*\s+(?:\w+\s+){0,2}(?:автобус|грузовик|бензовоз|автоцистерн|микроавтобус|маршрутк|фур)|авари\w*\s+танкер\w*[^.]{0,60}(?:шоссе|трасс|дорог)|дорожн\w+\s+(?:авари|происшеств|катастроф)|автокатастроф|автомобильн\w+\s+авари|(?:перевернул\w*|переворот\w*|опрокинул\w*|столкнул\w*|столкновени\w*)[^.]{0,40}(?:автобус|грузовик|бензовоз|автоцистерн|микроавтобус|маршрутк|фур)|(?:автобус|грузовик|бензовоз|маршрутк|микроавтобус)\w*[^.]{0,30}(?:упал|сорвал|опрокинул|перевернул|врезал|столкнул)', re.I)
 _RS_NOT = re.compile(r'удар|атак|обстрел|беспилот|БПЛА|ракет|взрыв\w* (?:бомб|снаряд)|теракт', re.I)
+# 26.11.2026 · FEED_AUDIT3_2611 (решение Мии 26.11 «да делай», аудит ленты 3, P1-P8).
+# Идёт после арбитра доменов, до записи файла. Откат: FEED_AUDIT3_2611 = False.
+FEED_AUDIT3_2611 = True
+_A3_FEATURE_SRC = re.compile(r'^(?:Phys\.org|ScienceDaily|Mongabay|Grist|Inside Climate|Yale E360|Carbon Brief|Atlantic Council|Foreign Affairs|Wildfire Today|Cloudflare Blog)', re.I)
+_A3_FEATURE_TTL = re.compile(r'^(?:Что |Как |Почему |Зачем |Итоги |Исследовател|Учёные |Ученые |Понимание |Пора |Мнение|Анализ )|И это всего лишь|меняет правила игры|«Карточный домик|отслеживает активность|предлагает модель|- Анализ ситуации|— Анализ ситуации', re.I)
+_A3_HARD = re.compile(r'погиб|убит|жертв|ранен|эвакуир|атак|удар|обстрел|взрыв|ДТП|авари', re.I)
+_A3_CYBER_ACT = re.compile(r'под активной атакой|активн\w+ (?:атак|эксплуат)|эксплуатиру\w+|используют (?:\w+\s+){0,3}уязвимост|использовали (?:\w+\s+){0,3}уязвимост|нарушив работу|нарушил\w* работу|нарушает работу|получили доступ|взломал\w*|подтвердил\w* кибератак', re.I)
+_A3_STRIKE = re.compile(r'(?:атакован\w*|атаковали|удар\w*\s+по|обстрел\w*|артиллерийск\w+\s+удар\w*)', re.I)
+_A3_STRIKE_OBJ = re.compile(r'БПЛА|беспилот|ракет|артилл|НПС|НПЗ|нефтеперекач|станци|город|район|гражданск', re.I)
+_A3_FUT = re.compile(r'предупрежда|может|могут|готов\w*|призыва|напомина|опасаю', re.I)
+_A3_CTX_NOISE = re.compile(r'фотографии (?:погоды )?года|Ядро Земли|Древние океаны|Ночные сторожа|Нормально ли хотеть|Отход молод\w+ от религии|обращений в .{0,30}кризисный центр|Мама, папа будут рады', re.I)
+_A3_REPORT_PERIOD = re.compile(r'в 20\d\d году|за 20\d\d год|за (?:первую|вторую) половину 20\d\d|за (?:первое|второе) полугодие|за (?:I|II|III|IV|\d)[\s-]*(?:й\s+)?квартал|за год\b', re.I)
+_A3_REPORT_STAT = re.compile(r'убит\w*|погибл\w*|украли|похитили|случа\w+ (?:насили|мошенн)|фемицид', re.I)
+_A3_EQUITY = re.compile(r'(?:Nasdaq|S&P|Dow Jones|фондов\w+ рын\w+|Мосбирж|индекс\w* (?:Мосбиржи|РТС|MOEX))[^.]{0,70}(?:потерял\w*|обвал\w*|рухнул\w*|уходит вниз|упал\w* на \d)|потерял\w* \$?\d+(?:[,.]\d+)?\s*трлн', re.I)
+_A3_STRIKE_TOLL = re.compile(r'(?<![\d,.])(\d{1,4})\s+(?:человек\w*\s+)?(?:погибл|погиб\b|убит)|(?:жертв|погибш)\w*[^.]{0,90}?(?:возросл\w*|выросл\w*|достигл\w*|увеличил\w*)\s+до\s+(\d{1,4})', re.I)
+_A3_STRIKE_CTX = re.compile(r'атак|удар|обстрел|БПЛА|беспилот|ракет', re.I)
+_A3_GEO_FIX = [
+    (re.compile(r'Боливи', re.I), 'Ливия', re.compile(r'(?<![А-Яа-яЁё])Ливи', re.I), ('BO', 'Боливия', -16.50, -68.15)),
+    (re.compile(r'Нов\w+ Англи', re.I), 'Великобритания', re.compile(r'Великобритан|Лондон|британ', re.I), ('US', 'США', 42.36, -71.06)),
+]
+_A3_MACRO = {'Ближний Восток', 'Европа', 'Азия', 'Африка', 'Глобально', 'Международные воды'}
+_A3_MACRO_CC = [(re.compile(r'Йемен', re.I), ('YE', 'Йемен', 15.35, 44.21)), (re.compile(r'Сири[ия]', re.I), ('SY', 'Сирия', 33.51, 36.29)),
+                (re.compile(r'Ирак', re.I), ('IQ', 'Ирак', 33.31, 44.36)), (re.compile(r'Ливан', re.I), ('LB', 'Ливан', 33.89, 35.50)),
+                (re.compile(r'Судан', re.I), ('SD', 'Судан', 15.50, 32.56)), (re.compile(r'Сомали', re.I), ('SO', 'Сомали', 2.05, 45.32))]
+_A3_DOM_SOC = re.compile(r'фемицид|насили\w+ (?:в отношении|против) женщин|убит\w* \d[\d\s]* женщин', re.I)
+_A3_DOM_GEO = re.compile(r'(?:гибел\w*|погибш\w*|погибл\w*|убит\w*)[^.]{0,40}(?:в войне|солдат|военнослужащ|с начала вторжения)|утечка из Росстата', re.I)
+_A3_DOM_TEC = re.compile(r'кибератак|программ\w*-вымогател|хакер', re.I)
+
+def _a3_show(e, why):
+    e['feed_visible'] = True; e['context_only'] = False
+    e.pop('hide_reason', None)
+    e['hide_reasons'] = [x for x in (e.get('hide_reasons') or []) if not (isinstance(x, dict) and x.get('code') in ('context_gate',))]
+    e.setdefault('audit3', []).append(why)
+def _a3_ctx(e, why):
+    e['feed_visible'] = False; e['context_only'] = True; e['hide_reason'] = 'context_gate'
+    e.setdefault('hide_reasons', []).append({'code': 'context_gate', 'src': 'audit3', 'why': why})
+    e.setdefault('audit3', []).append(why)
+
+def _feed_audit3_2611(events):
+    if not FEED_AUDIT3_2611:
+        return
+    n = {}
+    def inc(k): n[k] = n.get(k, 0) + 1
+    for e in events or []:
+        try:
+            if e.get('alerts_only'):
+                continue
+            t = e.get('title') or ''; src = str(e.get('source') or '')
+            vis = e.get('feed_visible') is not False
+            if vis and (_A3_FEATURE_SRC.search(src) or _A3_FEATURE_TTL.search(t)) and not (_A3_HARD.search(t) and not _A3_FEATURE_TTL.search(t)):
+                _a3_ctx(e, 'P1 очерк/наука/аналитика'); inc('P1'); vis = False
+            if e.get('context_only') and (_A3_CTX_NOISE.search(t) or (_A3_FEATURE_SRC.search(src) and (e.get('severity') or 0) <= 35)):
+                e['context_only'] = False; e['hide_reason'] = 'feed_fix_noise'; e.setdefault('audit3', []).append('P8 шум'); inc('P8')
+                continue
+            if e.get('context_only') and not _A3_FUT.search(t):
+                if e.get('domain') == 'technology' and _A3_CYBER_ACT.search(t):
+                    _a3_show(e, 'P2 активная атака / взлом'); inc('P2'); vis = True
+                elif _A3_STRIKE.search(t) and _A3_STRIKE_OBJ.search(t):
+                    _a3_show(e, 'P3 удар по инфраструктуре / гражданским'); inc('P3'); vis = True
+                    if e.get('domain') == 'economy' and re.search(r'БПЛА|беспилот|ракет', t, re.I):
+                        e['domain_audit3_from'] = e.get('domain'); e['domain'] = 'geopolitics'
+            reg = str(e.get('region') or '')
+            for _rx, _bad, _real, (_cc, _rg, _la, _lo) in _A3_GEO_FIX:
+                if reg == _bad and _rx.search(t) and not _real.search(_rx.sub(' ', t)):
+                    _gr9_set(e, _cc, _rg, _la, _lo, 'AUDIT3_GEO: ' + _bad + ' -> ' + _rg, sync=True); inc('P4'); break
+            if reg in _A3_MACRO:
+                for _rx, (_cc, _rg, _la, _lo) in _A3_MACRO_CC:
+                    if _rx.search(t):
+                        _gr9_set(e, _cc, _rg, _la, _lo, 'AUDIT3_GEO: макрорегион -> страна из заголовка', sync=True); inc('P4'); break
+            d0 = e.get('domain')
+            if d0 != 'social' and _A3_DOM_SOC.search(t):
+                e['domain_audit3_from'] = d0; e['domain'] = 'social'; inc('DOM')
+            elif d0 in ('technology', 'economy') and _A3_DOM_GEO.search(t):
+                e['domain_audit3_from'] = d0; e['domain'] = 'geopolitics'; inc('DOM')
+            elif d0 == 'geopolitics' and _A3_DOM_TEC.search(t) and not _A3_STRIKE.search(t):
+                e['domain_audit3_from'] = d0; e['domain'] = 'technology'; inc('DOM')
+            sev = e.get('severity') or 0
+            if _A3_REPORT_PERIOD.search(t) and _A3_REPORT_STAT.search(t) and (sev > 65 or sev < 55):
+                e['severity_audit3_from'] = sev; e['severity'] = min(65, max(55, sev)); inc('P5'); sev = e['severity']
+            if _A3_EQUITY.search(t) and sev < 65 and not _MS_MODAL.search(t):
+                e['severity_audit3_from'] = sev; e['severity'] = 65; inc('P6'); sev = 65
+            m = _A3_STRIKE_TOLL.search(t)
+            if m and _A3_STRIKE_CTX.search(t) and int(m.group(1) or m.group(2)) >= 10 and sev < 74 and e.get('domain') == 'geopolitics':
+                e['severity_audit3_from'] = sev; e['severity'] = 74; inc('TOLL')
+        except Exception:
+            continue
+    try:
+        grp = {}
+        for e in events or []:
+            if e.get('alerts_only') or e.get('feed_visible') is False:
+                continue
+            t = e.get('title') or ''
+            if not _DT_HARM.search(t):
+                continue
+            m = _DT_NUM.search(t)
+            cc = str(e.get('primary_country') or e.get('country_code') or '')
+            if not m or int(m.group(1)) < 3 or not cc:
+                continue
+            grp.setdefault((cc, str(e.get('date') or '')[:10]), []).append((int(m.group(1)), e))
+        for k, v in grp.items():
+            if len(v) < 2:
+                continue
+            v.sort(key=lambda x: -((x[1].get('severity') or 0)))
+            used = set()
+            for i, (ni, ei) in enumerate(v):
+                if id(ei) in used:
+                    continue
+                for nj, ej in v[i + 1:]:
+                    if id(ej) in used or ni == nj:
+                        continue
+                    close = abs(ni - nj) <= max(1, round(0.1 * max(ni, nj)))
+                    same = (_RS_ROAD.search(ei.get('title') or '') and _RS_ROAD.search(ej.get('title') or '')) or (ei.get('canon_type') and ei.get('canon_type') == ej.get('canon_type'))
+                    if close and same:
+                        ej['feed_visible'] = False; ej['hide_reason'] = 'dupe_toll'
+                        ej.setdefault('hide_reasons', []).append({'code': 'dupe_toll', 'src': 'audit3', 'keep': ei.get('id')})
+                        ej['merged_into'] = ei.get('id'); used.add(id(ej)); inc('P7')
+                        ei.setdefault('also_reported_by', [])
+                        if ej.get('source') and ej.get('source') not in ei['also_reported_by']:
+                            ei['also_reported_by'].append(ej.get('source'))
+    except Exception:
+        pass
+    print('  feed_audit3_2611: %s' % n)
+
+
 def _post_arbiter_2611(events):
     """26.11.2026 (аудит ленты): 1) арбитр доменов шёл после ROAD_SOCIAL_2511 и возвращал ДТП
     в экономику/климат - правило повторяется после арбитра; 2) THREAT_CAP_2511 срабатывал только
@@ -32774,6 +32898,10 @@ def save_enriched(events, previous_snapshot=None):
             # ПОСЛЕ них — непосредственно перед записью файла.
             try:
                 _post_arbiter_2611(enriched["events"])   # ROAD_SOCIAL_2511 после арбитра доменов + THREAT_CAP для сохранённых событий
+            except Exception:
+                pass
+            try:
+                _feed_audit3_2611(enriched["events"])    # FEED_AUDIT3_2611: P1-P8 аудита ленты 26.11
             except Exception:
                 pass
             _sev_finalize(enriched["events"])          # IDR-013: разложение веса
