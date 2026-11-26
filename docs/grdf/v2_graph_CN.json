@@ -2,17 +2,17 @@
   "country": "CN",
   "date": "2026-11-26",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-26T08:49:00.183509+00:00",
+  "generated_at": "2026-11-26T09:09:57.265502+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 74,
+      "score": 65,
       "props": {
-        "risk_score": 74
+        "risk_score": 65
       }
     },
     {
@@ -20,49 +20,49 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 62,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CN-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 74,
-      "trend": "stable"
+      "score": 5,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CN-technology",
       "type": "Domain",
       "label": "technology",
       "score": 64,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CN-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CN-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DRIVER-CN-Geopolitical",
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CN-Туман:_Зон",
-      "type": "Signal",
-      "label": "Туман: Зона выпуска, Жэньфэн, Китай",
-      "severity": 74,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-CN-Microsoft:",
       "type": "Signal",
       "label": "Microsoft: Хакеры из Китая, известные ка",
@@ -94,11 +87,18 @@
       "domain": "technology"
     },
     {
-      "id": "SIGNAL-CN-Трамп_разд",
+      "id": "SIGNAL-CN-Тарифы_Тра",
       "type": "Signal",
-      "label": "Трамп раздражает торговых партнеров тари",
+      "label": "Тарифы Трампа снижают привлекательность ",
       "severity": 62,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-CN-Группа_APT",
+      "type": "Signal",
+      "label": "Группа APT Webworm проникает в сети с по",
+      "severity": 62,
+      "domain": "technology"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-climate",
       "type": "CORRELATES",
-      "weight": 0.74
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CN",
@@ -163,48 +163,6 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-CN-climate",
-      "to": "DOMAIN-CN-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-CN-economic",
-      "to": "DOMAIN-CN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-CN-social",
-      "to": "DOMAIN-CN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-CN-climate",
-      "to": "DOMAIN-CN-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-CN-infrastructure",
-      "to": "DOMAIN-CN-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-CN-economic",
-      "to": "DOMAIN-CN-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-CN-geopolitical",
       "to": "DOMAIN-CN-infrastructure",
       "type": "ESCALATES",
@@ -226,20 +184,20 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-CN-Туман:_Зон",
-      "to": "DOMAIN-CN-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.74
-    },
-    {
       "from": "SIGNAL-CN-Microsoft:",
       "to": "DOMAIN-CN-technology",
       "type": "AMPLIFIES",
       "weight": 0.64
     },
     {
-      "from": "SIGNAL-CN-Трамп_разд",
+      "from": "SIGNAL-CN-Тарифы_Тра",
       "to": "DOMAIN-CN-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.62
+    },
+    {
+      "from": "SIGNAL-CN-Группа_APT",
+      "to": "DOMAIN-CN-technology",
       "type": "AMPLIFIES",
       "weight": 0.62
     }
