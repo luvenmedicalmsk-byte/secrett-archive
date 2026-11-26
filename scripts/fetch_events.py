@@ -29622,6 +29622,9 @@ def _a3_show(e, why):
 # 26.11.2026 · FEED_AUDIT4_2611 (Мия «включай», аудит ленты 26.11 18:00). Откат: False.
 FEED_AUDIT4_2611 = True
 _A4_RU_ASSETS = re.compile(r'(?:зарубежн\w+|иностранн\w+|международн\w+)\s+актив\w*\s+«?(?:Лукойл|Роснефт|Газпром|Новатэк|Росатом|Сбер|ВТБ|Татнефт)', re.I)
+_A4_RES = re.compile(r'резерв\w*\s+(?:\w+\s+){0,2}(?:центральн\w+\s+банк|ЦБ|нацбанк|центробанк)|(?:золотовалютн|международн)\w*\s+резерв|валют\w* на счетах центральн', re.I)
+_A4_RES_DROP = re.compile(r'упал|упали|сократил|снизил|рухнул|обвал|потерял|минимум|самого низкого', re.I)
+_A4_RES_LOW = re.compile(r'самого низкого|минимум\w* с|минимальн\w+ с|рекордн\w+ (?:низк|минимум)', re.I)
 _A4_GAZA = re.compile(r'\bГаз[аеыу]\b|сектор\w* Газа|Gaza', re.I)
 _A4_UA_PLACE = re.compile(r'Украин|Киев|Харьков|Одесс|Днепр|Запорож|Херсон|Сумы|Сумск|Чернигов|Львов|Николаев|Полтав|Житомир|Винниц|Донецк|Луганск|Славянск(?!\w* НПЗ)|Краматорск')
 _A4_DECLARE_DEAD = re.compile(r'(?:объяв\w+|призна\w+)\s+(?:\w+\s+){0,2}погибш\w+[\s\S]{0,140}пропавш|пропавш\w+ без вести[^.]{0,80}(?:объяв|призна)\w+ погибш', re.I)
@@ -29706,6 +29709,16 @@ def _feed_audit3_2611(events):
                 _sm = (e.get('summary') or e.get('description') or '')[:250]
                 if vis and _A4_DECLARE_DEAD.search(t + ' ' + _sm) and (e.get('severity') or 0) > 74:
                     e['severity_audit4_from'] = e.get('severity'); e['severity'] = 74; inc('A4_DEAD')
+                # 26.11.2026 (Мия): резервы центробанка. «Резервы ЦБ Турции -17 млрд $ за неделю, минимум с мая 2025» стояло 51.
+                # Падение резервов - 64; крупное (от 10 млрд или от 5%) или многомесячный минимум - 68. Только подъём.
+                if vis and _A4_RES.search(t) and _A4_RES_DROP.search(t):
+                    _rs = 64
+                    _mm = re.search(r'(\d+(?:[.,]\d+)?)\s*(?:млрд|миллиард)', t)
+                    _pp = re.search(r'(\d+(?:[.,]\d+)?)\s*%', t)
+                    if (_mm and float(_mm.group(1).replace(',', '.')) >= 10) or (_pp and float(_pp.group(1).replace(',', '.')) >= 5) or _A4_RES_LOW.search(t):
+                        _rs = 68
+                    if (e.get('severity') or 0) < _rs:
+                        e['severity_audit4_from'] = e.get('severity'); e['severity'] = _rs; inc('A4_RES')
                 if vis and _A4_AID.search(t):
                     _a3_ctx(e, 'A4 отправка гуманитарной помощи'); inc('A4_AID'); vis = False
                 if vis and _A4_REPORT.search(t) and (src.startswith('ReliefWeb') or 'DREF' in t or 'MDR' in t):
