@@ -2,17 +2,17 @@
   "country": "SA",
   "date": "2026-11-26",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-26T18:08:57.799334+00:00",
+  "generated_at": "2026-11-26T18:29:56.186995+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-SA",
       "type": "Country",
       "label": "SA",
-      "score": 83,
+      "score": 86,
       "props": {
-        "risk_score": 83
+        "risk_score": 86
       }
     },
     {
@@ -20,7 +20,7 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 73,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-economic",
@@ -33,8 +33,8 @@
       "id": "DOMAIN-SA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "stable"
+      "score": 74,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-technology",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-SA-Дождь:_Аль",
+      "type": "Signal",
+      "label": "Дождь: Аль-Меджарда (Асир), Риджал Аль М",
+      "severity": 74,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-SA-Хуситы_зая",
       "type": "Signal",
       "label": "Хуситы заявляют, что атаковали крупнейши",
@@ -91,13 +98,6 @@
       "type": "Signal",
       "label": "Атака Хуситов на нефтеперерабатывающий з",
       "severity": 72,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-SA-Взрыв_слыш",
-      "type": "Signal",
-      "label": "Взрыв слышен — Эр-Рияд после предупрежде",
-      "severity": 70,
       "domain": "geopolitical"
     }
   ],
@@ -118,7 +118,7 @@
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.74
     },
     {
       "from": "COUNTRY-SA",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-SA-climate",
+      "to": "DOMAIN-SA-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-SA-economic",
+      "to": "DOMAIN-SA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-SA-social",
+      "to": "DOMAIN-SA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-SA-climate",
+      "to": "DOMAIN-SA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-SA-infrastructure",
+      "to": "DOMAIN-SA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-SA-economic",
+      "to": "DOMAIN-SA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "DOMAIN-SA-geopolitical",
       "to": "DOMAIN-SA-infrastructure",
       "type": "ESCALATES",
@@ -184,6 +226,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-SA-Дождь:_Аль",
+      "to": "DOMAIN-SA-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.74
+    },
+    {
       "from": "SIGNAL-SA-Хуситы_зая",
       "to": "DOMAIN-SA-geopolitical",
       "type": "AMPLIFIES",
@@ -194,12 +242,6 @@
       "to": "DOMAIN-SA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.72
-    },
-    {
-      "from": "SIGNAL-SA-Взрыв_слыш",
-      "to": "DOMAIN-SA-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.7
     }
   ]
 }
