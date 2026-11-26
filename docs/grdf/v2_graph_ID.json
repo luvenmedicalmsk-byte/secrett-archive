@@ -2,7 +2,7 @@
   "country": "ID",
   "date": "2026-11-26",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-26T04:08:26.236495+00:00",
+  "generated_at": "2026-11-26T04:28:25.593367+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-ID",
       "type": "Country",
       "label": "ID",
-      "score": 55,
+      "score": 57,
       "props": {
-        "risk_score": 55
+        "risk_score": 57
       }
     },
     {
@@ -33,8 +33,8 @@
       "id": "DOMAIN-ID-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 55,
-      "trend": "down"
+      "score": 56,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-technology",
@@ -47,8 +47,8 @@
       "id": "DOMAIN-ID-social",
       "type": "Domain",
       "label": "social",
-      "score": 40,
-      "trend": "down"
+      "score": 5,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-ID-infrastructure",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-ID-Гроза:_Гор",
+      "type": "Signal",
+      "label": "Гроза: Горонтало, Центральный Сулавеси, ",
+      "severity": 56,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-ID-Пока_Индон",
       "type": "Signal",
       "label": "Пока Индонезия горит, сообщества ищут бе",
@@ -92,13 +99,6 @@
       "label": "Пожарная активность — Индонезия",
       "severity": 55,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-ID-Социальный",
-      "type": "Signal",
-      "label": "Социальный процесс — Юго-Восточная Азия",
-      "severity": 54,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-climate",
       "type": "CORRELATES",
-      "weight": 0.55
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-ID",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-social",
       "type": "CORRELATES",
-      "weight": 0.4
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-ID",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-ID-climate",
-      "to": "DOMAIN-ID-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-ID-economic",
-      "to": "DOMAIN-ID-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-ID-social",
-      "to": "DOMAIN-ID-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-ID-climate",
       "to": "DOMAIN-ID-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -205,6 +184,33 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-ID-climate",
+      "to": "DOMAIN-ID-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ID-economic",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-ID-social",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "SIGNAL-ID-Гроза:_Гор",
+      "to": "DOMAIN-ID-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.56
+    },
+    {
       "from": "SIGNAL-ID-Пока_Индон",
       "to": "DOMAIN-ID-climate",
       "type": "AMPLIFIES",
@@ -215,12 +221,6 @@
       "to": "DOMAIN-ID-climate",
       "type": "AMPLIFIES",
       "weight": 0.55
-    },
-    {
-      "from": "SIGNAL-ID-Социальный",
-      "to": "DOMAIN-ID-social",
-      "type": "AMPLIFIES",
-      "weight": 0.54
     }
   ]
 }
