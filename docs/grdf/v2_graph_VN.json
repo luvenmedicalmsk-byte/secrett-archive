@@ -2,67 +2,67 @@
   "country": "VN",
   "date": "2026-11-26",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-26T07:48:51.371956+00:00",
+  "generated_at": "2026-11-26T08:08:45.154603+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-VN",
       "type": "Country",
       "label": "VN",
-      "score": 47,
+      "score": 45,
       "props": {
-        "risk_score": 47
+        "risk_score": 45
       }
     },
     {
       "id": "DOMAIN-VN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 39,
-      "trend": "stable"
+      "score": 62,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-VN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
-      "trend": "stable"
+      "score": 26,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-VN-climate",
       "type": "Domain",
       "label": "climate",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-VN-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-VN-social",
       "type": "Domain",
       "label": "social",
       "score": 74,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-VN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-VN-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DRIVER-VN-social",
@@ -80,13 +80,6 @@
       "label": "economic"
     },
     {
-      "id": "SIGNAL-VN-Вьетнам_ра",
-      "type": "Signal",
-      "label": "Вьетнам рассматривает возможность отложи",
-      "severity": 47,
-      "domain": "social"
-    },
-    {
       "id": "SIGNAL-VN-Эпидемиоло",
       "type": "Signal",
       "label": "Эпидемиологический риск — Вьетнам",
@@ -99,6 +92,13 @@
       "label": "Социальный процесс — Юго-Восточная Азия",
       "severity": 54,
       "domain": "social"
+    },
+    {
+      "id": "SIGNAL-VN-Геополитич",
+      "type": "Signal",
+      "label": "Геополитический процесс — Вьетнам",
+      "severity": 62,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.62
     },
     {
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.26
     },
     {
       "from": "COUNTRY-VN",
@@ -163,10 +163,25 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-VN-Вьетнам_ра",
+      "from": "DOMAIN-VN-geopolitical",
+      "to": "DOMAIN-VN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-VN-infrastructure",
+      "to": "DOMAIN-VN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-VN-economic",
       "to": "DOMAIN-VN-social",
       "type": "AMPLIFIES",
-      "weight": 0.47
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-VN-Эпидемиоло",
@@ -179,6 +194,12 @@
       "to": "DOMAIN-VN-social",
       "type": "AMPLIFIES",
       "weight": 0.54
+    },
+    {
+      "from": "SIGNAL-VN-Геополитич",
+      "to": "DOMAIN-VN-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.62
     }
   ]
 }
