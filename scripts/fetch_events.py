@@ -29717,6 +29717,10 @@ def _feed_audit7_2711(events):
         try:
             t = e.get('title') or ''; sev = e.get('severity') or 0; src = str(e.get('source') or '')
             cc = str(e.get('primary_country') or e.get('country_code') or '')
+            # 27.11.2026 (Мия): заголовок целиком цитата без субъекта и места («Возникли сложности…») - не сигнал
+            _sm = (e.get('summary') or '').strip()
+            if re.fullmatch(r'\s*[«"][^«»"]{5,160}[»"]\.?\s*', t) and (len(_sm) < 120 or re.fullmatch(r'\s*[«"][^«»"]+[»"]\.?\s*', _sm)):
+                e['feed_visible'] = False; _hide_mark(e, 'quote_fragment'); inc('A7_QUOTE'); continue
             _t2 = re.sub(r'^\s*Ранее\s*[–—-]\s*', '', _A7_JUNK_TAIL.sub('', t))
             if _t2 != t and len(_t2) > 30:
                 e['title_raw_2711'] = t; e['title'] = t = _t2; inc('A7_TAIL')
