@@ -2,7 +2,7 @@
   "country": "CA",
   "date": "2026-11-27",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-27T10:29:53.104015+00:00",
+  "generated_at": "2026-11-27T10:50:11.150507+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-CA",
       "type": "Country",
       "label": "CA",
-      "score": 62,
+      "score": 56,
       "props": {
-        "risk_score": 62
+        "risk_score": 56
       }
     },
     {
@@ -20,49 +20,49 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 67,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 56,
-      "trend": "up"
+      "score": 60,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
-      "score": 56,
-      "trend": "up"
+      "score": 5,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DRIVER-CA-Geopolitical",
@@ -80,16 +80,9 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CA-Гололёд:_Ю",
+      "id": "SIGNAL-CA-Туман:_Кли",
       "type": "Signal",
-      "label": "Гололёд: Южноиндийское озеро и провинциа",
-      "severity": 56,
-      "domain": "social"
-    },
-    {
-      "id": "SIGNAL-CA-Туман:_Озе",
-      "type": "Signal",
-      "label": "Туман: Озеро Клуэйн, Северный мир реки П",
+      "label": "Туман: Клир Хиллс Каунти рядом с парком ",
       "severity": 56,
       "domain": "climate"
     },
@@ -99,6 +92,13 @@
       "label": "Геополитический процесс — Северная Амери",
       "severity": 90,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-CA-Наводнение",
+      "type": "Signal",
+      "label": "Наводнение — Северная Америка",
+      "severity": 80,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-climate",
       "type": "CORRELATES",
-      "weight": 0.56
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-CA",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-social",
       "type": "CORRELATES",
-      "weight": 0.56
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CA",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-CA-geopolitical",
-      "to": "DOMAIN-CA-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-CA-infrastructure",
-      "to": "DOMAIN-CA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-CA-economic",
-      "to": "DOMAIN-CA-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "DOMAIN-CA-climate",
       "to": "DOMAIN-CA-infrastructure",
       "type": "ESCALATES",
@@ -226,13 +205,28 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-CA-Гололёд:_Ю",
-      "to": "DOMAIN-CA-social",
-      "type": "AMPLIFIES",
-      "weight": 0.56
+      "from": "DOMAIN-CA-geopolitical",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
     },
     {
-      "from": "SIGNAL-CA-Туман:_Озе",
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-CA-Туман:_Кли",
       "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
       "weight": 0.56
@@ -242,6 +236,12 @@
       "to": "DOMAIN-CA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.9
+    },
+    {
+      "from": "SIGNAL-CA-Наводнение",
+      "to": "DOMAIN-CA-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.8
     }
   ]
 }
