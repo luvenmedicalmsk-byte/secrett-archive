@@ -10068,6 +10068,8 @@ def process_events(raw_items):
     # MAX_EVENTS -- КАП для FEED-слоя (ленты). Analytic-события (feed_visible=False) идут
     # в поток сверх капа: их не видит FREE, но видят Process Engine / Radar / Pressure.
     _feed_all = [e for e in balanced if e.get('feed_visible') is not False]
+    # 27.11.2026: карточка Copernicus C3S (глобальная температура) не уходит под кап ленты
+    _feed_all = [e for e in _feed_all if e.get('source') == 'Copernicus C3S'] + [e for e in _feed_all if e.get('source') != 'Copernicus C3S']
     _feed = _feed_all[:MAX_EVENTS]
     # КАП ЛЕНТЫ тоже не записывался в потери: трассировка шла только при
     # LINEAGE=1, то есть в обычном прогоне его не видел никто. В прогоне
@@ -29610,7 +29612,7 @@ _A3_MACRO_CC = [(re.compile(r'Йемен', re.I), ('YE', 'Йемен', 15.35, 44
                 (re.compile(r'Ирак', re.I), ('IQ', 'Ирак', 33.31, 44.36)), (re.compile(r'Ливан', re.I), ('LB', 'Ливан', 33.89, 35.50)),
                 (re.compile(r'Судан', re.I), ('SD', 'Судан', 15.50, 32.56)), (re.compile(r'Сомали', re.I), ('SO', 'Сомали', 2.05, 45.32))]
 _A3_DOM_SOC = re.compile(r'фемицид|насили\w+ (?:в отношении|против) женщин|убит\w* \d[\d\s]* женщин', re.I)
-_A3_DOM_GEO = re.compile(r'(?:гибел\w*|погибш\w*|погибл\w*|убит\w*)[^.]{0,40}(?:в войне|солдат|военнослужащ|с начала вторжения)|утечка из Росстата', re.I)
+_A3_DOM_GEO = re.compile(r'погиб\w*[^.]{0,60}(?:израильск|российск|украинск)\w*\s+(?:атак|удар|обстрел)|(?:гибел\w*|погибш\w*|погибл\w*|убит\w*)[^.]{0,40}(?:в войне|солдат|военнослужащ|с начала вторжения)|утечка из Росстата', re.I)
 _A3_DOM_TEC = re.compile(r'кибератак|программ\w*-вымогател|хакер', re.I)
 
 def _a3_show(e, why):
@@ -29622,6 +29624,14 @@ def _a3_show(e, why):
 # 26.11.2026 · FEED_AUDIT4_2611 (Мия «включай», аудит ленты 26.11 18:00). Откат: False.
 FEED_AUDIT4_2611 = True
 _A4_RU_ASSETS = re.compile(r'(?:зарубежн\w+|иностранн\w+|международн\w+)\s+актив\w*\s+«?(?:Лукойл|Роснефт|Газпром|Новатэк|Росатом|Сбер|ВТБ|Татнефт)', re.I)
+# 27.11.2026 · FEED_AUDIT5_2711 (аудит ленты 27.11)
+_A5_ATTACK = re.compile(r'атак\w*|удар\w*|обстрел\w*|бомбардир\w*|авиаудар\w*', re.I)
+_A5_QUOTE_CTX = re.compile(r'^\s*[«"](?:Я|Мы|Наш|Нам|Меня)\b|^\s*Наш народ|^На этой неделе\b', re.I)
+_A5_ECON_SEA = re.compile(r'морск\w+\s+(?:торговл|тариф|фрахт|перевоз)', re.I)
+_A5_STOP = {'после','также','может','могут','более','около','всего','между','через','против','сообщает','сообщил','заявил','заявили','результате','последние','несмотря'}
+def _a5_tri(t):
+    w = [x for x in re.findall(r'[а-яё]{5,}', (t or '').lower()) if x not in _A5_STOP]
+    return {' '.join(w[i:i + 3]) for i in range(len(w) - 2)}
 _A4_RES = re.compile(r'резерв\w*\s+(?:\w+\s+){0,2}(?:центральн\w+\s+банк|ЦБ|нацбанк|центробанк)|(?:золотовалютн|международн)\w*\s+резерв|валют\w* на счетах центральн', re.I)
 _A4_RES_DROP = re.compile(r'упал|упали|сократил|снизил|рухнул|обвал|потерял|минимум|самого низкого', re.I)
 _A4_RES_LOW = re.compile(r'самого низкого|минимум\w* с|минимальн\w+ с|рекордн\w+ (?:низк|минимум)', re.I)
@@ -29719,6 +29729,10 @@ def _feed_audit3_2611(events):
                         _rs = 68
                     if (e.get('severity') or 0) < _rs:
                         e['severity_audit4_from'] = e.get('severity'); e['severity'] = _rs; inc('A4_RES')
+                if vis and _A5_QUOTE_CTX.search(t):
+                    _a3_ctx(e, 'A5 цитата / дайджест'); inc('A5_QUOTE'); vis = False
+                if _A5_ECON_SEA.search(t) and e.get('domain') in ('social', 'geopolitics'):
+                    e['domain_audit3_from'] = e.get('domain'); e['domain'] = 'economy'; inc('A5_DOM')
                 if vis and _A4_AID.search(t):
                     _a3_ctx(e, 'A4 отправка гуманитарной помощи'); inc('A4_AID'); vis = False
                 if vis and _A4_REPORT.search(t) and (src.startswith('ReliefWeb') or 'DREF' in t or 'MDR' in t):
@@ -29780,8 +29794,10 @@ def _feed_audit3_2611(events):
                             continue
                     except Exception:
                         continue
-                    same = (_RS_ROAD.search(ei.get('title') or '') and _RS_ROAD.search(ej.get('title') or '')) or (ei.get('canon_type') and ei.get('canon_type') == ej.get('canon_type'))
-                    if close and same:
+                    same = (_RS_ROAD.search(ei.get('title') or '') and _RS_ROAD.search(ej.get('title') or '')) or (ei.get('canon_type') and ei.get('canon_type') == ej.get('canon_type')) \
+                        or (_A5_ATTACK.search((ei.get('title') or '') + ' ' + (ei.get('summary') or '')[:200]) and _A5_ATTACK.search((ej.get('title') or '') + ' ' + (ej.get('summary') or '')[:200]))   # 27.11: оба - об ударах
+                    _tri = _a5_tri(ei.get('title')) & _a5_tri(ej.get('title'))   # 27.11: общая фраза из 3 слов
+                    if (close and same) or _tri:
                         ej['feed_visible'] = False; ej['hide_reason'] = 'dupe_toll'
                         ej.setdefault('hide_reasons', []).append({'code': 'dupe_toll', 'src': 'audit3', 'keep': ei.get('id')})
                         ej['merged_into'] = ei.get('id'); used.add(id(ej)); inc('P7')
