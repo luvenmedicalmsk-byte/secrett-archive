@@ -29694,6 +29694,12 @@ _A7_CAP = [
     (re.compile(r'^(?:Шторм|Ураган|Тайфун|Циклон)[^.]{0,20}угрожа', re.I), 72),
 ]
 
+# 27.11.2026: нижняя граница для структурных сигналов (одобрено Мией): конкуренция ИИ-инфраструктуры
+# с оборонной промышленностью за ресурсы, кадры и энергию - связка технологии × геополитика × экономика
+_A7_FLOOR = [
+    (re.compile(r'дата-центр\w*[^.]{0,100}(?:оборон|ВПК|военн\w+ промышлен)|(?:оборон|ВПК)[^.]{0,100}дата-центр', re.I), 62),
+]
+
 def _feed_audit7_2711(events):
     stat = {}
     def inc(k): stat[k] = stat.get(k, 0) + 1
@@ -29724,6 +29730,9 @@ def _feed_audit7_2711(events):
                 if rx.search(t) and (e.get('domain') in frm or e.get('domain') == to):
                     if e.get('domain') != to: e['domain_audit3_from'] = e.get('domain'); e['domain'] = to; inc('A7_DOM')
                     e['domain_lock'] = 'A7_DOM'; break
+            for rx, fl in _A7_FLOOR:
+                if rx.search(t) and sev < fl:
+                    e['severity_audit3_from'] = sev; e['severity'] = fl; sev = fl; inc('A7_FLOOR'); break
             for rx, cap in _A7_CAP:
                 if rx.search(t) and sev > cap:
                     e['severity_audit3_from'] = sev; e['severity'] = cap; sev = cap; inc('A7_CAP'); break
