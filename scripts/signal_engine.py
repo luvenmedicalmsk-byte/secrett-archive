@@ -2782,6 +2782,31 @@ def identity_v2_parity(previous, evolved_v2=None):
             'проверки': checks}
 
 
+_V2_ABS = {}
+IDV2_FIX_2711 = True   # 27.11.2026: перенос индекса и свидетельств поглощённых; откат: False
+_IDV2_EV_CAP = 60
+
+
+def _idv2_carry(out):
+    """IDV2_FIX_2711. Победитель семьи после _evolve_one: индекс = максимум из
+    активных поглощённых, свидетельства = объединение (дедуп по заголовку), кап 60."""
+    n = 0
+    for s in out:
+        a = _V2_ABS.get(s.get('signal_id'))
+        if not a: continue
+        ev = list(s.get('evidence') or []); seen = {(e.get('title') or '')[:60] for e in ev}
+        for e in a['ev']:
+            k = (e.get('title') or '')[:60]
+            if k and k not in seen:
+                seen.add(k); ev.append(e)
+        ev.sort(key=lambda e: str(e.get('date') or ''), reverse=True)
+        s['evidence'] = ev[:_IDV2_EV_CAP]; s['evidence_count'] = len(s['evidence'])
+        if a['sev'] > (s.get('severity') or 0):
+            s['severity_before_idv2'] = s.get('severity'); s['severity'] = a['sev']
+        n += 1
+    return n
+
+
 def _identity_v2_prepare(previous):
     """TASK-242. Боевая подготовка previous по identity v2t.
 
@@ -2796,6 +2821,7 @@ def _identity_v2_prepare(previous):
     правила merge, winner и Evidence Contract не меняются.
     """
     import copy
+    _V2_ABS.clear()
     src = [s for s in (previous or []) if not s.get('is_macro')]
     fam = {}
     for s in src:
@@ -2818,6 +2844,12 @@ def _identity_v2_prepare(previous):
         _ms = [copy.deepcopy(m) for m in members]
         w = _mig_winner(_ms)
         merged.append(_mig_merge_family(_ms, w))
+        # IDV2_FIX_2711: что поглощённые несут в production (индекс и свидетельства),
+        # переносится в победителя ПОСЛЕ _evolve_one (тот пересобирает запись из cur).
+        _abs = [x for x in _ms if x is not w]
+        _V2_ABS[w['signal_id']] = {
+            'sev': max([x.get('severity') or 0 for x in _abs if x.get('status') == 'active'] or [0]),
+            'ev': [e for x in _abs for e in (x.get('evidence') or [])]}
         for x in _ms:
             if x is w:
                 continue
@@ -3214,6 +3246,8 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
     # Task 7: Explainability
     for s in out:
         s['explain']=_explain(s, s.get('process_type', s.get('title','').split(' — ')[0]))
+    if _apply_v2 and IDV2_FIX_2711 and _V2_ABS:
+        _IDENTITY_SHADOW['idv2_carry']=_idv2_carry(out)
     # v1.5: связи, давление, динамика, прогноз, критические переходы, глобальное здоровье
     out, global_health = enrich_v15(out, prev_global)
     # v1.6: память, DNA, паттерны, ожидаемый шаг, возраст, recurrence, Atlas Memory
@@ -4726,6 +4760,18 @@ def write_signals_json(events, path):
             print('  [STATE-SHADOW] %s' % json.dumps(_ss_stats, ensure_ascii=False)[:300], file=sys.stderr)
         except Exception as _sse:
             print(f'  [STATE-SHADOW] skip: {_sse}', file=sys.stderr)
+    # STATE_APPLY_2711 (27.11.2026, решение Мии): правило C в production.
+    # status не меняется; phase и lifecycle_stage берутся из state_shadow.
+    # Макропроцессы исключены (state_shadow у них не пишется). Откат: False.
+    if STATE_SHADOW and STATE_APPLY_2711:
+        _sa = 0
+        for _s in evolved:
+            _ssd = _s.get('state_shadow')
+            if _s.get('is_macro') or not _ssd or not _ssd.get('changed'): continue
+            _s['state_before_2711'] = {'phase': _s.get('phase'), 'lifecycle_stage': _s.get('lifecycle_stage')}
+            _s['phase'] = _ssd.get('phase'); _s['lifecycle_stage'] = _ssd.get('lifecycle_stage')
+            _sa += 1
+        print('  [STATE-APPLY-2711] applied=%d' % _sa, file=sys.stderr)
     if PROCESS_AUDIT_2711:
         try:
             _process_audit_2711(evolved, events)
@@ -4822,6 +4868,7 @@ def write_signals_json(events, path):
 # Shadow-правило согласования состояния процесса. Production-поля не меняются.
 # Откат: STATE_SHADOW = False.
 STATE_SHADOW = True
+STATE_APPLY_2711 = True   # 27.11.2026 (Мия): правило C в production; откат: False
 _SS_ALLOWED_STAGE = {
     'archived': ('Завершён',),
     'dormant': ('Ослабление', 'Завершён'),
