@@ -2783,6 +2783,7 @@ def identity_v2_parity(previous, evolved_v2=None):
 
 
 _V2_ABS = {}
+_V2_LATE = {}
 IDV2_FIX_2711 = True   # 27.11.2026: перенос индекса и свидетельств поглощённых; откат: False
 _IDV2_EV_CAP = 60
 
@@ -2794,6 +2795,9 @@ def _idv2_carry(out):
     for s in out:
         a = _V2_ABS.get(s.get('signal_id'))
         if not a: continue
+        for _c in _V2_LATE.get(s.get('signal_id')) or []:
+            a = dict(a); a['ev'] = list(_c.get('evidence') or []) + a['ev']
+            a['sev'] = max(a['sev'], _c.get('severity') or 0)
         ev = list(s.get('evidence') or []); seen = {(e.get('title') or '')[:60] for e in ev}
         for e in a['ev']:
             k = (e.get('title') or '')[:60]
@@ -2821,7 +2825,7 @@ def _identity_v2_prepare(previous):
     правила merge, winner и Evidence Contract не меняются.
     """
     import copy
-    _V2_ABS.clear()
+    _V2_ABS.clear(); _V2_LATE.clear()
     src = [s for s in (previous or []) if not s.get('is_macro')]
     fam = {}
     for s in src:
@@ -3018,6 +3022,15 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
         sid=cur['signal_id']; seen.add(sid)
         # средний confidence-match свидетельств процесса
         for e in cur.get('evidence',[]): match_scores.append(e.get('match_score',1.0))
+        # IDV2_FIX_2711 (2): кластер со signal_id поглощённого процесса идёт в победителя.
+        # Победитель свободен - матчится на него; уже занят - события доливаются в него.
+        if _apply_v2 and IDV2_FIX_2711 and sid not in prev_by_id and sid in _v2_remap:
+            _tgt=_v2_remap[sid]
+            if _tgt in prev_by_id and _tgt not in seen:
+                cur['signal_id']=sid=_tgt; seen.add(sid)
+            elif _tgt in prev_by_id:
+                _V2_LATE.setdefault(_tgt, []).append(cur)
+                continue
         if sid in prev_by_id:
             n_matched+=1
             s=_evolve_one(cur, prev_by_id[sid], now)
