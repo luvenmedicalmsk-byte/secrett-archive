@@ -2,7 +2,7 @@
   "country": "SK",
   "date": "2026-11-27",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-27T17:08:50.913488+00:00",
+  "generated_at": "2026-11-27T17:49:19.695849+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -40,7 +40,7 @@
       "id": "DOMAIN-SK-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 47,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -70,14 +70,21 @@
       "label": "climate"
     },
     {
-      "id": "DRIVER-SK-technology",
-      "type": "Driver",
-      "label": "technology"
-    },
-    {
       "id": "DRIVER-SK-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
+    },
+    {
+      "id": "DRIVER-SK-economic",
+      "type": "Driver",
+      "label": "economic"
+    },
+    {
+      "id": "SIGNAL-SK-Туман:_Луч",
+      "type": "Signal",
+      "label": "Туман: Лученец, Великий Кртеш, Римавская",
+      "severity": 50,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-SK-Снег:_Коши",
@@ -92,13 +99,6 @@
       "label": "Ветер: Кошице-околица, Кошице, Словакия",
       "severity": 50,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-SK-Технологич",
-      "type": "Signal",
-      "label": "Технологический сигнал — Словакия",
-      "severity": 47,
-      "domain": "technology"
     }
   ],
   "edges": [
@@ -124,7 +124,7 @@
       "from": "COUNTRY-SK",
       "to": "DOMAIN-SK-technology",
       "type": "CORRELATES",
-      "weight": 0.47
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-SK",
@@ -151,13 +151,13 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-SK-technology",
+      "from": "DRIVER-SK-geopolitical",
       "to": "COUNTRY-SK",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-SK-geopolitical",
+      "from": "DRIVER-SK-economic",
       "to": "COUNTRY-SK",
       "type": "CAUSES",
       "weight": 0.8
@@ -226,6 +226,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-SK-Туман:_Луч",
+      "to": "DOMAIN-SK-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
       "from": "SIGNAL-SK-Снег:_Коши",
       "to": "DOMAIN-SK-climate",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-SK-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-SK-Технологич",
-      "to": "DOMAIN-SK-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.47
     }
   ]
 }
