@@ -29652,6 +29652,90 @@ def _a3_ctx(e, why):
     e.setdefault('hide_reasons', []).append({'code': 'context_gate', 'src': 'audit3', 'why': why})
     e.setdefault('audit3', []).append(why)
 
+# 27.11.2026 · FEED_AUDIT6_2711 (аудит ленты 27.11, п.1-5, одобрено Мией)
+_A6_KILLED = re.compile(r'(\d+)\s+(?:[а-яё]+\s+){0,2}(?:погиб|убит|убиты)|(?:погиб\w*|убил\w*|убива\w*|убит\w*)\s+(?:еще\s+|ещё\s+)?(\d+)', re.I)
+_A6_SOCIAL = re.compile(r'жертв\w*\s+(?:священник|насили|педофил)|медработник\w*[^.]{0,80}(?:нападени|травм)|нападени\w+\s+пациент', re.I)
+_A6_TARIFF = re.compile(r'(?:Трамп|США|Вашингтон)[^.]{0,80}пошлин|пошлин[^.]{0,80}(?:США|Трамп)', re.I)
+_A6_OLD = re.compile(r'\bв\s+(?:январ|феврал|март|апрел|мае|июн|июл|август|сентябр|октябр|ноябр|декабр)\w*\s+(20\d\d)', re.I)
+_A6_ROUTINE = re.compile(r'^Ozon запустил|приняла бюджет\s+(?:Москвы|города|региона|области)|ввели в работу\s+(?:первую\s+)?(?:газотурбинн|энергоблок|установк)|^Хуанг вернулся|^Было утилизировано', re.I)
+
+def _feed_audit6_2711(events):
+    stat = {}
+    def inc(k): stat[k] = stat.get(k, 0) + 1
+    vis = [e for e in events or [] if e.get('feed_visible') is not False and not e.get('alerts_only')]
+    for e in vis:
+        try:
+            t = e.get('title') or ''; sev = e.get('severity') or 0; d0 = e.get('domain')
+            cc = str(e.get('primary_country') or e.get('country_code') or '')
+            # п.5 контекст: старое событие в заголовке, рутина
+            mo = _A6_OLD.search(t)
+            if (mo and int(mo.group(1)) < int(str(e.get('date') or '2026')[:4])) or _A6_ROUTINE.search(t):
+                _a3_ctx(e, 'A6 старое событие / рутина'); inc('A6_CTX'); continue
+            # домены
+            if d0 in ('economy', 'technology') and _A3_DOM_GEO.search(t):
+                e['domain_audit3_from'] = d0; e['domain'] = 'geopolitics'; inc('A6_DOM')
+            elif d0 in ('economy', 'geopolitics') and _A6_SOCIAL.search(t):
+                e['domain_audit3_from'] = d0; e['domain'] = 'social'; inc('A6_DOM')
+            # п.4 пошлины США -> экономика, США
+            if _A6_TARIFF.search(t) and e.get('domain') == 'geopolitics' and cc in ('', 'US', 'CN'):
+                e['domain_audit3_from'] = 'geopolitics'; e['domain'] = 'economy'
+                if cc != 'US':
+                    _gr9_set(e, 'US', 'США', 38.90, -77.04, 'AUDIT6_GEO: пошлины США', sync=True)
+                if sev < 66:
+                    e['severity_audit3_from'] = sev; e['severity'] = 68 if re.search(r'десятк\w+\s+стран|всех стран', t, re.I) else 66
+                inc('A6_TARIFF')
+            # гео
+            if re.search(r'^Пентагон', t) and cc in ('', ):
+                _gr9_set(e, 'US', 'США', 38.87, -77.06, 'AUDIT6_GEO: Пентагон -> США', sync=True); inc('A6_GEO')
+            elif re.search(r'^Бундесвер', t) and cc in ('', 'RU'):
+                _gr9_set(e, 'DE', 'Германия', 52.52, 13.40, 'AUDIT6_GEO: Бундесвер -> Германия', sync=True); inc('A6_GEO')
+            elif re.search(r'(?:Евросоюз|\bЕС\b)', t) and re.search(r'госфинанс|бюджет|долг', t, re.I) and cc == 'FR' and not re.search(r'Франц', t):
+                _gr9_set(e, '', 'Европа', 50.85, 4.35, 'AUDIT6_GEO: ЕС -> Европа', sync=True); inc('A6_GEO')
+            elif re.search(r'^(?:Standard Chartered|Goldman|JPMorgan|Morgan Stanley|Citi)\b[^.]{0,20}:\s*(?:нефт|Нефт)', t) and cc == '':
+                e['region'] = 'Глобально'; e['lat'] = e['lng'] = None; e['is_global'] = True; e['map_visible'] = False
+                if isinstance(e.get('geo'), dict): e['geo'].update({'region': 'Глобально', 'lat': None, 'lng': None, 'precision': 'none'})
+                inc('A6_GEO')
+            # п.1 удар с малым числом погибших
+            if e.get('domain') == 'geopolitics' and sev > 80:
+                m = _A6_KILLED.search(t)
+                if m and int(m.group(1) or m.group(2)) < 5 and not re.search(r'ранен\w*\s+\d{2,}|\d{2,}\s+ранен', t):
+                    e['severity_audit3_from'] = sev; e['severity'] = 80; inc('A6_TOLL')
+        except Exception:
+            continue
+    # склейка ударов: одна страна, +-1 сутки, тот же тип, общая фраза или то же число погибших
+    try:
+        from datetime import date as _dd
+        grp = {}
+        for e in vis:
+            if e.get('feed_visible') is False or e.get('domain') != 'geopolitics':
+                continue
+            cc = str(e.get('primary_country') or e.get('country_code') or '')
+            if cc: grp.setdefault((cc, e.get('canon_type')), []).append(e)
+        for k, v in grp.items():
+            if len(v) < 2: continue
+            v.sort(key=lambda x: -(x.get('severity') or 0)); used = set()
+            for i, ei in enumerate(v):
+                if id(ei) in used: continue
+                mi = _A6_KILLED.search(ei.get('title') or ''); ni = int(mi.group(1) or mi.group(2)) if mi else None
+                for ej in v[i + 1:]:
+                    if id(ej) in used: continue
+                    try:
+                        if abs((_dd.fromisoformat(str(ei.get('date'))[:10]) - _dd.fromisoformat(str(ej.get('date'))[:10])).days) > 1: continue
+                    except Exception:
+                        continue
+                    mj = _A6_KILLED.search(ej.get('title') or ''); nj = int(mj.group(1) or mj.group(2)) if mj else None
+                    if (_a5_tri(ei.get('title')) & _a5_tri(ej.get('title'))) or (ni and ni >= 3 and ni == nj):
+                        ej['feed_visible'] = False; ej['hide_reason'] = 'dupe_toll'
+                        ej.setdefault('hide_reasons', []).append({'code': 'dupe_toll', 'src': 'audit6', 'keep': ei.get('id')})
+                        ej['merged_into'] = ei.get('id'); used.add(id(ej)); inc('A6_MERGE')
+                        ei.setdefault('also_reported_by', [])
+                        if ej.get('source') and ej.get('source') not in ei['also_reported_by']:
+                            ei['also_reported_by'].append(ej.get('source'))
+    except Exception:
+        pass
+    print(f"  [feed_audit6] {stat}")
+    return stat
+
 def _feed_audit3_2611(events):
     if not FEED_AUDIT3_2611:
         return
@@ -33245,6 +33329,10 @@ def save_enriched(events, previous_snapshot=None):
                 pass
             try:
                 _feed_audit3_2611(enriched["events"])    # FEED_AUDIT3_2611: P1-P8 аудита ленты 26.11
+            except Exception:
+                pass
+            try:
+                _feed_audit6_2711(enriched["events"])    # FEED_AUDIT6_2711: п.1-5 аудита ленты 27.11
             except Exception:
                 pass
             try:
