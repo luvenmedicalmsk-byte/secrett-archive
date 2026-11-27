@@ -2,7 +2,7 @@
   "country": "BG",
   "date": "2026-11-27",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-27T23:11:52.187728+00:00",
+  "generated_at": "2026-11-27T23:28:25.478052+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -47,7 +47,7 @@
       "id": "DOMAIN-BG-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
+      "score": 61,
       "trend": "stable"
     },
     {
@@ -70,14 +70,14 @@
       "label": "climate"
     },
     {
+      "id": "DRIVER-BG-social",
+      "type": "Driver",
+      "label": "social"
+    },
+    {
       "id": "DRIVER-BG-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
-    },
-    {
-      "id": "DRIVER-BG-economic",
-      "type": "Driver",
-      "label": "economic"
     },
     {
       "id": "SIGNAL-BG-Ветер:_Ста",
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-BG-Снег:_Софи",
-      "type": "Signal",
-      "label": "Снег: София-область, Благоевград, Враца ",
-      "severity": 50,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-BG-Климатичес",
       "type": "Signal",
       "label": "Климатический сигнал — Болгария",
       "severity": 70,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-BG-Социальный",
+      "type": "Signal",
+      "label": "Социальный процесс — Болгария",
+      "severity": 61,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -130,7 +130,7 @@
       "from": "COUNTRY-BG",
       "to": "DOMAIN-BG-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.61
     },
     {
       "from": "COUNTRY-BG",
@@ -151,13 +151,13 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-BG-geopolitical",
+      "from": "DRIVER-BG-social",
       "to": "COUNTRY-BG",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-BG-economic",
+      "from": "DRIVER-BG-geopolitical",
       "to": "COUNTRY-BG",
       "type": "CAUSES",
       "weight": 0.8
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-BG-climate",
-      "to": "DOMAIN-BG-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-BG-infrastructure",
-      "to": "DOMAIN-BG-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-BG-economic",
-      "to": "DOMAIN-BG-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-BG-geopolitical",
       "to": "DOMAIN-BG-infrastructure",
       "type": "ESCALATES",
@@ -226,22 +205,43 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-BG-climate",
+      "to": "DOMAIN-BG-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-BG-infrastructure",
+      "to": "DOMAIN-BG-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-BG-economic",
+      "to": "DOMAIN-BG-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-BG-Ветер:_Ста",
       "to": "DOMAIN-BG-climate",
       "type": "AMPLIFIES",
       "weight": 0.88
     },
     {
-      "from": "SIGNAL-BG-Снег:_Софи",
-      "to": "DOMAIN-BG-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.5
-    },
-    {
       "from": "SIGNAL-BG-Климатичес",
       "to": "DOMAIN-BG-climate",
       "type": "AMPLIFIES",
       "weight": 0.7
+    },
+    {
+      "from": "SIGNAL-BG-Социальный",
+      "to": "DOMAIN-BG-social",
+      "type": "AMPLIFIES",
+      "weight": 0.61
     }
   ]
 }
