@@ -2,7 +2,7 @@
   "country": "BG",
   "date": "2026-11-27",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-27T19:13:44.233829+00:00",
+  "generated_at": "2026-11-27T19:30:06.966366+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,59 +10,59 @@
       "id": "COUNTRY-BG",
       "type": "Country",
       "label": "BG",
-      "score": 54,
+      "score": 88,
       "props": {
-        "risk_score": 54
+        "risk_score": 88
       }
     },
     {
       "id": "DOMAIN-BG-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 49,
-      "trend": "down"
+      "score": 71,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-BG-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-BG-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 70,
-      "trend": "down"
+      "score": 88,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-BG-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-BG-social",
       "type": "Domain",
       "label": "social",
-      "score": 61,
-      "trend": "down"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-BG-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-BG-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DRIVER-BG-climate",
@@ -70,14 +70,28 @@
       "label": "climate"
     },
     {
-      "id": "DRIVER-BG-social",
-      "type": "Driver",
-      "label": "social"
-    },
-    {
       "id": "DRIVER-BG-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
+    },
+    {
+      "id": "DRIVER-BG-economic",
+      "type": "Driver",
+      "label": "economic"
+    },
+    {
+      "id": "SIGNAL-BG-Ветер:_Ста",
+      "type": "Signal",
+      "label": "Ветер: Стара Загора, Благоевград, Пазард",
+      "severity": 88,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-BG-Снег:_Софи",
+      "type": "Signal",
+      "label": "Снег: София-область, Благоевград, Враца ",
+      "severity": 50,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-BG-Климатичес",
@@ -85,20 +99,6 @@
       "label": "Климатический сигнал — Болгария",
       "severity": 70,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-BG-Социальный",
-      "type": "Signal",
-      "label": "Социальный процесс — Болгария",
-      "severity": 61,
-      "domain": "social"
-    },
-    {
-      "id": "SIGNAL-BG-Геополитич",
-      "type": "Signal",
-      "label": "Геополитический процесс — Болгария",
-      "severity": 49,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-BG",
       "to": "DOMAIN-BG-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.49
+      "weight": 0.71
     },
     {
       "from": "COUNTRY-BG",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-BG",
       "to": "DOMAIN-BG-climate",
       "type": "CORRELATES",
-      "weight": 0.7
+      "weight": 0.88
     },
     {
       "from": "COUNTRY-BG",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-BG",
       "to": "DOMAIN-BG-social",
       "type": "CORRELATES",
-      "weight": 0.61
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-BG",
@@ -151,13 +151,13 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-BG-social",
+      "from": "DRIVER-BG-geopolitical",
       "to": "COUNTRY-BG",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-BG-geopolitical",
+      "from": "DRIVER-BG-economic",
       "to": "COUNTRY-BG",
       "type": "CAUSES",
       "weight": 0.8
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-BG-geopolitical",
-      "to": "DOMAIN-BG-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-BG-infrastructure",
-      "to": "DOMAIN-BG-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-BG-economic",
-      "to": "DOMAIN-BG-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "DOMAIN-BG-climate",
       "to": "DOMAIN-BG-infrastructure",
       "type": "ESCALATES",
@@ -226,22 +205,43 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-BG-geopolitical",
+      "to": "DOMAIN-BG-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-BG-infrastructure",
+      "to": "DOMAIN-BG-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-BG-economic",
+      "to": "DOMAIN-BG-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-BG-Ветер:_Ста",
+      "to": "DOMAIN-BG-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.88
+    },
+    {
+      "from": "SIGNAL-BG-Снег:_Софи",
+      "to": "DOMAIN-BG-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
       "from": "SIGNAL-BG-Климатичес",
       "to": "DOMAIN-BG-climate",
       "type": "AMPLIFIES",
       "weight": 0.7
-    },
-    {
-      "from": "SIGNAL-BG-Социальный",
-      "to": "DOMAIN-BG-social",
-      "type": "AMPLIFIES",
-      "weight": 0.61
-    },
-    {
-      "from": "SIGNAL-BG-Геополитич",
-      "to": "DOMAIN-BG-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.49
     }
   ]
 }
