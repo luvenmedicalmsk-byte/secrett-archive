@@ -1925,6 +1925,10 @@ def main():
             # аудит по слову «пожар» возвращал в климат.
             if _e is not None and _e.get("domain_hygiene_from") is not None:
                 continue
+            # 27.11.2026: решения аудитов ленты (FEED_AUDIT 5-7) аудит не перезаписывает:
+            # «19 палестинцев погибли в результате израильских атак» возвращалось в экономику.
+            if _e is not None and (_e.get("domain_lock") or _e.get("domain_audit3_from")):
+                continue
             if _e is not None and _e.get("domain") != _d["recommended"]:
                 # TASK-278 · LINEAGE. Инструментация, не логика: само присвоение
                 # домена ниже не изменено. Этот писатель работает ПОСЛЕ

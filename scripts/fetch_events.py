@@ -29653,7 +29653,7 @@ def _a3_ctx(e, why):
     e.setdefault('audit3', []).append(why)
 
 # 27.11.2026 · FEED_AUDIT6_2711 (аудит ленты 27.11, п.1-5, одобрено Мией)
-_A6_KILLED = re.compile(r'(\d+)\s+(?:[а-яё]+\s+){0,2}(?:погиб|убит|убиты)|(?:погиб\w*|убил\w*|убива\w*|убит\w*)\s+(?:еще\s+|ещё\s+)?(\d+)', re.I)
+_A6_KILLED = re.compile(r'(\d+)\s+(?:[а-яё]+\s+){0,2}(?:погиб|убит|убиты)|(?:погиб\w*|убил\w*|убива\w*|убит\w*)\s+(?:еще\s+|ещё\s+)?(?:как минимум\s+|не менее\s+|по меньшей мере\s+|по крайней мере\s+|около\s+)?(\d+)', re.I)
 _A6_WORDNUM = {'один': 1, 'одна': 1, 'два': 2, 'две': 2, 'двое': 2, 'три': 3, 'трое': 3, 'четыре': 4, 'четверо': 4}
 _A6_KILLED_W = re.compile(r'\b(один|одна|два|две|двое|три|трое|четыре|четверо)\s+(?:[а-яё]+\s+){0,3}?(?:погиб|убит)|(?:погиб\w*|убит\w*)\s+(?:[а-яё]+\s+){0,1}?(один|одна|два|две|двое|три|трое|четыре|четверо)\b', re.I)
 def _a6_n(t):
@@ -29713,8 +29713,9 @@ def _feed_audit7_2711(events):
             if src == 'ФАО ООН' and not e.get('region'):
                 e['region'] = 'Глобально'; e['is_global'] = True; inc('A7_GEO')
             for rx, frm, to in _A7_DOM:
-                if rx.search(t) and e.get('domain') in frm:
-                    e['domain_audit3_from'] = e.get('domain'); e['domain'] = to; inc('A7_DOM'); break
+                if rx.search(t) and (e.get('domain') in frm or e.get('domain') == to):
+                    if e.get('domain') != to: e['domain_audit3_from'] = e.get('domain'); e['domain'] = to; inc('A7_DOM')
+                    e['domain_lock'] = 'A7_DOM'; break
             for rx, cap in _A7_CAP:
                 if rx.search(t) and sev > cap:
                     e['severity_audit3_from'] = sev; e['severity'] = cap; sev = cap; inc('A7_CAP'); break
@@ -29733,8 +29734,8 @@ def _feed_audit7_2711(events):
             if e.get('feed_visible') is False or e.get('domain') != 'geopolitics':
                 continue
             n = _a6_n(e.get('title') or ''); cc = str(e.get('primary_country') or e.get('country_code') or '')
-            if n and n >= 10 and cc:
-                grp.setdefault((cc, e.get('canon_type')), []).append((n, e))
+            if n and n >= 10 and cc and _A5_ATTACK.search(e.get('title') or ''):
+                grp.setdefault(cc, []).append((n, e))   # 27.11: тип canon у сводок одной страны бывает разный
         for k, v in grp.items():
             if len(v) < 2: continue
             v.sort(key=lambda x: -x[0]); n0, h = v[0]
@@ -29768,13 +29769,17 @@ def _feed_audit6_2711(events):
             if (mo and int(mo.group(1)) < int(str(e.get('date') or '2026')[:4])) or _A6_ROUTINE.search(t):
                 _a3_ctx(e, 'A6 старое событие / рутина'); inc('A6_CTX'); continue
             # домены
-            if d0 in ('economy', 'technology') and _A3_DOM_GEO.search(t):
-                e['domain_audit3_from'] = d0; e['domain'] = 'geopolitics'; inc('A6_DOM')
-            elif d0 in ('economy', 'geopolitics') and _A6_SOCIAL.search(t):
-                e['domain_audit3_from'] = d0; e['domain'] = 'social'; inc('A6_DOM')
+            # 27.11: домен фиксируется (domain_lock) и там, где он уже верный, - иначе W17 и audit_events возвращали старый
+            if d0 in ('economy', 'technology', 'geopolitics') and _A3_DOM_GEO.search(t):
+                if d0 != 'geopolitics': e['domain_audit3_from'] = d0; e['domain'] = 'geopolitics'; inc('A6_DOM')
+                e['domain_lock'] = 'A6_DOM_GEO'
+            elif d0 in ('economy', 'geopolitics', 'social') and _A6_SOCIAL.search(t):
+                if d0 != 'social': e['domain_audit3_from'] = d0; e['domain'] = 'social'; inc('A6_DOM')
+                e['domain_lock'] = 'A6_SOCIAL'
             # п.4 пошлины США -> экономика, США
-            if _A6_TARIFF.search(t) and e.get('domain') == 'geopolitics' and cc in ('', 'US', 'CN'):
-                e['domain_audit3_from'] = 'geopolitics'; e['domain'] = 'economy'
+            if _A6_TARIFF.search(t) and e.get('domain') in ('geopolitics', 'economy') and cc in ('', 'US', 'CN'):
+                if e.get('domain') != 'economy': e['domain_audit3_from'] = e.get('domain'); e['domain'] = 'economy'
+                e['domain_lock'] = 'A6_TARIFF'
                 if cc != 'US':
                     _gr9_set(e, 'US', 'США', 38.90, -77.04, 'AUDIT6_GEO: пошлины США', sync=True)
                 if sev < 66:
