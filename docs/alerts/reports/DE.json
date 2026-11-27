@@ -2,46 +2,52 @@
   "country": "DE",
   "country_name": "DE",
   "date": "2026-11-27",
-  "alert_level": "ALERT",
-  "alert_score": 63,
-  "risk_score": 79,
-  "confidence": 45,
-  "signals": 10,
-  "trend": "decelerating",
+  "alert_level": "WARNING",
+  "alert_score": 78,
+  "risk_score": 87,
+  "confidence": 46,
+  "signals": 11,
+  "trend": "falling",
   "top_drivers": [
     "geopolitics",
     "economy",
     "finance"
   ],
-  "created_at": "2026-11-27T00:24:29.223557+00:00",
+  "created_at": "2026-11-27T00:38:00.980030+00:00",
   "triggered_rules": [
     "A",
-    "B"
+    "B",
+    "C",
+    "E"
   ],
   "rules": {
     "A_velocity": {
       "rule": "A",
       "name": "velocity_spike",
       "triggered": true,
-      "change_7d": -14.1,
-      "change_30d": 31.7,
-      "velocity_score": 63
+      "change_7d": -5.4,
+      "change_30d": 45.0,
+      "velocity_score": 90
     },
     "B_signal_expl": {
       "rule": "B",
       "name": "signal_explosion",
       "triggered": true,
-      "current_signals": 10,
-      "avg_90d": 4.0,
+      "current_signals": 11,
+      "avg_90d": 4.1,
       "threshold": 6.1,
-      "explosion_ratio": 2.47
+      "explosion_ratio": 2.71
     },
     "C_multi_eng": {
       "rule": "C",
       "name": "multi_engine_confirmation",
-      "triggered": false,
-      "confirming_engines": [],
-      "engine_count": 0,
+      "triggered": true,
+      "confirming_engines": [
+        "geopolitics",
+        "economy",
+        "climate"
+      ],
+      "engine_count": 3,
       "threshold": 3
     },
     "D_emerging": {
@@ -54,26 +60,32 @@
     "E_confidence": {
       "rule": "E",
       "name": "confidence_escalation",
-      "triggered": false,
-      "current_confidence": 45,
+      "triggered": true,
+      "current_confidence": 46,
       "prev_confidence": 45,
-      "confidence_delta": 0,
-      "score_delta": 0
+      "confidence_delta": 1,
+      "score_delta": 8
     }
   },
   "sub_scores": {
-    "velocity_component": 78,
-    "severity_component": 71,
-    "confidence_component": 36,
-    "signal_density": 53
+    "velocity_component": 100,
+    "severity_component": 95,
+    "confidence_component": 40,
+    "signal_density": 57
   },
-  "escalation": null,
-  "is_escalation": false,
+  "escalation": {
+    "previous": "ALERT",
+    "current": "WARNING",
+    "delta_score": 15,
+    "timestamp": "2026-11-27T00:38:00.980024+00:00",
+    "escalated": true
+  },
+  "is_escalation": true,
   "dominant_domain": "climate",
   "escalation_level": "critical",
-  "delta": 0,
+  "delta": 8,
   "engine_version": "ALERT_V1",
   "model_version": "GRIE_V1",
-  "generated_at": "2026-11-27T00:24:29.223557+00:00",
-  "hash": "27f8ed4c67f62626"
+  "generated_at": "2026-11-27T00:38:00.980030+00:00",
+  "hash": "0513d47113c08fc1"
 }
