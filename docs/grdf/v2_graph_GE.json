@@ -2,7 +2,7 @@
   "country": "GE",
   "date": "2026-11-27",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-27T06:10:03.565332+00:00",
+  "generated_at": "2026-11-27T06:28:45.378930+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -40,7 +40,7 @@
       "id": "DOMAIN-GE-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 55,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -75,9 +75,16 @@
       "label": "social"
     },
     {
-      "id": "DRIVER-GE-technology",
+      "id": "DRIVER-GE-economic",
       "type": "Driver",
-      "label": "technology"
+      "label": "economic"
+    },
+    {
+      "id": "SIGNAL-GE-Служба_гос",
+      "type": "Signal",
+      "label": "Служба государственной безопасности (СГБ",
+      "severity": 47,
+      "domain": "geopolitical"
     },
     {
       "id": "SIGNAL-GE-Протесты_и",
@@ -92,13 +99,6 @@
       "label": "Санкционное давление — Грузия",
       "severity": 62,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-GE-Отключение",
-      "type": "Signal",
-      "label": "Отключение интернета — Грузия",
-      "severity": 55,
-      "domain": "technology"
     }
   ],
   "edges": [
@@ -124,7 +124,7 @@
       "from": "COUNTRY-GE",
       "to": "DOMAIN-GE-technology",
       "type": "CORRELATES",
-      "weight": 0.55
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-GE",
@@ -157,7 +157,7 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-GE-technology",
+      "from": "DRIVER-GE-economic",
       "to": "COUNTRY-GE",
       "type": "CAUSES",
       "weight": 0.8
@@ -184,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-GE-Служба_гос",
+      "to": "DOMAIN-GE-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.47
+    },
+    {
       "from": "SIGNAL-GE-Протесты_и",
       "to": "DOMAIN-GE-social",
       "type": "AMPLIFIES",
@@ -194,12 +200,6 @@
       "to": "DOMAIN-GE-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.62
-    },
-    {
-      "from": "SIGNAL-GE-Отключение",
-      "to": "DOMAIN-GE-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.55
     }
   ]
 }
