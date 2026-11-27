@@ -29673,7 +29673,7 @@ _A6_OLD = re.compile(r'\bв\s+(?:январ|феврал|март|апрел|м�
 _A6_ROUTINE = re.compile(r'^Ozon запустил|приняла бюджет\s+(?:Москвы|города|региона|области)|ввели в работу\s+(?:первую\s+)?(?:газотурбинн|энергоблок|установк)|^Хуанг вернулся|^Было утилизировано', re.I)
 
 # 27.11.2026 · FEED_AUDIT7_2711 (вторая проверка 27.11, одобрено Мией)
-_A7_CTX = re.compile(r'предпринимает шаги для поддержки|поворот\w*[^.]{0,40}в вопросах|^[^:]{0,40}:\s*Почему|^Ответ на запрос COI|запретили прыга|\(устран[её]н\)\s*$|(?:детонаци|подрыв)\w*[^.]{0,30}(?:свинцов|боеприпас|запас\w* химикат)|армия подрывает|^\s*[«"]?Я\s+(?:думаю|считаю|уверен|полагаю)\b|голуб\w*[-\s]дрон|БПЛА-голуб|заказал\w*\s+дрон|^Испытание кризисн|учени\w+ по кризисн', re.I)
+_A7_CTX = re.compile(r'предпринимает шаги для поддержки|поворот\w*[^.]{0,40}в вопросах|^[^:]{0,40}:\s*Почему|^Ответ на запрос COI|запретили прыга|\(устран[её]н\)\s*$|(?:детонаци|подрыв)\w*[^.]{0,30}(?:свинцов|боеприпас|запас\w* химикат)|армия подрывает|^\s*[«"]?Я\s+(?:думаю|считаю|уверен|полагаю)\b|голуб\w*[-\s]дрон|БПЛА-голуб|заказал\w*\s+дрон|^Испытание кризисн|учени\w+ по кризисн|оборонных технологий[^.]{0,40}ускоряет инновац|\bмурал|^Дождь со снегом накроет|^О ситуации с гриппом', re.I)
 _A7_JUNK_TAIL = re.compile(r'\s+[а-яё]+[А-ЯЁ][а-яё]*(?:\s+\S{1,3}){2,}\s*$')
 _A7_GEO = [
     (re.compile(r'бассейн\w*\s+реки\s+Амур|\bАмур\b', re.I), 'RU', 'Амурская область', 50.29, 127.53),
@@ -29690,12 +29690,15 @@ _A7_DOM = [
     (re.compile(r'полици\w*[^.]{0,40}задержал\w*[^.]{0,80}(?:вербовк|пророссийск|шпион)', re.I), ('technology',), 'geopolitics'),
     (re.compile(r'взрыв\w*\s+мин\w*', re.I), ('social',), 'geopolitics'),
     (re.compile(r'отключени\w+\s+(?:электричеств|электроэнерг|света)|блэкаут|обесточ', re.I), ('climate', 'social'), 'technology'),
+    (re.compile(r'^Ночной пожар|пожар в (?:жилом|частном|многоквартирн)\w*\s+дом|пожар в квартир', re.I), ('climate',), 'social'),
     (re.compile(r'Губернатор[^.]{0,80}(?:у следователей|задержан|арестован|даёт показания|дает показания)', re.I), ('social',), 'geopolitics'),
 ]
 _A7_CAP = [
     (re.compile(r'призыва\w+\s+к\s+(?:защите|прекращению)', re.I), 60),
     (re.compile(r'Трамп\s+утверждает', re.I), 60),
     (re.compile(r'^(?:Шторм|Ураган|Тайфун|Циклон)[^.]{0,20}угрожа', re.I), 72),
+    (re.compile(r'^(?!.*погиб).*отключени\w+\s+(?:электроэнерги|электричеств|света)', re.I), 70),
+    (re.compile(r'вызыва\w+[^.]{0,30}посла', re.I), 76),
 ]
 
 # 27.11.2026: нижняя граница для структурных сигналов (одобрено Мией): конкуренция ИИ-инфраструктуры
@@ -29728,6 +29731,15 @@ def _feed_audit7_2711(events):
                 _gr9_set(e, 'UA', 'Украина', 50.45, 30.52, 'AUDIT7_GEO: заявление Зеленского о Киеве', sync=True); inc('A7_GEO')
             if cc in ('IL', '') and re.search(r'Трамп\s+(?:утверждает|заявил|считает)', t):
                 _gr9_set(e, 'US', 'США', 38.90, -77.04, 'AUDIT7_GEO: заявление Трампа', sync=True); inc('A7_GEO')
+            if cc == 'IR' and re.search(r'^Кувейт', t):
+                _gr9_set(e, 'KW', 'Кувейт', 29.37, 47.98, 'AUDIT7_GEO: Кувейт', sync=True); inc('A7_GEO')
+            if cc == 'RU' and re.search(r'\bEDF\b|Сил обороны Эстонии', t):
+                _gr9_set(e, 'EE', 'Эстония', 59.44, 24.75, 'AUDIT7_GEO: Силы обороны Эстонии', sync=True); inc('A7_GEO')
+            if cc == '' and src == 'UK Sanctions':
+                _gr9_set(e, 'GB', 'Великобритания', 51.50, -0.13, 'AUDIT7_GEO: санкции Великобритании', sync=True); inc('A7_GEO')
+            if cc == '' and not e.get('region'):
+                if re.search(r'\bЕС\b|Евросоюз|Европейск', t): e['region'] = 'Европа'; inc('A7_GEO')
+                elif re.search(r'[Мм]ировая|[Мм]орская торговля|глобальн', t): e['region'] = 'Глобально'; e['is_global'] = True; inc('A7_GEO')
             if cc == '' and e.get('region') == 'Грузия':
                 _gr9_set(e, 'GE', 'Грузия', 41.72, 44.79, 'AUDIT7_GEO: регион Грузия', sync=True); inc('A7_GEO')
             if src == 'ФАО ООН' and not e.get('region'):
@@ -29784,6 +29796,44 @@ def _feed_audit7_2711(events):
                 _hide_mark(e, 'реклама/PR'); inc('A7_AD_CTX')
         except Exception:
             continue
+    # 27.11.2026 (Мия): склейки - один НПЗ; отключения электричества в одной стране; вызов посла + удар
+    try:
+        from datetime import date as _dd
+        def _d(e):
+            try: return _dd.fromisoformat(str(e.get('date'))[:10])
+            except Exception: return None
+        def _merge(h, ej, tag):
+            ej['feed_visible'] = False; ej['hide_reason'] = 'dupe_toll'
+            ej.setdefault('hide_reasons', []).append({'code': 'dupe_toll', 'src': tag, 'keep': h.get('id')})
+            ej['merged_into'] = h.get('id'); inc('A7_' + tag)
+            h.setdefault('also_reported_by', [])
+            if ej.get('source') and ej.get('source') not in h['also_reported_by']:
+                h['also_reported_by'].append(ej.get('source'))
+        live = [e for e in events or [] if e.get('feed_visible') is not False and not e.get('alerts_only')]
+        _NPZ = re.compile(r'([А-ЯЁ][а-яё]+)\s+НПЗ', re.U)
+        _OUT = re.compile(r'отключени\w+\s+(?:электроэнерги|электричеств|света)|без\s+электр', re.I)
+        groups = {}
+        for e in live:
+            t = e.get('title') or ''; cc = str(e.get('primary_country') or e.get('country_code') or '')
+            m = _NPZ.search(t)
+            if m and m.start() < 60 and not re.match(r'Мониторинг', t) and m.group(1).lower()[:5] not in ('крупн', 'росси', 'украи', 'атако'):
+                groups.setdefault(('npz', cc, m.group(1).lower()[:6]), []).append(e)
+            if _OUT.search(t) and cc:
+                groups.setdefault(('out', cc), []).append(e)
+            if cc and re.search(r'дрон|БПЛА|беспилот', t, re.I) and e.get('domain') == 'geopolitics':
+                groups.setdefault(('drone', cc), []).append(e)
+        for k, v in groups.items():
+            if len(v) < 2: continue
+            if k[0] == 'drone' and not any(re.search(r'посла', x.get('title') or '') for x in v): continue
+            v.sort(key=lambda x: -(x.get('severity') or 0)); h = v[0]
+            for ej in v[1:]:
+                if ej.get('feed_visible') is False: continue
+                a, b = _d(h), _d(ej)
+                if a and b and abs((a - b).days) > 1: continue
+                if k[0] == 'drone' and not re.search(r'посла', (ej.get('title') or '') + (h.get('title') or '')): continue
+                _merge(h, ej, {'npz': 'NPZ', 'out': 'OUT', 'drone': 'AMB'}[k[0]])
+    except Exception:
+        pass
     print(f"  [feed_audit7] {stat}")
     return stat
 
@@ -30129,7 +30179,7 @@ _RP_CITY = [
     (r'Ульяновск', 'Ульяновская область', None), (r'Оренбург|Орск', 'Оренбургская область', None), (r'Удмурт|Ижевск', 'Удмуртия', None),
     (r'Чебоксар|Чуваш', 'Чувашия', None), (r'Астрахан', 'Астраханская область', None), (r'Ставрополь', 'Ставропольский край', None),
     (r'Петербург', 'Санкт-Петербург', None),
-    (r'Ленинградск|Кириш|Усть-Луг|Приморск\b', 'Ленинградская область', None), (r'Твер', 'Тверская область', None),
+    (r'Ленинградск|Ленобл|Кириш|Усть-Луг|Приморск\b', 'Ленинградская область', None), (r'Твер', 'Тверская область', None),
     (r'Белгород', 'Белгородская область', None), (r'Курск', 'Курская область', None), (r'Брянск', 'Брянская область', None),
     (r'Крым|Севастопол|Феодоси', 'Крым', None), (r'Мордов|Саранск', 'Мордовия', None),
     # 27.11.2026: Северный Кавказ (взрыв во Владикавказе стоял в Хабаровском крае)
