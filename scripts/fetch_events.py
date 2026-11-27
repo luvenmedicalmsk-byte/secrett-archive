@@ -29675,6 +29675,9 @@ _A6_ROUTINE = re.compile(r'^Ozon запустил|приняла бюджет\s+
 # 27.11.2026 · FEED_AUDIT7_2711 (вторая проверка 27.11, одобрено Мией)
 _A7_CTX = re.compile(r'предпринимает шаги для поддержки|поворот\w*[^.]{0,40}в вопросах|^[^:]{0,40}:\s*Почему|^Ответ на запрос COI|запретили прыга|\(устран[её]н\)\s*$|(?:детонаци|подрыв)\w*[^.]{0,30}(?:свинцов|боеприпас|запас\w* химикат)|армия подрывает|^\s*[«"]?Я\s+(?:думаю|считаю|уверен|полагаю)\b|голуб\w*[-\s]дрон|БПЛА-голуб|заказал\w*\s+дрон|^Испытание кризисн|учени\w+ по кризисн|оборонных технологий[^.]{0,40}ускоряет инновац|\bмурал|^Дождь со снегом накроет|^О ситуации с гриппом|^Война в Украине:[^;]{0,200};|планирует\s+(?:специализированную\s+)?поддержку|создал\w*\s+рабочую\s+группу', re.I)
 # 27.11.2026 (Мия): культура (спектакли, театральные премии, кинофестивали, выставки, романы) - не сигнал и не контекст
+# 27.11.2026 (Мия): организации с особым статусом в РФ не цитируются; судьбы отдельных людей (этапирование, экстрадиция) - не системный сигнал
+_A7_SENSITIVE = re.compile(r'Антивоенн\w*\s+комитет|Фонд\w*\s+борьбы\s+с\s+коррупцией|\bФБК\b', re.I)
+_A7_INDIV = re.compile(r'(?:активист|оппозиционер|блогер|журналист|правозащитни)\w*[^.]{0,90}(?:этапир|экстрадиц|выдач\w+\s+в\s+Росси)', re.I)
 _A7_CULTURE = re.compile(r'^Спектакл|\bспектакл\w*\b[^.]{0,60}преми|пьес[аыу]\b|театр\w*\s+преми|кинофестивал|выставк\w+\s+(?:о|об|в)\b|\bроман\w*\s+о\b', re.I)
 _A7_JUNK_TAIL = re.compile(r'\s+[а-яё]+[А-ЯЁ][а-яё]*(?:\s+\S{1,3}){2,}\s*$')
 _A7_GEO = [
@@ -29813,6 +29816,10 @@ def _feed_audit7_2711(events):
             if e.get('context_only') and _is_ad((e.get('title') or '') + ' ' + (e.get('summary') or '') + ' ' + (e.get('description') or '')):
                 e['context_only'] = False; e['feed_visible'] = False
                 _hide_mark(e, 'реклама/PR'); inc('A7_AD_CTX')
+            elif (e.get('context_only') or e.get('feed_visible') is not False) and not e.get('alerts_only') and \
+                    (_A7_SENSITIVE.search((e.get('title') or '') + ' ' + (e.get('summary') or '')) or _A7_INDIV.search(e.get('title') or '')):
+                e['context_only'] = False; e['feed_visible'] = False
+                _hide_mark(e, 'sensitive_or_individual'); inc('A7_SENS')
             elif (e.get('context_only') or e.get('feed_visible') is not False) and not e.get('alerts_only') and _A7_CULTURE.search(e.get('title') or ''):
                 e['context_only'] = False; e['feed_visible'] = False
                 _hide_mark(e, 'culture'); inc('A7_CULTURE')
