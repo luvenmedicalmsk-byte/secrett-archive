@@ -1,18 +1,18 @@
 {
-  "generated": "2026-11-27T05:27:38Z",
+  "generated": "2026-11-27T05:46:28Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
-    "PASS_FACT": 1226,
-    "DENY_COMMENTARY": 382,
+    "PASS_FACT": 1230,
+    "DENY_COMMENTARY": 381,
     "DENY_FEATURE": 6,
-    "DENY_BACKGROUND": 5,
+    "DENY_BACKGROUND": 6,
     "UNMATCHED": 4,
     "DENY_STATE_ONLY": 3
   },
   "kpi": {
-    "processes_total": 1626,
-    "matched": 1622,
+    "processes_total": 1630,
+    "matched": 1626,
     "unmatched": 4,
     "coverage_pct": 99.8,
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
@@ -25,37 +25,37 @@
   "shadow_reliability": {
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
-      "processes": 541,
-      "sample": 1744,
+      "processes": 550,
+      "sample": 1768,
       "agreement_pct": 86.9,
-      "decision_agreement_pct": 87.5,
-      "critical_errors": 218,
+      "decision_agreement_pct": 87.4,
+      "critical_errors": 222,
       "truth_ratio_pct": 99.8,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 200,
+        "FACT_EVENT→COMMENTARY": 204,
         "FEATURE→COMMENTARY": 4,
         "STATE_CONFIRMATION→COMMENTARY": 2,
         "COMMENTARY→FACT_EVENT": 14,
-        "BACKGROUND→COMMENTARY": 3,
         "FACT_EVENT→BACKGROUND": 2,
+        "BACKGROUND→COMMENTARY": 3,
         "FACT_EVENT→FEATURE": 1,
         "FACT_EVENT→REPORT": 1,
         "COMMENTARY→BACKGROUND": 1
       }
     },
     "historical": {
-      "processes": 1626,
-      "sample": 4463,
+      "processes": 1630,
+      "sample": 4482,
       "agreement_pct": 89.1,
       "decision_agreement_pct": 89.3,
-      "critical_errors": 476,
+      "critical_errors": 479,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 424,
+        "FACT_EVENT→COMMENTARY": 427,
         "FEATURE→COMMENTARY": 5,
         "STATE_CONFIRMATION→COMMENTARY": 2,
         "COMMENTARY→FACT_EVENT": 42,
-        "BACKGROUND→COMMENTARY": 3,
         "FACT_EVENT→BACKGROUND": 4,
+        "BACKGROUND→COMMENTARY": 3,
         "FACT_EVENT→FEATURE": 3,
         "FACT_EVENT→REPORT": 1,
         "COMMENTARY→BACKGROUND": 1,
@@ -63,12 +63,12 @@
       }
     },
     "events_stream": {
-      "sample": 500,
-      "agreement_pct": 86.2,
-      "decision_agreement_pct": 87.0,
-      "critical_errors": 65,
+      "sample": 510,
+      "agreement_pct": 85.9,
+      "decision_agreement_pct": 86.7,
+      "critical_errors": 68,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 60,
+        "FACT_EVENT→COMMENTARY": 63,
         "STATE_CONFIRMATION→COMMENTARY": 1,
         "FEATURE→COMMENTARY": 2,
         "COMMENTARY→FACT_EVENT": 4,
@@ -84,31 +84,31 @@
     }
   },
   "class_source": {
-    "evidence_sic": 4463,
+    "evidence_sic": 4482,
     "shadow_title_summary": 4
   },
   "truth_ratio_pct": 99.9,
   "domain_statistics": {
     "geopolitics": {
-      "pass": 278,
-      "deny": 89
+      "pass": 277,
+      "deny": 90
     },
     "climate": {
-      "pass": 407,
+      "pass": 408,
       "deny": 90,
       "unmatched": 4
     },
+    "social": {
+      "pass": 141,
+      "deny": 54
+    },
     "economy": {
-      "pass": 258,
-      "deny": 131
+      "pass": 259,
+      "deny": 130
     },
     "technology": {
-      "pass": 143,
+      "pass": 145,
       "deny": 32
-    },
-    "social": {
-      "pass": 140,
-      "deny": 54
     }
   },
   "deny_impact": [
@@ -140,6 +140,21 @@
       },
       "status": "fading",
       "causal_links": 3,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
+      "signal_id": "geop-геополитич-китай-a7d2",
+      "title": "Геополитический процесс — Китай",
+      "domain": "geopolitics",
+      "severity": 74,
+      "pressure": 38,
+      "first_seen": "2026-11-11",
+      "evidence_count": 1,
+      "evidence_classes": {
+        "COMMENTARY": 1
+      },
+      "status": "active",
+      "causal_links": 1,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -252,7 +267,7 @@
       "title": "Инфляция — Восточная Азия",
       "domain": "economy",
       "severity": 68,
-      "pressure": 47,
+      "pressure": 52,
       "first_seen": "2026-10-20",
       "evidence_count": 2,
       "evidence_classes": {
@@ -996,21 +1011,6 @@
       "status": "active",
       "causal_links": 0,
       "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "clim-климатичес-краснояр-ba54",
-      "title": "Климатический сигнал — Красноярский край",
-      "domain": "climate",
-      "severity": 56,
-      "pressure": 54,
-      "first_seen": "2026-09-15",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "COMMENTARY": 1
-      },
-      "status": "active",
-      "causal_links": 6,
-      "reason": "no FACT_EVENT in evidence"
     }
   ],
   "report_log": [],
@@ -1212,6 +1212,13 @@
       "delta": null
     },
     {
+      "signal_id": "econ-инфляция-китай-30e9",
+      "domain": "economy",
+      "legacy": 45,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "clim-климатичес-атлантич-f8fb",
       "domain": "climate",
       "legacy": 32,
@@ -1271,13 +1278,6 @@
       "signal_id": "geop-санкционно-европа-cde9",
       "domain": "geopolitics",
       "legacy": 53,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "econ-розничнаят-сша-2785",
-      "domain": "economy",
-      "legacy": 44,
       "shadow": null,
       "delta": null
     },
@@ -1429,18 +1429,18 @@
       "delta": null
     },
     {
-      "signal_id": "soci-эпидемиоло-сомали-65a0",
-      "domain": "social",
-      "legacy": 55,
+      "signal_id": "geop-геополитич-филиппин-c7bd",
+      "domain": "geopolitics",
+      "legacy": 57,
       "shadow": null,
       "delta": null
     }
   ],
   "deny_by_severity": {
     "0-30": 4,
-    "31-50": 236,
+    "31-50": 235,
     "51-70": 150,
-    "71-90": 5,
+    "71-90": 6,
     "91-100": 1
   }
 }
