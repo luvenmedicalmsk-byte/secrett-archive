@@ -24731,6 +24731,7 @@ def _ma_parse(xml_text, cc, country_name, lat, lng):
             _a = re.sub(r'^(?:район|регион|область)\s+', '', _a.strip(' ,;-'), flags=re.I)
             if _a and _a not in g['areas']:
                 g['areas'].append(_a)
+                g.setdefault('areas_raw', []).append(_a)   # 27.11.2026: исходное название для точки на карте
 
     today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
     for kind, g in groups.items():
@@ -24774,7 +24775,8 @@ def _ma_parse(xml_text, cc, country_name, lat, lng):
             '_force_severity': _MA_LEVEL[g['level']],
             '_meta': {'kind': 'cap', 'verified': True, 'provider': 'MeteoAlarm',
                       'level': g['level'], 'country': cc, 'warnings': n,
-                      'place': _place, 'service': 'MeteoAlarm', 'areas': _areas[:40]},
+                      'place': _place, 'service': 'MeteoAlarm', 'areas': _areas[:40],
+                      'areas_raw': (g.get('areas_raw') or [])[:5]},
         })
     return out
 
@@ -30151,8 +30153,78 @@ _AG_TAB = [(re.compile(a, re.I), cc, reg, la, lo) for a, cc, reg, la, lo in [
     (r'^\s*Олт|Мехединц|Долж', 'RO', 'Румыния', 44.3, 23.8), (r'Вранча|Тулча', 'RO', 'Румыния', 45.7, 27.5),
     (r'Флюелен|Муотаталь', 'CH', 'Швейцария', 46.9, 8.62),
     (r'Сааремаа|Хийумаа', 'EE', 'Эстония', 58.4, 22.5), (r'Финского залива', 'EE', 'Эстония', 59.5, 27.5),
-    (r'Аландск', 'FI', 'Финляндия', 60.1, 19.9), (r'Маал[её]й|Кармо', 'NO', 'Норвегия', 61.0, 5.0),
+    (r'Аландск', 'FI', 'Финляндия', 60.1, 19.9),
+    (r'Юго-восточная Исландия', 'IS', 'Исландия', 64.25, -15.2), (r'Центральное высокогорье', 'IS', 'Исландия', 64.8, -18.0),
+    (r'Западные фьорды', 'IS', 'Исландия', 65.9, -22.9), (r'Коннахт', 'IE', 'Ирландия', 53.8, -8.9), (r'Тексел', 'NL', 'Нидерланды', 53.05, 4.8),
+    (r'Словения / Море', 'SI', 'Словения', 45.55, 13.7), (r'Маал[её]й|Кармо', 'NO', 'Норвегия', 61.0, 5.0),
 ]]
+
+# ALERT_GEO_2711B: справочник GeoNames (города от 1000 жителей, регионы 1-2 уровня) - scripts/geo/alert_gaz.json
+_AG_GAZ = None
+def _ag_gaz():
+    global _AG_GAZ
+    if _AG_GAZ is None:
+        try:
+            _AG_GAZ = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'geo', 'alert_gaz.json'), encoding='utf-8'))
+        except Exception:
+            _AG_GAZ = {}
+    return _AG_GAZ
+_AG_TR = dict(zip('абвгдеёжзийклмнопрстуфхцчшщъыьэюя', ['a','b','v','g','d','e','e','zh','z','i','y','k','l','m','n','o','p','r','s','t','u','f','kh','ts','ch','sh','shch','','y','','e','yu','ya']))
+_AG_STOP = {'kreis','landkreis','stadt','stadtkreis','region','district','area','county','provincia','province','prov','di','de','del','della','des','du','la','le','el','okres','powiat','judetul','departement','canton','bezirk','gemeinde','municipality','municipio','of','the','and','zone','zona','coast','coastal','inland','north','south','east','west','northern','southern','eastern','western','central','nord','sud','ost','est','ouest','west','alta','bassa','alto','bajo','upper','lower','mountains','mountain','plain','valley','islands','island','sea','gulf','bay','lake','river','city','rayon','oblast','krai','raion','ilce','il','entire','governorate','warning','areas','aviso','para','as','for','issued','par','pour','region','regione','comarca','kanton','landes','gebiet','obere','unterer','oberer'}
+def _ag_norm(x):
+    import unicodedata as _ud
+    x = _ud.normalize('NFKD', str(x)).encode('ascii', 'ignore').decode().lower()
+    return re.sub(r'[^a-z0-9]+', ' ', x).strip()
+def _ag_translit(x):
+    return ''.join(_AG_TR.get(ch, ch) for ch in str(x).lower())
+def _ag_lookup(cc, names, fuzzy=False):
+    d = _ag_gaz().get(cc) or {}
+    if not d: return None
+    import difflib
+    for nm in names:
+        for part in [nm] + re.split(r'\s*[-/,:;()–—]\s*', nm):
+            k = _ag_norm(part)
+            if len(k) < 3: continue
+            if k in d: return d[k]
+            ws = [w for w in k.split() if w not in _AG_STOP and len(w) >= 4]
+            k2 = ' '.join(ws)
+            if k2 in d: return d[k2]
+            for w in ws:
+                if w in d: return d[w]
+            if fuzzy and len(k2) >= 5:
+                m = difflib.get_close_matches(k2, d.keys(), n=1, cutoff=0.86)
+                if m: return d[m[0]]
+    return None
+# Казахстан и Киргизия: область в скобках; США: штаты (русские названия из карточек)
+_AG_OBL = {
+ 'алматинск': (43.35, 77.0), 'акмолинск': (51.9, 69.6), 'актюбинск': (49.0, 57.5), 'атырауск': (47.1, 51.9),
+ 'восточно-казахстанск': (49.0, 82.6), 'жамбылск': (43.4, 71.4), 'западно-казахстанск': (50.5, 51.3),
+ 'карагандинск': (48.0, 73.0), 'костанайск': (52.2, 63.6), 'кызылординск': (44.8, 65.5), 'мангистауск': (44.5, 53.5),
+ 'павлодарск': (52.3, 76.9), 'северо-казахстанск': (54.0, 69.4), 'туркестанск': (42.6, 68.3), 'абайск': (49.6, 80.0),
+ 'жетысуск': (45.0, 78.4), 'улытауск': (47.8, 67.7),
+ 'баткенск': (40.06, 70.82), 'джалал-абадск': (41.3, 72.3), 'жалал-абадск': (41.3, 72.3), 'иссык-кульск': (42.3, 77.6),
+ 'нарынск': (41.4, 75.9), 'ошск': (40.3, 73.4), 'таласск': (42.5, 72.2), 'чуйск': (42.8, 74.6)}
+_AG_US = {'алабам': (32.8, -86.8), 'аляск': (64.0, -150.0), 'аризон': (34.2, -111.6), 'арканзас': (34.9, -92.4), 'калифорни': (36.8, -119.4),
+ 'колорадо': (39.0, -105.5), 'коннектикут': (41.6, -72.7), 'делавэр': (39.0, -75.5), 'колумби': (38.9, -77.0), 'флорид': (28.6, -82.4),
+ 'джорджи': (32.7, -83.4), 'гавай': (20.8, -156.3), 'айдахо': (44.4, -114.6), 'иллинойс': (40.0, -89.2), 'индиан': (39.9, -86.3),
+ 'айов': (42.1, -93.5), 'канзас': (38.5, -98.4), 'кентукки': (37.5, -85.3), 'луизиан': (31.1, -92.0), 'мэн': (45.4, -69.2),
+ 'мэриленд': (39.0, -76.8), 'массачусетс': (42.3, -71.8), 'мичиган': (44.3, -85.4), 'миннесот': (46.3, -94.3), 'миссисипи': (32.7, -89.7),
+ 'миссури': (38.4, -92.5), 'монтан': (47.0, -109.6), 'небраск': (41.5, -99.8), 'невад': (39.3, -116.6), 'нью-гэмпшир': (43.7, -71.6),
+ 'нью-джерси': (40.2, -74.7), 'нью-мексико': (34.4, -106.1), 'нью-йорк': (42.9, -75.5), 'северная каролин': (35.6, -79.4),
+ 'северная дакот': (47.5, -100.5), 'огайо': (40.3, -82.8), 'оклахом': (35.6, -97.5), 'орегон': (43.9, -120.6), 'пенсильвани': (40.9, -77.8),
+ 'род-айленд': (41.7, -71.5), 'южная каролин': (33.9, -80.9), 'южная дакот': (44.4, -100.2), 'теннесси': (35.9, -86.4), 'техас': (31.5, -99.3),
+ 'юта': (39.3, -111.7), 'вермонт': (44.1, -72.7), 'виргини': (37.5, -78.9), 'западная виргини': (38.6, -80.6), 'вашингтон': (47.4, -120.5),
+ 'висконсин': (44.6, -89.9), 'вайоминг': (43.0, -107.6), 'пуэрто-рико': (18.2, -66.5), 'гуам': (13.44, 144.79)}
+
+def _ag_rus_first(cc, first):
+    f = first.lower()
+    if cc in ('KZ', 'KG'):
+        for k, v in _AG_OBL.items():
+            if k in f: return v
+    if cc == 'US':
+        for k, v in sorted(_AG_US.items(), key=lambda kv: -len(kv[0])):
+            if f.strip().startswith(k): return v
+    return None
 
 def _alert_geo_2711(events):
     n = 0
@@ -30167,6 +30239,17 @@ def _alert_geo_2711(events):
             for rx, cc, reg, la, lo in _AG_TAB:
                 if rx.search(first):
                     hit = (cc, reg, la, lo); break
+            if not hit and src != 'Росгидромет CAP':
+                cc0 = str(e.get('primary_country') or e.get('country_code') or '')
+                m = e.get('_meta') or e.get('meta') or {}
+                raw = list(m.get('areas_raw') or []) + ([m['area']] if m.get('area') else [])
+                pt = _ag_rus_first(cc0, first) if cc0 else None
+                if not pt and cc0 and raw:
+                    pt = _ag_lookup(cc0, raw)
+                if not pt and cc0:
+                    pt = _ag_lookup(cc0, [_ag_translit(first)], fuzzy=True)
+                if pt:
+                    hit = (cc0, e.get('region') or '', float(pt[0]), float(pt[1]))
             if not hit:
                 continue
             cc, reg, la, lo = hit
