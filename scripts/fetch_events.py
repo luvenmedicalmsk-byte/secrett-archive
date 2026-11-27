@@ -29667,7 +29667,7 @@ _A6_OLD = re.compile(r'\bв\s+(?:январ|феврал|март|апрел|м�
 _A6_ROUTINE = re.compile(r'^Ozon запустил|приняла бюджет\s+(?:Москвы|города|региона|области)|ввели в работу\s+(?:первую\s+)?(?:газотурбинн|энергоблок|установк)|^Хуанг вернулся|^Было утилизировано', re.I)
 
 # 27.11.2026 · FEED_AUDIT7_2711 (вторая проверка 27.11, одобрено Мией)
-_A7_CTX = re.compile(r'предпринимает шаги для поддержки|поворот\w*[^.]{0,40}в вопросах|^[^:]{0,40}:\s*Почему|^Ответ на запрос COI|запретили прыга|\(устран[её]н\)\s*$|(?:детонаци|подрыв)\w*[^.]{0,30}(?:свинцов|боеприпас|запас\w* химикат)|армия подрывает', re.I)
+_A7_CTX = re.compile(r'предпринимает шаги для поддержки|поворот\w*[^.]{0,40}в вопросах|^[^:]{0,40}:\s*Почему|^Ответ на запрос COI|запретили прыга|\(устран[её]н\)\s*$|(?:детонаци|подрыв)\w*[^.]{0,30}(?:свинцов|боеприпас|запас\w* химикат)|армия подрывает|^\s*[«"]?Я\s+(?:думаю|считаю|уверен|полагаю)\b|голуб\w*[-\s]дрон|БПЛА-голуб|заказал\w*\s+дрон|^Испытание кризисн|учени\w+ по кризисн', re.I)
 _A7_JUNK_TAIL = re.compile(r'\s+[а-яё]+[А-ЯЁ][а-яё]*(?:\s+\S{1,3}){2,}\s*$')
 _A7_GEO = [
     (re.compile(r'бассейн\w*\s+реки\s+Амур|\bАмур\b', re.I), 'RU', 'Амурская область', 50.29, 127.53),
@@ -29675,11 +29675,15 @@ _A7_GEO = [
     (re.compile(r'Quantum Systems', re.I), 'DE', 'Германия', 48.14, 11.58),
     (re.compile(r'Вайоминг|\bN-able\b', re.I), 'US', 'США', 41.14, -104.82),
     (re.compile(r'Flight Centre', re.I), 'AU', 'Австралия', -27.47, 153.03),
+    (re.compile(r'Гуджарат|\bJeM\b|Джаиш', re.I), 'IN', 'Индия', 23.02, 72.57),
+    (re.compile(r'Королевский флот|Royal Navy', re.I), 'GB', 'Великобритания', 51.50, -0.13),
+    (re.compile(r'\bMaersk\b|Маерск', re.I), 'DK', 'Дания', 55.68, 12.57),
 ]
 _A7_DOM = [
     (re.compile(r'импортн\w+\s+пошлин|пошлин\w*\s+в размере', re.I), ('geopolitics',), 'economy'),
     (re.compile(r'полици\w*[^.]{0,40}задержал\w*[^.]{0,80}(?:вербовк|пророссийск|шпион)', re.I), ('technology',), 'geopolitics'),
     (re.compile(r'взрыв\w*\s+мин\w*', re.I), ('social',), 'geopolitics'),
+    (re.compile(r'отключени\w+\s+(?:электричеств|электроэнерг|света)|блэкаут|обесточ', re.I), ('climate', 'social'), 'technology'),
     (re.compile(r'Губернатор[^.]{0,80}(?:у следователей|задержан|арестован|даёт показания|дает показания)', re.I), ('social',), 'geopolitics'),
 ]
 _A7_CAP = [
@@ -29696,16 +29700,18 @@ def _feed_audit7_2711(events):
         try:
             t = e.get('title') or ''; sev = e.get('severity') or 0; src = str(e.get('source') or '')
             cc = str(e.get('primary_country') or e.get('country_code') or '')
-            _t2 = _A7_JUNK_TAIL.sub('', t)
+            _t2 = re.sub(r'^\s*Ранее\s*[–—-]\s*', '', _A7_JUNK_TAIL.sub('', t))
             if _t2 != t and len(_t2) > 30:
                 e['title_raw_2711'] = t; e['title'] = t = _t2; inc('A7_TAIL')
             if _A7_CTX.search(t) or src.startswith('ScienceDaily') or (src == 'EIA' and not re.search(r'рекорд|дефицит|сбой|авари|минимум', t, re.I)):
                 _a3_ctx(e, 'A7 контекст'); inc('A7_CTX'); continue
             for rx, c2, reg, la, lo in _A7_GEO:
-                if rx.search(t) and cc in ('',) + (('RU',) if c2 != 'RU' else ()):
+                if rx.search(t) and (cc in ('',) + (('RU',) if c2 != 'RU' else ()) or (c2 in ('IN', 'GB', 'DK') and cc in ('IL', 'US'))):
                     if cc != c2:
                         _gr9_set(e, c2, reg, la, lo, 'AUDIT7_GEO', sync=True); inc('A7_GEO')
                     break
+            if cc in ('RU', '') and re.search(r'Зеленск', t) and re.search(r'Киев', t) and not re.search(r'Росси|Москв', t):
+                _gr9_set(e, 'UA', 'Украина', 50.45, 30.52, 'AUDIT7_GEO: заявление Зеленского о Киеве', sync=True); inc('A7_GEO')
             if cc in ('IL', '') and re.search(r'Трамп\s+(?:утверждает|заявил|считает)', t):
                 _gr9_set(e, 'US', 'США', 38.90, -77.04, 'AUDIT7_GEO: заявление Трампа', sync=True); inc('A7_GEO')
             if cc == '' and e.get('region') == 'Грузия':
