@@ -2,7 +2,7 @@
   "country": "TH",
   "date": "2026-11-27",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-27T01:47:49.089423+00:00",
+  "generated_at": "2026-11-27T02:10:47.316245+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-TH",
       "type": "Country",
       "label": "TH",
-      "score": 63,
+      "score": 80,
       "props": {
-        "risk_score": 63
+        "risk_score": 80
       }
     },
     {
@@ -20,54 +20,49 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 44,
-      "trend": "stable"
+      "score": 74,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-technology",
       "type": "Domain",
       "label": "technology",
       "score": 63,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
-    },
-    {
-      "id": "DRIVER-TH-technology",
-      "type": "Driver",
-      "label": "technology"
+      "trend": "up"
     },
     {
       "id": "DRIVER-TH-climate",
@@ -75,9 +70,21 @@
       "label": "climate"
     },
     {
+      "id": "DRIVER-TH-technology",
+      "type": "Driver",
+      "label": "technology"
+    },
+    {
       "id": "DRIVER-TH-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-TH-Сильный_до",
+      "type": "Signal",
+      "label": "Сильный дождь: Таиланд",
+      "severity": 74,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-TH-Взрыв_прои",
@@ -92,13 +99,6 @@
       "label": "Тесты в Таиланде обнаружили высокое соде",
       "severity": 44,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-TH-Промышленн",
-      "type": "Signal",
-      "label": "Промышленная авария — Таиланд",
-      "severity": 63,
-      "domain": "technology"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-climate",
       "type": "CORRELATES",
-      "weight": 0.44
+      "weight": 0.74
     },
     {
       "from": "COUNTRY-TH",
@@ -145,13 +145,13 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-TH-technology",
+      "from": "DRIVER-TH-climate",
       "to": "COUNTRY-TH",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-TH-climate",
+      "from": "DRIVER-TH-technology",
       "to": "COUNTRY-TH",
       "type": "CAUSES",
       "weight": 0.8
@@ -205,6 +205,12 @@
       "lag_days": 90
     },
     {
+      "from": "SIGNAL-TH-Сильный_до",
+      "to": "DOMAIN-TH-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.74
+    },
+    {
       "from": "SIGNAL-TH-Взрыв_прои",
       "to": "DOMAIN-TH-technology",
       "type": "AMPLIFIES",
@@ -215,12 +221,6 @@
       "to": "DOMAIN-TH-climate",
       "type": "AMPLIFIES",
       "weight": 0.44
-    },
-    {
-      "from": "SIGNAL-TH-Промышленн",
-      "to": "DOMAIN-TH-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.63
     }
   ]
 }
