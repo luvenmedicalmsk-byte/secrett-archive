@@ -29666,6 +29666,95 @@ _A6_TARIFF = re.compile(r'(?:Трамп|США|Вашингтон)[^.]{0,80}по
 _A6_OLD = re.compile(r'\bв\s+(?:январ|феврал|март|апрел|мае|июн|июл|август|сентябр|октябр|ноябр|декабр)\w*\s+(20\d\d)', re.I)
 _A6_ROUTINE = re.compile(r'^Ozon запустил|приняла бюджет\s+(?:Москвы|города|региона|области)|ввели в работу\s+(?:первую\s+)?(?:газотурбинн|энергоблок|установк)|^Хуанг вернулся|^Было утилизировано', re.I)
 
+# 27.11.2026 · FEED_AUDIT7_2711 (вторая проверка 27.11, одобрено Мией)
+_A7_CTX = re.compile(r'предпринимает шаги для поддержки|поворот\w*[^.]{0,40}в вопросах|^[^:]{0,40}:\s*Почему|^Ответ на запрос COI|запретили прыга|\(устран[её]н\)\s*$|(?:детонаци|подрыв)\w*[^.]{0,30}(?:свинцов|боеприпас|запас\w* химикат)|армия подрывает', re.I)
+_A7_JUNK_TAIL = re.compile(r'\s+[а-яё]+[А-ЯЁ][а-яё]*(?:\s+\S{1,3}){2,}\s*$')
+_A7_GEO = [
+    (re.compile(r'бассейн\w*\s+реки\s+Амур|\bАмур\b', re.I), 'RU', 'Амурская область', 50.29, 127.53),
+    (re.compile(r'Алабуг', re.I), 'RU', 'Татарстан', 55.79, 49.12),
+    (re.compile(r'Quantum Systems', re.I), 'DE', 'Германия', 48.14, 11.58),
+    (re.compile(r'Вайоминг|\bN-able\b', re.I), 'US', 'США', 41.14, -104.82),
+    (re.compile(r'Flight Centre', re.I), 'AU', 'Австралия', -27.47, 153.03),
+]
+_A7_DOM = [
+    (re.compile(r'импортн\w+\s+пошлин|пошлин\w*\s+в размере', re.I), ('geopolitics',), 'economy'),
+    (re.compile(r'полици\w*[^.]{0,40}задержал\w*[^.]{0,80}(?:вербовк|пророссийск|шпион)', re.I), ('technology',), 'geopolitics'),
+    (re.compile(r'взрыв\w*\s+мин\w*', re.I), ('social',), 'geopolitics'),
+    (re.compile(r'Губернатор[^.]{0,80}(?:у следователей|задержан|арестован|даёт показания|дает показания)', re.I), ('social',), 'geopolitics'),
+]
+_A7_CAP = [
+    (re.compile(r'призыва\w+\s+к\s+(?:защите|прекращению)', re.I), 60),
+    (re.compile(r'Трамп\s+утверждает', re.I), 60),
+    (re.compile(r'^(?:Шторм|Ураган|Тайфун|Циклон)[^.]{0,20}угрожа', re.I), 72),
+]
+
+def _feed_audit7_2711(events):
+    stat = {}
+    def inc(k): stat[k] = stat.get(k, 0) + 1
+    vis = [e for e in events or [] if e.get('feed_visible') is not False and not e.get('alerts_only')]
+    for e in vis:
+        try:
+            t = e.get('title') or ''; sev = e.get('severity') or 0; src = str(e.get('source') or '')
+            cc = str(e.get('primary_country') or e.get('country_code') or '')
+            _t2 = _A7_JUNK_TAIL.sub('', t)
+            if _t2 != t and len(_t2) > 30:
+                e['title_raw_2711'] = t; e['title'] = t = _t2; inc('A7_TAIL')
+            if _A7_CTX.search(t) or src.startswith('ScienceDaily') or (src == 'EIA' and not re.search(r'рекорд|дефицит|сбой|авари|минимум', t, re.I)):
+                _a3_ctx(e, 'A7 контекст'); inc('A7_CTX'); continue
+            for rx, c2, reg, la, lo in _A7_GEO:
+                if rx.search(t) and cc in ('',) + (('RU',) if c2 != 'RU' else ()):
+                    if cc != c2:
+                        _gr9_set(e, c2, reg, la, lo, 'AUDIT7_GEO', sync=True); inc('A7_GEO')
+                    break
+            if cc in ('IL', '') and re.search(r'Трамп\s+(?:утверждает|заявил|считает)', t):
+                _gr9_set(e, 'US', 'США', 38.90, -77.04, 'AUDIT7_GEO: заявление Трампа', sync=True); inc('A7_GEO')
+            if cc == '' and e.get('region') == 'Грузия':
+                _gr9_set(e, 'GE', 'Грузия', 41.72, 44.79, 'AUDIT7_GEO: регион Грузия', sync=True); inc('A7_GEO')
+            if src == 'ФАО ООН' and not e.get('region'):
+                e['region'] = 'Глобально'; e['is_global'] = True; inc('A7_GEO')
+            for rx, frm, to in _A7_DOM:
+                if rx.search(t) and e.get('domain') in frm:
+                    e['domain_audit3_from'] = e.get('domain'); e['domain'] = to; inc('A7_DOM'); break
+            for rx, cap in _A7_CAP:
+                if rx.search(t) and sev > cap:
+                    e['severity_audit3_from'] = sev; e['severity'] = cap; sev = cap; inc('A7_CAP'); break
+            # удар: до 10 погибших - не выше 78 (порядок: 5 погибших не выше 19)
+            if e.get('domain') == 'geopolitics' and sev > 78:
+                _n7 = _a6_n(t)
+                if _n7 and _n7 < 10 and not re.search(r'ранен\w*\s+\d{2,}|\d{2,}\s+ранен', t):
+                    e['severity_audit3_from'] = sev; e['severity'] = 78; inc('A7_TOLL')
+        except Exception:
+            continue
+    # сводки погибших одной страны (от 10) за +-1 сутки - одна карточка, с большим числом
+    try:
+        from datetime import date as _dd
+        grp = {}
+        for e in vis:
+            if e.get('feed_visible') is False or e.get('domain') != 'geopolitics':
+                continue
+            n = _a6_n(e.get('title') or ''); cc = str(e.get('primary_country') or e.get('country_code') or '')
+            if n and n >= 10 and cc:
+                grp.setdefault((cc, e.get('canon_type')), []).append((n, e))
+        for k, v in grp.items():
+            if len(v) < 2: continue
+            v.sort(key=lambda x: -x[0]); n0, h = v[0]
+            for n, ej in v[1:]:
+                try:
+                    if abs((_dd.fromisoformat(str(h.get('date'))[:10]) - _dd.fromisoformat(str(ej.get('date'))[:10])).days) > 1: continue
+                except Exception:
+                    continue
+                ej['feed_visible'] = False; ej['hide_reason'] = 'dupe_toll'
+                ej.setdefault('hide_reasons', []).append({'code': 'dupe_toll', 'src': 'audit7', 'keep': h.get('id')})
+                ej['merged_into'] = h.get('id'); inc('A7_MERGE')
+                if (ej.get('severity') or 0) > (h.get('severity') or 0): h['severity'] = ej.get('severity')
+                h.setdefault('also_reported_by', [])
+                if ej.get('source') and ej.get('source') not in h['also_reported_by']:
+                    h['also_reported_by'].append(ej.get('source'))
+    except Exception:
+        pass
+    print(f"  [feed_audit7] {stat}")
+    return stat
+
 def _feed_audit6_2711(events):
     stat = {}
     def inc(k): stat[k] = stat.get(k, 0) + 1
@@ -33343,6 +33432,10 @@ def save_enriched(events, previous_snapshot=None):
                 pass
             try:
                 _feed_audit6_2711(enriched["events"])    # FEED_AUDIT6_2711: п.1-5 аудита ленты 27.11
+            except Exception:
+                pass
+            try:
+                _feed_audit7_2711(enriched["events"])    # FEED_AUDIT7_2711: вторая проверка 27.11
             except Exception:
                 pass
             try:
