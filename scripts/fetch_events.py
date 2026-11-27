@@ -29676,6 +29676,9 @@ _A6_ROUTINE = re.compile(r'^Ozon запустил|приняла бюджет\s+
 _A7_CTX = re.compile(r'предпринимает шаги для поддержки|поворот\w*[^.]{0,40}в вопросах|^[^:]{0,40}:\s*Почему|^Ответ на запрос COI|запретили прыга|\(устран[её]н\)\s*$|(?:детонаци|подрыв)\w*[^.]{0,30}(?:свинцов|боеприпас|запас\w* химикат)|армия подрывает|^\s*[«"]?Я\s+(?:думаю|считаю|уверен|полагаю)\b|голуб\w*[-\s]дрон|БПЛА-голуб|заказал\w*\s+дрон|^Испытание кризисн|учени\w+ по кризисн|оборонных технологий[^.]{0,40}ускоряет инновац|\bмурал|^Дождь со снегом накроет|^О ситуации с гриппом|^Война в Украине:[^;]{0,200};|планирует\s+(?:специализированную\s+)?поддержку|создал\w*\s+рабочую\s+группу', re.I)
 # 27.11.2026 (Мия): культура (спектакли, театральные премии, кинофестивали, выставки, романы) - не сигнал и не контекст
 # 27.11.2026 (Мия): организации с особым статусом в РФ не цитируются; судьбы отдельных людей (этапирование, экстрадиция) - не системный сигнал
+_A7_CRIME_TECH = re.compile(r'(?:соучредител|основател|директор|CTO|сотрудник)\w*[^.]{0,80}(?:обвиняется|обвинен|обвинён)', re.I)
+_A7_JUNK_CTX = re.compile(r'[Ээ]пидеми\w+\s+девственност|Всемирн\w+\s+недел\w+\s+повышения\s+осведомл', re.I)
+_A7_PROMOTE = [(re.compile(r'[Дд]ефицит\s+ликвидности[^.]{0,40}банк', re.I), 'economy', 64)]
 _A7_SENSITIVE = re.compile(r'Антивоенн\w*\s+комитет|Фонд\w*\s+борьбы\s+с\s+коррупцией|\bФБК\b', re.I)
 _A7_INDIV = re.compile(r'(?:активист|оппозиционер|блогер|журналист|правозащитни)\w*[^.]{0,90}(?:этапир|экстрадиц|выдач\w+\s+в\s+Росси)', re.I)
 _A7_CULTURE = re.compile(r'^Спектакл|\bспектакл\w*\b[^.]{0,60}преми|пьес[аыу]\b|театр\w*\s+преми|кинофестивал|выставк\w+\s+(?:о|об|в)\b|\bроман\w*\s+о\b', re.I)
@@ -29688,6 +29691,8 @@ _A7_GEO = [
     (re.compile(r'Flight Centre', re.I), 'AU', 'Австралия', -27.47, 153.03),
     (re.compile(r'Гуджарат|\bJeM\b|Джаиш', re.I), 'IN', 'Индия', 23.02, 72.57),
     (re.compile(r'Субханкулов', re.I), 'RU', 'Башкортостан', 54.55, 53.83),
+    (re.compile(r'подлодк\w*[^.]{0,60}Циркон|Циркон[^.]{0,60}подлодк', re.I), 'RU', 'Архангельская область', 64.56, 39.83),
+    (re.compile(r'^Алжир', re.I), 'DZ', 'Алжир', 36.75, 3.06),
     (re.compile(r'^Россия\s+(?:продолжит|получила|намерена|планирует)', re.I), 'RU', 'Россия', 55.75, 37.62),
     (re.compile(r'Королевский флот|Royal Navy', re.I), 'GB', 'Великобритания', 51.50, -0.13),
     (re.compile(r'\bMaersk\b|Маерск', re.I), 'DK', 'Дания', 55.68, 12.57),
@@ -29711,6 +29716,8 @@ _A7_CAP = [
 # 27.11.2026: нижняя граница для структурных сигналов (одобрено Мией): конкуренция ИИ-инфраструктуры
 # с оборонной промышленностью за ресурсы, кадры и энергию - связка технологии × геополитика × экономика
 _A7_FLOOR = [
+    # 27.11.2026: недельная инфляция в России при ускорении - не ниже 58
+    (re.compile(r'(?:Потребительские цены|[Ии]нфляци\w*)[^.]{0,40}(?:Росси|РФ)[^.]{0,60}(?:0,[3-9]|[1-9],\d)\s*%|(?:Росси|РФ)[^.]{0,40}(?:потребительские цены|инфляци)[^.]{0,60}(?:0,[3-9]|[1-9],\d)\s*%', re.I), 58),
     (re.compile(r'дата-центр\w*[^.]{0,100}(?:оборон|ВПК|военн\w+ промышлен)|(?:оборон|ВПК)[^.]{0,100}дата-центр', re.I), 62),
     # 27.11.2026: прогрессивный НДФЛ на пассивные доходы (закон № 617-9) - согласовано с пресетом «Atlas фиксирует» (68)
     (re.compile(r'(?:налог\w*|НДФЛ)[^.]{0,60}пассивн\w+\s+доход|пассивн\w+\s+доход\w*[^.]{0,60}(?:налог|НДФЛ)', re.I), 66),
@@ -29742,11 +29749,14 @@ def _feed_audit7_2711(events):
             _t2 = re.sub(r'^\s*Ранее\s*[–—-]\s*', '', _A7_JUNK_TAIL.sub('', t))
             if _t2 != t and len(_t2) > 30:
                 e['title_raw_2711'] = t; e['title'] = t = _t2; inc('A7_TAIL')
+            if _A7_CRIME_TECH.search(t):
+                _a3_ctx(e, 'A7 частное уголовное дело'); inc('A7_CTX'); continue
             if _A7_CTX.search(t) or src.startswith('ScienceDaily') or (src == 'EIA' and not re.search(r'рекорд|дефицит|сбой|авари|минимум', t, re.I)):
                 _a3_ctx(e, 'A7 контекст'); inc('A7_CTX'); continue
             for rx, c2, reg, la, lo in _A7_GEO:
-                if rx.search(t) and (cc in ('',) + (('RU',) if c2 != 'RU' else ()) or (c2 in ('IN', 'GB', 'DK') and cc in ('IL', 'US'))):
-                    if cc != c2:
+                if rx.search(t) and (cc in ('',) + (('RU',) if c2 != 'RU' else ()) or (c2 in ('IN', 'GB', 'DK') and cc in ('IL', 'US'))
+                                 or (c2 == 'RU' and cc == 'RU' and e.get('region') == 'Пермский край' and 'Циркон' in t)):
+                    if cc != c2 or (e.get('region') == 'Пермский край' and reg != 'Пермский край'):
                         _gr9_set(e, c2, reg, la, lo, 'AUDIT7_GEO', sync=True); inc('A7_GEO')
                     break
             if cc in ('RU', '') and re.search(r'Зеленск', t) and re.search(r'Киев', t) and not re.search(r'Росси|Москв', t):
@@ -29757,11 +29767,11 @@ def _feed_audit7_2711(events):
                 _gr9_set(e, 'KW', 'Кувейт', 29.37, 47.98, 'AUDIT7_GEO: Кувейт', sync=True); inc('A7_GEO')
             if cc == 'RU' and re.search(r'\bEDF\b|Сил обороны Эстонии', t):
                 _gr9_set(e, 'EE', 'Эстония', 59.44, 24.75, 'AUDIT7_GEO: Силы обороны Эстонии', sync=True); inc('A7_GEO')
-            if cc == '' and src == 'UK Sanctions':
+            if cc == '' and src.startswith('UK Sanction'):
                 _gr9_set(e, 'GB', 'Великобритания', 51.50, -0.13, 'AUDIT7_GEO: санкции Великобритании', sync=True); inc('A7_GEO')
             if cc == '' and not e.get('region'):
                 if re.search(r'\bЕС\b|Евросоюз|Европейск', t): e['region'] = 'Европа'; inc('A7_GEO')
-                elif re.search(r'[Мм]ировая|[Мм]орская торговля|глобальн', t): e['region'] = 'Глобально'; e['is_global'] = True; inc('A7_GEO')
+                elif re.search(r'[Мм]ировая|[Мм]орская торговля|глобальн|[Гг]орячие точки голода|авиакомпани|[Бб]иткоин', t): e['region'] = 'Глобально'; e['is_global'] = True; inc('A7_GEO')
             if cc == '' and e.get('region') == 'Грузия':
                 _gr9_set(e, 'GE', 'Грузия', 41.72, 44.79, 'AUDIT7_GEO: регион Грузия', sync=True); inc('A7_GEO')
             if src == 'ФАО ООН' and not e.get('region'):
@@ -29820,6 +29830,18 @@ def _feed_audit7_2711(events):
                     (_A7_SENSITIVE.search((e.get('title') or '') + ' ' + (e.get('summary') or '')) or _A7_INDIV.search(e.get('title') or '')):
                 e['context_only'] = False; e['feed_visible'] = False
                 _hide_mark(e, 'sensitive_or_individual'); inc('A7_SENS')
+            elif e.get('context_only') and _A7_JUNK_CTX.search(e.get('title') or ''):
+                e['context_only'] = False; e['feed_visible'] = False
+                _hide_mark(e, 'junk_context'); inc('A7_JUNK')
+            elif e.get('context_only') and any(rx.search(e.get('title') or '') for rx, _, _ in _A7_PROMOTE):
+                # 27.11.2026 (Мия): сигнал, ошибочно ушедший в контекст, возвращается в ленту
+                for rx, dom, sv in _A7_PROMOTE:
+                    if rx.search(e.get('title') or ''):
+                        e['context_only'] = False; e['feed_visible'] = True
+                        e.pop('hide_reason', None); e['hide_reasons'] = []
+                        e['domain'] = dom; e['domain_lock'] = 'A7_PROMOTE'
+                        if (e.get('severity') or 0) != sv: e['severity_audit3_from'] = e.get('severity'); e['severity'] = sv
+                        inc('A7_PROMOTE'); break
             elif (e.get('context_only') or e.get('feed_visible') is not False) and not e.get('alerts_only') and _A7_CULTURE.search(e.get('title') or ''):
                 e['context_only'] = False; e['feed_visible'] = False
                 _hide_mark(e, 'culture'); inc('A7_CULTURE')
