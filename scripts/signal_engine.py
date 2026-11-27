@@ -4362,6 +4362,95 @@ def build_signals(events):
             print('[SHADOW CB] report failed:', str(_e)[:150])
     return signals
 
+# ── PROCESS_AUDIT_2711 (аудит процессов 27.11.2026, одобрено Мией; тень: scripts/process_audit_shadow.py) ──
+# А. дубли «Военных ударов»: из одноимённых геопроцессов остаётся самый наполненный, страны - не больше 3 по событиям
+# Б. география в названии - по большинству стран событий (только не системные процессы)
+# В. индекс процесса из 1 события - не выше 70, из 2 - не выше 76
+# Д. стадия «Завершён» или системный процесс без событий 7 дней - fading
+# Е. события, скрытые из ленты или ушедшие в контекст, исключаются из процесса
+PROCESS_AUDIT_2711 = True
+def _process_audit_2711(evolved, events):
+    import re as _re, datetime as _dt
+    st = {'E': 0, 'A_dup': 0, 'A_cc': 0, 'B': 0, 'C': 0, 'D': 0}
+    def _n(t): return _re.sub(r'\s+', ' ', (t or '').strip().lower())[:90]
+    by_t, cc_ru = {}, {}
+    for e in events or []:
+        _k = _n(e.get('title'))
+        # при одинаковых заголовках берётся видимая в ленте копия: скрытый дубль не должен гасить процесс
+        if _k not in by_t or (by_t[_k].get('feed_visible') is False and e.get('feed_visible') is not False):
+            by_t[_k] = e
+        g = e.get('geo') or {}
+        c = str(e.get('primary_country') or e.get('country_code') or '')
+        if c and g.get('country_ru') and c not in cc_ru: cc_ru[c] = g['country_ru']
+    ru_names = set(cc_ru.values())
+    now = _dt.datetime.utcnow()
+    for p in evolved:
+        try:
+            if p.get('status') != 'active': continue
+            evs = p.get('evidence') or []
+            keep, drop = [], 0
+            for x in evs:
+                m = by_t.get(_n(x.get('title'))) if isinstance(x, dict) else None
+                _hr = str(m.get('hide_reason') or '') if m is not None else ''
+                # исключаются только контекст и шум; склейки, низкий порог ленты и спутниковый слой остаются
+                if m is not None and (m.get('context_only') or _hr in ('context_gate', 'hygiene', 'feed_fix_noise', 'feature_format',
+                                       'petty_scale', 'unverified', 'реклама/PR') or _hr.startswith('sh_')):
+                    drop += 1; continue
+                keep.append((x, m))
+            if drop:
+                p['evidence'] = [x for x, _ in keep]
+                p['evidence_count'] = max(0, int(p.get('evidence_count') or len(evs)) - drop)
+                p['audit_2711_dropped'] = drop; st['E'] += 1
+                if p['evidence_count'] == 0: p['status'] = 'fading'; continue
+            from collections import Counter as _C
+            ccs = _C(str(m.get('primary_country') or m.get('country_code') or '') for _, m in keep if m is not None)
+            ccs.pop('', None)
+            # А. страны геопроцесса
+            if p.get('primary_domain') == 'geopolitics' and not p.get('is_macro') and len(p.get('countries') or []) > 3 and ccs:
+                top = [c for c, _ in ccs.most_common(3)]
+                p['countries_before_2711'] = p.get('countries'); p['countries'] = top; st['A_cc'] += 1
+            # Б. география в названии
+            title = p.get('title') or ''
+            if not p.get('is_macro') and ccs and ' — ' in title:
+                c0, n0 = ccs.most_common(1)[0]
+                place = title.split(' — ', 1)[1]
+                new = cc_ru.get(c0)
+                if new and place in ru_names and new != place and n0 / sum(ccs.values()) >= 0.6:
+                    p['title_before_2711'] = title
+                    p['title'] = title.split(' — ', 1)[0] + ' — ' + new
+                    p['process_place'] = new; st['B'] += 1
+            # В. индекс по числу событий
+            cnt = int(p.get('evidence_count') or len(p.get('evidence') or []))
+            cap = 70 if cnt <= 1 else 76 if cnt == 2 else 100
+            if (p.get('severity') or 0) > cap:
+                p['severity_before_2711'] = p['severity']; p['severity'] = cap; st['C'] += 1
+            # Д. статус
+            age = None
+            try: age = (now - _dt.datetime.fromisoformat(str(p.get('last_seen'))[:19])).days
+            except Exception: pass
+            if p.get('lifecycle_stage') == 'Завершён' or (p.get('is_macro') and age is not None and age > 7):
+                p['status'] = 'fading'; p['status_reason_2711'] = 'стадия Завершён' if p.get('lifecycle_stage') == 'Завершён' else 'нет событий %d дн.' % age
+                st['D'] += 1
+        except Exception:
+            continue
+    # А. одноимённые активные геопроцессы - остаётся самый наполненный
+    try:
+        grp = {}
+        for p in evolved:
+            if p.get('status') == 'active' and p.get('primary_domain') == 'geopolitics' and not p.get('is_macro'):
+                t = (p.get('title') or '')
+                if t.startswith('Военные удары — '):   # без места в названии не склеиваются
+                    grp.setdefault(t, []).append(p)   # дубль = полностью одинаковое название
+        for k, v in grp.items():
+            if len(v) < 2: continue
+            v.sort(key=lambda x: -(x.get('evidence_count') or 0))
+            for d in v[1:]:
+                d['status'] = 'fading'; d['merged_into_2711'] = v[0].get('signal_id'); st['A_dup'] += 1
+    except Exception:
+        pass
+    print('  [PROCESS_AUDIT_2711] %s' % st, file=sys.stderr)
+    return st
+
 def write_signals_json(events, path):
     import os
     now=_now_iso()
@@ -4637,6 +4726,11 @@ def write_signals_json(events, path):
             print('  [STATE-SHADOW] %s' % json.dumps(_ss_stats, ensure_ascii=False)[:300], file=sys.stderr)
         except Exception as _sse:
             print(f'  [STATE-SHADOW] skip: {_sse}', file=sys.stderr)
+    if PROCESS_AUDIT_2711:
+        try:
+            _process_audit_2711(evolved, events)
+        except Exception as _pae:
+            print(f'  [PROCESS_AUDIT_2711] skip: {_pae}', file=sys.stderr)
     out={'updated':now,'count':len(evolved),'schema':'process-signal-v1.6',
          'global_health':global_health,'patterns_detected':patterns,'report':report,'signals':evolved}
     if _ss_stats is not None:
