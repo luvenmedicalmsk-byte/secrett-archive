@@ -29654,6 +29654,13 @@ def _a3_ctx(e, why):
 
 # 27.11.2026 · FEED_AUDIT6_2711 (аудит ленты 27.11, п.1-5, одобрено Мией)
 _A6_KILLED = re.compile(r'(\d+)\s+(?:[а-яё]+\s+){0,2}(?:погиб|убит|убиты)|(?:погиб\w*|убил\w*|убива\w*|убит\w*)\s+(?:еще\s+|ещё\s+)?(\d+)', re.I)
+_A6_WORDNUM = {'один': 1, 'одна': 1, 'два': 2, 'две': 2, 'двое': 2, 'три': 3, 'трое': 3, 'четыре': 4, 'четверо': 4}
+_A6_KILLED_W = re.compile(r'\b(один|одна|два|две|двое|три|трое|четыре|четверо)\s+(?:[а-яё]+\s+){0,3}?(?:погиб|убит)|(?:погиб\w*|убит\w*)\s+(?:[а-яё]+\s+){0,1}?(один|одна|два|две|двое|три|трое|четыре|четверо)\b', re.I)
+def _a6_n(t):
+    m = _A6_KILLED.search(t or '')
+    if m: return int(m.group(1) or m.group(2))
+    m = _A6_KILLED_W.search(t or '')
+    return _A6_WORDNUM.get((m.group(1) or m.group(2)).lower()) if m else None
 _A6_SOCIAL = re.compile(r'жертв\w*\s+(?:священник|насили|педофил)|медработник\w*[^.]{0,80}(?:нападени|травм)|нападени\w+\s+пациент', re.I)
 _A6_TARIFF = re.compile(r'(?:Трамп|США|Вашингтон)[^.]{0,80}пошлин|пошлин[^.]{0,80}(?:США|Трамп)', re.I)
 _A6_OLD = re.compile(r'\bв\s+(?:январ|феврал|март|апрел|мае|июн|июл|август|сентябр|октябр|ноябр|декабр)\w*\s+(20\d\d)', re.I)
@@ -29697,8 +29704,8 @@ def _feed_audit6_2711(events):
                 inc('A6_GEO')
             # п.1 удар с малым числом погибших
             if e.get('domain') == 'geopolitics' and sev > 80:
-                m = _A6_KILLED.search(t)
-                if m and int(m.group(1) or m.group(2)) < 5 and not re.search(r'ранен\w*\s+\d{2,}|\d{2,}\s+ранен', t):
+                _n6 = _a6_n(t)
+                if _n6 and _n6 < 5 and not re.search(r'ранен\w*\s+\d{2,}|\d{2,}\s+ранен', t):
                     e['severity_audit3_from'] = sev; e['severity'] = 80; inc('A6_TOLL')
         except Exception:
             continue
@@ -29815,8 +29822,11 @@ def _feed_audit3_2611(events):
                         e['severity_audit4_from'] = e.get('severity'); e['severity'] = _rs; inc('A4_RES')
                 if vis and _A5_QUOTE_CTX.search(t):
                     _a3_ctx(e, 'A5 цитата / дайджест'); inc('A5_QUOTE'); vis = False
-                if _A5_ECON_SEA.search(t) and e.get('domain') in ('social', 'geopolitics'):
-                    e['domain_audit3_from'] = e.get('domain'); e['domain'] = 'economy'; inc('A5_DOM')
+                if _A5_ECON_SEA.search(t):
+                    # 27.11: фиксируется и там, где домен уже экономика - иначе W17 переводил по canon_domain
+                    if e.get('domain') != 'economy':
+                        e['domain_audit3_from'] = e.get('domain'); e['domain'] = 'economy'; inc('A5_DOM')
+                    e['domain_lock'] = 'A5_ECON_SEA'
                 if vis and _A4_AID.search(t):
                     _a3_ctx(e, 'A4 отправка гуманитарной помощи'); inc('A4_AID'); vis = False
                 if vis and _A4_REPORT.search(t) and (src.startswith('ReliefWeb') or 'DREF' in t or 'MDR' in t):
@@ -33477,7 +33487,7 @@ def save_enriched(events, previous_snapshot=None):
                         if _dd.get('arbiter'):
                             continue
                         # 26.11.2026 (аудит): решения правила ДТП и аудитов ленты не перезаписываются
-                        if _e.get('domain_road_from') or _e.get('domain_audit3_from'):
+                        if _e.get('domain_road_from') or _e.get('domain_audit3_from') or _e.get('domain_lock'):
                             continue
                         if _cd in _CANARY_DOMAINS and _e.get('domain') != _cd:
                             _saved_dom[_i] = _e.get('domain'); _e['domain'] = _cd
