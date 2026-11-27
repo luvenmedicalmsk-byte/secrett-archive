@@ -2,7 +2,7 @@
   "country": "MX",
   "date": "2026-11-27",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-27T00:10:53.880827+00:00",
+  "generated_at": "2026-11-27T00:24:29.537690+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -19,14 +19,14 @@
       "id": "DOMAIN-MX-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 61,
+      "score": 53,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-MX-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 32,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-MX-Золотодобы",
+      "type": "Signal",
+      "label": "Золотодобыча в Мексике",
+      "severity": 32,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-MX-Наводнение",
       "type": "Signal",
       "label": "Наводнение — Мексика",
@@ -92,13 +99,6 @@
       "label": "Шторм — Мексика",
       "severity": 50,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-MX-Криминальн",
-      "type": "Signal",
-      "label": "Криминальный инцидент — Мексика",
-      "severity": 61,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.61
+      "weight": 0.53
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-MX",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-MX-climate",
-      "to": "DOMAIN-MX-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-MX-economic",
-      "to": "DOMAIN-MX-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-MX-social",
-      "to": "DOMAIN-MX-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-MX-climate",
       "to": "DOMAIN-MX-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -203,6 +182,27 @@
       "type": "AMPLIFIES",
       "weight": 0.55,
       "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-MX-climate",
+      "to": "DOMAIN-MX-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-MX-economic",
+      "to": "DOMAIN-MX-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-MX-social",
+      "to": "DOMAIN-MX-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "DOMAIN-MX-geopolitical",
@@ -226,6 +226,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-MX-Золотодобы",
+      "to": "DOMAIN-MX-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.32
+    },
+    {
       "from": "SIGNAL-MX-Наводнение",
       "to": "DOMAIN-MX-climate",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-MX-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-MX-Криминальн",
-      "to": "DOMAIN-MX-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.61
     }
   ]
 }
