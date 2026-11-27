@@ -2,7 +2,7 @@
   "country": "TR",
   "date": "2026-11-27",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-27T14:12:03.356879+00:00",
+  "generated_at": "2026-11-27T14:29:19.581590+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-TR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 68,
+      "score": 32,
       "trend": "stable"
     },
     {
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-TR-Резервы_це",
-      "type": "Signal",
-      "label": "Резервы центрального банка Турции упали ",
-      "severity": 68,
-      "domain": "economic"
-    },
-    {
       "id": "SIGNAL-TR-Гроза:_Кыр",
       "type": "Signal",
       "label": "Гроза: Кыркларели, Эдирне, Турция",
@@ -99,6 +92,13 @@
       "label": "COP31: Ключевые результаты по продовольс",
       "severity": 32,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-TR-Климатичес",
+      "type": "Signal",
+      "label": "Климатические переговоры ООН завершились",
+      "severity": 32,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-economic",
       "type": "CORRELATES",
-      "weight": 0.68
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-TR",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-TR-climate",
-      "to": "DOMAIN-TR-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-TR-infrastructure",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-TR-economic",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-TR-climate",
       "to": "DOMAIN-TR-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -203,6 +182,27 @@
       "type": "AMPLIFIES",
       "weight": 0.65,
       "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-TR-climate",
+      "to": "DOMAIN-TR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-TR-infrastructure",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-TR-geopolitical",
@@ -226,12 +226,6 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-TR-Резервы_це",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68
-    },
-    {
       "from": "SIGNAL-TR-Гроза:_Кыр",
       "to": "DOMAIN-TR-climate",
       "type": "AMPLIFIES",
@@ -240,6 +234,12 @@
     {
       "from": "SIGNAL-TR-COP31:_Клю",
       "to": "DOMAIN-TR-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.32
+    },
+    {
+      "from": "SIGNAL-TR-Климатичес",
+      "to": "DOMAIN-TR-economic",
       "type": "AMPLIFIES",
       "weight": 0.32
     }
