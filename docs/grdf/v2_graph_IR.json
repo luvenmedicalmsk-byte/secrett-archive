@@ -2,7 +2,7 @@
   "country": "IR",
   "date": "2026-11-28",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-28T05:11:29.435379+00:00",
+  "generated_at": "2026-11-28T05:30:29.176697+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-IR",
       "type": "Country",
       "label": "IR",
-      "score": 81,
+      "score": 83,
       "props": {
-        "risk_score": 81
+        "risk_score": 83
       }
     },
     {
@@ -20,13 +20,13 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 88,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 56,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IR-Центком_от",
+      "type": "Signal",
+      "label": "Центком отверг обвинения Ирана в атаке н",
+      "severity": 80,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-IR-Трафик_тан",
       "type": "Signal",
       "label": "Трафик танкеров в Ормузе увеличивается, ",
@@ -92,13 +99,6 @@
       "label": "Кувейт вызывает иранского посла из-за см",
       "severity": 76,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-IR-Президент_",
-      "type": "Signal",
-      "label": "Президент Ирана Пезешкиан дважды за нояб",
-      "severity": 56,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-economic",
       "type": "CORRELATES",
-      "weight": 0.56
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-IR",
@@ -184,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-IR-Центком_от",
+      "to": "DOMAIN-IR-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.8
+    },
+    {
       "from": "SIGNAL-IR-Трафик_тан",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
@@ -194,12 +200,6 @@
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.76
-    },
-    {
-      "from": "SIGNAL-IR-Президент_",
-      "to": "DOMAIN-IR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.56
     }
   ]
 }
