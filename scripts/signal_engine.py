@@ -4431,13 +4431,17 @@ def _process_audit_2811(evolved, events):
     О   - «Оползень» без слов оползень/сель/обвал в свидетельствах переименовывается в «Шторм».
     П   - метеопредупреждения (alerts_only) не свидетельствуют в процессах без места (Глобально).
     М   - место длиннее 3 слов (взято из текста новости) заменяется страной.
-    К   - код страны в заголовке макропроцесса заменяется названием."""
+    К   - код страны в заголовке макропроцесса заменяется названием.
+    Ш   - шум в свидетельствах (ниже порога ленты с индексом < 40, реклама, дайджесты) убирается."""
     import re as _re
-    st = {'G_fade': 0, 'G_cc': 0, 'O': 0, 'P': 0, 'M': 0, 'K': 0}
+    st = {'SH': 0, 'G_fade': 0, 'G_cc': 0, 'O': 0, 'P': 0, 'M': 0, 'K': 0}
     def _n(t): return _re.sub(r'\s+', ' ', (t or '').strip().lower())[:90]
     alerts = {_n(e.get('title')) for e in events or [] if e.get('alerts_only')}
-    t2cc = {}
+    t2cc, t2ev = {}, {}
+    _SH_JUNK = _re.compile(r'купить|последний шанс|лучш\w+\s+(?:зеркальн|камер|смартфон|ноутбук)|^Загрузка:|скидк|распродаж|промокод|GTA\s*VI|GTA\s*6', _re.I)
     for e in events or []:
+        _k = _n(e.get('title'))
+        if _k not in t2ev or (t2ev[_k].get('feed_visible') is False and e.get('feed_visible') is not False): t2ev[_k] = e
         c = str(e.get('primary_country') or e.get('country_code') or '')
         if c: t2cc.setdefault(_n(e.get('title')), c)
     _EXTRA = {'EG':'Египет','KR':'Южная Корея','PS':'Палестина','EU':'Евросоюз','KP':'КНДР','YE':'Йемен','LB':'Ливан','SA':'Саудовская Аравия',
@@ -4465,6 +4469,26 @@ def _process_audit_2811(evolved, events):
                 continue
             place = str(p.get('process_place') or '')
             ccs = [c for c in (p.get('countries') or []) if c]
+            # Ш. шум в свидетельствах: события ниже порога ленты с индексом < 40, реклама и дайджесты.
+            # Индекс процесса после чистки - не выше максимума оставшихся свидетельств + 6.
+            evs = p.get('evidence') or []
+            keep = []
+            for x in evs:
+                if not isinstance(x, dict): keep.append(x); continue
+                ev0 = t2ev.get(_n(x.get('title')))
+                xt = str(x.get('title') or '')
+                junk = bool(_SH_JUNK.search(xt))
+                low = ev0 is not None and ev0.get('feed_visible') is False and ev0.get('hide_reason') == 'below_feed_threshold' and int(ev0.get('severity') or 0) < 40
+                if junk or low: continue
+                keep.append(x)
+            if len(keep) < len(evs):
+                p['noise_dropped_2811'] = len(evs) - len(keep)
+                p['evidence'] = keep; p['evidence_count'] = len(keep); st['SH'] += 1
+                if not keep:
+                    p['status'] = 'fading'; p['fade_reason_2811'] = 'только шум'; continue
+                mx = max([int(x.get('severity') or 0) for x in keep if isinstance(x, dict)] or [0])
+                if mx and (p.get('severity') or 0) > mx + 6:
+                    p['severity_before_2811'] = p.get('severity'); p['severity'] = mx + 6
             # М. место из текста новости
             if len(place.split()) > 3 and ccs and _nm(ccs[0]):
                 nm = _nm(ccs[0]); p['place_before_2811'] = place; p['process_place'] = nm
