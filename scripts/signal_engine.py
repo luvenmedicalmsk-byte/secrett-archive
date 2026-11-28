@@ -4422,6 +4422,93 @@ def build_signals(events):
 # Д. стадия «Завершён» или системный процесс без событий 7 дней - fading
 # Е. события, скрытые из ленты или ушедшие в контекст, исключаются из процесса
 PROCESS_AUDIT_2711 = True
+PROCESS_AUDIT_2811 = True   # 28.11.2026 (Мия): правила Г, «Оползень», предупреждения, место из текста, коды стран в макро; откат: False
+
+def _process_audit_2811(evolved, events):
+    """Аудит процессов 28.11.2026.
+    Г   - процесс без места (Глобально) с событиями из 3+ стран не активен: затухает, индекс не выше 60;
+          с одной страной - страна уходит в заголовок.
+    О   - «Оползень» без слов оползень/сель/обвал в свидетельствах переименовывается в «Шторм».
+    П   - метеопредупреждения (alerts_only) не свидетельствуют в процессах без места (Глобально).
+    М   - место длиннее 3 слов (взято из текста новости) заменяется страной.
+    К   - код страны в заголовке макропроцесса заменяется названием."""
+    import re as _re
+    st = {'G_fade': 0, 'G_cc': 0, 'O': 0, 'P': 0, 'M': 0, 'K': 0}
+    def _n(t): return _re.sub(r'\s+', ' ', (t or '').strip().lower())[:90]
+    alerts = {_n(e.get('title')) for e in events or [] if e.get('alerts_only')}
+    t2cc = {}
+    for e in events or []:
+        c = str(e.get('primary_country') or e.get('country_code') or '')
+        if c: t2cc.setdefault(_n(e.get('title')), c)
+    _EXTRA = {'EG':'Египет','KR':'Южная Корея','PS':'Палестина','EU':'Евросоюз','KP':'КНДР','YE':'Йемен','LB':'Ливан','SA':'Саудовская Аравия',
+              'AE':'ОАЭ','KW':'Кувейт','QA':'Катар','OM':'Оман','JO':'Иордания','SD':'Судан','CD':'ДР Конго','ET':'Эфиопия','NP':'Непал',
+              'HT':'Гаити','BO':'Боливия','TL':'Восточный Тимор','HK':'Гонконг','TH':'Таиланд','PH':'Филиппины','ID':'Индонезия','VN':'Вьетнам',
+              'BR':'Бразилия','AR':'Аргентина','CL':'Чили','MX':'Мексика','VE':'Венесуэла','CO':'Колумбия','PE':'Перу','EC':'Эквадор',
+              'NG':'Нигерия','ZA':'ЮАР','KE':'Кения','MA':'Марокко','DZ':'Алжир','TN':'Тунис','LY':'Ливия','AF':'Афганистан','BD':'Бангладеш',
+              'LK':'Шри-Ланка','MM':'Мьянма','AU':'Австралия','NZ':'Новая Зеландия','CA':'Канада','IS':'Исландия','IE':'Ирландия'}
+    def _nm(c):
+        c = str(c or '').upper()
+        return _ISO_COUNTRY.get(c) or _EXTRA.get(c)
+    ru_ctry = set(_ISO_COUNTRY.values()) | set(_EXTRA.values())
+    titles = {}
+    for p in evolved:
+        if p.get('status') in ('active', 'fading'): titles.setdefault(p.get('title'), []).append(p)
+    for p in evolved:
+        try:
+            if p.get('status') != 'active': continue
+            t = p.get('title') or ''
+            # К. код страны в заголовке макро
+            if p.get('is_macro'):
+                m = _re.search(r' — ([A-Z]{2})( \(системный процесс\))?$', t)
+                if m and _nm(m.group(1)):
+                    p['title_before_2811'] = t; p['title'] = t.replace(' — ' + m.group(1), ' — ' + _nm(m.group(1)), 1); st['K'] += 1
+                continue
+            place = str(p.get('process_place') or '')
+            ccs = [c for c in (p.get('countries') or []) if c]
+            # М. место из текста новости
+            if len(place.split()) > 3 and ccs and _nm(ccs[0]):
+                nm = _nm(ccs[0]); p['place_before_2811'] = place; p['process_place'] = nm
+                p['title_before_2811'] = t; p['title'] = t.split(' — ')[0] + ' — ' + nm; t = p['title']; place = nm; st['M'] += 1
+            is_country = place in ru_ctry
+            # П. предупреждения только в процессах страны
+            if place in ('', 'Глобально') and alerts:
+                evs = p.get('evidence') or []
+                keep = [x for x in evs if not (isinstance(x, dict) and _n(x.get('title')) in alerts)]
+                if len(keep) < len(evs):
+                    p['alerts_dropped_2811'] = len(evs) - len(keep)
+                    p['evidence'] = keep; p['evidence_count'] = len(keep); st['P'] += 1
+                    if not keep:
+                        p['status'] = 'fading'; p['fade_reason_2811'] = 'только предупреждения'; continue
+                    sv = max([int(x.get('severity') or 0) for x in keep if isinstance(x, dict)] or [0])
+                    if sv and (p.get('severity') or 0) > sv:
+                        p['severity_before_2811'] = p.get('severity'); p['severity'] = sv
+            # О. «Оползень» без оползня
+            if (p.get('process_type') == 'Оползень' or t.startswith('Оползень')) and not any(
+                    _re.search(r'оползн|сел[ьяеи]\b|обвал\w*\s+грунт|landslide|mudslide', str(x.get('title') or ''), _re.I)
+                    for x in (p.get('evidence') or []) if isinstance(x, dict)):
+                p['title_before_2811'] = t; p['title'] = t.replace('Оползень', 'Шторм', 1); p['process_type'] = 'Шторм'; t = p['title']; st['O'] += 1
+                if len(titles.get(t, [])) > 0 and not any(q is p for q in titles.get(t, [])):
+                    p['status'] = 'fading'; p['fade_reason_2811'] = 'дубль после переименования'; continue
+            # Г. процесс без места
+            if place in ('', 'Глобально'):
+                from collections import Counter as _C
+                ecc = _C(t2cc.get(_n(x.get('title'))) for x in (p.get('evidence') or []) if isinstance(x, dict))
+                ecc.pop(None, None)
+                tot = sum(ecc.values())
+                top = ecc.most_common(1)[0] if ecc else (None, 0)
+                if tot >= 2 and top[1] / tot >= 0.6 and _nm(top[0]):
+                    nm = _nm(top[0]); p['place_before_2811'] = place; p['process_place'] = nm
+                    p['title_before_2811'] = t; p['title'] = t.split(' — ')[0] + ' — ' + nm; st['G_cc'] += 1
+                elif len(ecc) >= 3 or len(set(ccs)) >= 3:
+                    p['status'] = 'fading'; p['fade_reason_2811'] = 'нет места, 3+ стран'
+                    if (p.get('severity') or 0) > 60: p['severity_before_2811'] = p.get('severity'); p['severity'] = 60
+                    st['G_fade'] += 1
+        except Exception:
+            continue
+    print('  [PROCESS-AUDIT-2811] %s' % st, file=sys.stderr)
+    return st
+
+
 def _process_audit_2711(evolved, events):
     import re as _re, datetime as _dt
     st = {'E': 0, 'A_dup': 0, 'A_cc': 0, 'B': 0, 'C': 0, 'D': 0}
@@ -4796,6 +4883,11 @@ def write_signals_json(events, path):
             _process_audit_2711(evolved, events)
         except Exception as _pae:
             print(f'  [PROCESS_AUDIT_2711] skip: {_pae}', file=sys.stderr)
+    if PROCESS_AUDIT_2811:
+        try:
+            _process_audit_2811(evolved, events)
+        except Exception as _pae2:
+            print(f'  [PROCESS_AUDIT_2811] skip: {_pae2}', file=sys.stderr)
     out={'updated':now,'count':len(evolved),'schema':'process-signal-v1.6',
          'global_health':global_health,'patterns_detected':patterns,'report':report,'signals':evolved}
     if _ss_stats is not None:
