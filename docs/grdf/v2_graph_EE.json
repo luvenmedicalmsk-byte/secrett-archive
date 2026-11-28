@@ -2,25 +2,25 @@
   "country": "EE",
   "date": "2026-11-28",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-28T07:30:08.054353+00:00",
+  "generated_at": "2026-11-28T08:08:25.646847+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-EE",
       "type": "Country",
       "label": "EE",
-      "score": 67,
+      "score": 64,
       "props": {
-        "risk_score": 67
+        "risk_score": 64
       }
     },
     {
       "id": "DOMAIN-EE-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 67,
-      "trend": "up"
+      "score": 54,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-EE-economic",
@@ -33,8 +33,8 @@
       "id": "DOMAIN-EE-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "stable"
+      "score": 50,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-EE-technology",
@@ -70,34 +70,34 @@
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-EE-economic",
-      "type": "Driver",
-      "label": "economic"
-    },
-    {
       "id": "DRIVER-EE-climate",
       "type": "Driver",
       "label": "climate"
     },
     {
-      "id": "SIGNAL-EE-Сектор_обо",
-      "type": "Signal",
-      "label": "Сектор оборонных технологий Эстонии уско",
-      "severity": 67,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-EE-Воздушное_",
-      "type": "Signal",
-      "label": "Воздушное пространство — Эстония: помехи",
-      "severity": 59,
-      "domain": "geopolitical"
+      "id": "DRIVER-EE-economic",
+      "type": "Driver",
+      "label": "economic"
     },
     {
       "id": "SIGNAL-EE-Эстония_и_",
       "type": "Signal",
       "label": "Эстония и Россия находятся на грани нача",
       "severity": 54,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-EE-Ветер:_Вос",
+      "type": "Signal",
+      "label": "Ветер: Восточный залив Финского залива, ",
+      "severity": 50,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-EE-В_Эстонии_",
+      "type": "Signal",
+      "label": "В Эстонии призвали проявить гуманность в",
+      "severity": 46,
       "domain": "geopolitical"
     }
   ],
@@ -106,7 +106,7 @@
       "from": "COUNTRY-EE",
       "to": "DOMAIN-EE-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.67
+      "weight": 0.54
     },
     {
       "from": "COUNTRY-EE",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-EE",
       "to": "DOMAIN-EE-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-EE",
@@ -151,16 +151,58 @@
       "weight": 0.8
     },
     {
+      "from": "DRIVER-EE-climate",
+      "to": "COUNTRY-EE",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-EE-economic",
       "to": "COUNTRY-EE",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-EE-climate",
-      "to": "COUNTRY-EE",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-EE-climate",
+      "to": "DOMAIN-EE-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-EE-economic",
+      "to": "DOMAIN-EE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-EE-social",
+      "to": "DOMAIN-EE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-EE-climate",
+      "to": "DOMAIN-EE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-EE-infrastructure",
+      "to": "DOMAIN-EE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-EE-economic",
+      "to": "DOMAIN-EE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-EE-geopolitical",
@@ -184,22 +226,22 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-EE-Сектор_обо",
-      "to": "DOMAIN-EE-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.67
-    },
-    {
-      "from": "SIGNAL-EE-Воздушное_",
-      "to": "DOMAIN-EE-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.59
-    },
-    {
       "from": "SIGNAL-EE-Эстония_и_",
       "to": "DOMAIN-EE-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.54
+    },
+    {
+      "from": "SIGNAL-EE-Ветер:_Вос",
+      "to": "DOMAIN-EE-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
+      "from": "SIGNAL-EE-В_Эстонии_",
+      "to": "DOMAIN-EE-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.46
     }
   ]
 }
