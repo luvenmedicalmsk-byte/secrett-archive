@@ -1,8 +1,8 @@
 {
   "country": "IT",
-  "date": "2026-11-27",
+  "date": "2026-11-28",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-27T23:48:31.407447+00:00",
+  "generated_at": "2026-11-28T00:09:28.123425+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -33,7 +33,7 @@
       "id": "DOMAIN-IT-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 72,
+      "score": 50,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IT-Ветер:_Сиц",
+      "type": "Signal",
+      "label": "Ветер: Сицилия, Базиликата, Калабрия и е",
+      "severity": 50,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-IT-Ливень:_Мо",
       "type": "Signal",
       "label": "Ливень: Молизе, Абруццо, Кампания и ещё ",
@@ -92,13 +99,6 @@
       "label": "Италия на данном этапе не поддержит мног",
       "severity": 34,
       "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-IT-Шторм_—_Ит",
-      "type": "Signal",
-      "label": "Шторм — Италия",
-      "severity": 72,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-climate",
       "type": "CORRELATES",
-      "weight": 0.72
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-IT",
@@ -226,6 +226,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-IT-Ветер:_Сиц",
+      "to": "DOMAIN-IT-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
       "from": "SIGNAL-IT-Ливень:_Мо",
       "to": "DOMAIN-IT-climate",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-IT-economic",
       "type": "AMPLIFIES",
       "weight": 0.34
-    },
-    {
-      "from": "SIGNAL-IT-Шторм_—_Ит",
-      "to": "DOMAIN-IT-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.72
     }
   ]
 }
