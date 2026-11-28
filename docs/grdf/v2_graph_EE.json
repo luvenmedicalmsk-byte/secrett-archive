@@ -2,7 +2,7 @@
   "country": "EE",
   "date": "2026-11-28",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-28T21:47:16.968421+00:00",
+  "generated_at": "2026-11-28T22:07:53.324206+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-EE-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 48,
       "trend": "stable"
     },
     {
@@ -40,7 +40,7 @@
       "id": "DOMAIN-EE-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
+      "score": 65,
       "trend": "stable"
     },
     {
@@ -65,6 +65,11 @@
       "trend": "stable"
     },
     {
+      "id": "DRIVER-EE-technology",
+      "type": "Driver",
+      "label": "technology"
+    },
+    {
       "id": "DRIVER-EE-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
@@ -75,29 +80,24 @@
       "label": "economic"
     },
     {
-      "id": "DRIVER-EE-climate",
-      "type": "Driver",
-      "label": "climate"
-    },
-    {
-      "id": "SIGNAL-EE-Эстония_и_",
-      "type": "Signal",
-      "label": "Эстония и Россия находятся на грани нача",
-      "severity": 54,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-EE-В_Эстонии_",
-      "type": "Signal",
-      "label": "В Эстонии призвали проявить гуманность в",
-      "severity": 46,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-EE-Геополитич",
       "type": "Signal",
       "label": "Геополитический процесс — Эстония",
       "severity": 60,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-EE-Промышленн",
+      "type": "Signal",
+      "label": "Промышленная авария — Эстония",
+      "severity": 65,
+      "domain": "technology"
+    },
+    {
+      "id": "SIGNAL-EE-Военные_уд",
+      "type": "Signal",
+      "label": "Военные удары — Эстония",
+      "severity": 40,
       "domain": "geopolitical"
     }
   ],
@@ -112,7 +112,7 @@
       "from": "COUNTRY-EE",
       "to": "DOMAIN-EE-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-EE",
@@ -124,7 +124,7 @@
       "from": "COUNTRY-EE",
       "to": "DOMAIN-EE-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.65
     },
     {
       "from": "COUNTRY-EE",
@@ -145,6 +145,12 @@
       "weight": 0.05
     },
     {
+      "from": "DRIVER-EE-technology",
+      "to": "COUNTRY-EE",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-EE-geopolitical",
       "to": "COUNTRY-EE",
       "type": "CAUSES",
@@ -152,12 +158,6 @@
     },
     {
       "from": "DRIVER-EE-economic",
-      "to": "COUNTRY-EE",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
-      "from": "DRIVER-EE-climate",
       "to": "COUNTRY-EE",
       "type": "CAUSES",
       "weight": 0.8
@@ -184,22 +184,22 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-EE-Эстония_и_",
-      "to": "DOMAIN-EE-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.54
-    },
-    {
-      "from": "SIGNAL-EE-В_Эстонии_",
-      "to": "DOMAIN-EE-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.46
-    },
-    {
       "from": "SIGNAL-EE-Геополитич",
       "to": "DOMAIN-EE-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.6
+    },
+    {
+      "from": "SIGNAL-EE-Промышленн",
+      "to": "DOMAIN-EE-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.65
+    },
+    {
+      "from": "SIGNAL-EE-Военные_уд",
+      "to": "DOMAIN-EE-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.4
     }
   ]
 }
