@@ -29678,7 +29678,9 @@ _A7_CTX = re.compile(r'предпринимает шаги для поддерж
 # 27.11.2026 (Мия): организации с особым статусом в РФ не цитируются; судьбы отдельных людей (этапирование, экстрадиция) - не системный сигнал
 _A7_CRIME_TECH = re.compile(r'(?:соучредител|основател|директор|CTO|сотрудник)\w*[^.]{0,80}(?:обвиняется|обвинен|обвинён)', re.I)
 _A7_JUNK_CTX = re.compile(r'[Ээ]пидеми\w+\s+девственност|Всемирн\w+\s+недел\w+\s+повышения\s+осведомл', re.I)
-_A7_PROMOTE = [(re.compile(r'[Дд]ефицит\s+ликвидности[^.]{0,40}банк', re.I), 'economy', 64)]
+_A7_PROMOTE = [(re.compile(r'[Дд]ефицит\s+ликвидности[^.]{0,40}банк', re.I), 'economy', 64),
+               # 28.11.2026 (Мия): запрет российского газа/СПГ в Европе - экономика, 66
+               (re.compile(r'(?:запрет\w*|отказ\w*)[^.]{0,40}российск\w+\s+(?:газ|СПГ|нефт)', re.I), 'economy', 66)]
 _A7_SENSITIVE = re.compile(r'Антивоенн\w*\s+комитет|Фонд\w*\s+борьбы\s+с\s+коррупцией|\bФБК\b', re.I)
 _A7_INDIV = re.compile(r'(?:активист|оппозиционер|блогер|журналист|правозащитни)\w*[^.]{0,90}(?:этапир|экстрадиц|выдач\w+\s+в\s+Росси)', re.I)
 _A7_CULTURE = re.compile(r'^Спектакл|\bспектакл\w*\b[^.]{0,60}преми|пьес[аыу]\b|театр\w*\s+преми|кинофестивал|выставк\w+\s+(?:о|об|в)\b|\bроман\w*\s+о\b', re.I)
@@ -29841,6 +29843,10 @@ def _feed_audit7_2711(events):
                         e.pop('hide_reason', None); e['hide_reasons'] = []
                         e['domain'] = dom; e['domain_lock'] = 'A7_PROMOTE'
                         if (e.get('severity') or 0) != sv: e['severity_audit3_from'] = e.get('severity'); e['severity'] = sv
+                        if str(e.get('primary_country') or e.get('country_code') or '') == 'PS' and re.search(r'газ|СПГ', e.get('title') or '', re.I) and not re.search(r'сектор\w*\s+Газ', e.get('title') or ''):
+                            _es = bool(re.search(r'Enag|Испани', (e.get('summary') or '') + (e.get('title') or '')))
+                            _gr9_set(e, 'ES' if _es else 'BE', 'Европа', 40.42 if _es else 50.85, -3.70 if _es else 4.35,
+                                     'A7_PROMOTE: газ, не Газа', sync=True)
                         inc('A7_PROMOTE'); break
             elif (e.get('context_only') or e.get('feed_visible') is not False) and not e.get('alerts_only') and _A7_CULTURE.search(e.get('title') or ''):
                 e['context_only'] = False; e['feed_visible'] = False
