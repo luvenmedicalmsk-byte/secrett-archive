@@ -30610,6 +30610,69 @@ def _feed_audit9_2811(events):
     return stat
 
 
+# FEED_AUDIT10_2811 (28.11.2026, третий аудит ленты за день, решение Мии)
+_A10_CAP = [
+    (re.compile(r'нанесли массированн\w+ ночн\w+ удар по объектам ВПК', re.I), 80),
+    (re.compile(r'нарушила работу Пулково', re.I), 74),
+    (re.compile(r'взрыв\w*\s+морск\w+\s+мин\w*[^.]{0,40}судно получило повреждения', re.I), 72),
+    (re.compile(r'(?:МАГАТЭ|агентство по атомной энергии)[^.]{0,40}прекращени\w+ огня', re.I), 60),
+]
+_A10_FLOOR = [
+    (re.compile(r'авиаудар[^.]{0,40}свадьб[^.]{0,30}убивает\s+(?:около\s+)?\d{2}', re.I), 76),
+]
+_A10_CTX_OLD = re.compile(r'^Предупреждение CISA:', re.I)
+
+def _feed_audit10_2811(events):
+    stat = {}
+    def inc(k): stat[k] = stat.get(k, 0) + 1
+    vis = [e for e in events or [] if e.get('feed_visible') is not False and not e.get('alerts_only') and not e.get('context_only')]
+    for e in vis:
+        try:
+            t = e.get('title') or ''; sev = e.get('severity') or 0
+            cc = str(e.get('primary_country') or e.get('country_code') or '')
+            g = e.get('geo') if isinstance(e.get('geo'), dict) else None
+            if _A10_CTX_OLD.search(t) and str(e.get('date') or '')[:10] < '2026-11-21':
+                _a3_ctx(e, 'A10 устарело'); inc('A10_CTX'); continue
+            for rx, cap in _A10_CAP:
+                if rx.search(t) and sev > cap:
+                    e['severity_audit3_from'] = sev; e['severity'] = cap; sev = cap; inc('A10_CAP'); break
+            for rx, fl in _A10_FLOOR:
+                if rx.search(t) and sev < fl:
+                    e['severity_audit3_from'] = sev; e['severity'] = fl; sev = fl; inc('A10_FLOOR'); break
+            # гео
+            if re.match(r'^Бабиш', t) and cc != 'CZ':
+                _gr9_set(e, 'CZ', 'Чехия', 50.08, 14.43, 'AUDIT10_GEO', sync=True); inc('A10_GEO')
+                if isinstance(e.get('geo'), dict): e['geo']['country_ru'] = 'Чехия'
+            if cc == 'PS' and g is not None and g.get('country_ru') not in ('Палестина', 'Газа'):
+                g['country_ru'] = 'Палестина'; inc('A10_GEO')
+            if re.search(r'Евросоюз|Еврокомисс', t) and e.get('region') == 'Европа' and g is not None and g.get('country_ru') not in ('Евросоюз', 'Европа'):
+                g['country_ru'] = 'Евросоюз'; inc('A10_GEO')
+        except Exception:
+            continue
+    # одна история - одна карточка: взрыв у школы в Афганистане 28.11, удары по Киеву 28.11
+    try:
+        live = [e for e in vis if e.get('feed_visible') is not False and not e.get('context_only')]
+        groups = {}
+        for e in live:
+            t = e.get('title') or ''; cc = str(e.get('primary_country') or e.get('country_code') or ''); d = str(e.get('date') or '')[:10]
+            if cc == 'AF' and re.search(r'школ', t, re.I) and re.search(r'взрыв', t, re.I):
+                groups.setdefault('af_school_' + d, []).append(e)
+            elif cc == 'UA' and d == '2026-11-28' and re.search(r'(?:В Киеве|столиц\w+ Украины)', t) and re.search(r'удар', t, re.I):
+                groups.setdefault('ua_kyiv_' + d, []).append(e)
+        for g in groups.values():
+            if len(g) < 2: continue
+            g.sort(key=lambda x: (-(x.get('severity') or 0), -len(x.get('summary') or '')))
+            h = g[0]
+            for ej in g[1:]:
+                ej['feed_visible'] = False; ej['hide_reason'] = 'dupe_story'
+                ej.setdefault('hide_reasons', []).append({'code': 'dupe_story', 'src': 'audit10', 'keep': h.get('id')})
+                ej['merged_into'] = h.get('id'); inc('A10_MERGE')
+    except Exception:
+        pass
+    print('  [FEED_AUDIT10_2811] %s' % stat)
+    return stat
+
+
 def _ru_pin_2611(events):
     if not RU_PIN_2611:
         return
@@ -33953,6 +34016,10 @@ def save_enriched(events, previous_snapshot=None):
                 pass
             try:
                 _feed_audit9_2811(enriched["events"])    # FEED_AUDIT9_2811: второй аудит ленты 28.11
+            except Exception:
+                pass
+            try:
+                _feed_audit10_2811(enriched["events"])    # FEED_AUDIT10_2811: третий аудит ленты 28.11
             except Exception:
                 pass
             try:
