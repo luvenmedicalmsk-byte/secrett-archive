@@ -2,7 +2,7 @@
   "country": "SK",
   "date": "2026-11-28",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-28T09:27:56.391367+00:00",
+  "generated_at": "2026-11-28T09:48:06.625478+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-SK-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 32,
       "trend": "stable"
     },
     {
@@ -47,7 +47,7 @@
       "id": "DOMAIN-SK-social",
       "type": "Domain",
       "label": "social",
-      "score": 32,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -87,11 +87,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-SK-Коечный_фо",
+      "id": "SIGNAL-SK-Средняя_го",
       "type": "Signal",
-      "label": "Коечный фонд больниц Словакии",
+      "label": "Средняя годовая зарплата в Словакии",
       "severity": 32,
-      "domain": "social"
+      "domain": "economic"
     },
     {
       "id": "SIGNAL-SK-Технологич",
@@ -112,7 +112,7 @@
       "from": "COUNTRY-SK",
       "to": "DOMAIN-SK-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-SK",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-SK",
       "to": "DOMAIN-SK-social",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-SK",
@@ -161,6 +161,27 @@
       "to": "COUNTRY-SK",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-SK-climate",
+      "to": "DOMAIN-SK-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-SK-infrastructure",
+      "to": "DOMAIN-SK-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-SK-economic",
+      "to": "DOMAIN-SK-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-SK-climate",
@@ -205,35 +226,14 @@
       "lag_days": 45
     },
     {
-      "from": "DOMAIN-SK-climate",
-      "to": "DOMAIN-SK-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-SK-infrastructure",
-      "to": "DOMAIN-SK-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-SK-economic",
-      "to": "DOMAIN-SK-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "SIGNAL-SK-Снег:_Рима",
       "to": "DOMAIN-SK-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-SK-Коечный_фо",
-      "to": "DOMAIN-SK-social",
+      "from": "SIGNAL-SK-Средняя_го",
+      "to": "DOMAIN-SK-economic",
       "type": "AMPLIFIES",
       "weight": 0.32
     },
