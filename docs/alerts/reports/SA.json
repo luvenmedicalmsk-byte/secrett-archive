@@ -2,9 +2,9 @@
   "country": "SA",
   "country_name": "SA",
   "date": "2026-11-28",
-  "alert_level": "WATCH",
-  "alert_score": 58,
-  "risk_score": 88,
+  "alert_level": "ALERT",
+  "alert_score": 63,
+  "risk_score": 92,
   "confidence": 37,
   "signals": 3,
   "trend": "accelerating",
@@ -13,9 +13,10 @@
     "economy",
     "finance"
   ],
-  "created_at": "2026-11-28T14:29:30.398692+00:00",
+  "created_at": "2026-11-28T15:10:01.271313+00:00",
   "triggered_rules": [
     "A",
+    "C",
     "D"
   ],
   "rules": {
@@ -23,9 +24,9 @@
       "rule": "A",
       "name": "velocity_spike",
       "triggered": true,
-      "change_7d": 18.9,
-      "change_30d": 23.9,
-      "velocity_score": 63
+      "change_7d": 24.3,
+      "change_30d": 29.6,
+      "velocity_score": 81
     },
     "B_signal_expl": {
       "rule": "B",
@@ -39,11 +40,13 @@
     "C_multi_eng": {
       "rule": "C",
       "name": "multi_engine_confirmation",
-      "triggered": false,
+      "triggered": true,
       "confirming_engines": [
-        "geopolitics"
+        "geopolitics",
+        "economy",
+        "climate"
       ],
-      "engine_count": 1,
+      "engine_count": 3,
       "threshold": 3
     },
     "D_emerging": {
@@ -53,18 +56,24 @@
       "threats": [
         {
           "domain": "?",
+          "severity": 80,
+          "frequency": 0,
+          "source": "Сильный дождь: Аль-Тайф (Мекка), Саудовская Аравия"
+        },
+        {
+          "domain": "?",
           "severity": 77,
           "frequency": 0,
           "source": "Рабочий погиб, несколько других получили ранения —"
         },
         {
-          "domain": "geopolitics",
+          "domain": "climate",
           "severity": 80,
           "frequency": 0,
           "source": "Тренд: нарастание давления"
         }
       ],
-      "threat_count": 2
+      "threat_count": 3
     },
     "E_confidence": {
       "rule": "E",
@@ -73,22 +82,28 @@
       "current_confidence": 37,
       "prev_confidence": 37,
       "confidence_delta": 0,
-      "score_delta": 0
+      "score_delta": 4
     }
   },
   "sub_scores": {
-    "velocity_component": 63,
+    "velocity_component": 81,
     "severity_component": 100,
-    "confidence_component": 33,
+    "confidence_component": 34,
     "signal_density": 10
   },
-  "escalation": null,
-  "is_escalation": false,
-  "dominant_domain": "geopolitics",
+  "escalation": {
+    "previous": "WATCH",
+    "current": "ALERT",
+    "delta_score": 5,
+    "timestamp": "2026-11-28T15:10:01.271304+00:00",
+    "escalated": true
+  },
+  "is_escalation": true,
+  "dominant_domain": "climate",
   "escalation_level": "critical",
-  "delta": 0,
+  "delta": 4,
   "engine_version": "ALERT_V1",
   "model_version": "GRIE_V1",
-  "generated_at": "2026-11-28T14:29:30.398692+00:00",
-  "hash": "662a2d39ec2524b6"
+  "generated_at": "2026-11-28T15:10:01.271313+00:00",
+  "hash": "cdf47525a11387a8"
 }
