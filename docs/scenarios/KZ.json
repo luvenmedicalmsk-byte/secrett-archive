@@ -2,17 +2,17 @@
   "country": "KZ",
   "country_name": "Казахстан",
   "date": "2026-11-28",
-  "generated_at": "2026-11-28T12:13:34.231257+00:00",
+  "generated_at": "2026-11-28T12:32:01.203933+00:00",
   "risk_score": 70,
-  "scenario_score": 32,
-  "instability": 20,
+  "scenario_score": 28,
+  "instability": 10,
   "instability_v2": true,
   "scenarios": [
     {
       "type": "best",
       "name": "Best Case",
       "name_ru": "Лучший сценарий",
-      "probability": 32,
+      "probability": 34,
       "score": 54,
       "delta_from_current": -16,
       "state": "contained",
@@ -24,7 +24,7 @@
       "recovery_days": 289,
       "future_pressure": 34,
       "future_resilience": 49,
-      "future_probability": 32,
+      "future_probability": 34,
       "drivers": [
         {
           "driver": "Деэскалация",
@@ -71,7 +71,7 @@
       "type": "base",
       "name": "Base Case",
       "name_ru": "Базовый сценарий",
-      "probability": 23,
+      "probability": 27,
       "score": 74,
       "delta_from_current": 4,
       "state": "critical",
@@ -83,14 +83,14 @@
       "recovery_days": 396,
       "future_pressure": 56,
       "future_resilience": 46,
-      "future_probability": 23,
+      "future_probability": 27,
       "drivers": [
         {
-          "driver": "В Алматы задержали подозреваемую в поджоге до",
+          "driver": "В Алматы задержали 37-летнюю женщину",
           "impact": 10
         },
         {
-          "driver": "В Алматы задержали 37-летнюю женщину",
+          "driver": "Ночной пожар в Алматы унес жизни пяти человек",
           "impact": 10
         }
       ],
@@ -107,26 +107,26 @@
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 80,
+          "score": 74,
           "state": "critical",
           "state_ru": "Критическая эскалация",
-          "delta_from_current": 10
+          "delta_from_current": 4
         },
         {
           "horizon": "180d",
           "label": "180 дней",
-          "score": 86,
+          "score": 74,
           "state": "critical",
           "state_ru": "Критическая эскалация",
-          "delta_from_current": 16
+          "delta_from_current": 4
         },
         {
           "horizon": "365d",
           "label": "365 дней",
-          "score": 92,
-          "state": "cascade",
-          "state_ru": "Каскадный кризис",
-          "delta_from_current": 22
+          "score": 74,
+          "state": "critical",
+          "state_ru": "Критическая эскалация",
+          "delta_from_current": 4
         }
       ]
     },
@@ -134,7 +134,7 @@
       "type": "stress",
       "name": "Stress Case",
       "name_ru": "Стресс-сценарий",
-      "probability": 23,
+      "probability": 21,
       "score": 84,
       "delta_from_current": 14,
       "state": "critical",
@@ -146,14 +146,14 @@
       "recovery_days": 450,
       "future_pressure": 67,
       "future_resilience": 42,
-      "future_probability": 23,
+      "future_probability": 21,
       "drivers": [
         {
-          "driver": "В Алматы задержали подозреваемую в поджоге до",
+          "driver": "В Алматы задержали 37-летнюю женщину",
           "impact": 13
         },
         {
-          "driver": "В Алматы задержали 37-летнюю женщину",
+          "driver": "Ночной пожар в Алматы унес жизни пяти человек",
           "impact": 13
         },
         {
@@ -174,10 +174,10 @@
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 90,
+          "score": 89,
           "state": "cascade",
           "state_ru": "Каскадный кризис",
-          "delta_from_current": 20
+          "delta_from_current": 19
         },
         {
           "horizon": "180d",
@@ -201,7 +201,7 @@
       "type": "worst",
       "name": "Worst Case",
       "name_ru": "Худший сценарий",
-      "probability": 22,
+      "probability": 18,
       "score": 94,
       "delta_from_current": 24,
       "state": "cascade",
@@ -213,18 +213,18 @@
       "recovery_days": 503,
       "future_pressure": 80,
       "future_resilience": 35,
-      "future_probability": 22,
+      "future_probability": 18,
       "drivers": [
-        {
-          "driver": "В Алматы задержали подозреваемую в поджоге до",
-          "impact": 18
-        },
         {
           "driver": "В Алматы задержали 37-летнюю женщину",
           "impact": 18
         },
         {
           "driver": "Ночной пожар в Алматы унес жизни пяти человек",
+          "impact": 18
+        },
+        {
+          "driver": "В Алматы задержали подозреваемую в поджоге до",
           "impact": 18
         },
         {
@@ -271,24 +271,24 @@
   ],
   "transition_triggers": [
     {
-      "condition": "delta ≥ 5 за 24ч",
+      "condition": "delta ≥ 3 за 24ч",
       "leads_to": "worst",
-      "probability": 22
+      "probability": 18
     },
     {
       "condition": "Драйвер severity ≥ 85 в geopolitics",
       "leads_to": "stress",
-      "probability": 23
+      "probability": 21
     },
     {
       "condition": "Деэскалация ключевого кризиса",
       "leads_to": "best",
-      "probability": 32
+      "probability": 34
     },
     {
       "condition": "Цепочка распространения → 3+ страны",
       "leads_to": "worst",
-      "probability": 7
+      "probability": 5
     }
   ],
   "dominant_scenario": "best"
