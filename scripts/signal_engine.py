@@ -4424,6 +4424,109 @@ def build_signals(events):
 PROCESS_AUDIT_2711 = True
 PROCESS_AUDIT_2811 = True   # 28.11.2026 (Мия): правила Г, «Оползень», предупреждения, место из текста, коды стран в макро; откат: False
 
+PROCESS_AUDIT_2911 = True   # 29.11.2026 (Мия): пустые процессы, предупреждения, континенты, общие заголовки, стадия и индекс макро; откат: False
+_PA29_REG = {
+    'Северная Америка': set('US CA MX GL BM'.split()),
+    'Южная Америка': set('BR AR CL PE CO VE EC BO PY UY GY SR'.split()),
+    'Европа': set('AL AD AT BY BE BA BG HR CY CZ DK EE FI FR DE GR HU IS IE IT XK LV LI LT LU MT MD MC ME NL MK NO PL PT RO RU SM RS SK SI ES SE CH UA GB VA EU'.split()),
+    'Ближний Восток': set('IL PS LB SY JO IQ IR SA YE OM AE QA BH KW TR EG CY'.split()),
+    'Африка': set('DZ AO BJ BW BF BI CM CV CF TD KM CD CG CI DJ EG GQ ER SZ ET GA GM GH GN GW KE LS LR LY MG MW ML MR MU MA MZ NA NE NG RW ST SN SC SL SO ZA SS SD TZ TG TN UG ZM ZW'.split()),
+}
+_PA29_SEA_EU = ('Средиземное море', 'Балтийское море', 'Северное море', 'Адриатическое море', 'Эгейское море')
+
+def _process_audit_2911(evolved, events):
+    """Аудит процессов 29.11.2026.
+    1  активный процесс без свидетельств - затухает;
+    2  региональный/морской процесс, 80%+ свидетельств - предупреждения (3+ шт.): индекс не выше сильнейшего предупреждения - 8;
+       морское место с европейскими предупреждениями -> «Европа» или затухание, если есть макро «… — Европа»;
+    3  региональный процесс: убрать свидетельства из стран другого континента;
+    4  процесс без места с 1-2 событиями: страна события в заголовок или «Глобально»;
+    5  стадия макро «Обнаружение» при 5+ свидетельствах согласуется с фазой;
+    6  индекс макро не выше сильнейшего живого участника + 10."""
+    import re as _re
+    from collections import Counter as _C
+    st = {'EMPTY': 0, 'ALERT_CAP': 0, 'SEA_EU': 0, 'REG': 0, 'GEN': 0, 'M_STAGE': 0, 'M_SEV': 0}
+    def _n(t): return _re.sub(r'\s+', ' ', (t or '').strip().lower())[:90]
+    alerts = {_n(e.get('title')) for e in events or [] if e.get('alerts_only')}
+    t2cc = {}
+    for e in events or []:
+        c = str(e.get('primary_country') or e.get('country_code') or '')
+        if c: t2cc.setdefault(_n(e.get('title')), c)
+    def _nm(c):
+        c = str(c or '').upper()
+        return _ISO_COUNTRY.get(c)
+    def _cap_by_ev(p):
+        mx = max([int(x.get('severity') or 0) for x in (p.get('evidence') or []) if isinstance(x, dict)] or [0])
+        if mx and (p.get('severity') or 0) > mx + 6:
+            p.setdefault('severity_before_2911', p.get('severity')); p['severity'] = mx + 6
+    macro_titles = {p.get('title') for p in evolved if p.get('is_macro') and p.get('status') == 'active'}
+    for p in evolved:
+        try:
+            if p.get('status') != 'active' or p.get('is_macro'): continue
+            evs = [x for x in (p.get('evidence') or []) if isinstance(x, dict)]
+            t = p.get('title') or ''; place = str(p.get('process_place') or '')
+            if not evs:
+                p['status'] = 'fading'; p['fade_reason_2911'] = 'нет свидетельств'; st['EMPTY'] += 1; continue
+            # 3. континент
+            if place in _PA29_REG:
+                ok = _PA29_REG[place]
+                keep = [x for x in evs if not (t2cc.get(_n(x.get('title'))) and t2cc.get(_n(x.get('title'))) not in ok)]
+                if len(keep) < len(evs):
+                    p['offregion_dropped_2911'] = len(evs) - len(keep); p['evidence'] = keep; p['evidence_count'] = len(keep); evs = keep; st['REG'] += 1
+                    if not keep:
+                        p['status'] = 'fading'; p['fade_reason_2911'] = 'свидетельства с другого континента'; continue
+                    _cap_by_ev(p)
+            # 2. предупреждения
+            al = [x for x in evs if _n(x.get('title')) in alerts]
+            if len(evs) >= 3 and len(al) / len(evs) >= 0.8 and (place in _PA29_REG or place in _PA29_SEA_EU or place in ('', 'Глобально')):
+                amx = max([int(x.get('severity') or 0) for x in al] or [0])
+                if amx and (p.get('severity') or 0) > amx - 8:
+                    p.setdefault('severity_before_2911', p.get('severity')); p['severity'] = amx - 8; st['ALERT_CAP'] += 1
+                if place in _PA29_SEA_EU:
+                    ecc = _C(t2cc.get(_n(x.get('title'))) for x in al); ecc.pop(None, None)
+                    tot = sum(ecc.values()); eu = sum(v for c, v in ecc.items() if c in _PA29_REG['Европа'])
+                    if tot and eu / tot >= 0.6:
+                        typ = t.split(' — ')[0]
+                        if (typ + ' — Европа (системный процесс)') in macro_titles:
+                            p['status'] = 'fading'; p['fade_reason_2911'] = 'дубль макро «' + typ + ' — Европа»'
+                        else:
+                            p['title_before_2911'] = t; p['title'] = typ + ' — Европа'; p['process_place'] = 'Европа'
+                        st['SEA_EU'] += 1
+                        if p['status'] != 'active': continue
+            # 4. без места, 1-2 события
+            if place in ('', 'Глобально') and len(evs) <= 2:
+                ccs = [t2cc.get(_n(x.get('title'))) for x in evs]
+                ccs = [c for c in ccs if c]
+                typ = t.split(' — ')[0]
+                if ccs and len(set(ccs)) == 1 and _nm(ccs[0]):
+                    nm = _nm(ccs[0]); p['title_before_2911'] = t; p['title'] = typ + ' — ' + nm; p['process_place'] = nm
+                elif not ccs and ' — ' not in t:
+                    p['title_before_2911'] = t; p['title'] = typ + ' — Глобально'; p['process_place'] = 'Глобально'
+                else:
+                    continue
+                st['GEN'] += 1
+        except Exception:
+            continue
+    byid = {p.get('signal_id'): p for p in evolved}
+    for p in evolved:
+        try:
+            if not p.get('is_macro') or p.get('status') != 'active': continue
+            # 5. стадия макро
+            if p.get('lifecycle_stage') == 'Обнаружение' and len(p.get('evidence') or []) >= 5:
+                ph = p.get('phase'); ns = {'escalating': 'Развитие', 'growing': 'Развитие', 'stabilizing': 'Стабилизация', 'de-escalating': 'Ослабление'}.get(ph)
+                if ns:
+                    p['stage_before_2911'] = 'Обнаружение'; p['lifecycle_stage'] = ns; st['M_STAGE'] += 1
+            # 6. индекс макро
+            mem = [byid.get(i) for i in (p.get('included_processes') or [])]
+            live = [int(m.get('severity') or 0) for m in mem if m and m.get('status') in ('active', 'fading')]
+            if live and (p.get('severity') or 0) > max(live) + 10:
+                p['severity_before_2911'] = p.get('severity'); p['severity'] = max(live) + 10; st['M_SEV'] += 1
+        except Exception:
+            continue
+    print('  [PROCESS-AUDIT-2911] %s' % st, file=sys.stderr)
+    return st
+
+
 def _process_audit_2811(evolved, events):
     """Аудит процессов 28.11.2026.
     Г   - процесс без места (Глобально) с событиями из 3+ стран не активен: затухает, индекс не выше 60;
@@ -4912,6 +5015,11 @@ def write_signals_json(events, path):
             _process_audit_2811(evolved, events)
         except Exception as _pae2:
             print(f'  [PROCESS_AUDIT_2811] skip: {_pae2}', file=sys.stderr)
+    if PROCESS_AUDIT_2911:
+        try:
+            _process_audit_2911(evolved, events)
+        except Exception as _pae3:
+            print(f'  [PROCESS_AUDIT_2911] skip: {_pae3}', file=sys.stderr)
     out={'updated':now,'count':len(evolved),'schema':'process-signal-v1.6',
          'global_health':global_health,'patterns_detected':patterns,'report':report,'signals':evolved}
     if _ss_stats is not None:
