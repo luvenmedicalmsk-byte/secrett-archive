@@ -30482,6 +30482,105 @@ def _feed_audit8_2811(events):
     return stat
 
 
+# FEED_AUDIT9_2811 (28.11.2026, второй аудит ленты за день, решение Мии)
+_A9_CTX = re.compile(r'оставившего семью без жилья|^Паводковый риск:\s*бассейн', re.I)
+_A9_CAP = [
+    (re.compile(r'массированн\w+\s+атак\w*\s+украинских\s+БПЛА', re.I), 82),
+    (re.compile(r'повторно атаковали[^.]{0,30}НПЗ', re.I), 82),
+    (re.compile(r'Алмат[^.]{0,60}(?:пожар|поджог)|(?:пожар|поджог)[^.]{0,60}Алмат', re.I), 60),
+    (re.compile(r'криптомонет|стейблкоин', re.I), 54),
+]
+_A9_DOM = [
+    (re.compile(r'криптомонет|стейблкоин', re.I), ('social', 'geopolitics'), 'economy'),
+    (re.compile(r'взрыв\w*\s+(?:рядом\s+)?(?:со?\s+)?школ', re.I), ('social',), 'geopolitics'),
+    (re.compile(r'пожар\w*\s+на\s+нефтехранилищ|пожар\w*[^.]{0,30}\bОЭЗ\b', re.I), ('climate', 'technology'), 'economy'),
+]
+_A9_PROMOTE = [
+    (re.compile(r'^Drupal предупреждает о новой критической уязвимости', re.I), 'technology', 66),
+    (re.compile(r'конфискации\s+\$?[\d,.]+\s*(?:млрд|млн)[^.]{0,20}(?:USDC|USDT|криптовалют)', re.I), 'economy', 62),
+    (re.compile(r'взломали облачную платформу ВВС США', re.I), 'technology', 62),
+    (re.compile(r'подталкивали[^.]{0,40}к выходу из ОПЕК', re.I), 'economy', 60),
+    (re.compile(r'Торговля криптовалютой на Мосбирже', re.I), 'economy', 54),
+    (re.compile(r'^Уязвимость 0-day в VMware использована', re.I), 'technology', 62),
+]
+_A9_GEO = [
+    (re.compile(r'Калининград', re.I), 'RU', 'Калининградская область', 54.71, 20.51),
+    (re.compile(r'граница Пакистана и Индии', re.I), 'PK', 'Пакистан', 31.58, 74.36),
+]
+
+def _feed_audit9_2811(events):
+    stat = {}
+    def inc(k): stat[k] = stat.get(k, 0) + 1
+    # 28.11.2026 (Мия): сигналы, ошибочно ушедшие в контекст или ниже порога, возвращаются в ленту
+    for e in events or []:
+        try:
+            if e.get('alerts_only'): continue
+            hidden = e.get('context_only') or (e.get('feed_visible') is False and e.get('hide_reason') in ('context_gate', 'below_feed_threshold'))
+            if not hidden: continue
+            t = e.get('title') or ''
+            for rx, dom, sv in _A9_PROMOTE:
+                if rx.search(t):
+                    e['context_only'] = False; e['feed_visible'] = True
+                    e.pop('hide_reason', None); e['hide_reasons'] = []
+                    e['domain_audit3_from'] = e.get('domain'); e['domain'] = dom; e['domain_lock'] = 'A9_PROMOTE'
+                    if (e.get('severity') or 0) != sv: e['severity_audit3_from'] = e.get('severity'); e['severity'] = sv
+                    inc('A9_PROMOTE'); break
+        except Exception:
+            continue
+    vis = [e for e in events or [] if e.get('feed_visible') is not False and not e.get('alerts_only') and not e.get('context_only')]
+    for e in vis:
+        try:
+            t = e.get('title') or ''; sev = e.get('severity') or 0
+            cc = str(e.get('primary_country') or e.get('country_code') or '')
+            if _A9_CTX.search(t + ' ' + (e.get('summary') or '')[:200]):
+                _a3_ctx(e, 'A9 контекст'); inc('A9_CTX'); continue
+            for rx, c2, reg, la, lo in _A9_GEO:
+                if rx.search(t) and (cc in ('', c2, 'RU' if c2 == 'RU' else c2)) and e.get('region') != reg:
+                    _gr9_set(e, c2, reg, la, lo, 'AUDIT9_GEO', sync=True); inc('A9_GEO'); break
+            if re.search(r'криптомонет[^.]{0,40}Трамп', t, re.I) and cc not in ('US',):
+                _gr9_set(e, 'US', 'США', 38.90, -77.04, 'AUDIT9_GEO', sync=True); inc('A9_GEO')
+            if re.search(r'Конвой российских судов', t) and 'Сицилийск' in (e.get('summary') or ''):
+                e['region'] = 'Сицилийский пролив'; inc('A9_GEO')
+            for rx, frm, to in _A9_DOM:
+                if rx.search(t) and (e.get('domain') in frm or e.get('domain') == to):
+                    if e.get('domain') != to: e['domain_audit3_from'] = e.get('domain'); e['domain'] = to; inc('A9_DOM')
+                    e['domain_lock'] = 'A9_DOM'; break
+            for rx, cap in _A9_CAP:
+                if rx.search(t) and sev > cap:
+                    e['severity_audit3_from'] = sev; e['severity'] = cap; sev = cap; inc('A9_CAP'); break
+        except Exception:
+            continue
+    # одна история - одна карточка: пожар в Алматы, недельная инфляция Росстата, НПЗ Ростова 28.11
+    try:
+        live = [e for e in vis if e.get('feed_visible') is not False and not e.get('context_only')]
+        groups = {}
+        for e in live:
+            t = e.get('title') or ''; cc = str(e.get('primary_country') or e.get('country_code') or '')
+            if cc == 'KZ' and re.search(r'Алмат', t) and re.search(r'пожар|поджог|задержал', t + ' ' + (e.get('summary') or '')[:300], re.I):
+                groups.setdefault('kz_fire', []).append(e)
+            elif cc == 'RU' and re.search(r'(?:Инфляция|Потребительские цены)[^.]{0,60}\d+\s+по\s+\d+\s+\w+', t):
+                groups.setdefault('ru_cpi_' + re.sub(r'\D', '', re.search(r'\d+\s+по\s+\d+', t).group(0)), []).append(e)
+            elif cc == 'RU' and str(e.get('date') or '')[:10] == '2026-11-28' and re.search(r'НПЗ[^.]{0,30}Ростов|Новошахтинск', t):
+                groups.setdefault('ru_npz_rostov', []).append(e)
+        for gk, g in groups.items():
+            if len(g) < 2: continue
+            if gk == 'kz_fire':
+                # головой - карточка о самом пожаре, индекс не выше 60
+                g.sort(key=lambda x: (not re.search(r'^Ночной пожар|пожар\w*[^.]{0,30}унес', x.get('title') or '', re.I), -(x.get('severity') or 0)))
+                if (g[0].get('severity') or 0) > 60: g[0]['severity_audit3_from'] = g[0].get('severity'); g[0]['severity'] = 60
+            else:
+                g.sort(key=lambda x: (-(x.get('severity') or 0), -len(x.get('summary') or '')))
+            h = g[0]
+            for ej in g[1:]:
+                ej['feed_visible'] = False; ej['hide_reason'] = 'dupe_story'
+                ej.setdefault('hide_reasons', []).append({'code': 'dupe_story', 'src': 'audit9', 'keep': h.get('id')})
+                ej['merged_into'] = h.get('id'); inc('A9_MERGE')
+    except Exception:
+        pass
+    print('  [FEED_AUDIT9_2811] %s' % stat)
+    return stat
+
+
 def _ru_pin_2611(events):
     if not RU_PIN_2611:
         return
@@ -33821,6 +33920,10 @@ def save_enriched(events, previous_snapshot=None):
                 pass
             try:
                 _feed_audit8_2811(enriched["events"])    # FEED_AUDIT8_2811: аудит ленты 28.11
+            except Exception:
+                pass
+            try:
+                _feed_audit9_2811(enriched["events"])    # FEED_AUDIT9_2811: второй аудит ленты 28.11
             except Exception:
                 pass
             try:
