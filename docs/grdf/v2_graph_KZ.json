@@ -2,25 +2,25 @@
   "country": "KZ",
   "date": "2026-11-28",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-28T06:10:25.439529+00:00",
+  "generated_at": "2026-11-28T06:29:19.620850+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-KZ",
       "type": "Country",
       "label": "KZ",
-      "score": 65,
+      "score": 68,
       "props": {
-        "risk_score": 65
+        "risk_score": 68
       }
     },
     {
       "id": "DOMAIN-KZ-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 56,
-      "trend": "stable"
+      "score": 68,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-economic",
@@ -33,22 +33,22 @@
       "id": "DOMAIN-KZ-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "stable"
+      "score": 65,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-technology",
       "type": "Domain",
       "label": "technology",
       "score": 56,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-social",
       "type": "Domain",
       "label": "social",
       "score": 65,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-infrastructure",
@@ -87,18 +87,18 @@
       "domain": "social"
     },
     {
+      "id": "SIGNAL-KZ-Хозяин_дом",
+      "type": "Signal",
+      "label": "Хозяин дома в Алматы, где в огне погибли",
+      "severity": 65,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-KZ-О_чем_еще_",
       "type": "Signal",
       "label": "О чем еще сказал президент Казахстана на",
       "severity": 56,
       "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-KZ-Могут_ли_о",
-      "type": "Signal",
-      "label": "Могут ли отменить новогодние утренники в",
-      "severity": 56,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.56
+      "weight": 0.68
     },
     {
       "from": "COUNTRY-KZ",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.65
     },
     {
       "from": "COUNTRY-KZ",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-KZ-climate",
+      "to": "DOMAIN-KZ-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-KZ-economic",
+      "to": "DOMAIN-KZ-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-KZ-social",
+      "to": "DOMAIN-KZ-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-KZ-geopolitical",
       "to": "DOMAIN-KZ-infrastructure",
       "type": "ESCALATES",
@@ -184,20 +205,41 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-KZ-climate",
+      "to": "DOMAIN-KZ-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-KZ-infrastructure",
+      "to": "DOMAIN-KZ-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-KZ-economic",
+      "to": "DOMAIN-KZ-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-KZ-Ночной_пож",
       "to": "DOMAIN-KZ-social",
       "type": "AMPLIFIES",
       "weight": 0.65
     },
     {
-      "from": "SIGNAL-KZ-О_чем_еще_",
-      "to": "DOMAIN-KZ-technology",
+      "from": "SIGNAL-KZ-Хозяин_дом",
+      "to": "DOMAIN-KZ-climate",
       "type": "AMPLIFIES",
-      "weight": 0.56
+      "weight": 0.65
     },
     {
-      "from": "SIGNAL-KZ-Могут_ли_о",
-      "to": "DOMAIN-KZ-social",
+      "from": "SIGNAL-KZ-О_чем_еще_",
+      "to": "DOMAIN-KZ-technology",
       "type": "AMPLIFIES",
       "weight": 0.56
     }
