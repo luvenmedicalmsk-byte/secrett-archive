@@ -2,7 +2,7 @@
   "country": "IT",
   "date": "2026-11-28",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-28T11:29:48.003815+00:00",
+  "generated_at": "2026-11-28T11:49:34.547257+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,59 +10,59 @@
       "id": "COUNTRY-IT",
       "type": "Country",
       "label": "IT",
-      "score": 50,
+      "score": 70,
       "props": {
-        "risk_score": 50
+        "risk_score": 70
       }
     },
     {
       "id": "DOMAIN-IT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 41,
-      "trend": "stable"
+      "score": 70,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-climate",
       "type": "Domain",
       "label": "climate",
       "score": 50,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-IT-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IT-Конвой_рос",
+      "type": "Signal",
+      "label": "Конвой российских судов с военной техник",
+      "severity": 70,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-IT-Ветер:_Сиц",
       "type": "Signal",
       "label": "Ветер: Сицилия, Базиликата, Сардиния и е",
@@ -92,13 +99,6 @@
       "label": "Гроза: Сицилия, Калабрия, Италия",
       "severity": 50,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-IT-Ливень:_Мо",
-      "type": "Signal",
-      "label": "Ливень: Молизе, Абруццо, Кампания и ещё ",
-      "severity": 50,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.41
+      "weight": 0.7
     },
     {
       "from": "COUNTRY-IT",
@@ -226,6 +226,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-IT-Конвой_рос",
+      "to": "DOMAIN-IT-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.7
+    },
+    {
       "from": "SIGNAL-IT-Ветер:_Сиц",
       "to": "DOMAIN-IT-climate",
       "type": "AMPLIFIES",
@@ -233,12 +239,6 @@
     },
     {
       "from": "SIGNAL-IT-Гроза:_Сиц",
-      "to": "DOMAIN-IT-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-IT-Ливень:_Мо",
       "to": "DOMAIN-IT-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
