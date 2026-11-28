@@ -2,7 +2,7 @@
   "country": "IT",
   "date": "2026-11-28",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-28T09:10:47.887978+00:00",
+  "generated_at": "2026-11-28T09:27:56.395239+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-IT-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 34,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -82,7 +82,14 @@
     {
       "id": "SIGNAL-IT-Ветер:_Сиц",
       "type": "Signal",
-      "label": "Ветер: Сицилия, Базиликата, Калабрия и е",
+      "label": "Ветер: Сицилия, Базиликата, Сардиния и е",
+      "severity": 50,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-IT-Гроза:_Сиц",
+      "type": "Signal",
+      "label": "Гроза: Сицилия, Калабрия, Италия",
       "severity": 50,
       "domain": "climate"
     },
@@ -92,13 +99,6 @@
       "label": "Ливень: Молизе, Абруццо, Кампания и ещё ",
       "severity": 50,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-IT-Италия_на_",
-      "type": "Signal",
-      "label": "Италия на данном этапе не поддержит мног",
-      "severity": 34,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-economic",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-IT",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-IT-climate",
-      "to": "DOMAIN-IT-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-IT-infrastructure",
-      "to": "DOMAIN-IT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-IT-economic",
-      "to": "DOMAIN-IT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-IT-climate",
       "to": "DOMAIN-IT-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -203,6 +182,27 @@
       "type": "AMPLIFIES",
       "weight": 0.65,
       "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-IT-climate",
+      "to": "DOMAIN-IT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-IT-infrastructure",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-IT-geopolitical",
@@ -232,16 +232,16 @@
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-IT-Ливень:_Мо",
+      "from": "SIGNAL-IT-Гроза:_Сиц",
       "to": "DOMAIN-IT-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-IT-Италия_на_",
-      "to": "DOMAIN-IT-economic",
+      "from": "SIGNAL-IT-Ливень:_Мо",
+      "to": "DOMAIN-IT-climate",
       "type": "AMPLIFIES",
-      "weight": 0.34
+      "weight": 0.5
     }
   ]
 }
