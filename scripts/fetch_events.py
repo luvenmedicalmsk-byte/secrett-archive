@@ -30673,6 +30673,60 @@ def _feed_audit10_2811(events):
     return stat
 
 
+# FEED_AUDIT11_2811 (28.11.2026, четвёртый аудит ленты за день, решение Мии)
+_A11_CTX = re.compile(r'предложили сбросить на Москву', re.I)
+_A11_CAP = [
+    (re.compile(r'Фондовые рынки Дубая восстановили', re.I), 52),
+    (re.compile(r'(?:блэкаут|отключени\w+ свет)[^.]{0,40}(?:жилые комплексы|ЖК)', re.I), 50),
+]
+_A11_GEO = [
+    (re.compile(r'^Иранская валюта', re.I), 'IR', 'Иран', 35.69, 51.39),
+    (re.compile(r'Фондовые рынки Дубая', re.I), 'AE', 'ОАЭ', 25.20, 55.27),
+    (re.compile(r'над регионами России сбиты', re.I), 'RU', 'Россия', 55.75, 37.62),
+]
+_A11_DOM = [
+    (re.compile(r'перемещенн\w+ из-за климат', re.I), ('climate',), 'social'),
+]
+
+def _feed_audit11_2811(events):
+    stat = {}
+    def inc(k): stat[k] = stat.get(k, 0) + 1
+    vis = [e for e in events or [] if e.get('feed_visible') is not False and not e.get('alerts_only') and not e.get('context_only')]
+    for e in vis:
+        try:
+            t = e.get('title') or ''; sev = e.get('severity') or 0
+            if _A11_CTX.search(t):
+                _a3_ctx(e, 'A11 контекст'); inc('A11_CTX'); continue
+            for rx, c2, reg, la, lo in _A11_GEO:
+                if rx.search(t) and (str(e.get('primary_country') or '') != c2 or e.get('region') != reg):
+                    _gr9_set(e, c2, reg, la, lo, 'AUDIT11_GEO', sync=True)
+                    if isinstance(e.get('geo'), dict): e['geo']['country_ru'] = reg
+                    inc('A11_GEO'); break
+            for rx, frm, to in _A11_DOM:
+                if rx.search(t) and e.get('domain') in frm:
+                    e['domain_audit3_from'] = e.get('domain'); e['domain'] = to; e['domain_lock'] = 'A11_DOM'; inc('A11_DOM'); break
+            for rx, cap in _A11_CAP:
+                if rx.search(t) and sev > cap:
+                    e['severity_audit3_from'] = sev; e['severity'] = cap; sev = cap; inc('A11_CAP'); break
+        except Exception:
+            continue
+    # одна история - одна карточка: авиаудары Мьянмы 28.11
+    try:
+        g = [e for e in vis if e.get('feed_visible') is not False and not e.get('context_only')
+             and str(e.get('primary_country') or '') == 'MM' and re.search(r'авиаудар', e.get('title') or '', re.I)
+             and str(e.get('date') or '')[:10] == '2026-11-28']
+        if len(g) >= 2:
+            g.sort(key=lambda x: -(x.get('severity') or 0)); h = g[0]
+            for ej in g[1:]:
+                ej['feed_visible'] = False; ej['hide_reason'] = 'dupe_story'
+                ej.setdefault('hide_reasons', []).append({'code': 'dupe_story', 'src': 'audit11', 'keep': h.get('id')})
+                ej['merged_into'] = h.get('id'); inc('A11_MERGE')
+    except Exception:
+        pass
+    print('  [FEED_AUDIT11_2811] %s' % stat)
+    return stat
+
+
 def _ru_pin_2611(events):
     if not RU_PIN_2611:
         return
@@ -34020,6 +34074,10 @@ def save_enriched(events, previous_snapshot=None):
                 pass
             try:
                 _feed_audit10_2811(enriched["events"])    # FEED_AUDIT10_2811: третий аудит ленты 28.11
+            except Exception:
+                pass
+            try:
+                _feed_audit11_2811(enriched["events"])    # FEED_AUDIT11_2811: четвёртый аудит ленты 28.11
             except Exception:
                 pass
             try:
