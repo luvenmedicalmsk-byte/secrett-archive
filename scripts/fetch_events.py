@@ -11699,9 +11699,18 @@ def _gr9_set(e, cc, region, lat, lng, why, sync=False):
             if _gq is not None:
                 if isinstance(_gq.get('impact_countries'), list) and _wrong & set(_gq['impact_countries']):
                     _gq['impact_countries'] = [cc]
+                # 28.11.2026: хвост заголовка после запятой - название страны только у предупреждений
+                # («Ветер: Варна…, Болгария»); у новостей там текст («…о том, что проект WLF…»)
                 _tail = (e.get('title') or '').rsplit(',', 1)[-1].strip()
-                if _tail:
+                _cru = None
+                try:
+                    _cru = _QUAKE_RU.get(cc) or {'US':'США','RU':'Россия','KZ':'Казахстан','UA':'Украина','BY':'Беларусь','PK':'Пакистан','ES':'Испания','BE':'Бельгия','IT':'Италия','GB':'Великобритания','DK':'Дания','EE':'Эстония','KW':'Кувейт','DZ':'Алжир','IN':'Индия'}.get(cc)
+                except Exception:
+                    _cru = None
+                if _tail and len(_tail.split()) <= 3 and _tail[:1].isupper() and (not _cru or _tail == _cru):
                     _gq['country_ru'] = _tail
+                elif _cru:
+                    _gq['country_ru'] = _cru
     e['lat'], e['lng'] = lat, lng
     try:
         e['svgX'], e['svgY'] = coord_to_svg(lat, lng)
@@ -30577,6 +30586,26 @@ def _feed_audit9_2811(events):
                 ej['merged_into'] = h.get('id'); inc('A9_MERGE')
     except Exception:
         pass
+    # 28.11.2026 (Мия): в geo.country_ru попадал хвост заголовка после запятой - на сайте вместо страны был текст новости
+    _M = {'US':'США','RU':'Россия','KZ':'Казахстан','UA':'Украина','BY':'Беларусь','PK':'Пакистан','ES':'Испания','BE':'Бельгия',
+          'IT':'Италия','GB':'Великобритания','DK':'Дания','EE':'Эстония','KW':'Кувейт','DZ':'Алжир','IN':'Индия','GE':'Грузия',
+          'LY':'Ливия','UZ':'Узбекистан','KG':'Киргизия','AM':'Армения','AZ':'Азербайджан','PS':'Палестина','IL':'Израиль','IR':'Иран'}
+    for e in events or []:
+        try:
+            g = e.get('geo')
+            if not isinstance(g, dict): continue
+            cr = str(g.get('country_ru') or '')
+            if cr and (len(cr.split()) > 3 or cr[:1].islower() or re.search(r'\d', cr)):
+                cc = str(g.get('country') or e.get('primary_country') or e.get('country_code') or '')
+                nm = None
+                try: nm = _QUAKE_RU.get(cc)
+                except Exception: nm = None
+                nm = nm or _M.get(cc)
+                if nm: g['country_ru'] = nm
+                else: g.pop('country_ru', None)
+                inc('A9_GEO_RU')
+        except Exception:
+            continue
     print('  [FEED_AUDIT9_2811] %s' % stat)
     return stat
 
