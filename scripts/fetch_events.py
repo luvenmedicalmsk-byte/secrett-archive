@@ -30401,6 +30401,79 @@ def _rp_places(txt):
             out.append((reg, pt))
     return out
 
+# FEED_AUDIT8_2811 (28.11.2026, аудит ленты, решение Мии)
+_A8_CTX = re.compile(r'^.{5,160},\s*[—–-]\s*Зеленский\b|выгорани\w+\s+врач|подхватил\w*[^.]{0,40}лихорадк|нападени\w+\s+пациент|изложил\w*\s+свою\s+версию|^(?:Якутск|Норильск|Мирный|Верхоянск|Оймякон)[^:]{0,20}:\s*экстремальный мороз\s*-\s*3\d', re.I)
+_A8_CAP = [
+    (re.compile(r'опроверг\w*\s+заявлени', re.I), 66),
+    (re.compile(r'увеличива\w+,?\s+несмотря на', re.I), 64),
+    (re.compile(r'восстановлени\w+\s+электроснабжени|\bубираются\b', re.I), 70),
+    (re.compile(r'производител\w+[^.]{0,40}попал\w*\s+под[^.]{0,20}санкци', re.I), 52),
+    (re.compile(r'^Акции\s+[^.]{0,60}(?:подскочил|рухнул|взлетел|обвалил)', re.I), 52),
+    (re.compile(r'полици\w*[^.]{0,40}задержал\w*\s+мужчин', re.I), 52),
+]
+_A8_GEO = [
+    (re.compile(r'\bУф[аыеу]\b|Башкир', re.I), 'RU', 'Башкортостан', 54.74, 55.97),
+    (re.compile(r'Московского региона|Собянин', re.I), 'RU', 'Москва', 55.75, 37.62),
+]
+_A8_DOM = [
+    (re.compile(r'топливн\w+\s+терминал|нефтебаз', re.I), ('technology',), 'economy'),
+    (re.compile(r'производител\w+[^.]{0,40}попал\w*\s+под[^.]{0,20}санкци', re.I), ('geopolitics',), 'economy'),
+]
+
+def _feed_audit8_2811(events):
+    stat = {}
+    def inc(k): stat[k] = stat.get(k, 0) + 1
+    vis = [e for e in events or [] if e.get('feed_visible') is not False and not e.get('alerts_only') and not e.get('context_only')]
+    for e in vis:
+        try:
+            t = e.get('title') or ''; sev = e.get('severity') or 0
+            cc = str(e.get('primary_country') or e.get('country_code') or '')
+            if _A8_CTX.search(t):
+                _a3_ctx(e, 'A8 контекст'); inc('A8_CTX'); continue
+            # постоянные карточки структурного риска вне сезона - в контекст
+            _mo8 = int(str(e.get('date') or '0000-00')[5:7] or 0)
+            if (re.match(r'^Засуха и аномальная жара:', t) and _mo8 in (10, 11, 12, 1, 2, 3, 4)) or \
+               (re.match(r'^Сезон лесных пожаров:', t) and _mo8 in (11, 12, 1, 2, 3)) or \
+               (re.match(r'^Паводки:\s*реки', t) and _mo8 in (11, 12, 1, 2)):
+                _a3_ctx(e, 'A8 вне сезона'); inc('A8_SEASON'); continue
+            for rx, c2, reg, la, lo in _A8_GEO:
+                if rx.search(t) and cc == c2 and e.get('region') in ('Россия', '', None):
+                    _gr9_set(e, c2, reg, la, lo, 'AUDIT8_GEO', sync=True); inc('A8_GEO'); break
+            if cc == 'PS' and e.get('region') == 'Палестина' and re.search(r'Газ[аеуы]', t):
+                e['region'] = 'Газа'; inc('A8_GEO')
+            for rx, frm, to in _A8_DOM:
+                if rx.search(t) and (e.get('domain') in frm or e.get('domain') == to):
+                    if e.get('domain') != to: e['domain_audit3_from'] = e.get('domain'); e['domain'] = to; inc('A8_DOM')
+                    e['domain_lock'] = 'A8_DOM'; break
+            for rx, cap in _A8_CAP:
+                if rx.search(t) and sev > cap:
+                    e['severity_audit3_from'] = sev; e['severity'] = cap; sev = cap; inc('A8_CAP'); break
+        except Exception:
+            continue
+    # одна история - одна карточка: шторм в США (последствия) и Ливия (удар украинских катеров)
+    try:
+        live = [e for e in vis if e.get('feed_visible') is not False and not e.get('context_only')]
+        groups = {}
+        for e in live:
+            t = e.get('title') or ''; cc = str(e.get('primary_country') or e.get('country_code') or '')
+            if cc == 'US' and re.search(r'шторм', t, re.I) and re.search(r'электр', t, re.I):
+                groups.setdefault('us_storm', []).append(e)
+            elif cc == 'LY' and re.search(r'Украин|безэкипажн', t, re.I):
+                groups.setdefault('ly_ua', []).append(e)
+        for g in groups.values():
+            if len(g) < 2: continue
+            g.sort(key=lambda x: -(x.get('severity') or 0))
+            h = g[0]
+            for ej in g[1:]:
+                ej['feed_visible'] = False; ej['hide_reason'] = 'dupe_story'
+                ej.setdefault('hide_reasons', []).append({'code': 'dupe_story', 'src': 'audit8', 'keep': h.get('id')})
+                ej['merged_into'] = h.get('id'); inc('A8_MERGE')
+    except Exception:
+        pass
+    print('  [FEED_AUDIT8_2811] %s' % stat)
+    return stat
+
+
 def _ru_pin_2611(events):
     if not RU_PIN_2611:
         return
@@ -33736,6 +33809,10 @@ def save_enriched(events, previous_snapshot=None):
                 pass
             try:
                 _feed_audit7_2711(enriched["events"])    # FEED_AUDIT7_2711: вторая проверка 27.11
+            except Exception:
+                pass
+            try:
+                _feed_audit8_2811(enriched["events"])    # FEED_AUDIT8_2811: аудит ленты 28.11
             except Exception:
                 pass
             try:
