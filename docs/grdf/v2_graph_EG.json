@@ -1,68 +1,68 @@
 {
   "country": "EG",
-  "date": "2026-11-28",
+  "date": "2026-11-29",
   "grdf_version": "2.0",
-  "generated_at": "2026-11-28T23:55:10.685572+00:00",
+  "generated_at": "2026-11-29T00:11:10.353199+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-EG",
       "type": "Country",
       "label": "EG",
-      "score": 85,
+      "score": 74,
       "props": {
-        "risk_score": 85
+        "risk_score": 74
       }
     },
     {
       "id": "DOMAIN-EG-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 62,
-      "trend": "stable"
+      "score": 39,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-EG-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-EG-climate",
       "type": "Domain",
       "label": "climate",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-EG-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-EG-social",
       "type": "Domain",
       "label": "social",
-      "score": 78,
-      "trend": "stable"
+      "score": 70,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-EG-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-EG-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DRIVER-EG-Geopolitical",
@@ -75,16 +75,9 @@
       "label": "Economic"
     },
     {
-      "id": "DRIVER-EG-Economic",
+      "id": "DRIVER-EG-Social",
       "type": "Driver",
-      "label": "Economic"
-    },
-    {
-      "id": "SIGNAL-EG-31_человек",
-      "type": "Signal",
-      "label": "31 человек погиб в результате аварии тан",
-      "severity": 78,
-      "domain": "social"
+      "label": "Social"
     },
     {
       "id": "SIGNAL-EG-По_меньшей",
@@ -99,6 +92,13 @@
       "label": "Водитель, подозреваемый в причинении ава",
       "severity": 70,
       "domain": "social"
+    },
+    {
+      "id": "SIGNAL-EG-Криминальн",
+      "type": "Signal",
+      "label": "Криминальный инцидент — Египет",
+      "severity": 70,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-EG",
       "to": "DOMAIN-EG-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.62
+      "weight": 0.39
     },
     {
       "from": "COUNTRY-EG",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-EG",
       "to": "DOMAIN-EG-social",
       "type": "CORRELATES",
-      "weight": 0.78
+      "weight": 0.7
     },
     {
       "from": "COUNTRY-EG",
@@ -157,37 +157,10 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-EG-Economic",
+      "from": "DRIVER-EG-Social",
       "to": "COUNTRY-EG",
       "type": "CAUSES",
       "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-EG-geopolitical",
-      "to": "DOMAIN-EG-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-EG-infrastructure",
-      "to": "DOMAIN-EG-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-EG-economic",
-      "to": "DOMAIN-EG-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
-      "from": "SIGNAL-EG-31_человек",
-      "to": "DOMAIN-EG-social",
-      "type": "AMPLIFIES",
-      "weight": 0.78
     },
     {
       "from": "SIGNAL-EG-По_меньшей",
@@ -197,6 +170,12 @@
     },
     {
       "from": "SIGNAL-EG-Водитель,_",
+      "to": "DOMAIN-EG-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7
+    },
+    {
+      "from": "SIGNAL-EG-Криминальн",
       "to": "DOMAIN-EG-social",
       "type": "AMPLIFIES",
       "weight": 0.7
